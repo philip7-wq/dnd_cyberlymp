@@ -6,6 +6,8 @@
   <title>Character Upload — LZRV D&amp;D Hub</title>
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/upload.css">
+  <!-- PDF.js UMD — loaded as regular script so the module chain never crashes -->
+  <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 </head>
 <body>
 
@@ -23,7 +25,7 @@
 
   <!-- hidden file input — opacity:0 not display:none so Safari allows programmatic click -->
   <input type="file" id="pdfInput" accept=".pdf"
-    style="opacity:0;position:absolute;width:1px;height:1px;pointer-events:none;overflow:hidden">
+    style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden">
 
   <!-- PDF drop zone -->
   <div class="drop-zone card" id="dropZone">
@@ -90,6 +92,7 @@
 </main>
 
 <script type="module">
+console.log('[upload] module loaded');
 import { parsePDF }     from './assets/js/pdf-parser.js';
 import { saveCharacter, uploadPortrait } from './assets/js/supabase.js';
 

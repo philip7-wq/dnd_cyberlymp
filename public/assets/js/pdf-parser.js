@@ -5,11 +5,11 @@
 // many real-world PDFs.
 // ============================================================
 
-import * as pdfjsLib from 'https://esm.sh/pdfjs-dist@3.11.174';
-
-// Worker must be same version; CDN serves the CJS build for workers
+// PDF.js is loaded as a UMD <script> in upload.html → available as window.pdfjsLib.
+// Accessing a global from inside an ES module is valid; no import needed.
+const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
 const STAT_NAMES = ['INT', 'REF', 'DEX', 'TECH', 'COOL', 'WILL', 'MOVE', 'BODY', 'EMP'];
 
