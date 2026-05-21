@@ -1922,22 +1922,28 @@ async function doRoll(expression, opts = {}) {
     isCritFailure: result.isCritFailure,
   });
 
-  // Popup shows result immediately (overlay is the main visual)
+  // Show suspense state while 3D overlay spins (~1.25s spin + 0.4s bounce)
+  numEl.className = 'dice-result-num rolling';
+  numEl.textContent = '?';
   detailEl.textContent = '';
-  numEl.className = 'dice-result-num pop'
-    + (result.isCritSuccess ? ' crit-s' : '')
-    + (result.isCritFailure ? ' crit-f' : '');
-  numEl.textContent = result.total;
-  numEl.addEventListener('animationend', () => numEl.classList.remove('pop'), { once: true });
 
-  const breakdown = result.individualRolls
-    .map(r => {
-      if (r.isCritBonus)   return `+${r.value}(crit!)`;
-      if (r.isCritPenalty) return `${r.value}(botch!)`;
-      return `[${r.value}]`;
-    }).join(' ');
-  const label = opts.context ? `${opts.context}: ` : '';
-  detailEl.textContent = label + breakdown;
+  // Reveal actual result after spin + bounce completes (~1.7s)
+  setTimeout(() => {
+    numEl.className = 'dice-result-num pop'
+      + (result.isCritSuccess ? ' crit-s' : '')
+      + (result.isCritFailure ? ' crit-f' : '');
+    numEl.textContent = result.total;
+    numEl.addEventListener('animationend', () => numEl.classList.remove('pop'), { once: true });
+
+    const breakdown = result.individualRolls
+      .map(r => {
+        if (r.isCritBonus)   return `+${r.value}(crit!)`;
+        if (r.isCritPenalty) return `${r.value}(botch!)`;
+        return `[${r.value}]`;
+      }).join(' ');
+    const label = opts.context ? `${opts.context}: ` : '';
+    detailEl.textContent = label + breakdown;
+  }, 1700);
 
   // Add to log
   diceLog.unshift({ expression, result, context: opts.context });

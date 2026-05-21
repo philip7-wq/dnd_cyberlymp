@@ -227,7 +227,7 @@ export async function uploadChatImage(file) {
 export async function getActiveNpcs() {
   const { data, error } = await supabase.from('npcs')
     .select('id,name,current_hp,max_hp,armor,critical_injuries,is_eliminated')
-    .eq('is_active', true).eq('is_eliminated', false);
+    .eq('is_eliminated', false);
   if (error) { console.warn('getActiveNpcs:', error); return []; }
   return data || [];
 }

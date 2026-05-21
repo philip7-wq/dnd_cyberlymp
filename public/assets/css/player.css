@@ -396,6 +396,8 @@ body.combat-active .char-sub {
 .dice-result-detail { font-size: .68rem; color: var(--text-muted); margin-top: .28rem; line-height: 1.4; }
 @keyframes roll-pop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.18)} 100%{transform:scale(1);opacity:1} }
 .dice-result-num.pop { animation: roll-pop .32s ease forwards; }
+@keyframes dice-result-pulse { from { opacity: 0.25; } to { opacity: 0.6; } }
+.dice-result-num.rolling { opacity: 0.45; animation: dice-result-pulse 0.6s ease-in-out infinite alternate; }
 
 /* Roll log */
 .dice-log { max-height: 108px; overflow-y: auto; }
