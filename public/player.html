@@ -260,6 +260,7 @@ let notesSaveTimer      = null;
 let chatUnread          = 0;
 let statsEditing        = false;
 let roleAbilities       = null;
+let _tipPanel = null, _tipOverlay = null, _tipMap = new Map();
 
 function getInjuries() {
   try { return JSON.parse(char.critical_injuries || '[]'); } catch { return []; }
@@ -781,9 +782,6 @@ function getRankBand(bandsObj, rank) {
 }
 
 // ── Info Tooltip System ───────────────────────────────────────
-let _tipPanel = null, _tipOverlay = null;
-let _tipMap   = new Map();
-
 function _initTipUI() {
   if (_tipPanel) return;
   _tipOverlay = document.createElement('div');
