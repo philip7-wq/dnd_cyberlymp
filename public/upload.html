@@ -94,7 +94,7 @@
 <script type="module">
 console.log('[upload] module loaded');
 import { parsePDF }     from './assets/js/pdf-parser.js';
-import { saveCharacter, uploadPortrait } from './assets/js/supabase.js';
+import { saveCharacter, patchCharacter, uploadPortrait } from './assets/js/supabase.js';
 
 // ── State ─────────────────────────────────────────────────────
 let pdfFile      = null;
@@ -235,7 +235,7 @@ submitBtn.addEventListener('click', async () => {
     if (blob) {
       setProgress(50, 'Lade Portrait hoch…');
       const imageUrl = await uploadPortrait(blob, saved.id);
-      await saveCharacter({ id: saved.id, image_url: imageUrl });
+      await patchCharacter(saved.id, { image_url: imageUrl });
     }
 
     setProgress(100, 'Gespeichert!');
