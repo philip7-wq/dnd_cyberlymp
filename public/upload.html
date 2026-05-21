@@ -21,12 +21,15 @@
     <p>Ausgefülltes Cyberpunk RED PDF → Datenbank</p>
   </div>
 
-  <!-- PDF drop zone -->
+  <!-- PDF drop zone — label-based, no absolute overlay -->
   <div class="drop-zone card" id="dropZone">
-    <input type="file" id="pdfInput" accept=".pdf" aria-label="PDF auswählen">
     <span class="drop-icon">📄</span>
-    <p><strong>PDF hier ablegen</strong> oder klicken</p>
-    <p style="font-size:.8rem;margin-top:.35rem">Cyberpunk RED Charakterbogen (ausgefüllt)</p>
+    <p><strong>PDF hier ablegen</strong></p>
+    <label class="btn btn-ghost" style="margin-top:.75rem;cursor:pointer">
+      PDF auswählen
+      <input type="file" id="pdfInput" accept=".pdf" class="sr-only">
+    </label>
+    <p style="font-size:.75rem;margin-top:.5rem;color:var(--text-muted)">Cyberpunk RED Charakterbogen (ausgefüllt)</p>
     <p class="filename" id="pdfName" hidden></p>
   </div>
 
