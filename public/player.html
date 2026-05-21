@@ -143,6 +143,24 @@
   <div class="crit-modal-box" id="critModalBox"></div>
 </div>
 
+<!-- Damage Apply Modal -->
+<div id="dmgApplyModal" class="crit-modal-overlay" hidden>
+  <div class="crit-modal-box" id="dmgApplyBox">
+    <div class="crit-modal-title">SCHADEN ANWENDEN <span id="dmgApplyTotal" style="color:var(--cyan)"></span></div>
+    <div style="margin:.5rem 0">
+      <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);margin-bottom:.3rem">Ziel</div>
+      <select id="dmgApplyTarget" style="width:100%;padding:.4rem .6rem;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.82rem">
+        <option value="">— Ziel wählen —</option>
+      </select>
+    </div>
+    <div id="dmgApplyCalc" class="dmg-calc-row" style="display:none"></div>
+    <div class="crit-modal-btns">
+      <button class="btn btn-primary" id="dmgApplyConfirm" disabled>Bestätigen</button>
+      <button class="btn btn-ghost" id="dmgApplyCancel">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <!-- Item tooltip -->
 <div id="item-tooltip" class="item-tooltip" hidden></div>
 
@@ -260,6 +278,7 @@ let notesSaveTimer      = null;
 let chatUnread          = 0;
 let statsEditing        = false;
 let roleAbilities       = null;
+let activeNpcs          = [];
 let _tipPanel = null, _tipOverlay = null, _tipMap = new Map();
 
 function getInjuries() {
@@ -282,6 +301,10 @@ if (id) {
     ]);
     _allCharsFull = allChars;
     allChars = allChars.filter(c => c.id !== id);
+    const { data: npcRows } = await supabase.from('npcs')
+      .select('id,name,current_hp,max_hp,armor,critical_injuries')
+      .eq('is_active', true).eq('is_eliminated', false);
+    activeNpcs = npcRows || [];
     (rawItems || []).filter(i => i.category === 'Skill Upgrade').forEach(i => {
       skillUpgradeMap[i.name] = { ip_cost_multiplier: i.ip_cost_multiplier ?? 1, ip_cost_by_next_level: i.ip_cost_by_next_level || {} };
     });
@@ -613,14 +636,26 @@ function renderSkills() {
       ? `<span class="skill-role-note" title="Moto: +${roleRank} auf Fahrzeug-Checks">+${roleRank}⚙</span>` : '';
     const surgNote = (roleKey === 'medtech' && sk.name === 'Surgery')
       ? (() => { const sp = char.role_ability_data?.specialtyPoints?.surgery ?? 0;
-          return sp > 0 ? `<span class="skill-role-note" title="Surgery Specialty">⚕${sp}</span>` : ''; })()
+          return sp > 0 ? `<span class="skill-role-note" title="+${sp} Chirurgie-Specialty">+${sp}⚕</span>` : ''; })()
+      : '';
+    const medTechNote = (roleKey === 'medtech' && sk.name === 'Medical Tech')
+      ? (() => {
+          const p = char.role_ability_data?.specialtyPoints?.pharmaceuticals ?? 0;
+          const c = char.role_ability_data?.specialtyPoints?.cryosystem_operation ?? 0;
+          return (p+c) > 0 ? `<span class="skill-role-note" title="Pharma+Cryo Specialty">+${p+c}💊</span>` : '';
+        })()
+      : '';
+    const techFieldSkills = ['Basic Tech','Electronics','Weaponstech'];
+    const techFieldNote = (roleKey === 'tech' && techFieldSkills.includes(sk.name))
+      ? (() => { const f = char.role_ability_data?.specialtyRanks?.field ?? 0;
+          return f > 0 ? `<span class="skill-role-note" title="Maker Field Expertise">+${f}⚙</span>` : ''; })()
       : '';
     return `<div class="skill-row">
       <button class="skill-fav-btn${favs.has(sk.name) ? ' active' : ''}" data-fav="${sk.name}">★</button>
       <span class="skill-name">${sk.name}</span>
       <span class="skill-stat">${sk.stat}</span>
       <span class="skill-lvl">${sk.lvl ?? 0}</span>
-      <span class="skill-base">${base}${motoNote}${surgNote}</span>
+      <span class="skill-base">${base}${motoNote}${surgNote}${medTechNote}${techFieldNote}</span>
       <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1" title="1d10+${base}">⚄</button>
       ${upgradeBtn}
     </div>`;
@@ -758,6 +793,14 @@ function renderLifepath() {
 }
 
 // ── Role tab ──────────────────────────────────────────────────
+
+function showRoleSaveToast(msg) {
+  const t = document.getElementById('rollToast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'roll-toast show';
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
 
 function initRoleAbilityData(r) {
   switch (r) {
@@ -994,8 +1037,8 @@ function renderRoleTab() {
   const roleKey  = char.role.toLowerCase();
   const roleData = roleAbilities[roleKey];
   if (!roleData) { el.innerHTML = `<p class="empty-state">Rollendaten für "${char.role}" nicht gefunden.</p>`; return; }
-  if (!char.role_ability_data || !Object.keys(char.role_ability_data).length)
-    char.role_ability_data = initRoleAbilityData(roleKey);
+  // Merge defaults with saved values — preserves saved data, fills missing keys with 0
+  char.role_ability_data = { ...initRoleAbilityData(roleKey), ...(char.role_ability_data || {}) };
   const rank = char.role_ability_rank ?? 0;
   el.innerHTML = `
     <div class="role-tab-header">
@@ -1141,6 +1184,7 @@ function buildSolo(data, rank) {
     if (soloPointsUsed(cur) > rank) return;
     char.role_ability_data = { ...char.role_ability_data, combatAwareness: cur };
     await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
+    showRoleSaveToast('Combat Awareness gespeichert');
   });
 }
 
@@ -1232,6 +1276,8 @@ function buildTech(data, rank) {
     if (sum > maxPts) return;
     char.role_ability_data = { ...char.role_ability_data, specialtyRanks: vals };
     await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
+    renderSkills();
+    showRoleSaveToast('Specialties gespeichert');
   });
 
   document.getElementById('techRollBtn').addEventListener('click', async () => {
@@ -1322,6 +1368,7 @@ function buildMedtech(data, rank) {
     char.role_ability_data = { ...char.role_ability_data, specialtyPoints: vals };
     await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
     renderSkills();
+    showRoleSaveToast('Specialties gespeichert');
   });
 
   document.getElementById('medSurgRollBtn').addEventListener('click', async () => {
@@ -1857,10 +1904,13 @@ async function doRoll(expression, opts = {}) {
   // Toast
   showToast(result);
 
-  // Critical Injury trigger — damage rolls only
-  if (opts.isDamageRoll && injuryData) {
-    const sixCount = result.individualRolls.filter(r => r.die === 6 && Math.abs(r.value) === 6).length;
-    if (sixCount >= 2) showCritInjuryFlow();
+  // Damage roll extras
+  if (opts.isDamageRoll) {
+    showDamageApplyModal(result.total);
+    if (injuryData) {
+      const sixCount = result.individualRolls.filter(r => r.die === 6 && Math.abs(r.value) === 6).length;
+      if (sixCount >= 2) showCritInjuryFlow();
+    }
   }
 }
 
@@ -1937,15 +1987,90 @@ async function removeItem(inv, idx) {
 }
 
 // ── Critical Injury Flow ──────────────────────────────────────
-function showCritInjuryFlow() {
-  critTarget = allChars.length === 1 ? allChars[0].id : null;
+// ── Damage Apply Modal ────────────────────────────────────────
+function showDamageApplyModal(totalDamage) {
+  const modal = document.getElementById('dmgApplyModal');
+  const select = document.getElementById('dmgApplyTarget');
+  const calcRow = document.getElementById('dmgApplyCalc');
+  const confirmBtn = document.getElementById('dmgApplyConfirm');
 
-  const targetOptions = [
-    `<option value="">— Ziel wählen —</option>`,
-    ...allChars.map(c =>
-      `<option value="${c.id}"${allChars.length === 1 ? ' selected' : ''}>${c.name}</option>`),
-    `<option value="npc">NPC (kein Supabase-Eintrag)</option>`,
-  ].join('');
+  document.getElementById('dmgApplyTotal').textContent = `(${totalDamage})`;
+  calcRow.style.display = 'none';
+  calcRow.textContent = '';
+  confirmBtn.disabled = true;
+
+  // Build target dropdown
+  const playerOpts = allChars.map(c =>
+    `<option value="char:${c.id}">${c.handle || c.name}</option>`).join('');
+  const npcOpts = activeNpcs.map(n => `<option value="npc:${n.id}">${n.name}</option>`).join('');
+  select.innerHTML = `<option value="">— Ziel wählen —</option>`
+    + (playerOpts ? `<optgroup label="── Spieler ──">${playerOpts}</optgroup>` : '')
+    + (npcOpts   ? `<optgroup label="── NPCs ──">${npcOpts}</optgroup>` : '');
+
+  modal.hidden = false;
+
+  const onTargetChange = () => {
+    const val = select.value;
+    if (!val) { calcRow.style.display = 'none'; confirmBtn.disabled = true; return; }
+    const isNpc = val.startsWith('npc:');
+    const targetId = val.replace(/^(char|npc):/, '');
+    let sp = 0;
+    let targetName = '';
+    if (isNpc) {
+      const npc = activeNpcs.find(n => n.id === targetId);
+      sp = npc?.armor ?? 0;
+      targetName = npc?.name || 'NPC';
+    } else {
+      const tchar = _allCharsFull.find(c => c.id === targetId);
+      sp = tchar?.armor?.body?.sp ?? 0;
+      targetName = tchar?.handle || tchar?.name || 'Spieler';
+    }
+    const net = Math.max(0, totalDamage - sp);
+    calcRow.textContent = `${totalDamage} – SP ${sp} = ${net} Schaden`;
+    calcRow.style.display = 'block';
+    confirmBtn.disabled = false;
+    confirmBtn._net = net;
+    confirmBtn._targetName = targetName;
+  };
+
+  select.addEventListener('change', onTargetChange);
+
+  confirmBtn.onclick = async () => {
+    const val = select.value;
+    if (!val) return;
+    const isNpc = val.startsWith('npc:');
+    const targetId = val.replace(/^(char|npc):/, '');
+    const net = confirmBtn._net ?? 0;
+    const targetName = confirmBtn._targetName ?? '';
+    try {
+      if (isNpc) {
+        const npc = activeNpcs.find(n => n.id === targetId);
+        const newHp = Math.max(0, (npc?.current_hp ?? 0) - net);
+        await supabase.from('npcs').update({ current_hp: newHp, is_eliminated: newHp <= 0 }).eq('id', targetId);
+        if (npc) npc.current_hp = newHp;
+      } else {
+        const tchar = _allCharsFull.find(c => c.id === targetId);
+        const newHp = Math.max(0, (tchar?.current_hp ?? 0) - net);
+        await patchCharacter(targetId, { current_hp: newHp });
+      }
+    } catch (e) { console.warn('applyDamage failed:', e); }
+    modal.hidden = true;
+    const t = document.getElementById('rollToast');
+    if (t) { t.textContent = `${net} Schaden an ${targetName} angewendet`; t.className = 'roll-toast show'; setTimeout(() => t.classList.remove('show'), 2000); }
+  };
+
+  document.getElementById('dmgApplyCancel').onclick = () => { modal.hidden = true; };
+}
+
+function showCritInjuryFlow() {
+  critTarget = allChars.length === 1 && activeNpcs.length === 0 ? `char:${allChars[0].id}` : null;
+
+  const playerOpts = allChars.map(c =>
+    `<option value="char:${c.id}"${allChars.length === 1 && activeNpcs.length === 0 ? ' selected' : ''}>${c.handle || c.name}</option>`).join('');
+  const npcOpts = activeNpcs.map(n => `<option value="npc:${n.id}">${n.name}</option>`).join('');
+  const targetOptions = `<option value="">— Ziel wählen —</option>`
+    + (playerOpts ? `<optgroup label="── Spieler ──">${playerOpts}</optgroup>` : '')
+    + (npcOpts   ? `<optgroup label="── NPCs ──">${npcOpts}</optgroup>` : '');
 
   const box = document.getElementById('critModalBox');
   box.innerHTML = `
@@ -1965,7 +2090,7 @@ function showCritInjuryFlow() {
     </div>`;
   document.getElementById('crit-modal').hidden = false;
   document.getElementById('critTargetSelect').addEventListener('change', e => {
-    critTarget = e.target.value || null;
+    critTarget = e.target.value || null;  // now "char:UUID" or "npc:UUID"
   });
   document.getElementById('critHead').onclick   = () => rollInjury('head');
   document.getElementById('critBody').onclick   = () => rollInjury('body');
@@ -2029,27 +2154,37 @@ async function applyInjury(injury, table) {
     return;
   }
 
-  if (critTarget === 'npc') {
-    logRoll({ characterId: char.id, characterName: char.name,
-      expression: '2d6', individualRolls: [], modifier: 0, total: 0,
-      context: `Critical Injury (NPC): ${injury.name}`,
-      isCritSuccess: false, isCritFailure: false }).catch(() => {});
-    document.getElementById('crit-modal').hidden = true;
-    return;
-  }
+  const isNpc = critTarget.startsWith('npc:');
+  const targetId = critTarget.replace(/^(char|npc):/, '');
 
   try {
-    const target   = await getCharacter(critTarget);
-    const injuries = JSON.parse(target.critical_injuries || '[]');
-    injuries.push({ ...injury, table });
-    const newHp = Math.max(0, (target.current_hp ?? 0) - 5);
-    const patch = { critical_injuries: JSON.stringify(injuries), current_hp: newHp };
-    if (newHp === 0) patch.mortally_wounded = true;
-    await patchCharacter(critTarget, patch);
-    logRoll({ characterId: char.id, characterName: char.name,
-      expression: '2d6', individualRolls: [], modifier: 0, total: 0,
-      context: `Critical Injury → ${target.name}: ${injury.name}`,
-      isCritSuccess: false, isCritFailure: false }).catch(() => {});
+    if (isNpc) {
+      const npc = activeNpcs.find(n => n.id === targetId);
+      const existing = Array.isArray(npc?.critical_injuries) ? npc.critical_injuries : [];
+      const newHp = Math.max(0, (npc?.current_hp ?? 0) - 5);
+      await supabase.from('npcs').update({
+        critical_injuries: [...existing, { ...injury, table, ts: Date.now() }],
+        current_hp: newHp,
+        is_eliminated: newHp <= 0,
+      }).eq('id', targetId);
+      if (npc) { npc.critical_injuries = [...existing, { ...injury, table }]; npc.current_hp = newHp; }
+      logRoll({ characterId: char.id, characterName: char.handle || char.name,
+        expression: '2d6', individualRolls: [], modifier: 0, total: 0,
+        context: `Critical Injury → NPC ${npc?.name || targetId}: ${injury.name}`,
+        isCritSuccess: false, isCritFailure: false }).catch(() => {});
+    } else {
+      const target   = await getCharacter(targetId);
+      const injuries = JSON.parse(target.critical_injuries || '[]');
+      injuries.push({ ...injury, table });
+      const newHp = Math.max(0, (target.current_hp ?? 0) - 5);
+      const patch = { critical_injuries: JSON.stringify(injuries), current_hp: newHp };
+      if (newHp === 0) patch.mortally_wounded = true;
+      await patchCharacter(targetId, patch);
+      logRoll({ characterId: char.id, characterName: char.handle || char.name,
+        expression: '2d6', individualRolls: [], modifier: 0, total: 0,
+        context: `Critical Injury → ${target.name}: ${injury.name}`,
+        isCritSuccess: false, isCritFailure: false }).catch(() => {});
+    }
   } catch (e) {
     console.warn('applyInjury failed:', e);
   }

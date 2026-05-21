@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Charakter erstellen — LZRV Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <style>
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+    .create-wrap { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    .create-header { text-align: center; margin-bottom: 1.5rem; }
+    .create-title { font-family: var(--font-display); font-size: 1.2rem; color: var(--red); letter-spacing: .12em; text-transform: uppercase; }
+    .create-subtitle { font-size: .78rem; color: var(--text-muted); margin-top: .25rem; }
+
+    /* Step indicator */
+    .step-indicator { display: flex; gap: .25rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); color: var(--text-muted);
+      font-family: var(--font-display); font-size: .65rem; display: flex; align-items: center; justify-content: center; }
+    .step-dot.active { border-color: var(--cyan); color: var(--cyan); }
+    .step-dot.done { border-color: var(--red); background: var(--red); color: #fff; }
+
+    /* Step panels */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+    .step-heading { font-family: var(--font-display); font-size: .75rem; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--cyan); margin-bottom: 1rem; padding-bottom: .4rem;
+      border-bottom: 1px solid var(--border); }
+
+    /* Field groups */
+    .field-group { margin-bottom: 1rem; }
+    .field-group label { display: block; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: .3rem; }
+    .field-group input[type="text"],
+    .field-group input[type="number"],
+    .field-group select,
+    .field-group textarea {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); padding: .45rem .7rem;
+      font-family: var(--font-body); font-size: .9rem; box-sizing: border-box; }
+    .field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+      outline: none; border-color: var(--cyan); }
+    .field-hint { font-size: .72rem; color: var(--text-muted); margin-top: .2rem; }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: .6rem; }
+    .stat-cell { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: .6rem; }
+    .stat-cell label { display: block; font-family: var(--font-display); font-size: .62rem;
+      letter-spacing: .12em; color: var(--cyan); margin-bottom: .3rem; }
+    .stat-cell input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border);
+      color: var(--text); font-size: 1.3rem; font-family: var(--font-display); text-align: center; padding: .1rem 0; }
+    .stat-cell input:focus { outline: none; border-bottom-color: var(--cyan); }
+
+    /* HP panel */
+    .hp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+    .hp-cell { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: .6rem; text-align: center; }
+    .hp-cell-label { font-family: var(--font-display); font-size: .6rem; letter-spacing: .1em; color: var(--text-muted); margin-bottom: .3rem; }
+    .hp-cell input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border);
+      color: var(--cyan); font-size: 1.4rem; font-family: var(--font-display); text-align: center; padding: .1rem 0; }
+    .hp-cell input:focus { outline: none; border-bottom-color: var(--cyan); }
+    .hp-formula { font-size: .68rem; color: var(--text-muted); margin-top: .25rem; }
+
+    /* Skills */
+    .skill-cat-head { font-family: var(--font-display); font-size: .62rem; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--text-muted); margin: 1rem 0 .4rem;
+      padding-bottom: .25rem; border-bottom: 1px solid var(--border); }
+    .skills-cat-grid { display: grid; grid-template-columns: 1fr auto auto; gap: .25rem .5rem; align-items: center; }
+    .skill-name-cell { font-size: .8rem; color: var(--text); }
+    .skill-stat-cell { font-size: .65rem; color: var(--cyan); font-family: var(--font-display); text-align: center; }
+    .skill-lvl-input { width: 52px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); padding: .15rem .3rem; text-align: center; font-size: .85rem; }
+    .skill-lvl-input:focus { outline: none; border-color: var(--cyan); }
+
+    /* Specialty inputs (Step 5) */
+    .specialty-group { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: .75rem; margin-bottom: .75rem; }
+    .specialty-group-title { font-family: var(--font-display); font-size: .65rem; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: .6rem; }
+    .spec-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .4rem; }
+    .spec-row label { font-size: .8rem; color: var(--text); }
+    .spec-row input { width: 60px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); padding: .2rem .4rem; text-align: center; }
+    .spec-row input:focus { outline: none; border-color: var(--cyan); }
+    .spec-budget { font-family: var(--font-display); font-size: .72rem; color: var(--cyan); margin-top: .3rem; }
+    .spec-budget.over { color: var(--red); }
+
+    /* Lifepath */
+    .lifepath-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    @media (max-width: 500px) { .lifepath-grid { grid-template-columns: 1fr; } }
+
+    /* Overview */
+    .overview-section { margin-bottom: 1rem; }
+    .overview-section-title { font-family: var(--font-display); font-size: .62rem; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--cyan); margin-bottom: .4rem; }
+    .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem .6rem; font-size: .82rem; }
+    .overview-grid .key { color: var(--text-muted); }
+    .overview-grid .val { color: var(--text); font-weight: 500; }
+
+    /* Image preview */
+    .img-preview { width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius);
+      border: 1px solid var(--border); margin-top: .5rem; display: none; }
+    .img-preview.show { display: block; }
+
+    /* Navigation */
+    .step-nav { display: flex; gap: .75rem; justify-content: space-between; margin-top: 1.5rem; }
+    .btn-create { font-family: var(--font-display); font-size: .78rem; letter-spacing: .08em;
+      border-radius: var(--radius); padding: .5rem 1.25rem; cursor: pointer; transition: var(--transition); border: none; }
+    .btn-create-primary { background: var(--red); color: #fff; }
+    .btn-create-primary:hover { filter: brightness(1.15); }
+    .btn-create-primary:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-create-ghost { background: none; border: 1px solid var(--border); color: var(--text); }
+    .btn-create-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+    .create-error { color: var(--red); font-size: .8rem; margin-top: .5rem; min-height: 1.2rem; }
+    .create-success { color: #2ecc71; font-size: .8rem; margin-top: .5rem; }
+
+    /* Portrait area */
+    .portrait-area { display: flex; align-items: center; gap: 1rem; }
+    .portrait-label-btn { font-family: var(--font-display); font-size: .72rem; background: var(--bg-input);
+      border: 1px solid var(--border); color: var(--text); border-radius: var(--radius); padding: .35rem .7rem;
+      cursor: pointer; transition: var(--transition); }
+    .portrait-label-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
+  <a href="index.html" class="btn btn-ghost" style="font-size:.75rem;margin-left:auto">← Zurück</a>
+</nav>
+
+<div class="create-wrap">
+  <div class="create-header">
+    <div class="create-title">Charakter erstellen</div>
+    <div class="create-subtitle">Manuell · Kein PDF erforderlich</div>
+  </div>
+
+  <div class="step-indicator" id="stepIndicator"></div>
+
+  <!-- Step 1: Basics -->
+  <div class="step-panel active" id="step-1">
+    <div class="step-heading">Schritt 1 — Basics</div>
+    <div class="field-group">
+      <label for="s1Handle">Handle (Charaktername) *</label>
+      <input type="text" id="s1Handle" placeholder="V, Johnny Silverhand, …">
+    </div>
+    <div class="field-group">
+      <label for="s1Role">Rolle *</label>
+      <select id="s1Role">
+        <option value="">— Rolle wählen —</option>
+        <option value="Rockerboy">Rockerboy</option>
+        <option value="Solo">Solo</option>
+        <option value="Netrunner">Netrunner</option>
+        <option value="Tech">Tech</option>
+        <option value="Medtech">Medtech</option>
+        <option value="Media">Media</option>
+        <option value="Exec">Exec</option>
+        <option value="Lawman">Lawman</option>
+        <option value="Fixer">Fixer</option>
+        <option value="Nomad">Nomad</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label for="s1Player">Spieler-Name</label>
+      <input type="text" id="s1Player" placeholder="Echter Name des Spielers">
+    </div>
+    <div class="field-group">
+      <label>Portrait (optional)</label>
+      <div class="portrait-area">
+        <label class="portrait-label-btn" for="s1Portrait">Bild wählen</label>
+        <input type="file" id="s1Portrait" accept="image/*" style="display:none">
+        <img id="s1PortraitPreview" class="img-preview" src="" alt="Preview">
+      </div>
+      <div class="field-hint" id="s1PortraitName">Kein Bild gewählt</div>
+    </div>
+    <div class="create-error" id="err-1"></div>
+    <div class="step-nav">
+      <span></span>
+      <button class="btn-create btn-create-primary" onclick="goStep(2)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Stats -->
+  <div class="step-panel" id="step-2">
+    <div class="step-heading">Schritt 2 — Stats <span style="color:var(--text-muted);font-size:.65rem">(1–10 pro Stat)</span></div>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="create-error" id="err-2"></div>
+    <div class="step-nav">
+      <button class="btn-create btn-create-ghost" onclick="goStep(1)">← Zurück</button>
+      <button class="btn-create btn-create-primary" onclick="goStep(3)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- Step 3: HP / Humanity / Luck -->
+  <div class="step-panel" id="step-3">
+    <div class="step-heading">Schritt 3 — HP · Humanity · Luck</div>
+    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1rem">
+      Werte werden aus deinen Stats berechnet. Du kannst sie manuell anpassen.
+    </p>
+    <div class="hp-grid">
+      <div class="hp-cell">
+        <div class="hp-cell-label">Max HP</div>
+        <input type="number" id="s3MaxHp" min="1" max="99">
+        <div class="hp-formula" id="s3HpFormula"></div>
+      </div>
+      <div class="hp-cell">
+        <div class="hp-cell-label">Max Humanity</div>
+        <input type="number" id="s3MaxHumanity" min="0" max="100">
+        <div class="hp-formula" id="s3HumanityFormula"></div>
+      </div>
+      <div class="hp-cell">
+        <div class="hp-cell-label">Max Luck</div>
+        <input type="number" id="s3MaxLuck" min="0" max="10">
+        <div class="hp-formula" id="s3LuckFormula"></div>
+      </div>
+    </div>
+    <div class="field-group" style="margin-top:1rem">
+      <label for="s3Cash">Startkapital (eb)</label>
+      <input type="number" id="s3Cash" min="0" value="0">
+    </div>
+    <div class="create-error" id="err-3"></div>
+    <div class="step-nav">
+      <button class="btn-create btn-create-ghost" onclick="goStep(2)">← Zurück</button>
+      <button class="btn-create btn-create-primary" onclick="goStep(4)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Skills -->
+  <div class="step-panel" id="step-4">
+    <div class="step-heading">Schritt 4 — Skills <span style="color:var(--text-muted);font-size:.65rem">(Standard: 0, Max: 10)</span></div>
+    <div id="skillsGrid"></div>
+    <div class="create-error" id="err-4"></div>
+    <div class="step-nav">
+      <button class="btn-create btn-create-ghost" onclick="goStep(3)">← Zurück</button>
+      <button class="btn-create btn-create-primary" onclick="goStep(5)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- Step 5: Role Ability -->
+  <div class="step-panel" id="step-5">
+    <div class="step-heading">Schritt 5 — Role Ability</div>
+    <div class="field-group">
+      <label for="s5Rank">Ability Rank (1–10)</label>
+      <input type="number" id="s5Rank" min="1" max="10" value="4">
+      <div class="field-hint">Standard für Edgerunner: 4</div>
+    </div>
+    <div id="specialtiesSection"></div>
+    <div class="create-error" id="err-5"></div>
+    <div class="step-nav">
+      <button class="btn-create btn-create-ghost" onclick="goStep(4)">← Zurück</button>
+      <button class="btn-create btn-create-primary" onclick="goStep(6)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- Step 6: Lifepath -->
+  <div class="step-panel" id="step-6">
+    <div class="step-heading">Schritt 6 — Lifepath <span style="color:var(--text-muted);font-size:.65rem">(alle optional)</span></div>
+    <div class="lifepath-grid">
+      <div class="field-group">
+        <label for="lpOrigins">Cultural Origins</label>
+        <input type="text" id="lpOrigins" placeholder="z.B. North American">
+      </div>
+      <div class="field-group">
+        <label for="lpPersonality">Personality</label>
+        <input type="text" id="lpPersonality" placeholder="z.B. Serious, driven">
+      </div>
+      <div class="field-group">
+        <label for="lpGoals">Life Goals</label>
+        <input type="text" id="lpGoals" placeholder="z.B. Get rich, survive">
+      </div>
+      <div class="field-group">
+        <label for="lpCrisis">Family Crisis</label>
+        <input type="text" id="lpCrisis" placeholder="z.B. Murdered">
+      </div>
+      <div class="field-group">
+        <label for="lpFriend1">Freund 1</label>
+        <input type="text" id="lpFriend1" placeholder="Name">
+      </div>
+      <div class="field-group">
+        <label for="lpFriend2">Freund 2</label>
+        <input type="text" id="lpFriend2" placeholder="Name">
+      </div>
+      <div class="field-group">
+        <label for="lpFriend3">Freund 3</label>
+        <input type="text" id="lpFriend3" placeholder="Name">
+      </div>
+      <div class="field-group">
+        <label for="lpLifestyle">Lifestyle</label>
+        <input type="text" id="lpLifestyle" placeholder="z.B. Kibble, Street">
+      </div>
+    </div>
+    <div class="field-group">
+      <label for="lpNotes">Sonstige Notizen</label>
+      <textarea id="lpNotes" rows="3" placeholder="Hintergrundgeschichte, Ziele, Feinde…"></textarea>
+    </div>
+    <div class="create-error" id="err-6"></div>
+    <div class="step-nav">
+      <button class="btn-create btn-create-ghost" onclick="goStep(5)">← Zurück</button>
+      <button class="btn-create btn-create-primary" onclick="goStep(7)">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- Step 7: Overview + Submit -->
+  <div class="step-panel" id="step-7">
+    <div class="step-heading">Schritt 7 — Übersicht &amp; Erstellen</div>
+    <div id="overviewContent"></div>
+    <div class="create-error" id="err-7"></div>
+    <div id="successMsg" class="create-success" style="display:none">Charakter erstellt! Weiterleitung…</div>
+    <div class="step-nav">
+      <button class="btn-create btn-create-ghost" onclick="goStep(6)">← Zurück</button>
+      <button class="btn-create btn-create-primary" id="submitBtn" onclick="submitCharacter()">Charakter erstellen</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { saveCharacter, patchCharacter, uploadPortrait } from './assets/js/supabase.js';
+
+// ── Skills definition ──────────────────────────────────────────
+const ALL_SKILLS = [
+  // Awareness
+  ['Concentration','WILL'],['Conceal/Reveal Object','INT'],['Lip Reading','INT'],
+  ['Perception','INT'],['Tracking','INT'],
+  // Body
+  ['Athletics','DEX'],['Contortionist','DEX'],['Dance','DEX'],['Endurance','WILL'],
+  ['Resist Torture/Drugs','WILL'],['Stealth','DEX'],
+  // Control
+  ['Drive Land Vehicle','REF'],['Pilot Air Vehicle','REF'],['Pilot Sea Vehicle','REF'],['Riding','REF'],
+  // Education
+  ['Accounting','INT'],['Animal Handling','INT'],['Bureaucracy','INT'],['Business','INT'],
+  ['Composition','INT'],['Criminology','INT'],['Cryptography','INT'],['Deduction','INT'],
+  ['Education','INT'],['Gamble','INT'],['Language (Streetslang)','INT'],['Language (2nd)','INT'],
+  ['Language (3rd)','INT'],['Library Search','INT'],['Local Expert (Home)','INT'],
+  ['Local Expert (2)','INT'],['Paramedic','INT'],['Pharmacology','INT'],['Photography','INT'],
+  ['Science (Biology)','INT'],['Science (Chemistry)','INT'],['Science (Math)','INT'],
+  ['Science (Physics)','INT'],['Science (2nd)','INT'],['Tactics','INT'],
+  ['Wilderness Survival','INT'],['Zoology','INT'],
+  // Fighting
+  ['Brawling','DEX'],['Evasion','DEX'],['Martial Arts','DEX'],['Melee Weapon','DEX'],
+  // Performance
+  ['Acting','COOL'],['Play Instrument','TECH'],
+  // Ranged Weapon
+  ['Archery','REF'],['Autofire','REF'],['Handgun','REF'],['Heavy Weapons','REF'],['Shoulder Arms','REF'],
+  // Social
+  ['Bribery','COOL'],['Conversation','EMP'],['Human Perception','EMP'],
+  ['Interrogation','COOL'],['Persuasion','COOL'],['Personal Grooming','COOL'],
+  ['Streetwise','COOL'],['Trading','COOL'],['Wardrobe & Style','COOL'],
+  // Technique
+  ['Air Vehicle Tech','TECH'],['Basic Tech','TECH'],['Cybertech','TECH'],['Demolitions','TECH'],
+  ['Electronics/Security Tech','TECH'],['First Aid','TECH'],['Forgery','TECH'],
+  ['Land Vehicle Tech','TECH'],['Paint/Draw/Sculpt','TECH'],['Pickpocket','TECH'],
+  ['Sea Vehicle Tech','TECH'],['Weaponstech','TECH'],
+];
+
+const SKILL_CAT_MAP = {
+  'Concentration':'Awareness','Conceal/Reveal Object':'Awareness','Lip Reading':'Awareness','Perception':'Awareness','Tracking':'Awareness',
+  'Athletics':'Body','Contortionist':'Body','Dance':'Body','Endurance':'Body','Resist Torture/Drugs':'Body','Stealth':'Body',
+  'Drive Land Vehicle':'Control','Pilot Air Vehicle':'Control','Pilot Sea Vehicle':'Control','Riding':'Control',
+  'Accounting':'Education','Animal Handling':'Education','Bureaucracy':'Education','Business':'Education',
+  'Composition':'Education','Criminology':'Education','Cryptography':'Education','Deduction':'Education',
+  'Education':'Education','Gamble':'Education','Language (Streetslang)':'Education','Language (2nd)':'Education',
+  'Language (3rd)':'Education','Library Search':'Education','Local Expert (Home)':'Education','Local Expert (2)':'Education',
+  'Paramedic':'Education','Pharmacology':'Education','Photography':'Education',
+  'Science (Biology)':'Education','Science (Chemistry)':'Education','Science (Math)':'Education',
+  'Science (Physics)':'Education','Science (2nd)':'Education','Tactics':'Education',
+  'Wilderness Survival':'Education','Zoology':'Education',
+  'Brawling':'Fighting','Evasion':'Fighting','Martial Arts':'Fighting','Melee Weapon':'Fighting',
+  'Acting':'Performance','Play Instrument':'Performance',
+  'Archery':'Ranged Weapon','Autofire':'Ranged Weapon','Handgun':'Ranged Weapon','Heavy Weapons':'Ranged Weapon','Shoulder Arms':'Ranged Weapon',
+  'Bribery':'Social','Conversation':'Social','Human Perception':'Social',
+  'Interrogation':'Social','Persuasion':'Social','Personal Grooming':'Social',
+  'Streetwise':'Social','Trading':'Social','Wardrobe & Style':'Social',
+  'Air Vehicle Tech':'Technique','Basic Tech':'Technique','Cybertech':'Technique','Demolitions':'Technique',
+  'Electronics/Security Tech':'Technique','First Aid':'Technique','Forgery':'Technique',
+  'Land Vehicle Tech':'Technique','Paint/Draw/Sculpt':'Technique','Pickpocket':'Technique',
+  'Sea Vehicle Tech':'Technique','Weaponstech':'Technique',
+};
+const CAT_ORDER = ['Awareness','Body','Control','Education','Fighting','Performance','Ranged Weapon','Social','Technique'];
+const STATS = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP','LUCK'];
+const TOTAL_STEPS = 7;
+
+// ── State ──────────────────────────────────────────────────────
+let currentStep = 1;
+let portraitBlob = null;
+
+// ── Init ──────────────────────────────────────────────────────
+buildStepIndicator();
+buildStatsGrid();
+buildSkillsGrid();
+buildSpecialtiesOnRoleChange();
+
+// ── Step indicator ────────────────────────────────────────────
+function buildStepIndicator() {
+  const el = document.getElementById('stepIndicator');
+  el.innerHTML = Array.from({length: TOTAL_STEPS}, (_, i) => {
+    const n = i + 1;
+    return `<div class="step-dot${n === 1 ? ' active' : ''}" id="dot-${n}">${n}</div>`;
+  }).join('');
+}
+
+function updateIndicator(step) {
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const dot = document.getElementById(`dot-${i}`);
+    dot.className = 'step-dot' + (i < step ? ' done' : i === step ? ' active' : '');
+  }
+}
+
+// ── Step navigation ───────────────────────────────────────────
+window.goStep = function(target) {
+  if (target > currentStep && !validateStep(currentStep)) return;
+  if (target === 3) calcHp();
+  if (target === 5) renderSpecialties();
+  if (target === 7) renderOverview();
+  document.getElementById(`step-${currentStep}`).classList.remove('active');
+  currentStep = target;
+  document.getElementById(`step-${currentStep}`).classList.add('active');
+  updateIndicator(currentStep);
+  window.scrollTo(0, 0);
+};
+
+function validateStep(step) {
+  const errEl = document.getElementById(`err-${step}`);
+  if (errEl) errEl.textContent = '';
+  if (step === 1) {
+    if (!document.getElementById('s1Handle').value.trim()) {
+      if (errEl) errEl.textContent = 'Handle ist erforderlich.';
+      return false;
+    }
+    if (!document.getElementById('s1Role').value) {
+      if (errEl) errEl.textContent = 'Rolle ist erforderlich.';
+      return false;
+    }
+  }
+  if (step === 2) {
+    for (const stat of STATS) {
+      const v = parseInt(document.getElementById(`stat-${stat}`)?.value);
+      if (isNaN(v) || v < 1 || v > 10) {
+        if (errEl) errEl.textContent = `${stat} muss zwischen 1 und 10 liegen.`;
+        return false;
+      }
+    }
+  }
+  if (step === 5) {
+    const rank = parseInt(document.getElementById('s5Rank').value) || 0;
+    if (rank < 1 || rank > 10) {
+      if (errEl) errEl.textContent = 'Rank muss zwischen 1 und 10 liegen.';
+      return false;
+    }
+  }
+  return true;
+}
+
+// ── Stats grid ────────────────────────────────────────────────
+function buildStatsGrid() {
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = STATS.map(s => `
+    <div class="stat-cell">
+      <label>${s}</label>
+      <input type="number" id="stat-${s}" min="1" max="10" value="5">
+    </div>
+  `).join('');
+}
+
+function getStats() {
+  const stats = {};
+  STATS.forEach(s => { stats[s] = parseInt(document.getElementById(`stat-${s}`)?.value) || 5; });
+  return stats;
+}
+
+// ── HP auto-calc ──────────────────────────────────────────────
+function calcHp() {
+  const stats = getStats();
+  const maxHp = 10 + Math.floor(stats.BODY / 2) * 5;
+  const maxHum = stats.EMP * 10;
+  const maxLuck = stats.LUCK;
+  document.getElementById('s3MaxHp').value       = maxHp;
+  document.getElementById('s3MaxHumanity').value = maxHum;
+  document.getElementById('s3MaxLuck').value     = maxLuck;
+  document.getElementById('s3HpFormula').textContent     = `10 + (BODY ${stats.BODY} / 2) × 5`;
+  document.getElementById('s3HumanityFormula').textContent = `EMP ${stats.EMP} × 10`;
+  document.getElementById('s3LuckFormula').textContent   = `= LUCK ${stats.LUCK}`;
+}
+
+// ── Skills grid ───────────────────────────────────────────────
+function buildSkillsGrid() {
+  const container = document.getElementById('skillsGrid');
+  const groups = {};
+  for (const [name, stat] of ALL_SKILLS) {
+    const cat = SKILL_CAT_MAP[name] || 'Other';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push({ name, stat });
+  }
+  const cats = [...CAT_ORDER.filter(c => groups[c]), ...Object.keys(groups).filter(c => !CAT_ORDER.includes(c))];
+  container.innerHTML = cats.map(cat => `
+    <div class="skill-cat-head">${cat}</div>
+    <div class="skills-cat-grid">
+      ${groups[cat].map(sk => `
+        <span class="skill-name-cell">${sk.name}</span>
+        <span class="skill-stat-cell">${sk.stat}</span>
+        <input class="skill-lvl-input" type="number" id="skill-${encodeURIComponent(sk.name)}" min="0" max="10" value="0">
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function getSkills() {
+  const skills = {};
+  for (const [name, stat] of ALL_SKILLS) {
+    const lvl = parseInt(document.getElementById(`skill-${encodeURIComponent(name)}`)?.value) || 0;
+    skills[name] = { lvl, stat };
+  }
+  return skills;
+}
+
+// ── Role specialties ──────────────────────────────────────────
+function buildSpecialtiesOnRoleChange() {
+  document.getElementById('s5Rank').addEventListener('input', renderSpecialties);
+}
+
+function renderSpecialties() {
+  const role = document.getElementById('s1Role').value.toLowerCase();
+  const rank = parseInt(document.getElementById('s5Rank').value) || 0;
+  const container = document.getElementById('specialtiesSection');
+
+  if (role === 'medtech') {
+    container.innerHTML = `
+      <div class="specialty-group">
+        <div class="specialty-group-title">Medtech Specialties (max ${rank} Punkte gesamt, Pharma/Cryo max 5)</div>
+        <div class="spec-row"><label>Chirurgie</label><input type="number" id="sp-surgery" min="0" max="${rank}" value="0"></div>
+        <div class="spec-row"><label>Pharmazeutika</label><input type="number" id="sp-pharma" min="0" max="5" value="0"></div>
+        <div class="spec-row"><label>Cryosystem</label><input type="number" id="sp-cryo" min="0" max="5" value="0"></div>
+        <div class="spec-budget" id="sp-budget">0 / ${rank} Punkte verwendet</div>
+      </div>`;
+    ['sp-surgery','sp-pharma','sp-cryo'].forEach(id =>
+      document.getElementById(id).addEventListener('input', updateMedBudget));
+  } else if (role === 'tech') {
+    container.innerHTML = `
+      <div class="specialty-group">
+        <div class="specialty-group-title">Tech Specialties (max ${rank * 2} Punkte gesamt, je max ${rank})</div>
+        <div class="spec-row"><label>Field Expertise</label><input type="number" id="sp-field" min="0" max="${rank}" value="0"></div>
+        <div class="spec-row"><label>Upgrade</label><input type="number" id="sp-upgrade" min="0" max="${rank}" value="0"></div>
+        <div class="spec-row"><label>Fabrication</label><input type="number" id="sp-fab" min="0" max="${rank}" value="0"></div>
+        <div class="spec-row"><label>Invention</label><input type="number" id="sp-inv" min="0" max="${rank}" value="0"></div>
+        <div class="spec-budget" id="sp-budget">0 / ${rank * 2} Punkte verwendet</div>
+      </div>`;
+    ['sp-field','sp-upgrade','sp-fab','sp-inv'].forEach(id =>
+      document.getElementById(id).addEventListener('input', updateTechBudget));
+  } else if (role === 'solo') {
+    container.innerHTML = `
+      <div class="specialty-group">
+        <div class="specialty-group-title">Combat Awareness (max ${rank} Punkte gesamt)</div>
+        <div class="spec-row"><label>Damage Deflection (2/4/6/8/10)</label><select id="sp-dd"><option value="0">0</option><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="10">10</option></select></div>
+        <div class="spec-row"><label>Fumble Recovery (4 Pkt)</label><input type="checkbox" id="sp-fumble"></div>
+        <div class="spec-row"><label>Initiative Reaction (0–${rank})</label><input type="number" id="sp-ir" min="0" max="${rank}" value="0"></div>
+        <div class="spec-row"><label>Precision Attack (0/3/6/9)</label><select id="sp-pa"><option value="0">0</option><option value="3">3</option><option value="6">6</option><option value="9">9</option></select></div>
+        <div class="spec-row"><label>Spot Weakness (0–${rank})</label><input type="number" id="sp-sw" min="0" max="${rank}" value="0"></div>
+        <div class="spec-row"><label>Threat Detection (0–${rank})</label><input type="number" id="sp-td" min="0" max="${rank}" value="0"></div>
+        <div class="spec-budget" id="sp-budget">0 / ${rank} Punkte verwendet</div>
+      </div>`;
+    ['sp-dd','sp-ir','sp-pa','sp-sw','sp-td'].forEach(id =>
+      document.getElementById(id)?.addEventListener('input', updateSoloBudget));
+    document.getElementById('sp-fumble').addEventListener('change', updateSoloBudget);
+  } else {
+    container.innerHTML = rank > 0
+      ? `<p style="font-size:.78rem;color:var(--text-muted)">Rank ${rank} gesetzt. Diese Rolle hat keine Specialty-Punkt-Verteilung.</p>`
+      : '';
+  }
+}
+
+function updateMedBudget() {
+  const rank = parseInt(document.getElementById('s5Rank').value) || 0;
+  const s = parseInt(document.getElementById('sp-surgery')?.value) || 0;
+  const p = parseInt(document.getElementById('sp-pharma')?.value) || 0;
+  const c = parseInt(document.getElementById('sp-cryo')?.value) || 0;
+  const used = s + p + c;
+  const b = document.getElementById('sp-budget');
+  if (b) { b.textContent = `${used} / ${rank} Punkte verwendet`; b.className = `spec-budget${used > rank ? ' over' : ''}`; }
+}
+
+function updateTechBudget() {
+  const rank = parseInt(document.getElementById('s5Rank').value) || 0;
+  const ids = ['sp-field','sp-upgrade','sp-fab','sp-inv'];
+  const used = ids.reduce((a, id) => a + (parseInt(document.getElementById(id)?.value) || 0), 0);
+  const b = document.getElementById('sp-budget');
+  if (b) { b.textContent = `${used} / ${rank * 2} Punkte verwendet`; b.className = `spec-budget${used > rank * 2 ? ' over' : ''}`; }
+}
+
+function updateSoloBudget() {
+  const rank = parseInt(document.getElementById('s5Rank').value) || 0;
+  const dd = parseInt(document.getElementById('sp-dd')?.value) || 0;
+  const fumble = document.getElementById('sp-fumble')?.checked ? 4 : 0;
+  const ir = parseInt(document.getElementById('sp-ir')?.value) || 0;
+  const pa = parseInt(document.getElementById('sp-pa')?.value) || 0;
+  const sw = parseInt(document.getElementById('sp-sw')?.value) || 0;
+  const td = parseInt(document.getElementById('sp-td')?.value) || 0;
+  const used = dd + fumble + ir + pa + sw + td;
+  const b = document.getElementById('sp-budget');
+  if (b) { b.textContent = `${used} / ${rank} Punkte verwendet`; b.className = `spec-budget${used > rank ? ' over' : ''}`; }
+}
+
+function getRoleAbilityData() {
+  const role = document.getElementById('s1Role').value.toLowerCase();
+  if (role === 'medtech') return { specialtyPoints: {
+    surgery: parseInt(document.getElementById('sp-surgery')?.value) || 0,
+    pharmaceuticals: parseInt(document.getElementById('sp-pharma')?.value) || 0,
+    cryosystem_operation: parseInt(document.getElementById('sp-cryo')?.value) || 0,
+  }};
+  if (role === 'tech') return { specialtyRanks: {
+    field:     parseInt(document.getElementById('sp-field')?.value) || 0,
+    upgrade:   parseInt(document.getElementById('sp-upgrade')?.value) || 0,
+    fabrication: parseInt(document.getElementById('sp-fab')?.value) || 0,
+    invention: parseInt(document.getElementById('sp-inv')?.value) || 0,
+  }};
+  if (role === 'solo') return { combatAwareness: {
+    damage_deflection:  parseInt(document.getElementById('sp-dd')?.value) || 0,
+    fumble_recovery:    !!document.getElementById('sp-fumble')?.checked,
+    initiative_reaction: parseInt(document.getElementById('sp-ir')?.value) || 0,
+    precision_attack:   parseInt(document.getElementById('sp-pa')?.value) || 0,
+    spot_weakness:      parseInt(document.getElementById('sp-sw')?.value) || 0,
+    threat_detection:   parseInt(document.getElementById('sp-td')?.value) || 0,
+  }};
+  return {};
+}
+
+// ── Portrait ──────────────────────────────────────────────────
+document.getElementById('s1Portrait').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  portraitBlob = file;
+  document.getElementById('s1PortraitName').textContent = file.name;
+  const preview = document.getElementById('s1PortraitPreview');
+  preview.src = URL.createObjectURL(file);
+  preview.classList.add('show');
+});
+
+// ── Overview ──────────────────────────────────────────────────
+function renderOverview() {
+  const handle = document.getElementById('s1Handle').value.trim();
+  const role   = document.getElementById('s1Role').value;
+  const player = document.getElementById('s1Player').value.trim();
+  const stats  = getStats();
+  const rank   = document.getElementById('s5Rank').value;
+  const maxHp  = document.getElementById('s3MaxHp').value;
+  const maxHum = document.getElementById('s3MaxHumanity').value;
+  const maxLuck= document.getElementById('s3MaxLuck').value;
+  const cash   = document.getElementById('s3Cash').value;
+
+  const statsStr = STATS.map(s => `${s} ${stats[s]}`).join(' · ');
+
+  const overview = document.getElementById('overviewContent');
+  overview.innerHTML = `
+    <div class="overview-section">
+      <div class="overview-section-title">Basics</div>
+      <div class="overview-grid">
+        <span class="key">Handle</span><span class="val">${handle}</span>
+        <span class="key">Rolle</span><span class="val">${role}</span>
+        <span class="key">Spieler</span><span class="val">${player || '—'}</span>
+        <span class="key">Ability Rank</span><span class="val">${rank}</span>
+      </div>
+    </div>
+    <div class="overview-section">
+      <div class="overview-section-title">Stats</div>
+      <div style="font-size:.78rem;color:var(--text);line-height:1.8">${statsStr}</div>
+    </div>
+    <div class="overview-section">
+      <div class="overview-section-title">Ressourcen</div>
+      <div class="overview-grid">
+        <span class="key">Max HP</span><span class="val">${maxHp}</span>
+        <span class="key">Max Humanity</span><span class="val">${maxHum}</span>
+        <span class="key">Max Luck</span><span class="val">${maxLuck}</span>
+        <span class="key">Startkapital</span><span class="val">${cash} eb</span>
+      </div>
+    </div>
+    <div class="overview-section">
+      <div class="overview-section-title">Portrait</div>
+      <div style="font-size:.82rem;color:var(--text-muted)">${portraitBlob ? portraitBlob.name : 'Kein Portrait gewählt'}</div>
+    </div>`;
+}
+
+// ── Submit ────────────────────────────────────────────────────
+window.submitCharacter = async function() {
+  const btn  = document.getElementById('submitBtn');
+  const errEl = document.getElementById('err-7');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Wird erstellt…';
+
+  try {
+    const handle = document.getElementById('s1Handle').value.trim();
+    const role   = document.getElementById('s1Role').value;
+    const stats  = getStats();
+    const maxHp  = parseInt(document.getElementById('s3MaxHp').value) || 0;
+    const maxHum = parseInt(document.getElementById('s3MaxHumanity').value) || 0;
+    const maxLuck= parseInt(document.getElementById('s3MaxLuck').value) || 0;
+    const cash   = parseInt(document.getElementById('s3Cash').value) || 0;
+    const rank   = parseInt(document.getElementById('s5Rank').value) || 4;
+
+    const character = {
+      name:              handle,
+      handle:            handle,
+      role,
+      player_name:       document.getElementById('s1Player').value.trim() || null,
+      stats,
+      skills:            getSkills(),
+      max_hp:            maxHp,
+      current_hp:        maxHp,
+      max_humanity:      maxHum,
+      current_humanity:  maxHum,
+      max_luck:          maxLuck,
+      current_luck:      maxLuck,
+      seriously_wounded_threshold: Math.ceil(maxHp / 2),
+      death_save:        stats.BODY,
+      cash,
+      role_ability_rank: rank,
+      role_ability_data: getRoleAbilityData(),
+      lifepath: {
+        culturalOrigins: document.getElementById('lpOrigins').value.trim(),
+        personality:     document.getElementById('lpPersonality').value.trim(),
+        lifeGoals:       document.getElementById('lpGoals').value.trim(),
+        familyCrisis:    document.getElementById('lpCrisis').value.trim(),
+        friends:         [document.getElementById('lpFriend1').value.trim(), document.getElementById('lpFriend2').value.trim(), document.getElementById('lpFriend3').value.trim()].filter(Boolean),
+        lifestyle:       document.getElementById('lpLifestyle').value.trim(),
+        notes:           document.getElementById('lpNotes').value.trim(),
+      },
+    };
+
+    const saved = await saveCharacter(character);
+
+    // Upload portrait if provided
+    if (portraitBlob && saved?.id) {
+      try {
+        const imageUrl = await uploadPortrait(portraitBlob, saved.id);
+        await patchCharacter(saved.id, { image_url: imageUrl });
+      } catch (e) { console.warn('Portrait upload failed:', e); }
+    }
+
+    document.getElementById('successMsg').style.display = 'block';
+    setTimeout(() => { location.href = `player.html?id=${saved.id}`; }, 1200);
+  } catch (e) {
+    errEl.textContent = `Fehler: ${e.message}`;
+    btn.disabled = false;
+    btn.textContent = 'Charakter erstellen';
+  }
+};
+</script>
+
+</body>
+</html>

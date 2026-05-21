@@ -955,3 +955,11 @@ body.near-death::before {
   display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.55);
 }
 .info-tip-overlay.open { display: block; }
+
+/* ── Damage Apply Modal ─────────────────────────────────────── */
+.dmg-calc-row { font-family:var(--font-display); font-size:.9rem; color:var(--cyan);
+  padding:.4rem 0; text-align:center; }
+
+/* ── Crit optgroup colours ──────────────────────────────────── */
+.crit-group-player, select optgroup[label*="Spieler"] { color: var(--cyan); }
+.crit-group-npc,    select optgroup[label*="NPCs"]    { color: var(--red);  }

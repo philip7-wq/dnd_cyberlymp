@@ -38,8 +38,56 @@
 
 </div>
 
+<!-- Slot Picker Modal -->
+<div id="slotModal" hidden style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center">
+  <div style="background:#111;border:1px solid #00E5FF;border-radius:6px;padding:1.5rem;max-width:320px;width:90%">
+    <div id="slotModalTitle" style="font-family:Audiowide,sans-serif;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:#00E5FF;margin-bottom:1rem"></div>
+    <div id="slotModalBtns" style="display:flex;flex-wrap:wrap;gap:.5rem"></div>
+    <button id="slotModalCancel" style="margin-top:1rem;background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:.35rem .8rem;cursor:pointer;font-size:.78rem;width:100%">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Humanity Confirm Modal -->
+<div id="humanityModal" hidden style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center">
+  <div style="background:#111;border:1px solid #FF2D2D;border-radius:6px;padding:1.5rem;max-width:320px;width:90%">
+    <div style="font-family:Audiowide,sans-serif;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:#FF2D2D;margin-bottom:.75rem">HUMANITY VERLUST</div>
+    <div id="humanityModalText" style="font-size:.9rem;color:#eee;margin-bottom:1rem;line-height:1.5"></div>
+    <div style="display:flex;gap:.5rem">
+      <button id="humanityModalConfirm" style="flex:1;background:#FF2D2D;border:none;color:#fff;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem;font-family:Audiowide,sans-serif">Kaufen &amp; abziehen</button>
+      <button id="humanityModalCancel" style="flex:1;background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { getCharacter, getItems, patchCharacter } from './assets/js/supabase.js';
+
+// ── Cyberware slot mapping ────────────────────────────────────
+const CYBERWARE_SLOT_MAP = {
+  'Fashionware':                     ['fashionware'],
+  'Neuralware / Chipware':           ['neuralLink'],
+  'Chipware':                        ['neuralLink'],
+  'Neuralware':                      ['neuralLink'],
+  'Cybereye / Cybereye Option':      ['rightCybereye','leftCybereye'],
+  'Cybereye Option':                 ['rightCybereye','leftCybereye'],
+  'Cyberaudio Suite / Option':       ['cyberaudio'],
+  'Cyberaudio Option':               ['cyberaudio'],
+  'Internal Cyberware':              ['internal'],
+  'External Cyberware':              ['external'],
+  'Cyberarm / Cyberarm Option':      ['rightCyberarm','leftCyberarm'],
+  'Cyberarm Option':                 ['rightCyberarm','leftCyberarm'],
+  'Cyberarm/Cyberleg/Cyberlimb Option':['rightCyberarm','leftCyberarm','rightCyberleg','leftCyberleg'],
+  'Cyberleg/Cyberlimb Option':       ['rightCyberleg','leftCyberleg'],
+  'Borgware':                        ['borgware'],
+};
+const SLOT_LABELS = {
+  rightCybereye:'Rechtes Auge', leftCybereye:'Linkes Auge',
+  rightCyberarm:'Rechter Arm',  leftCyberarm:'Linker Arm',
+  rightCyberleg:'Rechtes Bein', leftCyberleg:'Linkes Bein',
+  neuralLink:'Neural Link', cyberaudio:'Cyberaudio',
+  internal:'Intern', external:'Extern',
+  fashionware:'Fashionware', borgware:'Borgware',
+};
 
 // ── Config ────────────────────────────────────────────────────
 const SHOP_CATEGORIES = [
@@ -316,6 +364,54 @@ function buildSnapshot(item) {
   }
 }
 
+function rollHumanityLoss(expr) {
+  if (!expr || expr === '0') return 0;
+  const m = String(expr).match(/^(\d+)d(\d+)(?:\+(\d+))?$/i);
+  if (!m) { const n = parseInt(expr); return isNaN(n) ? 0 : n; }
+  let sum = 0;
+  for (let i = 0; i < +m[1]; i++) sum += Math.ceil(Math.random() * +m[2]);
+  return sum + (+m[3] || 0);
+}
+
+function showSlotPickerModal(slots, itemName) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('slotModal');
+    document.getElementById('slotModalTitle').textContent = `${itemName} — Slot wählen`;
+    const btnsEl = document.getElementById('slotModalBtns');
+    btnsEl.innerHTML = slots.map(s =>
+      `<button data-slot="${s}" style="background:#1a1a1a;border:1px solid #00E5FF;color:#00E5FF;border-radius:4px;padding:.35rem .75rem;cursor:pointer;font-size:.78rem">${SLOT_LABELS[s] || s}</button>`
+    ).join('');
+    modal.hidden = false;
+    modal.style.display = 'flex';
+    const cleanup = (val) => {
+      modal.hidden = true; modal.style.display = '';
+      btnsEl.innerHTML = '';
+      resolve(val);
+    };
+    btnsEl.onclick = e => {
+      const s = e.target.closest('[data-slot]')?.dataset.slot;
+      if (s) cleanup(s);
+    };
+    document.getElementById('slotModalCancel').onclick = () => cleanup(null);
+  });
+}
+
+function showHumanityConfirmModal(amount, expr) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('humanityModal');
+    const isRoll = String(expr).match(/d/i);
+    document.getElementById('humanityModalText').innerHTML =
+      `Humanity-Verlust: <strong style="color:#FF2D2D;font-size:1.1rem">${amount}</strong>`
+      + (isRoll ? ` <span style="color:#aaa;font-size:.8rem">(gewürfelt aus ${expr})</span>` : '')
+      + `<br>Aktuell: ${char.current_humanity ?? '?'} → Nach Kauf: ${Math.max(0, (char.current_humanity ?? 0) - amount)}`;
+    modal.hidden = false;
+    modal.style.display = 'flex';
+    const cleanup = (val) => { modal.hidden = true; modal.style.display = ''; resolve(val); };
+    document.getElementById('humanityModalConfirm').onclick = () => cleanup(true);
+    document.getElementById('humanityModalCancel').onclick  = () => cleanup(false);
+  });
+}
+
 async function buyItem(item, override = false) {
   const msg   = document.getElementById('buyMsg');
   const btn   = document.getElementById('buyBtn');
@@ -332,37 +428,59 @@ async function buyItem(item, override = false) {
     msg.className   = 'buy-msg';
     return;
   }
-  if (!override && !g.humanity) {
-    msg.textContent = 'Nicht genug Humanity';
-    msg.className   = 'buy-msg';
-    return;
+
+  const dest     = routeItem(item);
+  const snapshot = buildSnapshot(item);
+  const patch    = { cash: (char.cash ?? 0) - price };
+
+  // ── Cyberware: slot picker + humanity roll ──
+  if (dest === 'cyberware') {
+    const x = item.extra || {};
+    const sub = item.subcategory || x.subcategory || '';
+    const slots = CYBERWARE_SLOT_MAP[sub] || ['internal'];
+
+    // Slot picker when multiple options
+    let chosenSlot = slots[0];
+    if (slots.length > 1) {
+      chosenSlot = await showSlotPickerModal(slots, item.name);
+      if (!chosenSlot) return;
+    }
+
+    // Humanity loss
+    let humanityLost = 0;
+    if (x.humanity_loss) {
+      humanityLost = rollHumanityLoss(x.humanity_loss);
+      if (humanityLost > 0) {
+        const confirmed = await showHumanityConfirmModal(humanityLost, x.humanity_loss);
+        if (!confirmed) return;
+        patch.current_humanity = Math.max(0, (char.current_humanity ?? 0) - humanityLost);
+      }
+    }
+
+    // Normalize existing cyberware to object (handles old flat-array saves)
+    const existingCw = (char.cyberware && !Array.isArray(char.cyberware))
+      ? char.cyberware : {};
+    patch.cyberware = {
+      ...existingCw,
+      [chosenSlot]: [...(existingCw[chosenSlot] || []), snapshot],
+    };
+  } else if (dest === 'weapons') {
+    patch.weapons = [...(char.weapons || []), snapshot];
+  } else if (dest === 'gear') {
+    patch.gear = [...(char.gear || []), snapshot];
+  } else if (dest === 'armor') {
+    patch.armor = { ...(char.armor || {}), [armorSlot]: snapshot };
   }
 
   btn.disabled    = true;
   msg.textContent = '';
 
-  const snapshot = buildSnapshot(item);
-  const dest     = routeItem(item);
-  const patch    = { cash: (char.cash ?? 0) - price };
-
-  if (dest === 'weapons') {
-    patch.weapons  = [...(char.weapons  || []), snapshot];
-  } else if (dest === 'cyberware') {
-    patch.cyberware = [...(char.cyberware || []), snapshot];
-  } else if (dest === 'gear') {
-    patch.gear     = [...(char.gear     || []), snapshot];
-  } else if (dest === 'armor') {
-    patch.armor = { ...(char.armor || {}), [armorSlot]: snapshot };
-  }
-
   try {
     await patchCharacter(char.id, patch);
-    // Apply locally
     Object.assign(char, patch);
     updateCashDisplay();
     msg.textContent = `✓ ${item.name} gekauft`;
     msg.className   = 'buy-msg buy-success';
-    // Refresh buy button state
     openDetail(item);
   } catch (e) {
     msg.textContent = `Fehler: ${e.message}`;
