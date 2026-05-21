@@ -208,7 +208,7 @@
 
 <script type="module">
 console.log('[player] module loaded');
-import { getCharacter, getCharacters, patchCharacter, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages } from './assets/js/supabase.js';
+import { getCharacter, getCharacters, patchCharacter, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc } from './assets/js/supabase.js';
 import { roll, initDiceBox, animateRollNumber } from './assets/js/dice.js';
 
 // ── Constants ─────────────────────────────────────────────────
@@ -301,10 +301,7 @@ if (id) {
     ]);
     _allCharsFull = allChars;
     allChars = allChars.filter(c => c.id !== id);
-    const { data: npcRows } = await supabase.from('npcs')
-      .select('id,name,current_hp,max_hp,armor,critical_injuries')
-      .eq('is_active', true).eq('is_eliminated', false);
-    activeNpcs = npcRows || [];
+    activeNpcs = await getActiveNpcs();
     (rawItems || []).filter(i => i.category === 'Skill Upgrade').forEach(i => {
       skillUpgradeMap[i.name] = { ip_cost_multiplier: i.ip_cost_multiplier ?? 1, ip_cost_by_next_level: i.ip_cost_by_next_level || {} };
     });
@@ -2046,7 +2043,7 @@ function showDamageApplyModal(totalDamage) {
       if (isNpc) {
         const npc = activeNpcs.find(n => n.id === targetId);
         const newHp = Math.max(0, (npc?.current_hp ?? 0) - net);
-        await supabase.from('npcs').update({ current_hp: newHp, is_eliminated: newHp <= 0 }).eq('id', targetId);
+        await patchNpc(targetId, { current_hp: newHp, is_eliminated: newHp <= 0 });
         if (npc) npc.current_hp = newHp;
       } else {
         const tchar = _allCharsFull.find(c => c.id === targetId);
@@ -2162,11 +2159,11 @@ async function applyInjury(injury, table) {
       const npc = activeNpcs.find(n => n.id === targetId);
       const existing = Array.isArray(npc?.critical_injuries) ? npc.critical_injuries : [];
       const newHp = Math.max(0, (npc?.current_hp ?? 0) - 5);
-      await supabase.from('npcs').update({
+      await patchNpc(targetId, {
         critical_injuries: [...existing, { ...injury, table, ts: Date.now() }],
         current_hp: newHp,
         is_eliminated: newHp <= 0,
-      }).eq('id', targetId);
+      });
       if (npc) { npc.critical_injuries = [...existing, { ...injury, table }]; npc.current_hp = newHp; }
       logRoll({ characterId: char.id, characterName: char.handle || char.name,
         expression: '2d6', individualRolls: [], modifier: 0, total: 0,

@@ -213,6 +213,20 @@ export function subscribeMessages(callback) {
     .subscribe();
 }
 
+// ── NPC helpers ───────────────────────────────────────────────
+export async function getActiveNpcs() {
+  const { data, error } = await supabase.from('npcs')
+    .select('id,name,current_hp,max_hp,armor,critical_injuries,is_eliminated')
+    .eq('is_active', true).eq('is_eliminated', false);
+  if (error) { console.warn('getActiveNpcs:', error); return []; }
+  return data || [];
+}
+
+export async function patchNpc(id, patch) {
+  const { error } = await supabase.from('npcs').update(patch).eq('id', id);
+  if (error) throw error;
+}
+
 export async function uploadChatImage(file) {
   const ext  = file.name.split('.').pop();
   const path = `chat/${Date.now()}.${ext}`;
