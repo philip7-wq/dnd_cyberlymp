@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Character — LZRV Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/player.css">
+</head>
+<body>
+
+<!-- Loading screen -->
+<div class="page-loader" id="loader">
+  <span>LADE CHARAKTER</span>
+  <div><span class="loader-dot"></span><span class="loader-dot"></span><span class="loader-dot"></span></div>
+</div>
+
+<nav class="nav" id="topNav" style="display:none">
+  <span class="nav-logo">LZRV<span>HUB</span></span>
+  <span id="navName" style="font-family:var(--font-display);font-size:.85rem;color:var(--red);margin-left:.75rem"></span>
+  <a href="index.html" class="btn btn-ghost" style="margin-left:auto;font-size:.75rem">← Übersicht</a>
+</nav>
+
+<!-- ── Character header ── -->
+<header class="char-header" id="charHeader" style="display:none">
+  <img id="charPortrait" class="char-portrait" src="" alt="Portrait">
+  <div class="char-info">
+    <div class="char-name" id="charName">—</div>
+    <div class="char-sub" id="charSub">—</div>
+    <div class="res-rows">
+      <!-- HP -->
+      <div class="res-row">
+        <span class="res-label">HP</span>
+        <div class="res-bar-wrap">
+          <div class="res-track"><div class="res-fill hp" id="hpFill" style="width:0%"></div></div>
+          <div class="res-controls">
+            <button class="res-btn" data-res="hp" data-d="-1">−</button>
+            <span class="res-cur" id="hpCur" contenteditable="true" data-res="hp">0</span>
+            <span class="res-sep">/</span>
+            <span class="res-max" id="hpMax">0</span>
+            <button class="res-btn" data-res="hp" data-d="+1">+</button>
+          </div>
+        </div>
+      </div>
+      <!-- Humanity -->
+      <div class="res-row">
+        <span class="res-label">HUM</span>
+        <div class="res-bar-wrap">
+          <div class="res-track"><div class="res-fill hum" id="humFill" style="width:0%"></div></div>
+          <div class="res-controls">
+            <button class="res-btn" data-res="humanity" data-d="-1">−</button>
+            <span class="res-cur" id="humCur" contenteditable="true" data-res="humanity">0</span>
+            <span class="res-sep">/</span>
+            <span class="res-max" id="humMax">0</span>
+            <button class="res-btn" data-res="humanity" data-d="+1">+</button>
+          </div>
+        </div>
+      </div>
+      <!-- Luck dots -->
+      <div class="luck-row">
+        <span class="luck-label">LUCK</span>
+        <div class="luck-dots" id="luckDots"></div>
+        <span class="luck-count" id="luckCount"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Tabs ── -->
+<div class="tabs" id="tabBar" style="display:none">
+  <button class="tab-btn active" data-tab="stats">Stats</button>
+  <button class="tab-btn" data-tab="skills">Skills</button>
+  <button class="tab-btn" data-tab="weapons">Weapons</button>
+  <button class="tab-btn" data-tab="armor">Armor</button>
+  <button class="tab-btn" data-tab="cyberware">Cyberware</button>
+  <button class="tab-btn" data-tab="gear">Gear</button>
+  <button class="tab-btn" data-tab="lifepath">Lifepath</button>
+</div>
+
+<!-- ── Tab panels ── -->
+<div class="tab-panel active" id="tab-stats"></div>
+<div class="tab-panel" id="tab-skills"></div>
+<div class="tab-panel" id="tab-weapons"></div>
+<div class="tab-panel" id="tab-armor"></div>
+<div class="tab-panel" id="tab-cyberware"></div>
+<div class="tab-panel" id="tab-gear"></div>
+<div class="tab-panel" id="tab-lifepath"></div>
+
+<!-- ── Dice ── -->
+<button class="dice-fab" id="diceFab" style="display:none" title="Würfeln">🎲</button>
+
+<div class="dice-popup" id="dicePopup">
+  <div class="dice-popup-head">
+    <span>WÜRFELN</span>
+    <button class="dice-popup-close" id="diceClose">✕</button>
+  </div>
+  <div class="dice-quick">
+    <button class="die-btn" data-expr="1d6">d6</button>
+    <button class="die-btn" data-expr="1d10">d10</button>
+    <button class="die-btn" data-expr="2d6">2d6</button>
+    <button class="die-btn" data-expr="3d6">3d6</button>
+    <button class="die-btn skill-check" data-expr="1d10">d10★</button>
+  </div>
+  <div class="dice-custom">
+    <input type="text" id="diceExpr" placeholder="z.B. 1d10+5" spellcheck="false">
+    <button id="diceRollBtn">Roll</button>
+  </div>
+  <div class="dice-result-area" id="diceResultArea">
+    <div class="dice-result-num" id="diceResultNum">—</div>
+    <div class="dice-result-detail" id="diceResultDetail"></div>
+  </div>
+  <div class="dice-log" id="diceLog"></div>
+</div>
+
+<div class="roll-toast" id="rollToast"></div>
+
+<script type="module">
+console.log('[player] module loaded');
+import { getCharacter, patchCharacter, logRoll } from './assets/js/supabase.js';
+import { roll, initDiceBox } from './assets/js/dice.js';
+
+// ── Constants ─────────────────────────────────────────────────
+const STATS_ORDER = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP'];
+
+const SKILL_CAT = {
+  'Concentration':'Awareness','Conceal/Reveal Object':'Awareness','Lip Reading':'Awareness',
+  'Perception':'Awareness','Tracking':'Awareness',
+  'Athletics':'Body','Contortionist':'Body','Dance':'Body',
+  'Endurance':'Body','Resist Torture/Drugs':'Body','Stealth':'Body',
+  'Drive Land Vehicle':'Control','Pilot Air Vehicle':'Control',
+  'Pilot Sea Vehicle':'Control','Riding':'Control',
+  'Accounting':'Education','Animal Handling':'Education','Bureaucracy':'Education',
+  'Business':'Education','Composition':'Education','Criminology':'Education',
+  'Cryptography':'Education','Deduction':'Education','Education':'Education',
+  'Gamble':'Education','Language':'Education','Library Search':'Education',
+  'Local Expert':'Education','Science':'Education','Streetwise':'Education',
+  'Tactics':'Education','Wilderness Survival':'Education',
+  'Brawling':'Fighting','Evasion':'Fighting','Martial Arts':'Fighting','Melee Weapon':'Fighting',
+  'Acting':'Performance','Play Instrument':'Performance',
+  'Archery':'Ranged Weapon','Autofire':'Ranged Weapon','Handgun':'Ranged Weapon',
+  'Heavy Weapons':'Ranged Weapon','Shoulder Arms':'Ranged Weapon',
+  'Bribery':'Social','Conversation':'Social','Human Perception':'Social',
+  'Interrogation':'Social','Persuasion':'Social','Personal Grooming':'Social',
+  'Trading':'Social','Wardrobe & Style':'Social',
+  'Air Vehicle Tech':'Technique','Basic Tech':'Technique','Cybertech':'Technique',
+  'Demolitions':'Technique','Electronics/Security Tech':'Technique','First Aid':'Technique',
+  'Forgery':'Technique','Land Vehicle Tech':'Technique','Paint/Draw/Sculpt':'Technique',
+  'Paramedic':'Technique','Photography/Film':'Technique','Pick Lock':'Technique',
+  'Pick Pocket':'Technique','Sea Vehicle Tech':'Technique','Weaponstech':'Technique',
+};
+const CAT_ORDER = ['Awareness','Body','Control','Education','Fighting','Performance','Ranged Weapon','Social','Technique'];
+
+const CYBER_LABELS = {
+  neuralLink:'Neural Link', rightEye:'Cybereye (R)', leftEye:'Cybereye (L)',
+  rightArm:'Cyberarm (R)', leftArm:'Cyberarm (L)',
+  rightLeg:'Cyberleg (R)', leftLeg:'Cyberleg (L)',
+  audio:'Audio Suite', internal:'Internal', external:'External',
+  fashion:'Fashionware', borgware:'Borgware',
+};
+
+// ── State ─────────────────────────────────────────────────────
+let char = null;
+
+// ── Boot ──────────────────────────────────────────────────────
+const id = new URLSearchParams(location.search).get('id');
+if (!id) {
+  document.getElementById('loader').innerHTML = '<span style="color:var(--red)">Kein Charakter gewählt.</span><br><a href="index.html" style="color:var(--cyan)">← Zurück</a>';
+} else {
+  try {
+    char = await getCharacter(id);
+    renderAll();
+    show();
+  } catch(e) {
+    document.getElementById('loader').innerHTML =
+      `<span style="color:var(--red)">Fehler: ${e.message}</span>`;
+  }
+}
+
+// Try dice-box (optional, fires in background)
+initDiceBox('#dice-canvas-placeholder');
+
+// ── Show UI ───────────────────────────────────────────────────
+function show() {
+  document.getElementById('loader').style.display  = 'none';
+  document.getElementById('topNav').style.display  = '';
+  document.getElementById('charHeader').style.display = '';
+  document.getElementById('tabBar').style.display  = '';
+  document.getElementById('diceFab').style.display = '';
+}
+
+// ── Master render ─────────────────────────────────────────────
+function renderAll() {
+  renderHeader();
+  renderStats();
+  renderSkills();
+  renderWeapons();
+  renderArmor();
+  renderCyberware();
+  renderGear();
+  renderLifepath();
+  setupTabs();
+  setupResEditing();
+  setupDice();
+}
+
+// ── Header ────────────────────────────────────────────────────
+function renderHeader() {
+  document.title = `${char.name} — LZRV Hub`;
+  document.getElementById('navName').textContent = char.name;
+  document.getElementById('charName').textContent = char.name || '—';
+
+  const sub = [char.role, char.handle && char.handle !== char.name ? char.handle : null,
+               char.player_name ? `(${char.player_name})` : null]
+    .filter(Boolean).join(' · ');
+  document.getElementById('charSub').textContent = sub || '—';
+
+  const img = document.getElementById('charPortrait');
+  if (char.image_url) { img.src = char.image_url; img.alt = char.name; }
+  else { img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 76"><rect fill="%231a1a26" width="76" height="76"/><text y="50" x="50%" text-anchor="middle" font-size="36" fill="%23686880">👤</text></svg>'; }
+
+  updateResDisplay();
+  renderLuck();
+}
+
+function updateResDisplay() {
+  const hp    = char.current_hp    || 0;
+  const maxHp = char.max_hp        || 0;
+  const hum   = char.current_humanity || 0;
+  const maxHum= char.max_humanity  || 0;
+
+  document.getElementById('hpCur').textContent  = hp;
+  document.getElementById('hpMax').textContent  = maxHp;
+  document.getElementById('humCur').textContent = hum;
+  document.getElementById('humMax').textContent = maxHum;
+  document.getElementById('hpFill').style.width  = maxHp  ? (hp  / maxHp  * 100) + '%' : '0%';
+  document.getElementById('humFill').style.width = maxHum ? (hum / maxHum * 100) + '%' : '0%';
+}
+
+function renderLuck() {
+  const cur = char.current_luck || 0;
+  const max = char.max_luck     || (char.stats?.LUCK) || 0;
+  const box = document.getElementById('luckDots');
+  box.innerHTML = '';
+  for (let i = 1; i <= max; i++) {
+    const d = document.createElement('span');
+    d.className = 'luck-dot' + (i <= cur ? ' on' : '');
+    d.dataset.idx = i;
+    d.title = i <= cur ? 'Luck spent – klicken zum Wiederherstellen' : 'Luck verfügbar – klicken zum Ausgeben';
+    box.appendChild(d);
+  }
+  document.getElementById('luckCount').textContent = `${cur}/${max}`;
+}
+
+// ── Stats tab ─────────────────────────────────────────────────
+function renderStats() {
+  const stats = char.stats || {};
+  const luck  = char.max_luck || 0;
+
+  const grid = document.getElementById('tab-stats');
+  let html = '<div class="stat-grid">';
+  for (const s of STATS_ORDER) {
+    html += `<div class="stat-card"><div class="stat-key">${s}</div><div class="stat-val">${stats[s] ?? 0}</div></div>`;
+  }
+  html += `<div class="stat-card"><div class="stat-key">LUCK</div><div class="stat-val">${luck}</div></div>`;
+  html += '</div>';
+
+  html += '<h3 class="sec-head">Ressourcen</h3><div class="res-grid">';
+  const res = [
+    ['Cash',   char.cash               ?? 0, 'eb'],
+    ['IP',     char.improvement_points ?? 0, ''],
+    ['Rep',    char.reputation         ?? 0, ''],
+    ['Death Save', char.death_save     ?? 0, ''],
+    ['SW Threshold', char.seriously_wounded_threshold ?? 0, ''],
+    ['HP',     `${char.current_hp ?? 0} / ${char.max_hp ?? 0}`, ''],
+  ];
+  for (const [k, v, unit] of res) {
+    html += `<div class="res-card"><span class="res-card-label">${k}</span><span class="res-card-val">${v}${unit ? ' '+unit : ''}</span></div>`;
+  }
+  html += '</div>';
+  grid.innerHTML = html;
+}
+
+// ── Skills tab ────────────────────────────────────────────────
+function renderSkills() {
+  const skills = char.skills || {};
+  const stats  = char.stats  || {};
+  const el     = document.getElementById('tab-skills');
+
+  if (!Object.keys(skills).length) {
+    el.innerHTML = '<p class="empty-state">Keine Skills gespeichert. PDF-Feldnamen eventuell abweichend.</p>'; return;
+  }
+
+  // Group by category, fall back to stat name for unknowns
+  const groups = {};
+  for (const [name, data] of Object.entries(skills)) {
+    const cat = SKILL_CAT[name] || `Stat: ${data.stat}`;
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push({ name, ...data });
+  }
+
+  // Build ordered output
+  let html = '<div class="skill-row" style="font-size:.62rem;color:var(--text-muted);border-bottom:1px solid var(--border);padding-bottom:.3rem;margin-bottom:.4rem">'
+    + '<span>Skill</span><span style="text-align:center">Stat</span><span style="text-align:center">LVL</span><span style="text-align:center">Base</span><span></span></div>';
+
+  const orderedCats = [...CAT_ORDER.filter(c => groups[c]), ...Object.keys(groups).filter(c => !CAT_ORDER.includes(c))];
+
+  for (const cat of orderedCats) {
+    html += `<div class="skill-group"><div class="skill-cat-label">${cat}</div>`;
+    for (const sk of groups[cat].sort((a,b) => a.name.localeCompare(b.name))) {
+      const statVal = stats[sk.stat] ?? 0;
+      const base    = statVal + (sk.lvl || 0);
+      const expr    = `1d10+${base}`;
+      html += `<div class="skill-row">
+        <span class="skill-name">${sk.name}</span>
+        <span class="skill-stat">${sk.stat}</span>
+        <span class="skill-lvl">${sk.lvl ?? 0}</span>
+        <span class="skill-base">${base}</span>
+        <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1">1d10+${base}</button>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// ── Weapons tab ───────────────────────────────────────────────
+function renderWeapons() {
+  const weapons = char.weapons || [];
+  const el = document.getElementById('tab-weapons');
+
+  if (!weapons.length) { el.innerHTML = '<p class="empty-state">Keine Waffen eingetragen.</p>'; return; }
+
+  el.innerHTML = weapons.map(w => `
+    <div class="weapon-card">
+      <div class="weapon-name">${w.name}</div>
+      <div class="weapon-stats">
+        <div class="ws-pair"><span class="ws-label">Damage</span>
+          <span class="ws-val">${w.damage
+            ? `<button class="roll-btn dmg-btn" data-expr="${w.damage}" data-ctx="${w.name} damage">${w.damage}</button>`
+            : '—'}</span>
+        </div>
+        <div class="ws-pair"><span class="ws-label">ROF</span><span class="ws-val">${w.rof || '—'}</span></div>
+        <div class="ws-pair"><span class="ws-label">Ammo</span><span class="ws-val">${w.ammo || '—'}</span></div>
+      </div>
+      ${w.notes ? `<div class="weapon-notes">${w.notes}</div>` : ''}
+    </div>`).join('');
+}
+
+// ── Armor tab ─────────────────────────────────────────────────
+function renderArmor() {
+  const armor = char.armor || {};
+  const slots = [
+    ['HEAD', armor.head   || {}],
+    ['BODY', armor.body   || {}],
+    ['SHIELD', armor.shield || {}],
+  ];
+  document.getElementById('tab-armor').innerHTML =
+    `<div class="armor-grid">${slots.map(([label, s]) => `
+      <div class="armor-slot">
+        <div class="armor-slot-label">${label}</div>
+        <div class="armor-name">${s.name || '—'}</div>
+        <div class="armor-sp">${s.sp ?? 0}</div>
+        <div class="armor-pen">${s.penalty ? `−${s.penalty} REF` : 'kein Malus'}</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+// ── Cyberware tab ─────────────────────────────────────────────
+function renderCyberware() {
+  const cw = char.cyberware || {};
+  const el = document.getElementById('tab-cyberware');
+  const occupied = Object.entries(cw).filter(([,v]) => v.has || (v.slots && v.slots.length));
+
+  if (!occupied.length) { el.innerHTML = '<p class="empty-state">Kein Cyberware installiert.</p>'; return; }
+
+  el.innerHTML = occupied.map(([key, data]) => {
+    const label = CYBER_LABELS[key] || key;
+    const tags  = (data.slots || []).map(s => s.option || s.data || '').filter(Boolean);
+    return `<div class="cyber-slot">
+      <div class="cyber-slot-label">${label}</div>
+      <div class="cyber-items">${tags.length
+        ? tags.map(t => `<span class="cyber-tag">${t}</span>`).join('')
+        : '<span style="font-size:.78rem;color:var(--text-muted)">installiert</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Gear tab ──────────────────────────────────────────────────
+function renderGear() {
+  const gear = char.gear || [];
+  const el   = document.getElementById('tab-gear');
+  if (!gear.length) { el.innerHTML = '<p class="empty-state">Kein Gear eingetragen.</p>'; return; }
+  el.innerHTML = `<div class="gear-list">${gear.map(g =>
+    `<div class="gear-item">
+      <div class="gear-item-name">${g.name}</div>
+      ${g.notes ? `<div class="gear-item-notes">${g.notes}</div>` : ''}
+    </div>`).join('')}</div>`;
+}
+
+// ── Lifepath tab ──────────────────────────────────────────────
+function renderLifepath() {
+  const lp = char.lifepath || {};
+  const el = document.getElementById('tab-lifepath');
+
+  const fields = [
+    ['Cultural Origins', lp.culturalOrigins],
+    ['Personality',      lp.personality],
+    ['Family Crisis',    lp.familyCrisis],
+    ['Life Goals',       lp.lifeGoals],
+    ['Role Ability',     lp.roleAbility ? `${lp.roleAbility} (Rank ${lp.roleAbilityRank ?? 0})` : null],
+    ['Aliases',          lp.aliases],
+    ['Housing',          [lp.housing, lp.lifestyle].filter(Boolean).join(' · ') || null],
+    ['Friends',          (lp.friends || []).join(', ')],
+    ['Love Affairs',     (lp.loveAffairs || []).join(', ')],
+    ['Enemies',          (lp.enemies?.who || []).join(', ')],
+    ['Enemy Cause',      lp.enemies?.whatCausedIt],
+  ];
+
+  el.innerHTML = `<div class="lp-grid">${fields.filter(([,v]) => v).map(([k,v]) =>
+    `<div class="lp-item">
+      <div class="lp-key">${k}</div>
+      <div class="lp-val">${v}</div>
+    </div>`).join('')}</div>`;
+
+  if (!fields.some(([,v]) => v)) {
+    el.innerHTML = '<p class="empty-state">Lifepath nicht ausgefüllt.</p>';
+  }
+}
+
+// ── Tab navigation ────────────────────────────────────────────
+function setupTabs() {
+  document.getElementById('tabBar').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+}
+
+// ── Live resource editing ─────────────────────────────────────
+function setupResEditing() {
+  // +/- buttons
+  document.querySelectorAll('.res-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const res   = btn.dataset.res;
+      const delta = parseInt(btn.dataset.d, 10);
+      await changeRes(res, delta);
+    });
+  });
+
+  // Contenteditable current values
+  document.querySelectorAll('.res-cur').forEach(el => {
+    el.addEventListener('blur', async () => {
+      const res = el.dataset.res;
+      const val = parseInt(el.textContent, 10);
+      if (isNaN(val)) { el.textContent = char[`current_${res}` ] || 0; return; }
+      await setRes(res, val);
+    });
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+  });
+
+  // Luck dots
+  document.getElementById('luckDots').addEventListener('click', async e => {
+    const dot = e.target.closest('.luck-dot');
+    if (!dot) return;
+    const idx = parseInt(dot.dataset.idx, 10);
+    const cur = char.current_luck || 0;
+    // Click on a filled dot → reduce luck, click on empty → restore to that level
+    const newVal = dot.classList.contains('on') ? idx - 1 : idx;
+    await setRes('luck', newVal);
+  });
+}
+
+async function changeRes(res, delta) {
+  const field   = `current_${res}`;
+  const maxField = res === 'hp' ? 'max_hp' : res === 'humanity' ? 'max_humanity' : 'max_luck';
+  const current = char[field] ?? 0;
+  const max     = char[maxField] ?? 999;
+  const newVal  = Math.max(0, Math.min(max, current + delta));
+  await setRes(res, newVal);
+}
+
+async function setRes(res, value) {
+  const field = `current_${res}`;
+  char[field]  = value;
+  updateResDisplay();
+  renderLuck();
+  try {
+    await patchCharacter(char.id, { [field]: value });
+  } catch(e) {
+    console.error('[player] patch failed:', e);
+  }
+}
+
+// ── Dice system ───────────────────────────────────────────────
+const diceLog = [];
+
+function setupDice() {
+  const fab     = document.getElementById('diceFab');
+  const popup   = document.getElementById('dicePopup');
+  const closeBtn= document.getElementById('diceClose');
+  const exprIn  = document.getElementById('diceExpr');
+  const rollBtn = document.getElementById('diceRollBtn');
+
+  fab.addEventListener('click', () => popup.classList.toggle('open'));
+  closeBtn.addEventListener('click', () => popup.classList.remove('open'));
+
+  // Quick die buttons
+  document.querySelectorAll('.die-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const isSkill = btn.classList.contains('skill-check');
+      doRoll(btn.dataset.expr, { isSkillCheck: isSkill, context: btn.dataset.expr });
+    });
+  });
+
+  // Custom roll
+  rollBtn.addEventListener('click', () => doRoll(exprIn.value.trim() || '1d10'));
+  exprIn.addEventListener('keydown', e => { if (e.key === 'Enter') doRoll(exprIn.value.trim() || '1d10'); });
+
+  // Inline roll buttons (weapons DMG + skill roll buttons) — delegated
+  document.body.addEventListener('click', e => {
+    const btn = e.target.closest('.roll-btn, .dmg-btn');
+    if (!btn) return;
+    const expr    = btn.dataset.expr;
+    const ctx     = btn.dataset.ctx || expr;
+    const isSkill = btn.dataset.skill === '1';
+    if (expr) doRoll(expr, { context: ctx, isSkillCheck: isSkill });
+  });
+}
+
+async function doRoll(expression, opts = {}) {
+  if (!expression) return;
+  document.getElementById('dicePopup').classList.add('open');
+  document.getElementById('diceFab').classList.add('rolling');
+
+  const result = await roll(expression, {
+    ...opts,
+    characterId:   char?.id   || null,
+    characterName: char?.name || null,
+  });
+
+  document.getElementById('diceFab').classList.remove('rolling');
+
+  // Update popup result
+  const numEl    = document.getElementById('diceResultNum');
+  const detailEl = document.getElementById('diceResultDetail');
+  numEl.className = 'dice-result-num pop'
+    + (result.isCritSuccess ? ' crit-s' : '')
+    + (result.isCritFailure ? ' crit-f' : '');
+  numEl.textContent = result.total;
+
+  const breakdown = result.individualRolls
+    .map(r => {
+      if (r.isCritBonus)   return `+${r.value}(crit!)`;
+      if (r.isCritPenalty) return `${r.value}(botch!)`;
+      return `[${r.value}]`;
+    }).join(' ');
+  const label = opts.context ? `${opts.context}: ` : '';
+  detailEl.textContent = label + breakdown;
+
+  // Remove pop class after animation so it can re-trigger
+  numEl.addEventListener('animationend', () => numEl.classList.remove('pop'), { once: true });
+
+  // Add to log
+  diceLog.unshift({ expression, result, context: opts.context });
+  if (diceLog.length > 10) diceLog.pop();
+  renderDiceLog();
+
+  // Toast
+  showToast(result);
+}
+
+function renderDiceLog() {
+  const logEl = document.getElementById('diceLog');
+  logEl.innerHTML = diceLog.map(entry => {
+    const cls = entry.result.isCritSuccess ? 'crit-s' : entry.result.isCritFailure ? 'crit-f' : '';
+    const label = entry.context || entry.expression;
+    return `<div class="dice-log-row ${cls}">
+      <span class="dice-log-expr">${label}</span>
+      <span class="dice-log-tot">${entry.result.total}</span>
+    </div>`;
+  }).join('');
+}
+
+let _toastTimer = null;
+function showToast(result) {
+  const toast = document.getElementById('rollToast');
+  clearTimeout(_toastTimer);
+  toast.className = 'roll-toast show'
+    + (result.isCritSuccess ? ' crit-s' : '')
+    + (result.isCritFailure ? ' crit-f' : '');
+  const label = result.isCritSuccess ? '★ CRIT! ' : result.isCritFailure ? '✗ BOTCH! ' : '';
+  toast.textContent = `${label}${result.total}`;
+  _toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+</script>
+
+</body>
+</html>
