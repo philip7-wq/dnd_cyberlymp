@@ -280,6 +280,7 @@ let statsEditing        = false;
 let roleAbilities       = null;
 let activeNpcs          = [];
 let _tipPanel = null, _tipOverlay = null, _tipMap = new Map();
+let _diceAutoClose = null;
 
 function getInjuries() {
   try { return JSON.parse(char.critical_injuries || '[]'); } catch { return []; }
@@ -1198,6 +1199,7 @@ function buildSolo(data, rank) {
     if (soloPointsUsed(cur) > rank) return;
     char.role_ability_data = { ...char.role_ability_data, combatAwareness: cur };
     await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
+    renderRoleTab();
     showRoleSaveToast('Combat Awareness gespeichert');
   });
 }
@@ -1291,6 +1293,7 @@ function buildTech(data, rank) {
     char.role_ability_data = { ...char.role_ability_data, specialtyRanks: vals };
     await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
     renderSkills();
+    renderRoleTab();
     showRoleSaveToast('Specialties gespeichert');
   });
 
@@ -1382,6 +1385,7 @@ function buildMedtech(data, rank) {
     char.role_ability_data = { ...char.role_ability_data, specialtyPoints: vals };
     await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
     renderSkills();
+    renderRoleTab();
     showRoleSaveToast('Specialties gespeichert');
   });
 
@@ -1793,8 +1797,30 @@ function setupDice() {
   const exprIn  = document.getElementById('diceExpr');
   const rollBtn = document.getElementById('diceRollBtn');
 
-  fab.addEventListener('click', () => popup.classList.toggle('open'));
-  closeBtn.addEventListener('click', () => popup.classList.remove('open'));
+  function startDiceTimer() {
+    clearTimeout(_diceAutoClose);
+    _diceAutoClose = setTimeout(() => popup.classList.remove('open'), 5000);
+  }
+
+  fab.addEventListener('click', () => {
+    popup.classList.toggle('open');
+    if (popup.classList.contains('open')) startDiceTimer();
+  });
+  closeBtn.addEventListener('click', () => { popup.classList.remove('open'); clearTimeout(_diceAutoClose); });
+
+  // Reset timer when user hovers or types inside popup
+  popup.addEventListener('mouseenter', startDiceTimer);
+  popup.addEventListener('input', startDiceTimer);
+
+  // Click anywhere outside popup (capture phase so it fires before FAB toggle)
+  document.addEventListener('click', e => {
+    if (popup.classList.contains('open')
+        && !popup.contains(e.target)
+        && e.target !== fab) {
+      popup.classList.remove('open');
+      clearTimeout(_diceAutoClose);
+    }
+  }, true);
 
   // Quick die buttons
   document.querySelectorAll('.die-btn').forEach(btn => {
@@ -1874,6 +1900,8 @@ function showDiceRollOverlay(finalValue, opts = {}) {
 async function doRoll(expression, opts = {}) {
   if (!expression) return;
   document.getElementById('dicePopup').classList.add('open');
+  clearTimeout(_diceAutoClose);
+  _diceAutoClose = setTimeout(() => document.getElementById('dicePopup').classList.remove('open'), 5000);
   document.getElementById('diceFab').classList.add('rolling');
 
   const result = await roll(expression, {
@@ -1924,9 +1952,12 @@ async function doRoll(expression, opts = {}) {
     const sixCount = injuryData
       ? result.individualRolls.filter(r => r.die === 6 && Math.abs(r.value) === 6).length
       : 0;
-    setTimeout(async () => {
-      await showDamageApplyModal(result.total);
-      if (sixCount >= 2) setTimeout(() => showCritInjuryFlow(), 300);
+    setTimeout(() => {
+      if (sixCount >= 2) {
+        showCritInjuryFlow();             // crit: only injury flow, no damage modal
+      } else {
+        showDamageApplyModal(result.total); // normal hit: damage modal only
+      }
     }, 2000);
   }
 }
