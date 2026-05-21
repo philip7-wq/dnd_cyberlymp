@@ -21,15 +21,17 @@
     <p>Ausgefülltes Cyberpunk RED PDF → Datenbank</p>
   </div>
 
+  <!-- hidden file input — opacity:0 not display:none so Safari allows programmatic click -->
+  <input type="file" id="pdfInput" accept=".pdf"
+    style="opacity:0;position:absolute;width:1px;height:1px;pointer-events:none;overflow:hidden">
+
   <!-- PDF drop zone -->
   <div class="drop-zone card" id="dropZone">
-    <!-- hidden input — triggered via .click() below, never overlays anything -->
-    <input type="file" id="pdfInput" accept=".pdf" style="display:none">
     <span class="drop-icon">📄</span>
     <p><strong>PDF hier ablegen</strong></p>
-    <button type="button" class="btn btn-ghost" id="pdfBrowseBtn" style="margin-top:.75rem">
+    <label for="pdfInput" class="btn btn-ghost" style="margin-top:.75rem;cursor:pointer;display:inline-flex">
       PDF auswählen
-    </button>
+    </label>
     <p style="font-size:.75rem;margin-top:.5rem;color:var(--text-muted)">Cyberpunk RED Charakterbogen (ausgefüllt)</p>
     <p class="filename" id="pdfName" hidden></p>
   </div>
@@ -97,12 +99,11 @@ let manualImgBlob = null;
 let parsedResult  = null;   // { character, imageBlob }
 
 // ── DOM refs ──────────────────────────────────────────────────
-const dropZone     = document.getElementById('dropZone');
-const pdfInput     = document.getElementById('pdfInput');
-const pdfBrowseBtn = document.getElementById('pdfBrowseBtn');
-const pdfName      = document.getElementById('pdfName');
-const charName     = document.getElementById('charName');
-const playerName   = document.getElementById('playerName');
+const dropZone   = document.getElementById('dropZone');
+const pdfInput   = document.getElementById('pdfInput');
+const pdfName    = document.getElementById('pdfName');
+const charName   = document.getElementById('charName');
+const playerName = document.getElementById('playerName');
 const imgPreview  = document.getElementById('imgPreview');
 const imgHint     = document.getElementById('imgHint');
 const manualImg   = document.getElementById('manualImg');
@@ -114,32 +115,30 @@ const progressFill  = document.getElementById('progressFill');
 const statusMsg   = document.getElementById('statusMsg');
 const submitBtn   = document.getElementById('submitBtn');
 
-// ── Browse button → programmatic click on hidden input ────────
-pdfBrowseBtn.addEventListener('click', () => pdfInput.click());
+// ── File input via label[for="pdfInput"] ─────────────────────
+// label click → browser opens dialog → change fires
 pdfInput.addEventListener('change', () => {
   const file = pdfInput.files[0];
   if (file) handlePDF(file);
 });
 
-// ── Drag & drop (Safari needs dragenter + document-level guard) ─
-// Prevent Safari from navigating to the dropped file at the window level
-document.addEventListener('dragenter', e => e.preventDefault(), false);
-document.addEventListener('dragover',  e => e.preventDefault(), false);
-document.addEventListener('drop',      e => e.preventDefault(), false);
+// ── Drag & drop ───────────────────────────────────────────────
+// Document-level: prevent Safari from navigating to dropped file
+['dragenter','dragover','drop'].forEach(ev =>
+  document.addEventListener(ev, e => e.preventDefault(), false)
+);
 
 dropZone.addEventListener('dragenter', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); });
 dropZone.addEventListener('dragleave', e => {
-  // Only remove highlight when leaving the zone itself, not a child element
   if (!dropZone.contains(e.relatedTarget)) dropZone.classList.remove('drag-over');
 });
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
-  e.stopPropagation();
   dropZone.classList.remove('drag-over');
   const file = e.dataTransfer.files[0];
   if (file?.type === 'application/pdf') handlePDF(file);
-  else showStatus('Bitte eine PDF-Datei auswählen.', 'error');
+  else showStatus('Bitte eine PDF-Datei (.pdf) auswählen.', 'error');
 });
 
 // ── Manual portrait ───────────────────────────────────────────
