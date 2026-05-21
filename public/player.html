@@ -1695,6 +1695,7 @@ function setupTabs() {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'skills') { renderSkills(); setupSkillFavs(); setupSkillUpgrades(); }
   });
 }
 
@@ -1918,13 +1919,15 @@ async function doRoll(expression, opts = {}) {
   // Toast
   showToast(result);
 
-  // Damage roll extras
+  // Damage roll extras — delay 2s so the dice result is visible first
   if (opts.isDamageRoll) {
-    showDamageApplyModal(result.total);
-    if (injuryData) {
-      const sixCount = result.individualRolls.filter(r => r.die === 6 && Math.abs(r.value) === 6).length;
-      if (sixCount >= 2) showCritInjuryFlow();
-    }
+    const sixCount = injuryData
+      ? result.individualRolls.filter(r => r.die === 6 && Math.abs(r.value) === 6).length
+      : 0;
+    setTimeout(async () => {
+      await showDamageApplyModal(result.total);
+      if (sixCount >= 2) setTimeout(() => showCritInjuryFlow(), 300);
+    }, 2000);
   }
 }
 
@@ -2002,7 +2005,8 @@ async function removeItem(inv, idx) {
 
 // ── Critical Injury Flow ──────────────────────────────────────
 // ── Damage Apply Modal ────────────────────────────────────────
-function showDamageApplyModal(totalDamage) {
+async function showDamageApplyModal(totalDamage) {
+  activeNpcs = await getActiveNpcs();
   const modal = document.getElementById('dmgApplyModal');
   const select = document.getElementById('dmgApplyTarget');
   const calcRow = document.getElementById('dmgApplyCalc');
@@ -2013,7 +2017,7 @@ function showDamageApplyModal(totalDamage) {
   calcRow.textContent = '';
   confirmBtn.disabled = true;
 
-  // Build target dropdown
+  // Build target dropdown (fresh NPC list)
   const playerOpts = allChars.map(c =>
     `<option value="char:${c.id}">${c.handle || c.name}</option>`).join('');
   const npcOpts = activeNpcs.map(n => `<option value="npc:${n.id}">${n.name}</option>`).join('');
@@ -2076,7 +2080,8 @@ function showDamageApplyModal(totalDamage) {
   document.getElementById('dmgApplyCancel').onclick = () => { modal.hidden = true; };
 }
 
-function showCritInjuryFlow() {
+async function showCritInjuryFlow() {
+  activeNpcs = await getActiveNpcs();
   critTarget = allChars.length === 1 && activeNpcs.length === 0 ? `char:${allChars[0].id}` : null;
 
   const playerOpts = allChars.map(c =>
