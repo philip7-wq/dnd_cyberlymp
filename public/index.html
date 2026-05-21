@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LZRV Hub — Night City</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/index.css">
+</head>
+<body>
+
+<div class="hub-wrap">
+  <div class="hub-scanlines"></div>
+
+  <header class="hub-header">
+    <div class="hub-logo">LZRV<span>HUB</span></div>
+    <div class="hub-subtitle">NIGHT CITY CHARACTER HUB</div>
+  </header>
+
+  <main class="hub-card">
+    <div class="hub-select-wrap">
+      <label class="hub-label" for="charSelect">Charakter</label>
+      <select id="charSelect" class="hub-select">
+        <option value="">— Auswählen —</option>
+      </select>
+    </div>
+
+    <div class="hub-actions">
+      <button id="btnPlayer" class="btn-hub btn-hub-primary" disabled>
+        Als Spieler einsteigen
+      </button>
+      <button id="btnDM" class="btn-hub btn-hub-ghost">
+        Als DM einsteigen
+      </button>
+    </div>
+
+    <a href="upload.html" class="hub-upload-link">+ Neuen Charakter hochladen</a>
+  </main>
+
+  <div class="hub-loader" id="hubLoader">VERBINDE MIT NIGHT CITY…</div>
+  <div class="hub-error" id="hubError" hidden></div>
+</div>
+
+<script type="module">
+import { getCharacters } from './assets/js/supabase.js';
+
+const LAST_CHAR_KEY = 'lzrv_last_char';
+
+async function boot() {
+  try {
+    const chars = await getCharacters();
+    const sel   = document.getElementById('charSelect');
+    const saved = localStorage.getItem(LAST_CHAR_KEY);
+
+    chars.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value       = c.id;
+      opt.textContent = c.handle ? `${c.name}  (${c.handle})` : c.name;
+      if (c.id === saved) opt.selected = true;
+      sel.appendChild(opt);
+    });
+
+    document.getElementById('hubLoader').hidden = true;
+    updateButtons();
+    sel.addEventListener('change', updateButtons);
+  } catch (e) {
+    document.getElementById('hubLoader').hidden = true;
+    const err = document.getElementById('hubError');
+    err.hidden = false;
+    err.textContent = `Fehler: ${e.message}`;
+  }
+}
+
+function updateButtons() {
+  const id = document.getElementById('charSelect').value;
+  document.getElementById('btnPlayer').disabled = !id;
+  if (id) localStorage.setItem(LAST_CHAR_KEY, id);
+}
+
+document.getElementById('btnPlayer').addEventListener('click', () => {
+  const id = document.getElementById('charSelect').value;
+  if (id) location.href = `player.html?id=${id}`;
+});
+
+document.getElementById('btnDM').addEventListener('click', () => {
+  location.href = 'dm.html';
+});
+
+boot();
+</script>
+
+</body>
+</html>

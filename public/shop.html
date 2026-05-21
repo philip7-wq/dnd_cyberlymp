@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop — LZRV Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/shop.css">
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-logo">LZRV<span>HUB</span></span>
+  <span id="navCharName" style="font-family:var(--font-display);font-size:.85rem;color:var(--red);margin-left:.75rem"></span>
+  <span class="nav-cash" id="navCash"></span>
+  <a id="backLink" href="index.html" class="btn btn-ghost" style="font-size:.75rem;margin-left:1rem">← Charakter</a>
+</nav>
+
+<div class="shop-layout">
+
+  <!-- Sidebar -->
+  <aside class="shop-sidebar">
+    <div class="sidebar-label">Kategorie</div>
+    <!-- Buttons are injected by JS -->
+    <div id="catButtons"></div>
+  </aside>
+
+  <!-- Main: grid + detail -->
+  <div class="shop-main" id="shopMain">
+    <div class="shop-grid-wrap" id="shopGridWrap">
+      <div class="shop-loader" id="shopLoader">LADE ITEMS…</div>
+    </div>
+    <aside class="shop-detail" id="shopDetail"></aside>
+  </div>
+
+</div>
+
+<script type="module">
+import { getCharacter, getItems, patchCharacter } from './assets/js/supabase.js';
+
+// ── Config ────────────────────────────────────────────────────
+const SHOP_CATEGORIES = [
+  'Ranged Weapon',
+  'Melee Weapon',
+  'Exotic Weapon',
+  'Armor',
+  'Cyberware',
+  'Gear',
+  'Ammunition',
+  'Program',
+  'Fashion',
+  'Nomad Vehicle Access',
+];
+
+// ── State ─────────────────────────────────────────────────────
+const id   = new URLSearchParams(location.search).get('id');
+if (!id) { location.replace('index.html'); }
+let char   = null;
+let items  = [];           // all fetched items
+let activeCategory = SHOP_CATEGORIES[0];
+let selectedItem   = null;
+let armorSlot      = 'body';
+
+// ── Boot ──────────────────────────────────────────────────────
+if (!id) {
+  document.getElementById('shopLoader').innerHTML =
+    '<span style="color:var(--red)">Kein Charakter gewählt.</span>';
+} else {
+  document.getElementById('backLink').href = `player.html?id=${id}`;
+
+  try {
+    [char, items] = await Promise.all([
+      getCharacter(id),
+      getItems(SHOP_CATEGORIES),
+    ]);
+    renderNav();
+    renderCatButtons();
+    renderGrid();
+  } catch (e) {
+    document.getElementById('shopLoader').innerHTML =
+      `<span style="color:var(--red)">Fehler: ${e.message}</span>`;
+  }
+}
+
+// ── Gating helpers ────────────────────────────────────────────
+function parseMaxHumanityLoss(str) {
+  if (!str || str.startsWith('0')) return 0;
+  const diceMatch = str.match(/\((\d+)d(\d+)/);
+  if (diceMatch) return parseInt(diceMatch[1]) * parseInt(diceMatch[2]);
+  const num = parseInt(str);
+  return isNaN(num) ? 0 : num;
+}
+
+function getGates(item) {
+  const x   = item.extra || {};
+  const out = { cash: true, rank: true, humanity: true };
+
+  out.cash = (char.cash ?? 0) >= (item.price ?? 0);
+
+  if (x.required_moto_rank != null) {
+    out.rankRequired = x.required_moto_rank;
+    out.rankCurrent  = char.role_ability_rank ?? 0;
+    out.rank = (char.role === 'Nomad') && (out.rankCurrent >= out.rankRequired);
+  }
+
+  if (item.category === 'Cyberware' && x.humanity_loss) {
+    const maxLoss = parseMaxHumanityLoss(x.humanity_loss);
+    if (maxLoss > 0) {
+      out.humanityLoss    = maxLoss;
+      out.humanityCurrent = char.current_humanity ?? 0;
+      out.humanity        = out.humanityCurrent >= maxLoss;
+    }
+  }
+
+  return out;
+}
+
+// ── Nav ───────────────────────────────────────────────────────
+function renderNav() {
+  document.title = `Shop — ${char.name}`;
+  document.getElementById('navCharName').textContent = char.name;
+  updateCashDisplay();
+}
+
+function updateCashDisplay() {
+  document.getElementById('navCash').textContent = `💰 ${char.cash ?? 0} eb`;
+}
+
+// ── Category sidebar ──────────────────────────────────────────
+function renderCatButtons() {
+  const wrap = document.getElementById('catButtons');
+  wrap.innerHTML = SHOP_CATEGORIES.map(cat => `
+    <button class="cat-btn${cat === activeCategory ? ' active' : ''}" data-cat="${cat}">${cat}</button>
+  `).join('');
+  wrap.addEventListener('click', e => {
+    const btn = e.target.closest('.cat-btn');
+    if (!btn) return;
+    activeCategory = btn.dataset.cat;
+    selectedItem   = null;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderGrid();
+    closeDetail();
+  });
+}
+
+// ── Item grid ─────────────────────────────────────────────────
+function renderGrid() {
+  const wrap = document.getElementById('shopGridWrap');
+  const list = items.filter(i => i.category === activeCategory);
+
+  if (!list.length) {
+    wrap.innerHTML = `<p class="shop-empty">Keine Items in dieser Kategorie.</p>`;
+    return;
+  }
+
+  // Group by subcategory
+  const groups = {};
+  for (const item of list) {
+    const sub = item.subcategory || '';
+    if (!groups[sub]) groups[sub] = [];
+    groups[sub].push(item);
+  }
+
+  wrap.innerHTML = Object.entries(groups).map(([sub, groupItems]) => `
+    ${sub ? `<div class="shop-section-head">${sub}</div>` : ''}
+    <div class="shop-grid">
+      ${groupItems.map(item => {
+        const g        = getGates(item);
+        const isLocked = !g.rank || !g.humanity;
+        const cashOut  = !g.cash;
+        let lockTip    = '';
+        if (!g.rank)          lockTip = `Benötigt Nomad Rank ${g.rankRequired} (du hast Rank ${g.rankCurrent})`;
+        else if (!g.humanity) lockTip = `Nicht genug Humanity (riskiert Cyberpsychose)`;
+        return `
+        <div class="shop-card${selectedItem?.id === item.id ? ' active' : ''}${cashOut ? ' card-no-cash' : ''}${isLocked ? ' card-locked' : ''}"
+             data-id="${item.id}">
+          <div class="shop-card-name">${item.name}</div>
+          <div class="shop-card-price">${item.price != null ? item.price + ' eb' : '—'}</div>
+          ${item.notes ? `<div class="shop-card-notes">${item.notes}</div>` : ''}
+          ${isLocked ? `<div class="lock-icon" title="${lockTip}">🔒</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+
+  wrap.addEventListener('click', e => {
+    const card = e.target.closest('.shop-card');
+    if (!card) return;
+    const item = items.find(i => i.id === card.dataset.id);
+    if (!item) return;
+    document.querySelectorAll('.shop-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    selectedItem = item;
+    armorSlot = 'body';
+    openDetail(item);
+  });
+}
+
+// ── Detail panel ──────────────────────────────────────────────
+function openDetail(item) {
+  const panel = document.getElementById('shopDetail');
+  const main  = document.getElementById('shopMain');
+  const x     = item.extra || {};
+
+  panel.className = 'shop-detail visible';
+  main.classList.add('detail-open');
+
+  // Build field rows based on category
+  const fields = [];
+  if (item.damage)   fields.push(['Damage',   item.damage]);
+  if (item.rof)      fields.push(['ROF',      item.rof]);
+  if (item.hands)    fields.push(['Hands',    item.hands]);
+  if (item.ammo)     fields.push(['Ammo',     item.ammo]);
+  if (x.sp)         fields.push(['SP',        x.sp]);
+  if (x.armor_penalty && x.armor_penalty !== 'None')
+                     fields.push(['Penalty',  x.armor_penalty]);
+  if (x.install)     fields.push(['Install',  x.install]);
+  if (x.humanity_loss) fields.push(['Humanity', x.humanity_loss]);
+  if (x.concealable) fields.push(['Concealable', 'Ja']);
+  if (x.magazine)    fields.push(['Magazine', x.magazine]);
+  if (item.source?.page) fields.push(['Quelle', `Core S.${item.source.page}`]);
+
+  const fieldsHtml = fields.length
+    ? `<div class="detail-fields">${fields.map(([k,v]) =>
+        `<div class="df-row"><span class="df-key">${k}</span><span class="df-val">${v}</span></div>`
+      ).join('')}</div>`
+    : '';
+
+  const armorSlotHtml = item.category === 'Armor' ? `
+    <div>
+      <div class="df-key" style="margin-bottom:.4rem">Slot</div>
+      <div class="armor-slots">
+        ${['head','body','shield'].map(s => `
+          <button class="slot-btn${armorSlot === s ? ' active' : ''}" data-slot="${s}">${s.toUpperCase()}</button>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  const g          = getGates(item);
+  const priceLabel = item.price != null ? item.price + ' eb' : 'Kostenlos';
+
+  let btnClass = 'buy-btn', btnLabel = 'Kaufen', btnDisabled = false;
+  if (!g.cash) {
+    btnClass += ' no-cash';     btnLabel = 'Nicht genug eb';                    btnDisabled = true;
+  } else if (!g.rank) {
+    btnClass += ' no-rank';     btnLabel = `🔒 Rank ${g.rankRequired} erforderlich`; btnDisabled = true;
+  } else if (!g.humanity) {
+    btnClass += ' no-humanity'; btnLabel = '🔒 Nicht genug Humanity';           btnDisabled = true;
+  }
+  const showOverride = g.rank && g.cash && !g.humanity;
+
+  panel.innerHTML = `
+    <div>
+      <div class="detail-name">${item.name}</div>
+      <div class="detail-sub">${[item.category, item.subcategory].filter(Boolean).join(' · ')}</div>
+    </div>
+    <div class="detail-price">${priceLabel}</div>
+    ${fieldsHtml}
+    ${armorSlotHtml}
+    ${item.notes ? `<div class="detail-notes">${item.notes}</div>` : ''}
+    <div style="margin-top:auto">
+      <button class="${btnClass}" id="buyBtn" ${btnDisabled ? 'disabled' : ''}>${btnLabel}</button>
+      ${showOverride ? `<button class="override-btn" id="overrideBtn">DM Override: Trotzdem kaufen</button>` : ''}
+      <div class="buy-msg" id="buyMsg"></div>
+    </div>
+  `;
+
+  // Slot selector
+  panel.querySelectorAll('.slot-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      armorSlot = btn.dataset.slot;
+      panel.querySelectorAll('.slot-btn').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  // Buy button
+  document.getElementById('buyBtn').addEventListener('click', () => buyItem(item));
+  document.getElementById('overrideBtn')?.addEventListener('click', () => buyItem(item, true));
+}
+
+function closeDetail() {
+  document.getElementById('shopDetail').className = 'shop-detail';
+  document.getElementById('shopMain').classList.remove('detail-open');
+}
+
+// ── Purchase ──────────────────────────────────────────────────
+function routeItem(item) {
+  if (['Ranged Weapon','Melee Weapon','Exotic Weapon'].includes(item.category)) return 'weapons';
+  if (item.category === 'Armor')     return 'armor';
+  if (item.category === 'Cyberware') return 'cyberware';
+  return 'gear';
+}
+
+function buildSnapshot(item) {
+  const x = item.extra || {};
+  switch (routeItem(item)) {
+    case 'weapons':
+      return { name: item.name, damage: item.damage || null, ammo: item.ammo || null,
+               rof: item.rof || null, notes: item.notes || null,
+               price: item.price, raw_cost: item.raw_cost, category: item.category };
+    case 'armor':
+      return { name: item.name,
+               sp: parseInt(x.sp) || 0,
+               penalty: (x.armor_penalty && x.armor_penalty !== 'None') ? parseInt(x.armor_penalty) || 0 : 0,
+               notes: item.notes || null, price: item.price, raw_cost: item.raw_cost };
+    case 'cyberware':
+      return { name: item.name, notes: item.notes || null,
+               install: x.install || null, humanity_loss: x.humanity_loss || null,
+               price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null };
+    default:
+      return { name: item.name, notes: item.notes || null,
+               price: item.price, raw_cost: item.raw_cost };
+  }
+}
+
+async function buyItem(item, override = false) {
+  const msg   = document.getElementById('buyMsg');
+  const btn   = document.getElementById('buyBtn');
+  const price = item.price ?? 0;
+  const g     = getGates(item);
+
+  if (!g.cash) {
+    msg.textContent = 'Nicht genug eb';
+    msg.className   = 'buy-msg';
+    return;
+  }
+  if (!g.rank) {
+    msg.textContent = `Benötigt Nomad Rank ${g.rankRequired}`;
+    msg.className   = 'buy-msg';
+    return;
+  }
+  if (!override && !g.humanity) {
+    msg.textContent = 'Nicht genug Humanity';
+    msg.className   = 'buy-msg';
+    return;
+  }
+
+  btn.disabled    = true;
+  msg.textContent = '';
+
+  const snapshot = buildSnapshot(item);
+  const dest     = routeItem(item);
+  const patch    = { cash: (char.cash ?? 0) - price };
+
+  if (dest === 'weapons') {
+    patch.weapons  = [...(char.weapons  || []), snapshot];
+  } else if (dest === 'cyberware') {
+    patch.cyberware = [...(char.cyberware || []), snapshot];
+  } else if (dest === 'gear') {
+    patch.gear     = [...(char.gear     || []), snapshot];
+  } else if (dest === 'armor') {
+    patch.armor = { ...(char.armor || {}), [armorSlot]: snapshot };
+  }
+
+  try {
+    await patchCharacter(char.id, patch);
+    // Apply locally
+    Object.assign(char, patch);
+    updateCashDisplay();
+    msg.textContent = `✓ ${item.name} gekauft`;
+    msg.className   = 'buy-msg buy-success';
+    // Refresh buy button state
+    openDetail(item);
+  } catch (e) {
+    msg.textContent = `Fehler: ${e.message}`;
+    msg.className   = 'buy-msg';
+    btn.disabled    = false;
+  }
+}
+</script>
+
+</body>
+</html>

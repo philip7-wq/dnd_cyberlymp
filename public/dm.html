@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DM Dashboard — LZRV Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/dm.css">
+</head>
+<body>
+
+<!-- PIN Overlay -->
+<div id="pinOverlay" class="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-title">DM ZUGANG</div>
+    <input id="pinInput" class="pin-input" type="password" placeholder="PIN eingeben" maxlength="10" autofocus>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<nav class="nav">
+  <span class="nav-logo">LZRV<span>HUB</span></span>
+  <span style="font-family:var(--font-display);font-size:.72rem;color:var(--red);margin-left:.75rem;letter-spacing:.12em">DM DASHBOARD</span>
+  <a href="index.html" class="btn btn-ghost" style="font-size:.75rem;margin-left:auto">← Übersicht</a>
+</nav>
+
+<div class="dm-layout">
+  <!-- Character Grid -->
+  <div class="dm-grid-wrap" id="dmGrid">
+    <div style="color:var(--text-muted);font-size:.82rem;padding:.5rem">Lade Charaktere…</div>
+  </div>
+
+  <!-- Live Roll Log -->
+  <div class="roll-log" id="rollLog">
+    <div class="roll-log-head">ROLL LOG</div>
+    <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
+  </div>
+</div>
+
+<!-- Character Detail Modal -->
+<div id="dmModal" class="dm-modal-overlay" hidden>
+  <div class="dm-modal-box" id="dmModalBox">
+    <div class="dm-modal-header" id="dmModalHeader"></div>
+    <div class="dm-modal-tabs" id="dmModalTabs"></div>
+    <div class="dm-modal-body" id="dmModalBody"></div>
+  </div>
+</div>
+
+<script type="module">
+import {
+  getCharacters, getCharacter, patchCharacter, getItems, getRolls,
+  subscribeCharacters, subscribeRolls, logRoll,
+} from './assets/js/supabase.js';
+
+// ── Constants ─────────────────────────────────────────────────
+const DM_PIN = 'DM2077';
+
+// ── State ─────────────────────────────────────────────────────
+let chars      = [];
+let rolls      = [];
+let injData    = null;
+let itemsCache = [];
+let openChar   = null; // full char object currently in modal
+let activeModalTab = 'controls';
+let itemSearchTimer = null;
+
+// ── PIN Auth ──────────────────────────────────────────────────
+function checkPin() {
+  if (sessionStorage.getItem('dm_auth') === '1') {
+    document.getElementById('pinOverlay').hidden = true;
+    boot();
+  }
+}
+
+document.getElementById('pinInput').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (e.target.value === DM_PIN) {
+    sessionStorage.setItem('dm_auth', '1');
+    document.getElementById('pinOverlay').hidden = true;
+    boot();
+  } else {
+    document.getElementById('pinError').textContent = 'Falscher PIN';
+    e.target.value = '';
+  }
+});
+
+checkPin();
+
+// ── Boot ──────────────────────────────────────────────────────
+async function boot() {
+  try {
+    [chars, rolls, injData] = await Promise.all([
+      getCharacters(),
+      getRolls(50),
+      fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
+    ]);
+  } catch (e) {
+    document.getElementById('dmGrid').innerHTML =
+      `<div style="color:var(--red);font-size:.82rem">Fehler: ${e.message}</div>`;
+    return;
+  }
+
+  renderGrid();
+  renderRollLog();
+
+  subscribeCharacters(payload => {
+    const updated = payload.new;
+    if (!updated?.id) return;
+    const idx = chars.findIndex(c => c.id === updated.id);
+    if (idx !== -1) chars[idx] = { ...chars[idx], ...updated };
+    else chars.push(updated);
+    renderGrid();
+    if (openChar?.id === updated.id) {
+      openChar = { ...openChar, ...updated };
+      refreshModalHeader();
+    }
+  });
+
+  subscribeRolls(payload => {
+    const roll = payload.new;
+    if (!roll) return;
+    rolls.unshift(roll);
+    if (rolls.length > 100) rolls.pop();
+    prependRollEntry(roll);
+    document.getElementById('rollEmpty')?.remove();
+  });
+}
+
+// ── Character Grid ─────────────────────────────────────────────
+function hpColor(cur, max) {
+  if (!max) return 'var(--text-muted)';
+  const pct = cur / max;
+  if (pct > 0.5) return 'var(--cyan)';
+  if (pct > 0.25) return '#FFD600';
+  return 'var(--red)';
+}
+
+function parseInjuries(str) {
+  try { return JSON.parse(str || '[]'); } catch { return []; }
+}
+
+function cardWeapons(char) {
+  const ws = Array.isArray(char.weapons) ? char.weapons : [];
+  if (!ws.length) return '';
+  return ws.slice(0, 3).map(w => `${w.name}${w.damage ? ` <span style="color:var(--text-muted)">${w.damage}</span>` : ''}`).join(' · ');
+}
+
+function renderGrid() {
+  const wrap = document.getElementById('dmGrid');
+  if (!chars.length) {
+    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.82rem;padding:.5rem">Keine Charaktere.</div>';
+    return;
+  }
+  wrap.innerHTML = chars.map(c => {
+    const hpPct     = c.max_hp ? Math.round((c.current_hp / c.max_hp) * 100) : 0;
+    const humPct    = c.max_humanity ? Math.round((c.current_humanity / c.max_humanity) * 100) : 0;
+    const injuries  = parseInjuries(c.critical_injuries);
+    const portrait  = c.image_url
+      ? `<img class="dm-card-portrait" src="${c.image_url}" alt="" onerror="this.style.display='none'">`
+      : `<div class="dm-card-portrait" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem">🤖</div>`;
+    const weapons   = cardWeapons(c);
+
+    return `
+    <div class="dm-card" data-id="${c.id}">
+      <div class="dm-card-header">
+        ${portrait}
+        <div class="dm-card-meta">
+          <div class="dm-card-name">${c.name}</div>
+          <div class="dm-card-role">${c.role || '—'}</div>
+        </div>
+      </div>
+      <div class="dm-card-stats">
+        <div class="dm-card-stat">
+          <div class="dm-card-stat-label">HP</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${hpPct}%;background:${hpColor(c.current_hp, c.max_hp)}"></div></div>
+          <div>${c.current_hp ?? 0} / ${c.max_hp ?? 0}</div>
+        </div>
+        <div class="dm-card-stat">
+          <div class="dm-card-stat-label">Humanity</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${humPct}%;background:var(--cyan)"></div></div>
+          <div>${c.current_humanity ?? 0} / ${c.max_humanity ?? 0}</div>
+        </div>
+        <div class="dm-card-stat">
+          <div class="dm-card-stat-label">Luck</div>
+          <div style="font-family:var(--font-display);font-size:.8rem">${c.current_luck ?? 0}</div>
+        </div>
+      </div>
+      ${injuries.length ? `<div class="inj-badge">${injuries.length} Injur${injuries.length === 1 ? 'y' : 'ies'}</div>` : ''}
+      ${weapons ? `<div class="dm-card-weapons">${weapons}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.dm-card').forEach(card => {
+    card.addEventListener('click', () => openDetail(card.dataset.id));
+  });
+}
+
+// ── Roll Log ──────────────────────────────────────────────────
+function fmtTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+
+function rollEntryHtml(roll) {
+  const cls = roll.is_crit_success ? ' crit-success' : roll.is_crit_failure ? ' crit-fail' : '';
+  return `
+  <div class="roll-entry${cls}">
+    <div class="roll-entry-top">
+      <span class="roll-char">${roll.character_name || '?'}</span>
+      <span class="roll-expr">${roll.expression}</span>
+      <span class="roll-total">${roll.total}</span>
+    </div>
+    ${roll.context ? `<div class="roll-ctx">${roll.context}</div>` : ''}
+    <div class="roll-time">${fmtTime(roll.created_at)}</div>
+  </div>`;
+}
+
+function renderRollLog() {
+  const log = document.getElementById('rollLog');
+  const head = log.querySelector('.roll-log-head');
+  if (!rolls.length) return;
+  document.getElementById('rollEmpty')?.remove();
+  const frag = document.createDocumentFragment();
+  rolls.forEach(r => {
+    const div = document.createElement('div');
+    div.innerHTML = rollEntryHtml(r);
+    frag.appendChild(div.firstElementChild);
+  });
+  log.appendChild(frag);
+}
+
+function prependRollEntry(roll) {
+  const log  = document.getElementById('rollLog');
+  const head = log.querySelector('.roll-log-head');
+  const div  = document.createElement('div');
+  div.innerHTML = rollEntryHtml(roll);
+  head.insertAdjacentElement('afterend', div.firstElementChild);
+}
+
+// ── Character Detail Modal ─────────────────────────────────────
+async function openDetail(id) {
+  document.getElementById('dmModal').hidden = false;
+  document.getElementById('dmModalHeader').innerHTML = '<span style="color:var(--text-muted);font-size:.8rem">Lade…</span>';
+  document.getElementById('dmModalTabs').innerHTML = '';
+  document.getElementById('dmModalBody').innerHTML = '';
+
+  try {
+    openChar = await getCharacter(id);
+  } catch (e) {
+    document.getElementById('dmModalHeader').innerHTML = `<span style="color:var(--red)">Fehler: ${e.message}</span>`;
+    return;
+  }
+
+  activeModalTab = 'controls';
+  renderModal();
+}
+
+function refreshModalHeader() {
+  if (!openChar) return;
+  renderModalHeader();
+}
+
+function renderModal() {
+  renderModalHeader();
+  renderModalTabs();
+  renderModalBody();
+}
+
+function renderModalHeader() {
+  const c = openChar;
+  document.getElementById('dmModalHeader').innerHTML = `
+    ${c.image_url
+      ? `<img class="dm-modal-portrait" src="${c.image_url}" alt="" onerror="this.style.display='none'">`
+      : `<div class="dm-modal-portrait" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem">🤖</div>`}
+    <div class="dm-modal-title-wrap">
+      <div class="dm-modal-name">${c.name}</div>
+      <div class="dm-modal-sub">${[c.role, c.handle, c.player_name].filter(Boolean).join(' · ')}</div>
+    </div>
+    <a href="player.html?id=${c.id}" target="_blank" class="dm-modal-player-link">↗ Player View</a>
+    <button class="dm-modal-close" id="dmModalClose">✕</button>
+  `;
+  document.getElementById('dmModalClose').addEventListener('click', closeModal);
+  document.getElementById('dmModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('dmModal')) closeModal();
+  }, { once: true });
+}
+
+function renderModalTabs() {
+  const tabs = [
+    { key: 'controls', label: 'DM Controls' },
+    { key: 'stats',    label: 'Stats' },
+    { key: 'skills',   label: 'Skills' },
+    { key: 'inventory',label: 'Inventar' },
+  ];
+  document.getElementById('dmModalTabs').innerHTML = tabs.map(t =>
+    `<button class="dm-tab-btn${activeModalTab === t.key ? ' active' : ''}" data-tab="${t.key}">${t.label}</button>`
+  ).join('');
+  document.getElementById('dmModalTabs').addEventListener('click', e => {
+    const btn = e.target.closest('.dm-tab-btn');
+    if (!btn) return;
+    activeModalTab = btn.dataset.tab;
+    document.querySelectorAll('.dm-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderModalBody();
+  });
+}
+
+function renderModalBody() {
+  const body = document.getElementById('dmModalBody');
+  switch (activeModalTab) {
+    case 'controls':  body.innerHTML = buildControlsHtml(); setupControls(); break;
+    case 'stats':     body.innerHTML = buildStatsHtml();    break;
+    case 'skills':    body.innerHTML = buildSkillsHtml();   break;
+    case 'inventory': body.innerHTML = buildInventoryHtml();break;
+  }
+}
+
+function closeModal() {
+  document.getElementById('dmModal').hidden = true;
+  openChar = null;
+}
+
+// ── Stats Tab ─────────────────────────────────────────────────
+function buildStatsHtml() {
+  const c    = openChar;
+  const stats = c.stats || {};
+  const STAT_ORDER = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP','LUCK'];
+  const injuries = parseInjuries(c.critical_injuries);
+  const injPenalty = injuries.filter(i => i.effect?.includes('Base Death Save Penalty is increased')).length;
+
+  const statCells = STAT_ORDER.map(s => `
+    <div class="dm-stat-cell">
+      <div class="dm-stat-key">${s}</div>
+      <div class="dm-stat-val">${stats[s] ?? c.stats?.[s] ?? '—'}</div>
+    </div>`).join('');
+
+  const resources = [
+    ['HP',         `${c.current_hp ?? 0} / ${c.max_hp ?? 0}`],
+    ['Humanity',   `${c.current_humanity ?? 0} / ${c.max_humanity ?? 0}`],
+    ['Luck',       `${c.current_luck ?? 0} / ${c.max_luck ?? 0}`],
+    ['Cash',       `${c.cash ?? 0} eb`],
+    ['IP',         c.improvement_points ?? 0],
+    ['Rep',        c.reputation ?? 0],
+    ['Role Rank',  c.role_ability_rank ?? 0],
+    ['Death Save', injPenalty ? `${(c.death_save ?? 0) + injPenalty} <small style="color:var(--red)">(+${injPenalty})</small>` : (c.death_save ?? 0)],
+    ['SW Thresh',  c.seriously_wounded_threshold ?? 0],
+  ];
+
+  return `
+    <div class="dm-stats-grid">${statCells}</div>
+    <div class="dm-res-grid">
+      ${resources.map(([k,v]) => `
+        <div class="dm-res-cell">
+          <div class="dm-res-key">${k}</div>
+          <div class="dm-res-val">${v}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── Skills Tab ────────────────────────────────────────────────
+const SKILL_CATEGORIES = {
+  'Awareness':       ['Concentration','Conceal/Reveal Object','Lip Reading','Perception','Tracking'],
+  'Body':            ['Athletics','Contortionist','Dance','Endurance','Resist Torture/Drugs','Stealth'],
+  'Control':         ['Drive Land Vehicle','Pilot Air Vehicle','Pilot Sea Vehicle','Riding'],
+  'Education':       ['Accounting','Animal Handling','Bureaucracy','Business','Composition',
+                      'Criminology','Cryptography','Deduction','Education','Gamble','Language',
+                      'Library Search','Local Expert','Science','Tactics','Wilderness Survival'],
+  'Fighting':        ['Brawling','Evasion','Martial Arts','Melee Weapon'],
+  'Performance':     ['Acting','Play Instrument'],
+  'Ranged Weapon':   ['Archery','Autofire','Handgun','Heavy Weapons','Shoulder Arms','Submachinegun'],
+  'Social':          ['Bribery','Conversation','Human Perception','Interrogation','Persuasion',
+                      'Personal Grooming','Streetwise','Trading','Wardrobe & Style'],
+  'Technique':       ['Air Vehicle Tech','Basic Tech','Cybertech','Demolitions','Electronics/Security Tech',
+                      'First Aid','Forgery','Land Vehicle Tech','Paramedic','Photography/Film',
+                      'Pick Lock','Pick Pocket','Sea Vehicle Tech','Weaponstech'],
+};
+
+function buildSkillsHtml() {
+  const skills = openChar.skills || {};
+  return Object.entries(SKILL_CATEGORIES).map(([cat, list]) => {
+    const rows = list.filter(s => skills[s]?.lvl).map(s => {
+      const sk = skills[s];
+      return `<div class="dm-skill-row"><span class="dm-skill-name">${s}</span><span class="dm-skill-val">${sk.lvl}</span></div>`;
+    });
+    if (!rows.length) return '';
+    return `<div class="dm-skill-section"><div class="dm-skill-head">${cat}</div>${rows.join('')}</div>`;
+  }).join('') || '<p style="color:var(--text-muted);font-size:.82rem">Keine Skills.</p>';
+}
+
+// ── Inventory Tab ─────────────────────────────────────────────
+function buildInventoryHtml() {
+  const c  = openChar;
+  const ws = Array.isArray(c.weapons) ? c.weapons : [];
+  const ar = c.armor || {};
+  const cw = Array.isArray(c.cyberware) ? c.cyberware : [];
+  const gr = Array.isArray(c.gear) ? c.gear : [];
+
+  const weaponRows = ws.map(w =>
+    `<div class="dm-inv-item"><span class="dm-inv-name">${w.name}</span><span class="dm-inv-sub">${[w.damage, w.ammo ? w.ammo + ' Ammo' : ''].filter(Boolean).join(' · ')}</span></div>`
+  );
+  const armorRows = ['head','body','shield'].filter(s => ar[s]?.name).map(s =>
+    `<div class="dm-inv-item"><span class="dm-inv-name">${ar[s].name}</span><span class="dm-inv-sub">${s.toUpperCase()} · SP ${ar[s].sp ?? 0}</span></div>`
+  );
+  const cwRows = cw.map(i =>
+    `<div class="dm-inv-item"><span class="dm-inv-name">${i.name}</span><span class="dm-inv-sub">${[i.subcategory, i.install].filter(Boolean).join(' · ')}</span></div>`
+  );
+  const gearRows = gr.map(i =>
+    `<div class="dm-inv-item"><span class="dm-inv-name">${i.name}</span></div>`
+  );
+
+  const section = (title, rows) => rows.length ? `
+    <div class="dm-inv-section">
+      <div class="dm-inv-head">${title}</div>
+      ${rows.join('')}
+    </div>` : '';
+
+  return section('Weapons', weaponRows) + section('Armor', armorRows) +
+         section('Cyberware', cwRows) + section('Gear', gearRows) ||
+         '<p style="color:var(--text-muted);font-size:.82rem">Kein Inventar.</p>';
+}
+
+// ── DM Controls ───────────────────────────────────────────────
+function buildControlsHtml() {
+  const c = openChar;
+  const injuries = parseInjuries(c.critical_injuries);
+  const injList = injuries.length
+    ? injuries.map((inj, i) => `
+        <div class="ctrl-inj-row">
+          <span class="ctrl-inj-name">${inj.name}</span>
+          <span class="ctrl-inj-table">${(inj.table || '').toUpperCase()}</span>
+          <button class="ctrl-inj-remove" data-idx="${i}" title="Entfernen">✕</button>
+        </div>`).join('')
+    : '<div style="font-size:.75rem;color:var(--text-muted)">Keine aktiven Injuries.</div>';
+
+  const rankOptions = Array.from({length: 11}, (_, i) =>
+    `<option value="${i}"${(c.role_ability_rank ?? 0) === i ? ' selected' : ''}>${i}</option>`
+  ).join('');
+
+  return `
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">HP</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Current HP</span>
+        <input type="number" class="ctrl-input" id="ctrlHp" value="${c.current_hp ?? 0}" min="0" max="${c.max_hp ?? 999}">
+        <button class="ctrl-btn" id="ctrlHpSave">Setzen</button>
+      </div>
+      <div class="ctrl-msg" id="ctrlHpMsg"></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">Cash</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Betrag (eb)</span>
+        <input type="number" class="ctrl-input" id="ctrlCashAmt" placeholder="500" min="0">
+        <button class="ctrl-btn" id="ctrlCashAdd">+ eb</button>
+        <button class="ctrl-btn ctrl-btn-red" id="ctrlCashSub">− eb</button>
+      </div>
+      <div style="font-size:.72rem;color:var(--text-muted)">Aktuell: ${c.cash ?? 0} eb</div>
+      <div class="ctrl-msg" id="ctrlCashMsg"></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">Improvement Points</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Betrag</span>
+        <input type="number" class="ctrl-input" id="ctrlIpAmt" placeholder="10" min="0">
+        <button class="ctrl-btn" id="ctrlIpAdd">+ IP</button>
+      </div>
+      <div style="font-size:.72rem;color:var(--text-muted)">Aktuell: ${c.improvement_points ?? 0} IP</div>
+      <div class="ctrl-msg" id="ctrlIpMsg"></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">Role Ability Rank</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Rank</span>
+        <select class="ctrl-select" id="ctrlRank">${rankOptions}</select>
+        <button class="ctrl-btn" id="ctrlRankSave">Setzen</button>
+      </div>
+      <div class="ctrl-msg" id="ctrlRankMsg"></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">Reputation</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Wert</span>
+        <input type="number" class="ctrl-input" id="ctrlRep" value="${c.reputation ?? 0}" min="0">
+        <button class="ctrl-btn" id="ctrlRepSave">Setzen</button>
+      </div>
+      <div class="ctrl-msg" id="ctrlRepMsg"></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">Humanity</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Current</span>
+        <input type="number" class="ctrl-input" id="ctrlHum" value="${c.current_humanity ?? 0}" min="0" max="${c.max_humanity ?? 999}">
+        <button class="ctrl-btn" id="ctrlHumSave">Setzen</button>
+      </div>
+      <div class="ctrl-msg" id="ctrlHumMsg"></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">Critical Injuries</div>
+      <div class="ctrl-inj-list" id="ctrlInjList">${injList}</div>
+      <div class="ctrl-row" style="margin-top:.4rem">
+        <button class="ctrl-btn" id="ctrlInjAdd">+ Injury hinzufügen</button>
+      </div>
+      <div class="ctrl-msg" id="ctrlInjMsg"></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">NPC greift an</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Würfelausdruck</span>
+        <input type="text" class="ctrl-input" id="ctrlNpcExpr" placeholder="3d6">
+        <input type="number" class="ctrl-input npc-mod-input" id="ctrlNpcMod" placeholder="±0">
+        <button class="ctrl-btn" id="ctrlNpcRoll">Würfeln</button>
+      </div>
+      <div id="ctrlNpcResult" class="npc-result" style="display:none"></div>
+      <div class="ctrl-msg" id="ctrlNpcMsg"></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-section-head">Custom Item vergeben (ohne Cash-Abzug)</div>
+      <div class="ctrl-row">
+        <div class="ctrl-item-wrap">
+          <input type="text" class="ctrl-input" id="ctrlItemSearch" placeholder="Item suchen…" autocomplete="off">
+          <div class="item-search-results" id="ctrlItemResults" style="display:none"></div>
+        </div>
+      </div>
+      <div class="ctrl-msg" id="ctrlItemMsg"></div>
+    </div>
+  `;
+}
+
+function setupControls() {
+  const c = openChar;
+
+  // HP
+  document.getElementById('ctrlHpSave').addEventListener('click', async () => {
+    const val = parseInt(document.getElementById('ctrlHp').value);
+    if (isNaN(val)) return;
+    await ctrlPatch({ current_hp: val }, 'ctrlHpMsg', `HP → ${val}`);
+  });
+
+  // Cash
+  document.getElementById('ctrlCashAdd').addEventListener('click', async () => {
+    const amt = parseInt(document.getElementById('ctrlCashAmt').value);
+    if (isNaN(amt) || amt <= 0) return;
+    await ctrlPatch({ cash: (openChar.cash ?? 0) + amt }, 'ctrlCashMsg', `+${amt} eb`);
+    document.querySelector('[style*="Aktuell: "]').textContent; // will be stale; fine
+  });
+  document.getElementById('ctrlCashSub').addEventListener('click', async () => {
+    const amt = parseInt(document.getElementById('ctrlCashAmt').value);
+    if (isNaN(amt) || amt <= 0) return;
+    const newCash = Math.max(0, (openChar.cash ?? 0) - amt);
+    await ctrlPatch({ cash: newCash }, 'ctrlCashMsg', `−${amt} eb`);
+  });
+
+  // IP
+  document.getElementById('ctrlIpAdd').addEventListener('click', async () => {
+    const amt = parseInt(document.getElementById('ctrlIpAmt').value);
+    if (isNaN(amt) || amt <= 0) return;
+    await ctrlPatch({ improvement_points: (openChar.improvement_points ?? 0) + amt }, 'ctrlIpMsg', `+${amt} IP`);
+  });
+
+  // Role Rank
+  document.getElementById('ctrlRankSave').addEventListener('click', async () => {
+    const val = parseInt(document.getElementById('ctrlRank').value);
+    await ctrlPatch({ role_ability_rank: val }, 'ctrlRankMsg', `Rank → ${val}`);
+  });
+
+  // Reputation
+  document.getElementById('ctrlRepSave').addEventListener('click', async () => {
+    const val = parseInt(document.getElementById('ctrlRep').value);
+    if (isNaN(val)) return;
+    await ctrlPatch({ reputation: val }, 'ctrlRepMsg', `Rep → ${val}`);
+  });
+
+  // Humanity
+  document.getElementById('ctrlHumSave').addEventListener('click', async () => {
+    const val = parseInt(document.getElementById('ctrlHum').value);
+    if (isNaN(val)) return;
+    await ctrlPatch({ current_humanity: val }, 'ctrlHumMsg', `Humanity → ${val}`);
+  });
+
+  // Injury remove
+  document.getElementById('ctrlInjList').addEventListener('click', async e => {
+    const btn = e.target.closest('.ctrl-inj-remove');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx);
+    const injuries = parseInjuries(openChar.critical_injuries);
+    injuries.splice(idx, 1);
+    await ctrlPatch({ critical_injuries: JSON.stringify(injuries) }, 'ctrlInjMsg', 'Injury entfernt');
+    document.getElementById('ctrlInjList').innerHTML = injuries.length
+      ? injuries.map((inj, i) => `
+          <div class="ctrl-inj-row">
+            <span class="ctrl-inj-name">${inj.name}</span>
+            <span class="ctrl-inj-table">${(inj.table || '').toUpperCase()}</span>
+            <button class="ctrl-inj-remove" data-idx="${i}" title="Entfernen">✕</button>
+          </div>`).join('')
+      : '<div style="font-size:.75rem;color:var(--text-muted)">Keine aktiven Injuries.</div>';
+  });
+
+  // Injury add
+  document.getElementById('ctrlInjAdd').addEventListener('click', () => showInjuryPicker());
+
+  // NPC greift an
+  document.getElementById('ctrlNpcRoll').addEventListener('click', () => {
+    const expr = document.getElementById('ctrlNpcExpr').value.trim();
+    if (!expr) return;
+    const mod = parseInt(document.getElementById('ctrlNpcMod').value) || 0;
+    const { total, dice } = rollNpcDamage(expr, mod);
+    logRoll({ characterId: null, characterName: 'NPC',
+      expression: mod ? `${expr}+${mod}` : expr,
+      individualRolls: dice, modifier: mod, total,
+      context: `NPC → ${openChar.name}`,
+      isCritSuccess: false, isCritFailure: false }).catch(() => {});
+    const sixCount = dice.filter(d => d.die === 6 && d.value === 6).length;
+    showNpcResult(total, dice, mod, sixCount >= 2);
+  });
+
+  // Item search
+  const searchInput = document.getElementById('ctrlItemSearch');
+  searchInput.addEventListener('input', () => {
+    clearTimeout(itemSearchTimer);
+    itemSearchTimer = setTimeout(() => runItemSearch(searchInput.value.trim()), 300);
+  });
+  searchInput.addEventListener('blur', () => {
+    setTimeout(() => { document.getElementById('ctrlItemResults').style.display = 'none'; }, 200);
+  });
+  searchInput.addEventListener('focus', () => {
+    if (searchInput.value.trim().length >= 2) runItemSearch(searchInput.value.trim());
+  });
+}
+
+// ── NPC Attack helpers ────────────────────────────────────────
+function rollNpcDamage(expr, mod) {
+  const dice = [];
+  let total = mod;
+  expr.replace(/(\d+)d(\d+)/gi, (_, n, d) => {
+    for (let i = 0; i < parseInt(n); i++) {
+      const val = Math.floor(Math.random() * parseInt(d)) + 1;
+      dice.push({ die: parseInt(d), value: val });
+      total += val;
+    }
+  });
+  return { total, dice };
+}
+
+function showNpcResult(total, dice, mod, hasCrit) {
+  const res     = document.getElementById('ctrlNpcResult');
+  const autoSp  = openChar.armor?.body?.sp ?? 0;
+  const diceStr = dice.map(d => d.value).join(', ');
+
+  res.style.display = 'block';
+  res.innerHTML = `
+    <div class="npc-roll-result">
+      <span class="npc-roll-total">${total}</span>
+      <span class="npc-roll-dice">[${diceStr}]${mod ? (mod > 0 ? ` +${mod}` : ` ${mod}`) : ''}</span>
+    </div>
+    ${hasCrit ? `<div class="npc-crit-hint">⚡ Critical Injury möglich (≥2 Sechser)!
+      <button class="ctrl-btn" id="ctrlNpcCritBtn">Crit Flow starten</button>
+    </div>` : ''}
+    <div class="ctrl-row" style="margin-top:.5rem">
+      <span class="ctrl-label">Armor SP</span>
+      <input type="number" class="ctrl-input" id="ctrlNpcSp" value="${autoSp}" min="0" style="max-width:70px">
+      <button class="ctrl-btn" id="ctrlNpcApply">Schaden anwenden</button>
+    </div>
+    <div class="npc-dmg-preview" id="ctrlNpcPreview"></div>
+  `;
+
+  const spInput = document.getElementById('ctrlNpcSp');
+  const updatePreview = () => {
+    const sp  = parseInt(spInput.value) || 0;
+    const dmg = Math.max(0, total - sp);
+    document.getElementById('ctrlNpcPreview').textContent =
+      `${total} − SP ${sp} = ${dmg} Schaden`;
+  };
+  spInput.addEventListener('input', updatePreview);
+  updatePreview();
+
+  document.getElementById('ctrlNpcApply').addEventListener('click', async () => {
+    const sp    = parseInt(document.getElementById('ctrlNpcSp').value) || 0;
+    const dmg   = Math.max(0, total - sp);
+    const newHp = Math.max(0, (openChar.current_hp ?? 0) - dmg);
+    const patch = { current_hp: newHp };
+    if (newHp === 0) patch.mortally_wounded = true;
+    await ctrlPatch(patch, 'ctrlNpcMsg',
+      `${dmg} Schaden → HP ${newHp}${newHp === 0 ? ' ⚠ MORTALLY WOUNDED' : ''}`);
+    const hpInput = document.getElementById('ctrlHp');
+    if (hpInput) hpInput.value = newHp;
+    res.style.display = 'none';
+  });
+
+  if (hasCrit) {
+    document.getElementById('ctrlNpcCritBtn').addEventListener('click', () => {
+      res.style.display = 'none';
+      showInjuryPicker();
+    });
+  }
+}
+
+async function ctrlPatch(patch, msgId, successText) {
+  const msgEl = document.getElementById(msgId);
+  if (msgEl) { msgEl.textContent = ''; msgEl.style.color = 'var(--cyan)'; }
+  try {
+    await patchCharacter(openChar.id, patch);
+    Object.assign(openChar, patch);
+    // update chars[] too
+    const idx = chars.findIndex(c => c.id === openChar.id);
+    if (idx !== -1) Object.assign(chars[idx], patch);
+    renderGrid();
+    if (msgEl) msgEl.textContent = `✓ ${successText}`;
+  } catch (e) {
+    if (msgEl) { msgEl.textContent = `Fehler: ${e.message}`; msgEl.style.color = 'var(--red)'; }
+  }
+}
+
+// ── Injury Picker ─────────────────────────────────────────────
+function showInjuryPicker() {
+  if (!injData) {
+    document.getElementById('ctrlInjMsg').textContent = 'Injury-Daten nicht geladen.';
+    return;
+  }
+  // Phase 1: Head/Body
+  const msg = document.getElementById('ctrlInjMsg');
+  msg.innerHTML = `
+    <span style="color:var(--text)">Tabelle wählen: </span>
+    <button class="ctrl-btn" id="injPickHead" style="margin:0 .25rem">Head</button>
+    <button class="ctrl-btn" id="injPickBody" style="margin:0 .25rem">Body</button>
+    <button class="ctrl-btn" id="injPickCancel" style="color:var(--text-muted)">Abbrechen</button>
+  `;
+  document.getElementById('injPickHead').addEventListener('click', () => rollAndPick('head'));
+  document.getElementById('injPickBody').addEventListener('click', () => rollAndPick('body'));
+  document.getElementById('injPickCancel').addEventListener('click', () => { msg.innerHTML = ''; });
+}
+
+function rollAndPick(table) {
+  const tableData = injData[table];
+  if (!tableData) return;
+  const roll = Math.floor(Math.random() * 6) + Math.floor(Math.random() * 6) + 2; // 2d6
+  const inj  = tableData.find(i => i.roll === roll) || tableData[tableData.length - 1];
+  showInjuryResult(inj, roll, table);
+}
+
+function showInjuryResult(inj, rollVal, table) {
+  const msg = document.getElementById('ctrlInjMsg');
+  msg.innerHTML = `
+    <div style="background:rgba(255,45,45,.08);border:1px solid var(--red);border-radius:var(--radius);padding:.6rem .75rem;margin-top:.4rem">
+      <div style="font-family:var(--font-display);color:var(--red);font-size:.9rem">${inj.name}</div>
+      <div style="font-size:.65rem;color:var(--text-muted);margin:.2rem 0">${table.toUpperCase()} · 2d6 = ${rollVal}</div>
+      ${inj.effect ? `<div style="font-size:.75rem;color:var(--text);margin-top:.3rem">${inj.effect}</div>` : ''}
+      <div style="display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap">
+        <button class="ctrl-btn" id="injApplyBtn">Hinzufügen (−5 HP)</button>
+        <button class="ctrl-btn" id="injRerollBtn">Neu würfeln</button>
+        <button class="ctrl-btn" id="injCancelBtn" style="color:var(--text-muted)">Abbrechen</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('injApplyBtn').addEventListener('click', () => applyInjury(inj, table));
+  document.getElementById('injRerollBtn').addEventListener('click', () => rollAndPick(table));
+  document.getElementById('injCancelBtn').addEventListener('click', () => { document.getElementById('ctrlInjMsg').innerHTML = ''; });
+}
+
+async function applyInjury(inj, table) {
+  const injuries = parseInjuries(openChar.critical_injuries);
+  injuries.push({ ...inj, table });
+  const newHp = Math.max(0, (openChar.current_hp ?? 0) - 5);
+  await ctrlPatch(
+    { critical_injuries: JSON.stringify(injuries), current_hp: newHp },
+    'ctrlInjMsg', `${inj.name} hinzugefügt, −5 HP`
+  );
+  // Re-render injury list
+  document.getElementById('ctrlInjList').innerHTML = injuries.map((i2, idx) => `
+    <div class="ctrl-inj-row">
+      <span class="ctrl-inj-name">${i2.name}</span>
+      <span class="ctrl-inj-table">${(i2.table || '').toUpperCase()}</span>
+      <button class="ctrl-inj-remove" data-idx="${idx}" title="Entfernen">✕</button>
+    </div>`).join('');
+  document.getElementById('ctrlHp').value = newHp;
+}
+
+// ── Custom Item Grant ─────────────────────────────────────────
+function routeItem(item) {
+  if (['Ranged Weapon','Melee Weapon','Exotic Weapon'].includes(item.category)) return 'weapons';
+  if (item.category === 'Armor')     return 'armor';
+  if (item.category === 'Cyberware') return 'cyberware';
+  return 'gear';
+}
+
+function buildSnapshot(item) {
+  const x = item.extra || {};
+  switch (routeItem(item)) {
+    case 'weapons':
+      return { name: item.name, damage: item.damage || null, ammo: item.ammo || null,
+               rof: item.rof || null, notes: item.notes || null,
+               price: item.price, raw_cost: item.raw_cost, category: item.category };
+    case 'armor':
+      return { name: item.name, sp: parseInt(x.sp) || 0,
+               penalty: (x.armor_penalty && x.armor_penalty !== 'None') ? parseInt(x.armor_penalty) || 0 : 0,
+               notes: item.notes || null, price: item.price, raw_cost: item.raw_cost };
+    case 'cyberware':
+      return { name: item.name, notes: item.notes || null,
+               install: x.install || null, humanity_loss: x.humanity_loss || null,
+               price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null };
+    default:
+      return { name: item.name, notes: item.notes || null,
+               price: item.price, raw_cost: item.raw_cost };
+  }
+}
+
+async function runItemSearch(query) {
+  const resultsEl = document.getElementById('ctrlItemResults');
+  if (query.length < 2) { resultsEl.style.display = 'none'; return; }
+
+  // Lazy-load item cache
+  if (!itemsCache.length) {
+    try { itemsCache = await getItems([]); } catch { return; }
+  }
+
+  const q = query.toLowerCase();
+  const matches = itemsCache.filter(i => i.name.toLowerCase().includes(q)).slice(0, 20);
+
+  if (!matches.length) {
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = '<div class="item-search-empty">Kein Item gefunden.</div>';
+    return;
+  }
+
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = matches.map(item => `
+    <div class="item-search-row" data-id="${item.id}">
+      <span>${item.name}</span>
+      <span class="isr-price">${item.price != null ? item.price + ' eb' : '—'}</span>
+    </div>`).join('');
+
+  resultsEl.querySelectorAll('.item-search-row').forEach(row => {
+    row.addEventListener('click', async () => {
+      const item = itemsCache.find(i => i.id === row.dataset.id);
+      if (!item) return;
+      resultsEl.style.display = 'none';
+      document.getElementById('ctrlItemSearch').value = '';
+      await grantItem(item);
+    });
+  });
+}
+
+async function grantItem(item) {
+  const dest     = routeItem(item);
+  const snapshot = buildSnapshot(item);
+  const c        = openChar;
+  const patch    = {};
+
+  if (dest === 'weapons') {
+    patch.weapons   = [...(Array.isArray(c.weapons) ? c.weapons : []), snapshot];
+  } else if (dest === 'cyberware') {
+    patch.cyberware = [...(Array.isArray(c.cyberware) ? c.cyberware : []), snapshot];
+  } else if (dest === 'gear') {
+    patch.gear      = [...(Array.isArray(c.gear) ? c.gear : []), snapshot];
+  } else if (dest === 'armor') {
+    patch.armor     = { ...(c.armor || {}), body: snapshot };
+  }
+
+  await ctrlPatch(patch, 'ctrlItemMsg', `${item.name} hinzugefügt`);
+}
+</script>
+
+</body>
+</html>

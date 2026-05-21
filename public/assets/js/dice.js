@@ -10,24 +10,10 @@ import { logRoll } from './supabase.js';
 // ── @3d-dice/dice-box (optional) ─────────────────────────────
 let diceBox = null;
 
-export async function initDiceBox(containerSelector) {
-  try {
-    const { default: DiceBox } = await import(
-      'https://unpkg.com/@3d-dice/dice-box@1.1.4/dist/dice-box.es.js'
-    );
-    diceBox = new DiceBox(containerSelector, {
-      assetPath: 'https://unpkg.com/@3d-dice/dice-box@1.1.4/dist/assets/',
-      themeColor: '#FF2D2D',
-      scale: 6,
-      offscreen: true,
-      enableShadows: true,
-    });
-    await diceBox.init();
-    console.log('[dice] dice-box ready');
-  } catch (e) {
-    console.warn('[dice] dice-box unavailable → CSS fallback:', e.message);
-    diceBox = null;
-  }
+export async function initDiceBox(_containerSelector) {
+  // 3D dice-box disabled — asset loading from CDN fails on localhost (Babylon.js URL error).
+  // CSS fallback is used instead; roll math and crit detection are unaffected.
+  diceBox = null;
 }
 
 // ── Core roll engine ─────────────────────────────────────────

@@ -26,6 +26,7 @@ create table if not exists characters (
   death_save int default 0,
   cash int default 0,
   improvement_points int default 0,
+  role_ability_rank int default 0,
   reputation int default 0,
 
   -- Big jsonb blobs (mirror character sheet sections)
@@ -38,6 +39,7 @@ create table if not exists characters (
 
   -- Status text
   critical_injuries text,
+  mortally_wounded boolean default false,
   addictions text,
   notes text,
 

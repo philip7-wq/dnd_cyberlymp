@@ -158,7 +158,8 @@
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: .85rem 1rem; margin-bottom: .6rem;
 }
-.weapon-name { font-family: var(--font-display); font-size: 1rem; color: var(--text-head); margin-bottom: .5rem; }
+.weapon-name { font-family: var(--font-display); font-size: 1rem; color: var(--text-head); margin-bottom: .5rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.gear-item-name { color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .weapon-stats { display: flex; flex-wrap: wrap; gap: .4rem .8rem; font-size: .8rem; }
 .ws-pair { display: flex; flex-direction: column; }
 .ws-label { font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); }
@@ -195,7 +196,6 @@
   padding: .4rem .75rem; background: var(--bg-card);
   border: 1px solid var(--border); border-radius: var(--radius); font-size: .88rem;
 }
-.gear-item-name  { color: var(--text); }
 .gear-item-notes { color: var(--text-muted); font-size: .75rem; }
 
 /* ── Lifepath ── */
@@ -208,6 +208,69 @@
   border-radius: var(--radius); padding: .45rem .75rem;
 }
 .lp-val:empty::after { content: '—'; color: var(--text-muted); }
+
+/* ── Critical Injury Modal ── */
+.crit-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1200;
+                      display:flex;align-items:center;justify-content:center;padding:1rem; }
+.crit-modal-overlay[hidden] { display:none; }
+.crit-modal-box { background:var(--bg-card);border:2px solid var(--red);
+                  border-radius:var(--radius);padding:1.5rem;max-width:440px;width:100%;
+                  max-height:85vh;overflow-y:auto; }
+.crit-modal-title { font-family:var(--font-display);color:var(--red);font-size:1rem;
+                    letter-spacing:.1em;margin-bottom:.5rem; }
+.crit-modal-sub   { font-size:.82rem;color:var(--text-muted);margin-bottom:1rem; }
+.crit-injury-name { font-family:var(--font-display);font-size:1.25rem;color:var(--red);
+                    margin-bottom:.1rem; }
+.crit-roll-info   { font-size:.72rem;color:var(--text-muted);margin-bottom:.75rem; }
+.crit-divider     { border:none;border-top:1px solid var(--border);margin:.75rem 0; }
+.crit-field-row   { margin-top:.45rem; }
+.crit-field-key   { font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted); }
+.crit-field-val   { font-size:.82rem;color:var(--text); }
+.crit-bonus-dmg   { margin:.85rem 0;padding:.5rem .75rem;
+                    background:rgba(255,45,45,.1);border:1px solid var(--red);
+                    border-radius:var(--radius);font-size:.8rem;color:var(--red); }
+.crit-modal-btns  { display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap; }
+.crit-already     { font-size:.75rem;color:var(--red);margin-bottom:.5rem; }
+
+/* ── Injuries tab ── */
+.injury-badge  { background:var(--red);color:#fff;border-radius:10px;font-size:.58rem;
+                 padding:.05rem .35rem;margin-left:.3rem;vertical-align:middle; }
+.injury-card   { background:var(--bg-card);border:1px solid var(--red);
+                 border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:.5rem; }
+.injury-header { display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem; }
+.injury-name   { font-family:var(--font-display);color:var(--red);font-size:.9rem;flex:1; }
+.injury-table  { font-size:.62rem;color:var(--text-muted);padding:.1rem .4rem;
+                 border:1px solid var(--border);border-radius:2px;text-transform:uppercase; }
+.injury-effect { font-size:.82rem;color:var(--text);margin-bottom:.4rem;line-height:1.5; }
+.injury-meta   { font-size:.75rem;color:var(--text-muted);margin-top:.2rem; }
+.inj-key       { font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;
+                 color:var(--text-muted);margin-right:.25rem; }
+
+/* ── Remove button (on inventory items) ── */
+.remove-btn {
+  font-size: .62rem; padding: .1rem .32rem; line-height: 1;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-muted); border-radius: 2px; cursor: pointer;
+  flex-shrink: 0;
+}
+.remove-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ── Item tooltip ── */
+.item-tooltip {
+  position: fixed; z-index: 1100;
+  background: var(--bg-card); border: 1px solid var(--cyan);
+  border-radius: var(--radius); padding: .65rem .85rem;
+  max-width: 260px; min-width: 160px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.7);
+  pointer-events: none;
+}
+.item-tooltip[hidden] { display: none; }
+.itp-name  { font-family: var(--font-display); font-size: .75rem; color: var(--text-head); margin-bottom: .35rem; }
+.itp-notes { font-size: .7rem; color: var(--text-muted); line-height: 1.45; margin-bottom: .4rem; }
+.itp-meta  { display: flex; flex-direction: column; gap: .18rem; }
+.itp-row   { display: flex; justify-content: space-between; align-items: center; gap: .5rem; font-size: .72rem; }
+.itp-key   { color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; font-size: .62rem; flex-shrink: 0; }
+.itp-val   { color: var(--cyan); text-align: right; }
 
 /* ── Floating dice button ── */
 .dice-fab {

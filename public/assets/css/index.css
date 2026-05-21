@@ -1,0 +1,110 @@
+/* ============================================================
+   index.css — LZRV Hub Startseite
+   ============================================================ */
+
+body {
+  margin: 0; min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.hub-wrap {
+  position: relative; width: 100%; min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2rem;
+  padding: 2rem; box-sizing: border-box; overflow: hidden;
+}
+
+/* ── Scanlines ── */
+.hub-scanlines {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px
+  );
+}
+
+/* ── Logo ── */
+.hub-header { text-align: center; position: relative; z-index: 1; }
+.hub-logo {
+  font-family: var(--font-display); font-size: clamp(2.5rem, 8vw, 5rem);
+  color: var(--text-head); letter-spacing: .15em;
+  animation: neon-pulse 3s ease-in-out infinite;
+  line-height: 1;
+}
+.hub-logo span { color: var(--red); }
+
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 8px  rgba(255,45,45,.4),
+      0 0 20px rgba(255,45,45,.2);
+  }
+  50% {
+    text-shadow:
+      0 0 16px rgba(255,45,45,.7),
+      0 0 40px rgba(255,45,45,.4),
+      0 0 80px rgba(255,45,45,.15);
+  }
+}
+
+.hub-subtitle {
+  font-family: var(--font-display); font-size: .65rem;
+  letter-spacing: .35em; color: var(--text-muted); margin-top: .65rem;
+}
+
+/* ── Card ── */
+.hub-card {
+  position: relative; z-index: 1;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 2rem;
+  width: 100%; max-width: 380px;
+  display: flex; flex-direction: column; gap: 1.25rem;
+}
+
+/* ── Select ── */
+.hub-label {
+  display: block; font-size: .58rem; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: .4rem;
+}
+.hub-select {
+  width: 100%; padding: .6rem .75rem; background: var(--bg-input);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); font-family: var(--font-body); font-size: .9rem;
+  cursor: pointer; appearance: none; box-sizing: border-box;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23686880' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right .75rem center;
+}
+.hub-select:focus { outline: none; border-color: var(--cyan); }
+
+/* ── Buttons ── */
+.hub-actions { display: flex; flex-direction: column; gap: .6rem; }
+.btn-hub {
+  width: 100%; padding: .75rem; border-radius: var(--radius);
+  font-family: var(--font-display); font-size: .85rem; letter-spacing: .1em;
+  text-transform: uppercase; cursor: pointer; transition: var(--transition); border: none;
+}
+.btn-hub-primary { background: var(--red); color: #fff; }
+.btn-hub-primary:hover:not(:disabled) { background: var(--red-dim); }
+.btn-hub-primary:disabled { opacity: .35; cursor: default; }
+.btn-hub-ghost {
+  background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+}
+.btn-hub-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* ── Upload link ── */
+.hub-upload-link {
+  text-align: center; font-size: .75rem; color: var(--text-muted);
+  text-decoration: none; transition: var(--transition);
+}
+.hub-upload-link:hover { color: var(--cyan); }
+
+/* ── Loader / Error ── */
+.hub-loader {
+  font-family: var(--font-display); font-size: .72rem;
+  letter-spacing: .2em; color: var(--text-muted);
+  position: relative; z-index: 1;
+}
+.hub-error {
+  color: var(--red); font-size: .8rem;
+  position: relative; z-index: 1;
+}

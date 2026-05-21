@@ -1,0 +1,167 @@
+{
+  "source": "Cyberpunk RED Core Rulebook, pg. 187-188",
+  "trigger_rule": "Whenever two or more dice rolled for damage from a Melee or Ranged Attack come up 6, you've inflicted a Critical Injury.",
+  "table_selection": "If the attack was an Aimed Shot to the head, roll on the Head table. Otherwise roll on the Body table.",
+  "bonus_damage_rule": "All Critical Injuries deal 5 Bonus Damage directly to the target's Hit Points. This Bonus Damage does NOT ablate armor and is NOT modified by hit location. It is inflicted regardless of whether any of the attack's damage got through SP.",
+  "reroll_rule": "Roll 2d6 on the table until you get an injury the target isn't currently suffering.",
+
+  "body": [
+    {
+      "roll": 2,
+      "name": "Dismembered Arm",
+      "effect": "The Dismembered Arm is gone. You drop any items in that dismembered arm's hand immediately. Base Death Save Penalty is increased by 1.",
+      "quick_fix": "N/A",
+      "treatment": "Surgery DV17"
+    },
+    {
+      "roll": 3,
+      "name": "Dismembered Hand",
+      "effect": "The Dismembered Hand is gone. You drop any items in the dismembered hand immediately. Base Death Save Penalty is increased by 1.",
+      "quick_fix": "N/A",
+      "treatment": "Surgery DV17"
+    },
+    {
+      "roll": 4,
+      "name": "Collapsed Lung",
+      "effect": "-2 to MOVE (minimum 1). Base Death Save Penalty is increased by 1.",
+      "quick_fix": "Paramedic DV15",
+      "treatment": "Surgery DV15"
+    },
+    {
+      "roll": 5,
+      "name": "Broken Ribs",
+      "effect": "At the end of every Turn where you move further than 4m/yds on foot, you re-suffer this Critical Injury's Bonus Damage directly to your Hit Points.",
+      "quick_fix": "Paramedic DV13",
+      "treatment": "Paramedic DV15 or Surgery DV13"
+    },
+    {
+      "roll": 6,
+      "name": "Broken Arm",
+      "effect": "The Broken Arm cannot be used. You drop any items in that arm's hand immediately.",
+      "quick_fix": "Paramedic DV13",
+      "treatment": "Paramedic DV15 or Surgery DV13"
+    },
+    {
+      "roll": 7,
+      "name": "Foreign Object",
+      "effect": "At the end of every Turn where you move further than 4m/yds on foot, you re-suffer this Critical Injury's Bonus Damage directly to your Hit Points.",
+      "quick_fix": "First Aid or Paramedic DV13",
+      "treatment": "Quick Fix removes Injury Effect permanently"
+    },
+    {
+      "roll": 8,
+      "name": "Broken Leg",
+      "effect": "-4 to MOVE (minimum 1)",
+      "quick_fix": "Paramedic DV13",
+      "treatment": "Paramedic DV15 or Surgery DV13"
+    },
+    {
+      "roll": 9,
+      "name": "Torn Muscle",
+      "effect": "-2 to Melee Attacks",
+      "quick_fix": "First Aid or Paramedic DV13",
+      "treatment": "Quick Fix removes Injury Effect permanently"
+    },
+    {
+      "roll": 10,
+      "name": "Spinal Injury",
+      "effect": "Next Turn, you cannot take an Action, but you can still take a Move Action. Base Death Save Penalty is increased by 1.",
+      "quick_fix": "Paramedic DV15",
+      "treatment": "Surgery DV15"
+    },
+    {
+      "roll": 11,
+      "name": "Crushed Fingers",
+      "effect": "-4 to all Actions involving that hand",
+      "quick_fix": "Paramedic DV13",
+      "treatment": "Surgery DV15"
+    },
+    {
+      "roll": 12,
+      "name": "Dismembered Leg",
+      "effect": "The Dismembered Leg is gone. -6 to MOVE (minimum 1). You cannot dodge attacks. Base Death Save Penalty is increased by 1.",
+      "quick_fix": "N/A",
+      "treatment": "Surgery DV17"
+    }
+  ],
+
+  "head": [
+    {
+      "roll": 2,
+      "name": "Lost Eye",
+      "effect": "The Lost Eye is gone. -4 to Ranged Attacks & Perception Checks involving vision. Base Death Save Penalty is increased by 1.",
+      "quick_fix": "N/A",
+      "treatment": "Surgery DV17"
+    },
+    {
+      "roll": 3,
+      "name": "Brain Injury",
+      "effect": "-2 to all Actions. Base Death Save Penalty is increased by 1.",
+      "quick_fix": "N/A",
+      "treatment": "Surgery DV17"
+    },
+    {
+      "roll": 4,
+      "name": "Damaged Eye",
+      "effect": "-2 to Ranged Attacks & Perception Checks involving vision.",
+      "quick_fix": "Paramedic DV15",
+      "treatment": "Surgery DV13"
+    },
+    {
+      "roll": 5,
+      "name": "Concussion",
+      "effect": "-2 to all Actions",
+      "quick_fix": "First Aid or Paramedic DV13",
+      "treatment": "Quick Fix removes Injury Effect permanently"
+    },
+    {
+      "roll": 6,
+      "name": "Broken Jaw",
+      "effect": "-4 to all Actions involving speech",
+      "quick_fix": "Paramedic DV13",
+      "treatment": "Paramedic or Surgery DV13"
+    },
+    {
+      "roll": 7,
+      "name": "Foreign Object",
+      "effect": "At the end of every Turn where you move further than 4m/yds on foot, you re-suffer this Critical Injury's Bonus Damage directly to your Hit Points.",
+      "quick_fix": "First Aid or Paramedic DV13",
+      "treatment": "Quick Fix removes Injury Effect permanently"
+    },
+    {
+      "roll": 8,
+      "name": "Whiplash",
+      "effect": "Base Death Save Penalty is increased by 1.",
+      "quick_fix": "Paramedic DV13",
+      "treatment": "Paramedic or Surgery DV13"
+    },
+    {
+      "roll": 9,
+      "name": "Cracked Skull",
+      "effect": "Aimed Shots to your head multiply the damage that gets through your SP by 3 instead of 2. Base Death Save Penalty is increased by 1.",
+      "quick_fix": "Paramedic DV15",
+      "treatment": "Paramedic or Surgery DV15"
+    },
+    {
+      "roll": 10,
+      "name": "Damaged Ear",
+      "effect": "Whenever you move further than 4m/yds on foot in a Turn, you cannot take a Move Action on your next Turn. Additionally you take a -2 to Perception Checks involving hearing.",
+      "quick_fix": "Paramedic DV13",
+      "treatment": "Surgery DV13"
+    },
+    {
+      "roll": 11,
+      "name": "Crushed Windpipe",
+      "effect": "You cannot speak. Base Death Save Penalty is increased by 1.",
+      "quick_fix": "N/A",
+      "treatment": "Surgery DV15"
+    },
+    {
+      "roll": 12,
+      "name": "Lost Ear",
+      "effect": "The Lost Ear is gone. Whenever you move further than 4m/yds on foot in a Turn, you cannot take a Move Action on your next Turn. Additionally you take a -4 to Perception Checks involving hearing. Base Death Save Penalty is increased by 1.",
+      "quick_fix": "N/A",
+      "treatment": "Surgery DV17"
+    }
+  ]
+}

@@ -1,88 +1,146 @@
 // ============================================================
 // PDF AcroForm parser — Cyberpunk RED character sheet
-// Uses PDF.js (Mozilla) via ESM CDN — reads Widget annotations
-// directly instead of pdf-lib's form abstraction which misses
-// many real-world PDFs.
+// Uses pdf-lib direct getField(name) lookup (works where
+// getFields() iteration fails on this PDF's structure).
 // ============================================================
 
-// PDF.js is loaded as a UMD <script> in upload.html → available as window.pdfjsLib.
-// Accessing a global from inside an ES module is valid; no import needed.
-const pdfjsLib = window.pdfjsLib;
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-
-const STAT_NAMES = ['INT', 'REF', 'DEX', 'TECH', 'COOL', 'WILL', 'MOVE', 'BODY', 'EMP'];
+import { PDFDocument, PDFTextField, PDFCheckBox, PDFDropdown, PDFRadioGroup }
+  from 'https://esm.sh/pdf-lib@1.17.1';
 
 /**
- * Main entry point.
  * @param {ArrayBuffer} arrayBuffer
  * @returns {{ character: object, imageBlob: Blob|null, _raw: object }}
  */
 export async function parsePDF(arrayBuffer) {
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+  const form   = pdfDoc.getForm();
 
-  const raw = await collectAnnotations(pdf);
+  const raw = collectFields(form);
 
-  console.log('[pdf-parser] raw fields:', raw);
+  const fieldCount = Object.keys(raw).length;
+  console.log(`[pdf-parser] ${fieldCount} fields read`);
+  if (fieldCount > 0) {
+    console.log('[pdf-parser] raw fields (JSON):', JSON.stringify(raw, null, 2));
+  } else {
+    console.warn('[pdf-parser] No fields could be read — check field names');
+  }
 
   return {
     character: mapToCharacter(raw),
-    imageBlob: null,   // manual portrait upload is the primary path
+    imageBlob: null,
     _raw: raw,
   };
 }
 
-// ── Annotation collection (all pages) ───────────────────────
+// ── Field accessor ────────────────────────────────────────────
 
-async function collectAnnotations(pdf) {
+function getVal(form, name) {
+  try {
+    const field = form.getField(name);
+    if (field instanceof PDFTextField)  return field.getText() ?? '';
+    if (field instanceof PDFCheckBox)   return field.isChecked();
+    if (field instanceof PDFDropdown)   return field.getSelected()[0] ?? '';
+    if (field instanceof PDFRadioGroup) return field.getSelected() ?? '';
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+// ── Enumerate all known field names ──────────────────────────
+
+const STAT_FIELDS = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP','EMP MAX'];
+
+const HP_FIELDS = [
+  'Current HP','Max HP','Current Humanity',
+  'LUCK CURRENT','LUCK MAX',
+  'Death Save','Seriously Wounded Threshhold',
+];
+
+const IDENTITY_FIELDS = [
+  'Handle','Role','Aliases','Role Ability','Role Ability Rank',
+];
+
+const RESOURCE_FIELDS = [
+  'Cash','Ammo','Reputation','Total IP','Current IP',
+  'Housing','Rent','Lifestyle',
+];
+
+const LIFEPATH_FIELDS = [
+  'Cultural Origins','Personality','Family Crisis','Life Goals',
+  'Friend 1','Friend 2','Friend 3',
+  'Love Affair 1','Love Affair 2','Love Affair 3',
+  'Who 1','Who 2','Who 3',
+  'What Caused It','Throw At You','Happen',
+];
+
+const ARMOR_FIELDS = [
+  'Head Armor','SPHead','PENALTYHead',
+  'Body Armor','SPBody','PENALTYBody',
+  'Shield','SPShield','PENALTYShield',
+];
+
+// All Cyberpunk RED skills: [fieldBaseName, stat]
+const ALL_SKILLS = [
+  // Awareness
+  ['Concentration','WILL'],['Conceal/Reveal Object','INT'],['Lip Reading','INT'],
+  ['Perception','INT'],['Tracking','INT'],
+  // Body
+  ['Athletics','DEX'],['Contortionist','DEX'],['Dance','DEX'],['Endurance','WILL'],
+  ['Resist Torture/Drugs','WILL'],['Stealth','DEX'],
+  // Control
+  ['Drive Land Vehicle','REF'],['Pilot Air Vehicle','REF'],['Pilot Sea Vehicle','REF'],
+  ['Riding','REF'],
+  // Education
+  ['Accounting','INT'],['Animal Handling','INT'],['Bureaucracy','INT'],
+  ['Business','INT'],['Composition','INT'],['Criminology','INT'],
+  ['Cryptography','INT'],['Deduction','INT'],['Education','INT'],
+  ['Gamble','INT'],['Language (Streetslang)','INT'],['Language (2nd)','INT'],
+  ['Language (3rd)','INT'],['Library Search','INT'],['Local Expert (Home)','INT'],
+  ['Local Expert (2)','INT'],['Paramedic','INT'],['Pharmacology','INT'],
+  ['Photography','INT'],['Science (Biology)','INT'],['Science (Chemistry)','INT'],
+  ['Science (Math)','INT'],['Science (Physics)','INT'],['Science (2nd)','INT'],
+  ['Tactics','INT'],['Wilderness Survival','INT'],['Zoology','INT'],
+  // Fighting
+  ['Brawling','DEX'],['Evasion','DEX'],['Martial Arts','DEX'],['Melee Weapon','DEX'],
+  // Performance
+  ['Acting','COOL'],['Play Instrument','TECH'],
+  // Ranged Weapon
+  ['Archery','REF'],['Autofire','REF'],['Handgun','REF'],['Heavy Weapons','REF'],
+  ['Shoulder Arms','REF'],
+  // Social
+  ['Bribery','COOL'],['Conversation','EMP'],['Human Perception','EMP'],
+  ['Interrogation','COOL'],['Persuasion','COOL'],['Personal Grooming','COOL'],
+  ['Streetwise','COOL'],['Trading','COOL'],['Wardrobe & Style','COOL'],
+  // Technique
+  ['Air Vehicle Tech','TECH'],['Basic Tech','TECH'],['Cybertech','TECH'],
+  ['Demolitions','TECH'],['Electronics/Security Tech','TECH'],['First Aid','TECH'],
+  ['Forgery','TECH'],['Land Vehicle Tech','TECH'],['Paint/Draw/Sculpt','TECH'],
+  ['Pickpocket','TECH'],['Sea Vehicle Tech','TECH'],['Weaponstech','TECH'],
+];
+
+// ── Collect all fields into raw object ───────────────────────
+
+function collectFields(form) {
   const raw = {};
 
-  for (let p = 1; p <= pdf.numPages; p++) {
-    const page  = await pdf.getPage(p);
-    const annots = await page.getAnnotations();
+  const readList = (names) => {
+    for (const n of names) raw[n] = getVal(form, n);
+  };
 
-    for (const ann of annots) {
-      if (ann.subtype !== 'Widget') continue;
+  readList(STAT_FIELDS);
+  readList(HP_FIELDS);
+  readList(IDENTITY_FIELDS);
+  readList(RESOURCE_FIELDS);
+  readList(LIFEPATH_FIELDS);
+  readList(ARMOR_FIELDS);
 
-      const name = ann.fieldName;
-      if (!name) continue;
-
-      const value = readAnnotValue(ann);
-
-      // Keep first non-empty value when a logical field spans pages
-      if (name in raw) {
-        if (value !== null && value !== '' && value !== false) raw[name] = value;
-      } else {
-        raw[name] = value;
-      }
-    }
+  // Skills
+  for (const [name, stat] of ALL_SKILLS) {
+    raw[`LVL${name} ${stat}`] = getVal(form, `LVL${name} ${stat}`);
   }
 
   return raw;
-}
-
-function readAnnotValue(ann) {
-  switch (ann.fieldType) {
-    case 'Tx':
-      return ann.fieldValue ?? '';
-
-    case 'Btn':
-      if (ann.checkBox) {
-        // checked when fieldValue is not 'Off' / empty
-        const v = ann.fieldValue;
-        return v != null && v !== 'Off' && v !== '';
-      }
-      if (ann.radioButton) return ann.fieldValue ?? '';
-      return null;   // pushbutton (e.g. Character Image)
-
-    case 'Ch':
-      return Array.isArray(ann.fieldValue)
-        ? (ann.fieldValue[0] ?? '')
-        : (ann.fieldValue ?? '');
-
-    default:
-      return ann.fieldValue ?? null;
-  }
 }
 
 // ── Field → character schema mapping ────────────────────────
@@ -123,10 +181,10 @@ function mapToCharacter(f) {
     reputation:                  int(f['Reputation']),
 
     skills:    extractSkills(f),
-    weapons:   extractWeapons(f),
+    weapons:   [],
     armor:     extractArmor(f),
-    gear:      extractGear(f),
-    cyberware: extractCyberware(f),
+    gear:      [],
+    cyberware: {},
     lifepath:  extractLifepath(f),
 
     notes: str(f['Notes']),
@@ -137,35 +195,12 @@ function mapToCharacter(f) {
 
 function extractSkills(f) {
   const skills = {};
-  for (const [key, val] of Object.entries(f)) {
-    if (!key.startsWith('LVL')) continue;
-    for (const stat of STAT_NAMES) {
-      if (key.endsWith(' ' + stat)) {
-        const skillName = key.slice(3, -(stat.length + 1));
-        if (skillName) skills[skillName] = { lvl: int(val), stat };
-        break;
-      }
-    }
+  for (const [name, stat] of ALL_SKILLS) {
+    const key = `LVL${name} ${stat}`;
+    const lvl = int(f[key]);
+    if (lvl || key in f) skills[name] = { lvl, stat };
   }
   return skills;
-}
-
-// ── Weapons ──────────────────────────────────────────────────
-
-function extractWeapons(f) {
-  const weapons = [];
-  for (let i = 1; i <= 6; i++) {
-    const name = str(f[`WEAPONRow${i}`]);
-    if (!name) continue;
-    weapons.push({
-      name,
-      damage: str(f[`DMGRow${i}`]),
-      ammo:   str(f[`AMMORow${i}`]),
-      rof:    str(f[`ROFRow${i}`]),
-      notes:  str(f[`NOTESRow${i}`]),
-    });
-  }
-  return weapons;
 }
 
 // ── Armor ────────────────────────────────────────────────────
@@ -176,50 +211,6 @@ function extractArmor(f) {
     body:   { name: str(f['Body Armor']), sp: int(f['SPBody']),   penalty: int(f['PENALTYBody']) },
     shield: { name: str(f['Shield']),     sp: int(f['SPShield']), penalty: int(f['PENALTYShield']) },
   };
-}
-
-// ── Gear ─────────────────────────────────────────────────────
-
-function extractGear(f) {
-  const gear = [];
-  for (let i = 1; i <= 18; i++) {
-    const name = str(f[`Gear ${i}`]);
-    if (!name) continue;
-    gear.push({ name, notes: str(f[`Gear Notes ${i}`]) });
-  }
-  return gear;
-}
-
-// ── Cyberware ────────────────────────────────────────────────
-
-const CYBERWARE_SLOTS = [
-  ['rightEye',   'R Eye',  6],
-  ['leftEye',    'L Eye',  6],
-  ['rightArm',   'R Arm',  6],
-  ['leftArm',    'L Arm',  6],
-  ['rightLeg',   'R Leg',  6],
-  ['leftLeg',    'L Leg',  6],
-  ['audio',      'Audio',  6],
-  ['neuralLink', 'Link',   10],
-  ['internal',   'IC',     6],
-  ['external',   'EC',     6],
-  ['fashion',    'FW',     6],
-  ['borgware',   'Borg',   6],
-];
-
-function extractCyberware(f) {
-  const cyberware = {};
-  for (const [key, prefix, max] of CYBERWARE_SLOTS) {
-    const has   = f[`${prefix} Box`] === true;
-    const slots = [];
-    for (let i = 1; i <= max; i++) {
-      const option = str(f[`${prefix} ${i}`]);
-      const data   = str(f[`${prefix}Data ${i}`]);
-      if (option || data) slots.push({ option, data });
-    }
-    if (has || slots.length) cyberware[key] = { has, slots };
-  }
-  return cyberware;
 }
 
 // ── Lifepath ─────────────────────────────────────────────────

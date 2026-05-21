@@ -21,6 +21,7 @@
 <nav class="nav" id="topNav" style="display:none">
   <span class="nav-logo">LZRV<span>HUB</span></span>
   <span id="navName" style="font-family:var(--font-display);font-size:.85rem;color:var(--red);margin-left:.75rem"></span>
+  <a id="shopLink" href="#" class="btn btn-ghost" style="font-size:.75rem">Shop</a>
   <a href="index.html" class="btn btn-ghost" style="margin-left:auto;font-size:.75rem">← Übersicht</a>
 </nav>
 
@@ -78,6 +79,7 @@
   <button class="tab-btn" data-tab="cyberware">Cyberware</button>
   <button class="tab-btn" data-tab="gear">Gear</button>
   <button class="tab-btn" data-tab="lifepath">Lifepath</button>
+  <button class="tab-btn" data-tab="injuries">Injuries<span id="injuryBadge" class="injury-badge" hidden></span></button>
 </div>
 
 <!-- ── Tab panels ── -->
@@ -88,6 +90,18 @@
 <div class="tab-panel" id="tab-cyberware"></div>
 <div class="tab-panel" id="tab-gear"></div>
 <div class="tab-panel" id="tab-lifepath"></div>
+<div class="tab-panel" id="tab-injuries"></div>
+
+<!-- Critical Injury Modal -->
+<div id="crit-modal" class="crit-modal-overlay" hidden>
+  <div class="crit-modal-box" id="critModalBox"></div>
+</div>
+
+<!-- Item tooltip -->
+<div id="item-tooltip" class="item-tooltip" hidden></div>
+
+<!-- Dice-box 3D canvas (hidden, mounted by dice-box lib) -->
+<div id="dice-canvas-placeholder" style="position:fixed;inset:0;pointer-events:none;z-index:900"></div>
 
 <!-- ── Dice ── -->
 <button class="dice-fab" id="diceFab" style="display:none" title="Würfeln">🎲</button>
@@ -119,7 +133,7 @@
 
 <script type="module">
 console.log('[player] module loaded');
-import { getCharacter, patchCharacter, logRoll } from './assets/js/supabase.js';
+import { getCharacter, getCharacters, patchCharacter, logRoll } from './assets/js/supabase.js';
 import { roll, initDiceBox } from './assets/js/dice.js';
 
 // ── Constants ─────────────────────────────────────────────────
@@ -162,15 +176,26 @@ const CYBER_LABELS = {
 };
 
 // ── State ─────────────────────────────────────────────────────
-let char = null;
+let char       = null;
+let injuryData = null;  // { body: [...], head: [...] }
+let allChars   = [];    // alle anderen Charaktere (für Injury-Zuweisung)
+let critTarget = null;  // char-id oder 'npc'
+
+function getInjuries() {
+  try { return JSON.parse(char.critical_injuries || '[]'); } catch { return []; }
+}
 
 // ── Boot ──────────────────────────────────────────────────────
 const id = new URLSearchParams(location.search).get('id');
-if (!id) {
-  document.getElementById('loader').innerHTML = '<span style="color:var(--red)">Kein Charakter gewählt.</span><br><a href="index.html" style="color:var(--cyan)">← Zurück</a>';
-} else {
+if (!id) { location.replace('index.html'); }
+if (id) {
   try {
-    char = await getCharacter(id);
+    [char, injuryData, allChars] = await Promise.all([
+      getCharacter(id),
+      fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
+      getCharacters(),
+    ]);
+    allChars = allChars.filter(c => c.id !== id);
     renderAll();
     show();
   } catch(e) {
@@ -179,8 +204,12 @@ if (!id) {
   }
 }
 
+// Wire up shop link
+if (id) document.getElementById('shopLink').href = `shop.html?id=${id}`;
+
 // Try dice-box (optional, fires in background)
 initDiceBox('#dice-canvas-placeholder');
+
 
 // ── Show UI ───────────────────────────────────────────────────
 function show() {
@@ -201,9 +230,13 @@ function renderAll() {
   renderCyberware();
   renderGear();
   renderLifepath();
+  renderCritInjuries();
   setupTabs();
   setupResEditing();
   setupDice();
+  setupTooltip();
+  setupRemove();
+  setupCritModal();
 }
 
 // ── Header ────────────────────────────────────────────────────
@@ -268,11 +301,14 @@ function renderStats() {
   html += '</div>';
 
   html += '<h3 class="sec-head">Ressourcen</h3><div class="res-grid">';
+  const injPenalty = getInjuries().filter(i => i.effect?.includes('Base Death Save Penalty is increased')).length;
+  const dsBase     = char.death_save ?? 0;
+  const dsDisplay  = injPenalty ? `${dsBase + injPenalty} <small style="color:var(--red)">(+${injPenalty})</small>` : dsBase;
   const res = [
     ['Cash',   char.cash               ?? 0, 'eb'],
     ['IP',     char.improvement_points ?? 0, ''],
     ['Rep',    char.reputation         ?? 0, ''],
-    ['Death Save', char.death_save     ?? 0, ''],
+    ['Death Save', dsDisplay, ''],
     ['SW Threshold', char.seriously_wounded_threshold ?? 0, ''],
     ['HP',     `${char.current_hp ?? 0} / ${char.max_hp ?? 0}`, ''],
   ];
@@ -334,9 +370,12 @@ function renderWeapons() {
 
   if (!weapons.length) { el.innerHTML = '<p class="empty-state">Keine Waffen eingetragen.</p>'; return; }
 
-  el.innerHTML = weapons.map(w => `
-    <div class="weapon-card">
-      <div class="weapon-name">${w.name}</div>
+  el.innerHTML = weapons.map((w, i) => `
+    <div class="weapon-card has-tooltip" data-tooltip='${safeJson(w)}'>
+      <div class="weapon-name">
+        ${w.name}
+        <button class="remove-btn" data-inv="weapons" data-idx="${i}">✕</button>
+      </div>
       <div class="weapon-stats">
         <div class="ws-pair"><span class="ws-label">Damage</span>
           <span class="ws-val">${w.damage
@@ -354,14 +393,14 @@ function renderWeapons() {
 function renderArmor() {
   const armor = char.armor || {};
   const slots = [
-    ['HEAD', armor.head   || {}],
-    ['BODY', armor.body   || {}],
-    ['SHIELD', armor.shield || {}],
+    ['HEAD',   armor.head   || {}, 'head'],
+    ['BODY',   armor.body   || {}, 'body'],
+    ['SHIELD', armor.shield || {}, 'shield'],
   ];
   document.getElementById('tab-armor').innerHTML =
-    `<div class="armor-grid">${slots.map(([label, s]) => `
+    `<div class="armor-grid">${slots.map(([label, s, slotKey]) => `
       <div class="armor-slot">
-        <div class="armor-slot-label">${label}</div>
+        <div class="armor-slot-label">${label}${s.name ? `<button class="remove-btn" data-inv="armor" data-idx="${slotKey}" style="float:right">✕</button>` : ''}</div>
         <div class="armor-name">${s.name || '—'}</div>
         <div class="armor-sp">${s.sp ?? 0}</div>
         <div class="armor-pen">${s.penalty ? `−${s.penalty} REF` : 'kein Malus'}</div>
@@ -371,23 +410,17 @@ function renderArmor() {
 
 // ── Cyberware tab ─────────────────────────────────────────────
 function renderCyberware() {
-  const cw = char.cyberware || {};
+  const cw = Array.isArray(char.cyberware) ? char.cyberware : [];
   const el = document.getElementById('tab-cyberware');
-  const occupied = Object.entries(cw).filter(([,v]) => v.has || (v.slots && v.slots.length));
-
-  if (!occupied.length) { el.innerHTML = '<p class="empty-state">Kein Cyberware installiert.</p>'; return; }
-
-  el.innerHTML = occupied.map(([key, data]) => {
-    const label = CYBER_LABELS[key] || key;
-    const tags  = (data.slots || []).map(s => s.option || s.data || '').filter(Boolean);
-    return `<div class="cyber-slot">
-      <div class="cyber-slot-label">${label}</div>
-      <div class="cyber-items">${tags.length
-        ? tags.map(t => `<span class="cyber-tag">${t}</span>`).join('')
-        : '<span style="font-size:.78rem;color:var(--text-muted)">installiert</span>'}
+  if (!cw.length) { el.innerHTML = '<p class="empty-state">Kein Cyberware installiert.</p>'; return; }
+  el.innerHTML = cw.map((item, i) => `
+    <div class="cyber-slot">
+      <div class="cyber-slot-label">${item.subcategory || 'Cyberware'}</div>
+      <div class="cyber-items">
+        <span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
+        <button class="remove-btn" data-inv="cyberware" data-idx="${i}">✕</button>
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 }
 
 // ── Gear tab ──────────────────────────────────────────────────
@@ -395,9 +428,12 @@ function renderGear() {
   const gear = char.gear || [];
   const el   = document.getElementById('tab-gear');
   if (!gear.length) { el.innerHTML = '<p class="empty-state">Kein Gear eingetragen.</p>'; return; }
-  el.innerHTML = `<div class="gear-list">${gear.map(g =>
-    `<div class="gear-item">
-      <div class="gear-item-name">${g.name}</div>
+  el.innerHTML = `<div class="gear-list">${gear.map((g, i) =>
+    `<div class="gear-item has-tooltip" data-tooltip='${safeJson(g)}'>
+      <div class="gear-item-name">
+        ${g.name}
+        <button class="remove-btn" data-inv="gear" data-idx="${i}">✕</button>
+      </div>
       ${g.notes ? `<div class="gear-item-notes">${g.notes}</div>` : ''}
     </div>`).join('')}</div>`;
 }
@@ -531,7 +567,8 @@ function setupDice() {
     const expr    = btn.dataset.expr;
     const ctx     = btn.dataset.ctx || expr;
     const isSkill = btn.dataset.skill === '1';
-    if (expr) doRoll(expr, { context: ctx, isSkillCheck: isSkill });
+    const isDmg   = btn.classList.contains('dmg-btn');
+    if (expr) doRoll(expr, { context: ctx, isSkillCheck: isSkill, isDamageRoll: isDmg });
   });
 }
 
@@ -575,6 +612,241 @@ async function doRoll(expression, opts = {}) {
 
   // Toast
   showToast(result);
+
+  // Critical Injury trigger — damage rolls only
+  if (opts.isDamageRoll && injuryData) {
+    const sixCount = result.individualRolls.filter(r => r.die === 6 && Math.abs(r.value) === 6).length;
+    if (sixCount >= 2) showCritInjuryFlow();
+  }
+}
+
+// ── safeJson — tooltip data from stored item snapshot ────────
+function safeJson(obj) {
+  return JSON.stringify({
+    notes:         obj.notes         || null,
+    damage:        obj.damage        || null,
+    humanity_loss: obj.humanity_loss || null,
+    install:       obj.install       || null,
+    raw_cost:      obj.raw_cost      || null,
+  }).replace(/'/g, '&#39;');
+}
+
+// ── Item tooltip ──────────────────────────────────────────────
+function setupTooltip() {
+  const tip = document.getElementById('item-tooltip');
+  let hideTimer = null;
+
+  function show(el, data) {
+    clearTimeout(hideTimer);
+    const notes    = data.notes    ? `<div class="itp-notes">${data.notes.length > 130 ? data.notes.slice(0,127)+'…' : data.notes}</div>` : '';
+    const dmgRow   = data.damage   ? `<div class="itp-row"><span class="itp-key">Damage</span><span class="itp-val">${data.damage}</span></div>` : '';
+    const hlRow    = data.humanity_loss ? `<div class="itp-row"><span class="itp-key">Humanity</span><span class="itp-val">${data.humanity_loss}</span></div>` : '';
+    const instRow  = data.install  ? `<div class="itp-row"><span class="itp-key">Install</span><span class="itp-val">${data.install}</span></div>` : '';
+    const priceRow = data.raw_cost ? `<div class="itp-row"><span class="itp-key">Price</span><span class="itp-val">${data.raw_cost}</span></div>` : '';
+    tip.innerHTML  = `<div class="itp-meta">${dmgRow}${hlRow}${instRow}${priceRow}</div>${notes}`;
+
+    tip.hidden = false;
+    const r  = el.getBoundingClientRect();
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let top  = r.top - th - 8;
+    let left = r.left + r.width / 2 - tw / 2;
+    if (top < 8) top = r.bottom + 8;
+    left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+    tip.style.top  = top  + 'px';
+    tip.style.left = left + 'px';
+  }
+
+  function scheduleHide() { hideTimer = setTimeout(() => { tip.hidden = true; }, 120); }
+
+  document.addEventListener('mouseover', e => {
+    const trigger = e.target.closest('.has-tooltip');
+    if (!trigger) return;
+    try { show(trigger, JSON.parse(trigger.dataset.tooltip)); } catch {}
+  });
+  document.addEventListener('mouseout', e => {
+    if (e.target.closest('.has-tooltip')) scheduleHide();
+  });
+}
+
+// ── Item removal ──────────────────────────────────────────────
+function setupRemove() {
+  document.body.addEventListener('click', e => {
+    const btn = e.target.closest('.remove-btn');
+    if (!btn) return;
+    removeItem(btn.dataset.inv, btn.dataset.idx);
+  });
+}
+
+async function removeItem(inv, idx) {
+  if (inv === 'armor') {
+    char.armor = { ...(char.armor || {}), [idx]: { name: '', sp: 0, penalty: 0 } };
+    renderArmor();
+    await patchCharacter(char.id, { armor: char.armor });
+  } else {
+    char[inv] = (char[inv] || []).filter((_, i) => i !== parseInt(idx));
+    if (inv === 'weapons')   renderWeapons();
+    if (inv === 'cyberware') renderCyberware();
+    if (inv === 'gear')      renderGear();
+    await patchCharacter(char.id, { [inv]: char[inv] });
+  }
+}
+
+// ── Critical Injury Flow ──────────────────────────────────────
+function showCritInjuryFlow() {
+  critTarget = allChars.length === 1 ? allChars[0].id : null;
+
+  const targetOptions = [
+    `<option value="">— Ziel wählen —</option>`,
+    ...allChars.map(c =>
+      `<option value="${c.id}"${allChars.length === 1 ? ' selected' : ''}>${c.name}</option>`),
+    `<option value="npc">NPC (kein Supabase-Eintrag)</option>`,
+  ].join('');
+
+  const box = document.getElementById('critModalBox');
+  box.innerHTML = `
+    <div class="crit-modal-title">CRITICAL INJURY!</div>
+    <div class="crit-modal-sub">≥2 Sechsen gewürfelt.</div>
+    <div style="margin:.5rem 0">
+      <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);margin-bottom:.3rem">Ziel</div>
+      <select id="critTargetSelect" style="width:100%;padding:.4rem .6rem;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.82rem">
+        ${targetOptions}
+      </select>
+    </div>
+    <div class="crit-modal-sub">War das ein Aimed Shot to the Head?</div>
+    <div class="crit-modal-btns">
+      <button class="btn btn-primary" id="critHead">Head Table</button>
+      <button class="btn btn-ghost" id="critBody">Body Table</button>
+      <button class="btn btn-ghost" id="critCancel">Abbrechen</button>
+    </div>`;
+  document.getElementById('crit-modal').hidden = false;
+  document.getElementById('critTargetSelect').addEventListener('change', e => {
+    critTarget = e.target.value || null;
+  });
+  document.getElementById('critHead').onclick   = () => rollInjury('head');
+  document.getElementById('critBody').onclick   = () => rollInjury('body');
+  document.getElementById('critCancel').onclick = () => { document.getElementById('crit-modal').hidden = true; };
+}
+
+function rollInjury(table) {
+  const d1 = Math.floor(Math.random() * 6) + 1;
+  const d2 = Math.floor(Math.random() * 6) + 1;
+  const rollVal = d1 + d2;
+  const injury  = injuryData[table].find(i => i.roll === rollVal) || injuryData[table][0];
+  const already = getInjuries().some(i => i.name === injury.name);
+  showInjuryResult(injury, rollVal, table, already);
+}
+
+function showInjuryResult(injury, rollVal, table, already) {
+  const box = document.getElementById('critModalBox');
+  box.innerHTML = `
+    <div class="crit-modal-title">CRITICAL INJURY</div>
+    <div class="crit-injury-name">${injury.name}</div>
+    <div class="crit-roll-info">2d6 = ${rollVal} · ${table === 'head' ? 'HEAD' : 'BODY'} Table</div>
+    <hr class="crit-divider">
+    <div class="crit-field-row">
+      <div class="crit-field-key">Effect</div>
+      <div class="crit-field-val">${injury.effect}</div>
+    </div>
+    <div class="crit-field-row">
+      <div class="crit-field-key">Quick Fix</div>
+      <div class="crit-field-val">${injury.quick_fix || '—'}</div>
+    </div>
+    <div class="crit-field-row">
+      <div class="crit-field-key">Treatment</div>
+      <div class="crit-field-val">${injury.treatment}</div>
+    </div>
+    <hr class="crit-divider">
+    <div class="crit-bonus-dmg">⚠ +5 Bonus Damage direkt auf HP (ignoriert Armor)</div>
+    ${already ? `<div class="crit-already">⚡ Charakter hat diese Injury bereits — Re-roll empfohlen!</div>` : ''}
+    <div class="crit-modal-btns">
+      <button class="btn btn-primary" id="critApply">Apply to Character</button>
+      <button class="btn btn-ghost" id="critReroll">Re-roll</button>
+      <button class="btn btn-ghost" id="critIgnore">Ignorieren</button>
+    </div>`;
+  document.getElementById('critApply').onclick  = () => applyInjury(injury, table);
+  document.getElementById('critReroll').onclick = () => rollInjury(table);
+  document.getElementById('critIgnore').onclick = () => { document.getElementById('crit-modal').hidden = true; };
+}
+
+async function applyInjury(injury, table) {
+  if (!critTarget) {
+    const box  = document.getElementById('critModalBox');
+    let warn   = box.querySelector('.crit-no-target');
+    if (!warn) {
+      warn = document.createElement('div');
+      warn.className = 'crit-no-target';
+      warn.style.cssText = 'color:var(--red);font-size:.75rem;margin-top:.4rem';
+      box.appendChild(warn);
+    }
+    warn.textContent = 'Bitte erst ein Ziel auswählen.';
+    return;
+  }
+
+  if (critTarget === 'npc') {
+    logRoll({ characterId: char.id, characterName: char.name,
+      expression: '2d6', individualRolls: [], modifier: 0, total: 0,
+      context: `Critical Injury (NPC): ${injury.name}`,
+      isCritSuccess: false, isCritFailure: false }).catch(() => {});
+    document.getElementById('crit-modal').hidden = true;
+    return;
+  }
+
+  try {
+    const target   = await getCharacter(critTarget);
+    const injuries = JSON.parse(target.critical_injuries || '[]');
+    injuries.push({ ...injury, table });
+    const newHp = Math.max(0, (target.current_hp ?? 0) - 5);
+    const patch = { critical_injuries: JSON.stringify(injuries), current_hp: newHp };
+    if (newHp === 0) patch.mortally_wounded = true;
+    await patchCharacter(critTarget, patch);
+    logRoll({ characterId: char.id, characterName: char.name,
+      expression: '2d6', individualRolls: [], modifier: 0, total: 0,
+      context: `Critical Injury → ${target.name}: ${injury.name}`,
+      isCritSuccess: false, isCritFailure: false }).catch(() => {});
+  } catch (e) {
+    console.warn('applyInjury failed:', e);
+  }
+  document.getElementById('crit-modal').hidden = true;
+}
+
+function setupCritModal() {
+  document.getElementById('crit-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.hidden = true;
+  });
+}
+
+// ── Critical Injuries tab ─────────────────────────────────────
+function renderCritInjuries() {
+  const injuries = getInjuries();
+  const badge    = document.getElementById('injuryBadge');
+  if (badge) { badge.hidden = !injuries.length; badge.textContent = injuries.length || ''; }
+
+  const el = document.getElementById('tab-injuries');
+  if (!el) return;
+  if (!injuries.length) {
+    el.innerHTML = '<p class="empty-state">Keine aktiven Critical Injuries.</p>';
+    return;
+  }
+  el.innerHTML = injuries.map((inj, i) => `
+    <div class="injury-card">
+      <div class="injury-header">
+        <span class="injury-name">${inj.name}</span>
+        <span class="injury-table">${inj.table === 'head' ? 'Head' : 'Body'}</span>
+        <button class="remove-btn" data-action="removeInjury" data-idx="${i}">✕</button>
+      </div>
+      <div class="injury-effect">${inj.effect}</div>
+      <div class="injury-meta"><span class="inj-key">Quick Fix</span>${inj.quick_fix || '—'}</div>
+      <div class="injury-meta"><span class="inj-key">Treatment</span>${inj.treatment}</div>
+    </div>`).join('');
+}
+
+async function removeInjury(idx) {
+  const injuries = getInjuries();
+  injuries.splice(idx, 1);
+  char.critical_injuries = JSON.stringify(injuries);
+  await patchCharacter(char.id, { critical_injuries: char.critical_injuries });
+  renderCritInjuries();
+  renderStats();
 }
 
 function renderDiceLog() {

@@ -23,11 +23,11 @@ export async function saveCharacter(data) {
   return row;
 }
 
-/** Fetch all characters (name + id + role + current_hp + max_hp) for dropdowns. */
+/** Fetch all characters for DM dashboard + dropdowns. */
 export async function getCharacters() {
   const { data, error } = await supabase
     .from('characters')
-    .select('id, name, handle, role, current_hp, max_hp, image_url')
+    .select('id, name, handle, role, current_hp, max_hp, image_url, current_humanity, max_humanity, current_luck, critical_injuries')
     .order('name');
   if (error) throw error;
   return data;
@@ -40,6 +40,18 @@ export async function getCharacter(id) {
     .select('*')
     .eq('id', id)
     .single();
+  if (error) throw error;
+  return data;
+}
+
+/** Fetch shop items, optionally filtered to a list of categories. */
+export async function getItems(categories = []) {
+  let q = supabase
+    .from('items')
+    .select('id, name, category, subcategory, price, raw_cost, damage, rof, hands, ammo, notes, source, extra')
+    .order('name');
+  if (categories.length) q = q.in('category', categories);
+  const { data, error } = await q;
   if (error) throw error;
   return data;
 }
@@ -90,6 +102,17 @@ export async function logRoll({ characterId, characterName, expression, individu
     is_crit_failure:  isCritFailure ?? false,
   });
   if (error) console.warn('logRoll failed:', error);
+}
+
+/** Fetch the most recent rolls (for DM dashboard initial load). */
+export async function getRolls(limit = 50) {
+  const { data, error } = await supabase
+    .from('rolls')
+    .select('id, character_name, expression, total, context, is_crit_success, is_crit_failure, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data;
 }
 
 /** Subscribe to live character changes (DM dashboard). */
