@@ -71,10 +71,26 @@
   </div>
 </div>
 
+<div class="dm-page">
 <div class="dm-layout">
-  <!-- Character Grid -->
-  <div class="dm-grid-wrap" id="dmGrid">
-    <div style="color:var(--text-muted);font-size:.82rem;padding:.5rem">Lade Charaktere…</div>
+  <!-- Main col: Characters + NPCs with tabs -->
+  <div class="dm-main-col">
+    <div class="dm-content-tabs">
+      <button class="dm-content-tab active" data-panel="chars">CHARAKTERE</button>
+      <button class="dm-content-tab" data-panel="npcs">NPCs</button>
+    </div>
+    <div class="dm-grid-wrap" id="dmGrid">
+      <div style="color:var(--text-muted);font-size:.82rem;padding:.5rem">Lade Charaktere…</div>
+    </div>
+    <div class="dm-npc-panel" id="npcPanel" style="display:none">
+      <div class="npc-section-head" style="padding:1rem 1rem .5rem">
+        <span class="npc-section-title">NPCs</span>
+        <button id="npcAddBtn" class="npc-add-btn">+ NPC</button>
+      </div>
+      <div class="npc-grid" id="npcGrid" style="padding:0 1rem 1rem">
+        <div style="color:var(--text-muted);font-size:.78rem">Lade NPCs…</div>
+      </div>
+    </div>
   </div>
 
   <!-- Sidebar: Roll Log + DM Notes -->
@@ -83,21 +99,6 @@
       <div class="roll-log-head">ROLL LOG <button class="roll-log-clear" id="clearRollLog" title="Alle Würfelwürfe löschen">🗑</button></div>
       <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
     </div>
-    <div class="dm-chat-wrap">
-      <div class="dm-chat-head">
-        <span>CHAT</span>
-        <label class="dm-chat-img-label" title="Bild anhängen">
-          📎
-          <input type="file" id="dmChatImgInput" accept="image/*" style="display:none">
-        </label>
-      </div>
-      <div class="dm-chat-messages" id="dmChatMessages"></div>
-      <div id="dmChatImgPreview" class="dm-chat-img-preview" style="display:none"></div>
-      <div class="dm-chat-input-row">
-        <textarea id="dmChatInput" class="dm-chat-input" rows="2" placeholder="Nachricht an alle…" maxlength="500"></textarea>
-        <button id="dmChatSend" class="dm-chat-send-btn">→</button>
-      </div>
-    </div>
     <div class="dm-own-notes-wrap">
       <div class="roll-log-head">DM NOTIZEN <span style="font-size:.58rem;color:var(--text-muted)">(nur lokal)</span></div>
       <textarea id="dmOwnNotes" class="player-notes-area dm-own-notes-area" placeholder="Session-Notizen, NPC-Ideen…"></textarea>
@@ -105,16 +106,25 @@
   </div>
 </div>
 
-<!-- NPC Section -->
-<section class="npc-section">
-  <div class="npc-section-head">
-    <span class="npc-section-title">NPCs</span>
-    <button id="npcAddBtn" class="npc-add-btn">+ NPC</button>
+<!-- Chat — full-width bottom panel -->
+<div class="dm-chat-bottom">
+  <div class="dm-chat-bottom-left">
+    <div class="dm-chat-head">
+      <span>CHAT</span>
+      <label class="dm-chat-img-label" title="Bild anhängen">
+        📎
+        <input type="file" id="dmChatImgInput" accept="image/*" style="display:none">
+      </label>
+    </div>
+    <div class="dm-chat-messages" id="dmChatMessages"></div>
+    <div id="dmChatImgPreview" class="dm-chat-img-preview" style="display:none"></div>
+    <div class="dm-chat-input-row">
+      <textarea id="dmChatInput" class="dm-chat-input" rows="2" placeholder="Nachricht an alle…" maxlength="500"></textarea>
+      <button id="dmChatSend" class="dm-chat-send-btn">→</button>
+    </div>
   </div>
-  <div class="npc-grid" id="npcGrid">
-    <div style="color:var(--text-muted);font-size:.78rem">Lade NPCs…</div>
-  </div>
-</section>
+</div>
+</div><!-- /.dm-page -->
 
 <!-- Player Notes Read-only Overlay -->
 <div id="dmNotesOverlay" class="dm-notes-overlay" hidden>
@@ -148,25 +158,36 @@
     <span>DM WÜRFELN</span>
     <button class="dice-popup-close" id="dmDiceClose">✕</button>
   </div>
-  <div class="dice-quick">
-    <button class="die-btn" data-expr="1d6">d6</button>
-    <button class="die-btn" data-expr="1d10">d10</button>
-    <button class="die-btn" data-expr="2d6">2d6</button>
-    <button class="die-btn" data-expr="3d6">3d6</button>
-    <button class="die-btn" data-expr="4d6">4d6</button>
+  <div class="dp-section">
+    <div class="dp-sec-label">Schnellwurf</div>
+    <div class="dice-quick">
+      <button class="die-btn" data-expr="1d6">d6</button>
+      <button class="die-btn" data-expr="1d10">d10</button>
+      <button class="die-btn" data-expr="2d6">2d6</button>
+      <button class="die-btn" data-expr="3d6">3d6</button>
+      <button class="die-btn" data-expr="4d6">4d6</button>
+      <button class="die-btn" data-expr="1d10+1d6">d10+d6</button>
+    </div>
   </div>
-  <div class="dice-custom">
-    <input type="text" id="dmDiceExpr" placeholder="z.B. 3d6+2" spellcheck="false">
-    <button id="dmDiceRollBtn">Roll</button>
+  <div class="dp-section">
+    <div class="dp-sec-label">Eigener Wurf</div>
+    <div class="dice-custom">
+      <input type="text" id="dmDiceExpr" placeholder="z.B. 3d6+2" spellcheck="false">
+      <button id="dmDiceRollBtn">Roll</button>
+    </div>
   </div>
   <div class="dice-result-area">
+    <div class="dp-sec-label">Ergebnis</div>
     <div class="dice-result-num" id="dmDiceResultNum">—</div>
     <div class="dice-result-detail" id="dmDiceResultDetail"></div>
   </div>
-  <div id="dmDiceNpcBtn" style="display:none;padding:.4rem .9rem .6rem">
-    <button class="ctrl-btn" id="dmUseAsNpcDmg" style="width:100%">Als NPC-Damage verwenden →</button>
+  <div id="dmDiceNpcBtn" style="display:none">
+    <button class="ctrl-btn" id="dmUseAsNpcDmg">Als NPC-Damage verwenden →</button>
   </div>
-  <div class="dice-log" id="dmDiceLog"></div>
+  <div class="dp-section">
+    <div class="dp-sec-label">Verlauf</div>
+    <div class="dice-log" id="dmDiceLog"></div>
+  </div>
 </div>
 
 <!-- NPC Quick-Damage Modal -->
@@ -223,8 +244,15 @@
         </details>
         <div class="npc-weapons-wrap">
           <div class="npc-weapons-head">
-            <span>Waffen</span>
-            <button id="npcAddWeaponBtn" type="button" class="npc-add-weapon-btn">+ Waffe</button>
+            <span>Waffen / Items</span>
+            <button id="npcAddWeaponBtn" type="button" class="npc-add-weapon-btn">+ Manuell</button>
+          </div>
+          <div class="npc-item-search-wrap">
+            <button type="button" class="npc-shop-trigger" id="npcShopTrigger">📦 Aus Shop hinzufügen <span class="npc-shop-arrow">▾</span></button>
+            <div class="npc-shop-dropdown" id="npcShopDropdown" style="display:none">
+              <input id="npcItemSearch" class="npc-field npc-item-search-input" placeholder="Item suchen…" autocomplete="off">
+              <div class="npc-item-results" id="npcItemResults"></div>
+            </div>
           </div>
           <div id="npcWeaponsList"></div>
         </div>
@@ -243,9 +271,10 @@ import {
   getCharacters, getCharacter, patchCharacter, getItems, getRolls,
   subscribeCharacters, subscribeRolls, logRoll, deleteCharacter, deleteAllRolls,
   getActiveCombat, saveCombat, endCombat, subscribeCombat,
-  sendMessage, getMessages, subscribeMessages, uploadChatImage,
+  sendMessage, getMessages, subscribeMessages, uploadChatImage, patchMessage,
   getNpcs, saveNpc, patchNpc, deleteNpc, uploadNpcImage, subscribeNpcs,
 } from './assets/js/supabase.js';
+import { animateRollNumber } from './assets/js/dice.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const DM_PIN = 'DM2077';
@@ -282,6 +311,8 @@ let _npcs = [];
 let _editingNpcId = null;
 let _npcPendingImageBlob = null;
 let _npcRollContext = null;
+let _highlightedMsgId = null;
+let roleAbilities     = null;
 
 // ── PIN Auth ──────────────────────────────────────────────────
 function checkPin() {
@@ -308,11 +339,12 @@ checkPin();
 // ── Boot ──────────────────────────────────────────────────────
 async function boot() {
   try {
-    [chars, rolls, injData, combatSession] = await Promise.all([
+    [chars, rolls, injData, combatSession, roleAbilities] = await Promise.all([
       getCharacters(),
       getRolls(50),
       fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
       getActiveCombat(),
+      fetch('./assets/data/role-abilities.json').then(r => r.json()).catch(() => ({})),
     ]);
   } catch (e) {
     document.getElementById('dmGrid').innerHTML =
@@ -429,12 +461,24 @@ async function boot() {
   const chatHistory = await getMessages(50);
   renderDmChat(chatHistory);
   setupDmChat();
-  subscribeMessages(payload => appendDmChatMessage(payload.new));
+  subscribeMessages(payload => {
+    if (payload.eventType === 'UPDATE') {
+      const row = document.querySelector(`[data-msg-id="${payload.new.id}"]`);
+      if (row) {
+        row.querySelector('.chat-msg')?.classList.toggle('chat-msg--highlighted', !!payload.new.is_highlighted);
+        const btn = row.querySelector('.dm-msg-highlight-btn');
+        if (btn) btn.classList.toggle('active', !!payload.new.is_highlighted);
+      }
+    } else {
+      appendDmChatMessage(payload.new);
+    }
+  });
 
   // NPCs
   try { _npcs = await getNpcs(); } catch(e) { console.warn('getNpcs failed:', e); }
   renderNpcGrid();
   setupNpcModal();
+  setupMainTabs();
   subscribeNpcs(payload => {
     if (payload.eventType === 'DELETE') {
       _npcs = _npcs.filter(n => n.id !== payload.old.id);
@@ -484,7 +528,7 @@ function renderGrid() {
     const weapons   = cardWeapons(c);
 
     return `
-    <div class="dm-card" data-id="${c.id}">
+    <div class="dm-card${(c.current_hp <= 0 || (c.conditions||[]).includes('Mortally Wounded')) ? ' dm-card--dying' : ''}" data-id="${c.id}">
       <div class="dm-card-header">
         ${portrait}
         <div class="dm-card-meta">
@@ -580,8 +624,26 @@ function openLightbox(src) {
 
 function appendDmChatMessage(m) {
   const isDm = m.sender_role === 'dm';
-  const el   = document.createElement('div');
-  el.className = `chat-msg ${isDm ? 'chat-msg--dm' : 'chat-msg--player'}`;
+  const row  = document.createElement('div');
+  row.className = 'chat-msg-row';
+  if (m.id) row.dataset.msgId = m.id;
+
+  const hlBtn = document.createElement('button');
+  hlBtn.className = `dm-msg-highlight-btn${m.is_highlighted ? ' active' : ''}`;
+  hlBtn.title = 'Für Spieler hervorheben';
+  hlBtn.textContent = '📌';
+  hlBtn.addEventListener('click', async () => {
+    const newVal = !hlBtn.classList.contains('active');
+    if (newVal && _highlightedMsgId && _highlightedMsgId !== m.id) {
+      await patchMessage(_highlightedMsgId, { is_highlighted: false });
+    }
+    _highlightedMsgId = newVal ? m.id : null;
+    await patchMessage(m.id, { is_highlighted: newVal });
+  });
+  row.appendChild(hlBtn);
+
+  const el = document.createElement('div');
+  el.className = `chat-msg ${isDm ? 'chat-msg--dm' : 'chat-msg--player'}${m.is_highlighted ? ' chat-msg--highlighted' : ''}`;
   const time = new Date(m.created_at).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
   el.innerHTML =
     `<div class="chat-msg-header">` +
@@ -590,8 +652,10 @@ function appendDmChatMessage(m) {
     `</div>` +
     (m.content   ? `<div class="chat-text">${escapeHtml(m.content)}</div>` : '') +
     (m.image_url ? `<img class="chat-img" src="${m.image_url}" alt="Bild" data-src="${m.image_url}">` : '');
+  row.appendChild(el);
+
   const container = document.getElementById('dmChatMessages');
-  container.appendChild(el);
+  container.appendChild(row);
   if (m.image_url) {
     el.querySelector('.chat-img').addEventListener('click', e => openLightbox(e.currentTarget.dataset.src));
   }
@@ -600,6 +664,8 @@ function appendDmChatMessage(m) {
 
 function renderDmChat(msgs) {
   document.getElementById('dmChatMessages').innerHTML = '';
+  const highlighted = msgs.find(m => m.is_highlighted);
+  _highlightedMsgId = highlighted?.id ?? null;
   msgs.forEach(m => appendDmChatMessage(m));
 }
 
@@ -880,19 +946,7 @@ function setupNpcModal() {
       closeNpcModal();
     } catch(e) { alert('Fehler: ' + e.message); }
   });
-  document.getElementById('npcAddWeaponBtn').addEventListener('click', () => {
-    const list = document.getElementById('npcWeaponsList');
-    const idx  = list.querySelectorAll('.npc-weapon-row').length;
-    const div  = document.createElement('div');
-    div.className = 'npc-weapon-row';
-    div.dataset.wi = idx;
-    div.innerHTML = `
-      <input class="npc-field" placeholder="Waffe" data-wi="${idx}" data-field="name">
-      <input class="npc-field npc-field--hp" placeholder="DMG" data-wi="${idx}" data-field="damage">
-      <button class="npc-weapon-remove" type="button">✕</button>`;
-    div.querySelector('.npc-weapon-remove').addEventListener('click', () => div.remove());
-    list.appendChild(div);
-  });
+  document.getElementById('npcAddWeaponBtn').addEventListener('click', () => addNpcWeaponRow('', ''));
   document.getElementById('npcImgInput').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -904,6 +958,86 @@ function setupNpcModal() {
     };
     reader.readAsDataURL(file);
     e.target.value = '';
+  });
+
+  // Item search dropdown
+  let _npcItemSearchTimer = null;
+  const shopTrigger     = document.getElementById('npcShopTrigger');
+  const shopDropdown    = document.getElementById('npcShopDropdown');
+  const itemSearchInput = document.getElementById('npcItemSearch');
+  const itemResultsEl   = document.getElementById('npcItemResults');
+
+  async function renderNpcItemResults(q = '') {
+    if (!itemsCache.length) {
+      try { itemsCache = await getItems([]); } catch { return; }
+    }
+    const matches = q.length >= 1
+      ? itemsCache.filter(i => i.name.toLowerCase().includes(q)).slice(0, 15)
+      : itemsCache.slice(0, 15);
+    if (!matches.length) { itemResultsEl.innerHTML = '<div style="padding:.4rem .6rem;font-size:.72rem;color:var(--text-muted)">Keine Treffer</div>'; return; }
+    itemResultsEl.innerHTML = matches.map(i =>
+      `<div class="npc-item-row" data-id="${i.id}" data-name="${escapeHtml(i.name)}" data-dmg="${escapeHtml(i.damage || '')}">
+        <span class="npc-item-name">${escapeHtml(i.name)}</span>
+        ${i.damage ? `<span class="npc-item-dmg">${escapeHtml(i.damage)}</span>` : ''}
+        <span class="npc-item-cat">${escapeHtml(i.category || '')}</span>
+      </div>`
+    ).join('');
+    itemResultsEl.querySelectorAll('.npc-item-row').forEach(row => {
+      row.addEventListener('click', () => {
+        addNpcWeaponRow(row.dataset.name, row.dataset.dmg);
+        itemSearchInput.value = '';
+        shopDropdown.style.display = 'none';
+        shopTrigger.classList.remove('open');
+      });
+    });
+  }
+
+  shopTrigger.addEventListener('click', async () => {
+    const isOpen = shopDropdown.style.display !== 'none';
+    shopDropdown.style.display = isOpen ? 'none' : 'block';
+    shopTrigger.classList.toggle('open', !isOpen);
+    if (!isOpen) {
+      itemSearchInput.value = '';
+      await renderNpcItemResults('');
+      itemSearchInput.focus();
+    }
+  });
+
+  itemSearchInput.addEventListener('input', () => {
+    clearTimeout(_npcItemSearchTimer);
+    _npcItemSearchTimer = setTimeout(() => renderNpcItemResults(itemSearchInput.value.trim().toLowerCase()), 200);
+  });
+
+  document.addEventListener('click', e => {
+    if (!shopTrigger.contains(e.target) && !shopDropdown.contains(e.target)) {
+      shopDropdown.style.display = 'none';
+      shopTrigger.classList.remove('open');
+    }
+  });
+}
+
+function addNpcWeaponRow(name, damage) {
+  const list = document.getElementById('npcWeaponsList');
+  const idx  = list.querySelectorAll('.npc-weapon-row').length;
+  const div  = document.createElement('div');
+  div.className = 'npc-weapon-row';
+  div.innerHTML = `
+    <input class="npc-field" placeholder="Waffe" data-wi="${idx}" data-field="name" value="${escapeHtml(name)}">
+    <input class="npc-field npc-field--hp" placeholder="DMG" data-wi="${idx}" data-field="damage" value="${escapeHtml(damage)}">
+    <button class="npc-weapon-remove" type="button">✕</button>`;
+  div.querySelector('.npc-weapon-remove').addEventListener('click', () => div.remove());
+  list.appendChild(div);
+}
+
+function setupMainTabs() {
+  document.querySelectorAll('.dm-content-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.dm-content-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const panel = btn.dataset.panel;
+      document.getElementById('dmGrid').style.display   = panel === 'chars' ? '' : 'none';
+      document.getElementById('npcPanel').style.display = panel === 'npcs'  ? '' : 'none';
+    });
   });
 }
 
@@ -947,6 +1081,7 @@ function renderModalHeader() {
       <div class="dm-modal-name">${c.name}</div>
       <div class="dm-modal-sub">${[c.role, c.handle, c.player_name].filter(Boolean).join(' · ')}</div>
     </div>
+    <div class="dm-modal-cash">${(c.cash ?? 0).toLocaleString('de-DE')} eb</div>
     <a href="player.html?id=${c.id}" target="_blank" class="dm-modal-player-link">↗ Player View</a>
     <button class="dm-modal-close" id="dmModalClose">✕</button>
   `;
@@ -1343,7 +1478,171 @@ function buildControlsHtml() {
       </div>
       <div class="ctrl-msg" id="ctrlItemMsg"></div>
     </div>
+    ${buildRoleAbilityDataSection(openChar)}
   `;
+}
+
+function getRankBandDM(bandsObj, rank) {
+  if (!bandsObj) return null;
+  for (const [key, val] of Object.entries(bandsObj)) {
+    const [lo, hi] = key.includes('-') ? key.split('-').map(Number) : [+key, +key];
+    if (rank >= lo && rank <= hi) return val;
+  }
+  return null;
+}
+
+function buildRoleAbilityDataSection(c) {
+  const roleKey = (c.role || '').toLowerCase();
+  const rad = c.role_ability_data || {};
+  const rank = c.role_ability_rank ?? 0;
+
+  if (roleKey === 'medtech') {
+    const sp = rad.specialtyPoints || { surgery:0, pharmaceuticals:0, cryosystem_operation:0 };
+    return `
+      <div class="ctrl-section">
+        <div class="ctrl-section-head">Medtech Specialties (Total ≤ Rank ${rank})</div>
+        <div class="ctrl-row"><span class="ctrl-label">Surgery</span>
+          <input type="number" class="ctrl-input" id="ctrlMedSurgery" value="${sp.surgery||0}" min="0" style="max-width:65px"></div>
+        <div class="ctrl-row"><span class="ctrl-label">Pharma (max 5)</span>
+          <input type="number" class="ctrl-input" id="ctrlMedPharma" value="${sp.pharmaceuticals||0}" min="0" max="5" style="max-width:65px"></div>
+        <div class="ctrl-row"><span class="ctrl-label">Cryosystem (max 5)</span>
+          <input type="number" class="ctrl-input" id="ctrlMedCryo" value="${sp.cryosystem_operation||0}" min="0" max="5" style="max-width:65px"></div>
+        <button class="ctrl-btn" id="ctrlMedSpecSave">Speichern</button>
+        <div class="ctrl-msg" id="ctrlMedSpecMsg"></div>
+      </div>`;
+  }
+
+  if (roleKey === 'tech') {
+    const sr = rad.specialtyRanks || { field:0, upgrade:0, fabrication:0, invention:0 };
+    return `
+      <div class="ctrl-section">
+        <div class="ctrl-section-head">Tech Specialties (Total ≤ Rank × 2 = ${rank * 2})</div>
+        ${['field','upgrade','fabrication','invention'].map(s =>
+          `<div class="ctrl-row"><span class="ctrl-label">${s.charAt(0).toUpperCase()+s.slice(1)}</span>
+           <input type="number" class="ctrl-input" id="ctrlTechSpec_${s}" value="${sr[s]||0}" min="0" max="${rank}" style="max-width:65px"></div>`
+        ).join('')}
+        <button class="ctrl-btn" id="ctrlTechSpecSave">Speichern</button>
+        <div class="ctrl-msg" id="ctrlTechSpecMsg"></div>
+      </div>`;
+  }
+
+  if (roleKey === 'nomad') {
+    const pool = rad.vehiclePool || [];
+    const motorpool = getRankBandDM(roleAbilities?.nomad?.family_motorpool, rank) || {};
+    const available = motorpool.vehicles || (Array.isArray(motorpool) ? motorpool : []);
+    const notInPool = available.filter(v => !pool.includes(v));
+    return `
+      <div class="ctrl-section">
+        <div class="ctrl-section-head">Nomad — Fahrzeugpool</div>
+        <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.35rem">Pool: ${pool.join(', ') || '—'}</div>
+        ${notInPool.length ? `
+          <div class="ctrl-row">
+            <select class="ctrl-select" id="ctrlNomadVehicle">${notInPool.map(v => `<option>${v}</option>`).join('')}</select>
+            <button class="ctrl-btn" id="ctrlNomadAddVehicle">+ Hinzufügen</button>
+          </div>` : '<div style="font-size:.72rem;color:var(--text-muted)">Alle Motorpool-Fahrzeuge bereits im Pool.</div>'}
+        <div class="ctrl-msg" id="ctrlNomadMsg"></div>
+      </div>`;
+  }
+
+  if (roleKey === 'exec') {
+    const members = rad.teamMembers || [];
+    const maxM = rank >= 9 ? 3 : rank >= 5 ? 2 : rank >= 3 ? 1 : 0;
+    return `
+      <div class="ctrl-section">
+        <div class="ctrl-section-head">Exec — Team Members (${members.length} / ${maxM})</div>
+        ${members.map(m => `<div style="font-size:.8rem;padding:.25rem 0">${m.name} · Loyalty ${m.loyalty ?? 5}</div>`).join('') || '<div style="font-size:.72rem;color:var(--text-muted)">Keine Mitglieder.</div>'}
+        ${members.length < maxM ? `
+          <div class="ctrl-row" style="margin-top:.4rem;flex-wrap:wrap;gap:.4rem">
+            <input type="text" class="ctrl-input" id="ctrlExecName" placeholder="Name" style="flex:1;min-width:80px">
+            <input type="number" class="ctrl-input" id="ctrlExecLoyalty" value="5" min="0" max="10" style="max-width:65px" title="Loyalty">
+            <button class="ctrl-btn" id="ctrlExecAddMember">+ Hinzufügen</button>
+          </div>` : `<div style="font-size:.72rem;color:var(--text-muted);margin-top:.35rem">Max. ${maxM} Mitglieder bei Rank ${rank}.</div>`}
+        <div class="ctrl-msg" id="ctrlExecMsg"></div>
+      </div>`;
+  }
+
+  if (roleKey === 'lawman') {
+    return `
+      <div class="ctrl-section">
+        <div class="ctrl-section-head">Lawman — Backup Squad</div>
+        <button class="ctrl-btn" id="ctrlLawmanShowSquad">Squad für Rank ${rank} anzeigen</button>
+        <div id="ctrlLawmanSquadResult" style="margin-top:.4rem;font-size:.78rem"></div>
+      </div>`;
+  }
+
+  return '';
+}
+
+function setupRoleAbilityDataControls() {
+  const roleKey = (openChar.role || '').toLowerCase();
+  const rank = openChar.role_ability_rank ?? 0;
+  const rad = openChar.role_ability_data || {};
+
+  if (roleKey === 'medtech') {
+    document.getElementById('ctrlMedSpecSave')?.addEventListener('click', async () => {
+      const s = Math.max(0, parseInt(document.getElementById('ctrlMedSurgery')?.value)||0);
+      const p = Math.min(5, Math.max(0, parseInt(document.getElementById('ctrlMedPharma')?.value)||0));
+      const c = Math.min(5, Math.max(0, parseInt(document.getElementById('ctrlMedCryo')?.value)||0));
+      if (s + p + c > rank) {
+        document.getElementById('ctrlMedSpecMsg').textContent = `Fehler: ${s+p+c} Punkte > Rank ${rank}`;
+        return;
+      }
+      const newData = { ...rad, specialtyPoints: { surgery:s, pharmaceuticals:p, cryosystem_operation:c }};
+      await ctrlPatch({ role_ability_data: newData }, 'ctrlMedSpecMsg', 'Specialties gespeichert');
+    });
+  }
+
+  if (roleKey === 'tech') {
+    document.getElementById('ctrlTechSpecSave')?.addEventListener('click', async () => {
+      const vals = {};
+      let sum = 0;
+      ['field','upgrade','fabrication','invention'].forEach(k => {
+        vals[k] = Math.min(rank, Math.max(0, parseInt(document.getElementById(`ctrlTechSpec_${k}`)?.value)||0));
+        sum += vals[k];
+      });
+      if (sum > rank * 2) {
+        document.getElementById('ctrlTechSpecMsg').textContent = `Fehler: ${sum} > ${rank * 2}`;
+        return;
+      }
+      const newData = { ...rad, specialtyRanks: vals };
+      await ctrlPatch({ role_ability_data: newData }, 'ctrlTechSpecMsg', 'Specialties gespeichert');
+    });
+  }
+
+  if (roleKey === 'nomad') {
+    document.getElementById('ctrlNomadAddVehicle')?.addEventListener('click', async () => {
+      const sel = document.getElementById('ctrlNomadVehicle');
+      if (!sel?.value) return;
+      const pool = [...(openChar.role_ability_data?.vehiclePool || [])];
+      if (!pool.includes(sel.value)) pool.push(sel.value);
+      const newData = { ...rad, vehiclePool: pool };
+      await ctrlPatch({ role_ability_data: newData }, 'ctrlNomadMsg', `${sel.value} hinzugefügt`);
+    });
+  }
+
+  if (roleKey === 'exec') {
+    document.getElementById('ctrlExecAddMember')?.addEventListener('click', async () => {
+      const name = document.getElementById('ctrlExecName')?.value?.trim();
+      if (!name) return;
+      const loyalty = parseInt(document.getElementById('ctrlExecLoyalty')?.value)||5;
+      const members = [...(openChar.role_ability_data?.teamMembers || [])];
+      members.push({ name, loyalty, id: Date.now() });
+      const newData = { ...rad, teamMembers: members };
+      await ctrlPatch({ role_ability_data: newData }, 'ctrlExecMsg', `${name} hinzugefügt`);
+    });
+  }
+
+  if (roleKey === 'lawman') {
+    document.getElementById('ctrlLawmanShowSquad')?.addEventListener('click', () => {
+      const squad = getRankBandDM(roleAbilities?.lawman?.ranks, rank);
+      const el = document.getElementById('ctrlLawmanSquadResult');
+      if (!squad) { el.textContent = 'Keine Daten für diesen Rank.'; return; }
+      el.innerHTML = `<strong>${squad.name || 'Backup'}</strong> (${squad.count || 1}×)<br>
+        Combat #: ${squad.combat_number ?? '—'} · SP: ${squad.sp ?? '—'} · HP: ${squad.hp ?? '—'}<br>
+        Waffen: ${squad.weapons || '—'}<br>
+        Transport: ${squad.transport || '—'}`;
+    });
+  }
 }
 
 function setupControls() {
@@ -1483,6 +1782,7 @@ function setupControls() {
     renderLeftActiveBuffs();
   });
 
+  setupRoleAbilityDataControls();
 }
 
 // ── NPC Attack helpers ────────────────────────────────────────
@@ -1733,6 +2033,49 @@ async function runItemSearch(query) {
   });
 }
 
+// ── 3D Dice Overlay (center-bottom, fire-and-forget) ─────────
+function showDiceRollOverlay(finalValue, opts = {}) {
+  const { context = null, isCritSuccess = false, isCritFailure = false } = opts;
+
+  document.querySelector('.dice-roll-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'dice-roll-overlay';
+
+  const face = document.createElement('div');
+  face.className = 'dice-3d-face';
+  face.textContent = '?';
+  overlay.appendChild(face);
+
+  if (context) {
+    const ctxEl = document.createElement('div');
+    ctxEl.className = 'dice-roll-ctx';
+    ctxEl.textContent = context;
+    overlay.appendChild(ctxEl);
+  }
+
+  document.body.appendChild(overlay);
+
+  const rattle = setInterval(() => {
+    face.textContent = Math.floor(Math.random() * 20) + 1;
+  }, 150);
+
+  face.addEventListener('animationend', () => {
+    clearInterval(rattle);
+    face.style.animation = 'none';
+    void face.offsetHeight;
+    face.style.animation = '';
+    face.textContent = finalValue;
+    face.classList.add('landed');
+    if (isCritSuccess) face.classList.add('crit-s');
+    else if (isCritFailure) face.classList.add('crit-f');
+    setTimeout(() => {
+      overlay.classList.add('fadeout');
+      setTimeout(() => overlay.remove(), 400);
+    }, 4600);
+  }, { once: true });
+}
+
 // ── DM Dice FAB ───────────────────────────────────────────────
 function dmDoRoll(expr) {
   const { total, dice } = rollNpcDamage(expr, 0);
@@ -1744,10 +2087,18 @@ function dmDoRoll(expr) {
     expression: expr, individualRolls: dice, modifier: 0, total,
     context: ctx, isCritSuccess: false, isCritFailure: false }).catch(() => {});
 
-  const numEl = document.getElementById('dmDiceResultNum');
-  numEl.textContent = total;
+  const numEl    = document.getElementById('dmDiceResultNum');
+  const detailEl = document.getElementById('dmDiceResultDetail');
+
+  // 3D overlay at center-bottom (fire-and-forget)
+  showDiceRollOverlay(total, { context: ctx });
+
+  // Popup shows result immediately
+  detailEl.textContent = '';
   numEl.className = 'dice-result-num pop';
-  document.getElementById('dmDiceResultDetail').textContent = `[${dice.map(d => d.value).join(', ')}]`;
+  numEl.textContent = total;
+  numEl.addEventListener('animationend', () => numEl.classList.remove('pop'), { once: true });
+  detailEl.textContent = `[${dice.map(d => d.value).join(', ')}]`;
 
   const logEl = document.getElementById('dmDiceLog');
   const row = document.createElement('div');
@@ -1924,13 +2275,18 @@ function renderSetupInitiativeList() {
     });
   });
   wrap.querySelectorAll('.combat-roll-init').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const si  = parseInt(btn.dataset.si);
       const ref = parseInt(btn.dataset.ref) || 0;
       const d10 = Math.floor(Math.random() * 10) + 1;
       const init = d10 + ref;
-      setupCombatants[si].initiative = init;
       const inp = wrap.querySelector(`input[data-si="${si}"]`);
+      if (inp) {
+        inp.disabled = true;
+        await animateRollNumber(inp, init, { duration: 800, minVal: 1, maxVal: 20 });
+        inp.disabled = false;
+      }
+      setupCombatants[si].initiative = init;
       if (inp) inp.value = init;
     });
   });

@@ -6,6 +6,28 @@
   <title>Character Upload — LZRV D&amp;D Hub</title>
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/upload.css">
+  <style>
+    .info-icon { background:none; border:none; color:var(--cyan,#00e5ff); cursor:pointer;
+      font-size:.68rem; padding:0 .18rem; opacity:.6; line-height:1; vertical-align:middle;
+      transition:opacity .15s; font-style:normal; }
+    .info-icon:hover { opacity:1; }
+    .info-tip-panel { position:fixed; z-index:9999; background:#090909;
+      border:1px solid var(--cyan,#00e5ff); border-radius:4px; padding:.75rem 1rem;
+      max-width:min(320px, calc(100vw - 24px)); font-size:.78rem; color:#ddd;
+      line-height:1.55; box-shadow:0 4px 28px rgba(0,229,255,.14); display:none; }
+    .info-tip-panel.is-modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+      max-width:min(360px, calc(100vw - 32px)); max-height:80vh; overflow-y:auto; }
+    .info-tip-panel h4 { font-size:.73rem; letter-spacing:.1em; text-transform:uppercase;
+      color:#ff2d2d; margin:0 0 .5rem; }
+    .info-tip-panel p { margin:0 0 .3rem; }
+    .info-tip-panel ul { margin:.2rem 0 .3rem; padding-left:1.1rem; }
+    .info-tip-panel li { margin-bottom:.16rem; }
+    .info-tip-panel strong { color:#fff; }
+    .info-tip-close { float:right; background:none; border:none; color:#888; cursor:pointer;
+      font-size:1rem; padding:0; margin:-.1rem -.1rem 0 .5rem; line-height:1; }
+    .info-tip-overlay { display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.55); }
+    .info-tip-overlay.open { display:block; }
+  </style>
 </head>
 <body>
 
@@ -46,6 +68,51 @@
   <div class="field-group">
     <label for="playerName">Spieler-Name</label>
     <input type="text" id="playerName" placeholder="z.B. Philip" autocomplete="off">
+  </div>
+
+  <!-- Role selection (shown after PDF parse) -->
+  <div class="field-group" id="roleSection" style="display:none">
+    <label for="charRole">Rolle <span class="text-red">*</span></label>
+    <select id="charRole">
+      <option value="">— Rolle wählen —</option>
+      <option value="Rockerboy">Rockerboy</option>
+      <option value="Solo">Solo</option>
+      <option value="Netrunner">Netrunner</option>
+      <option value="Tech">Tech</option>
+      <option value="Medtech">Medtech</option>
+      <option value="Media">Media</option>
+      <option value="Exec">Exec</option>
+      <option value="Lawman">Lawman</option>
+      <option value="Fixer">Fixer</option>
+      <option value="Nomad">Nomad</option>
+    </select>
+  </div>
+
+  <div class="field-group" id="rankSection" style="display:none">
+    <label for="charRank">Ability Rank</label>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <input type="number" id="charRank" min="1" max="10" value="4" style="max-width:70px">
+      <span class="text-muted" style="font-size:.8rem">Standard: 4 (Edgerunner)</span>
+    </div>
+  </div>
+
+  <div class="field-group" id="medtechSpecSection" style="display:none">
+    <label>Medtech Specialties <span class="text-muted" style="font-size:.8rem">(Punkte gesamt ≤ Rank)</span></label>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.3rem;align-items:center">
+      <span>Chirurgie: <button class="info-icon" data-tip="med-surgery" aria-label="Info">ℹ</button> <input type="number" id="uploadSurgery" min="0" value="0" style="width:55px"></span>
+      <span>Pharma (max 5): <button class="info-icon" data-tip="med-pharma" aria-label="Info">ℹ</button> <input type="number" id="uploadPharma" min="0" max="5" value="0" style="width:55px"></span>
+      <span>Cryosystem (max 5): <button class="info-icon" data-tip="med-cryo" aria-label="Info">ℹ</button> <input type="number" id="uploadCryo" min="0" max="5" value="0" style="width:55px"></span>
+    </div>
+  </div>
+
+  <div class="field-group" id="techSpecSection" style="display:none">
+    <label>Tech Specialties <span class="text-muted" style="font-size:.8rem">(Gesamt ≤ Rank × 2)</span></label>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.3rem;align-items:center">
+      <span>Field: <button class="info-icon" data-tip="tech-field" aria-label="Info">ℹ</button> <input type="number" id="uploadField" min="0" value="0" style="width:55px"></span>
+      <span>Upgrade: <button class="info-icon" data-tip="tech-upgrade" aria-label="Info">ℹ</button> <input type="number" id="uploadUpgrade" min="0" value="0" style="width:55px"></span>
+      <span>Fabrication: <button class="info-icon" data-tip="tech-fabrication" aria-label="Info">ℹ</button> <input type="number" id="uploadFab" min="0" value="0" style="width:55px"></span>
+      <span>Invention: <button class="info-icon" data-tip="tech-invention" aria-label="Info">ℹ</button> <input type="number" id="uploadInvent" min="0" value="0" style="width:55px"></span>
+    </div>
   </div>
 
   <!-- Portrait fallback (shown when PDF has no embedded image) -->
@@ -95,9 +162,107 @@ import { parsePDF }     from './assets/js/pdf-parser.js';
 import { saveCharacter, patchCharacter, uploadPortrait } from './assets/js/supabase.js';
 
 // ── State ─────────────────────────────────────────────────────
-let pdfFile      = null;
+let pdfFile       = null;
 let manualImgBlob = null;
 let parsedResult  = null;   // { character, imageBlob }
+let roleAbilities = {};
+
+// ── Tooltip system (standalone) ───────────────────────────────
+let _uTipPanel = null, _uTipOverlay = null;
+const _uTipMap = new Map();
+
+function _uInitTip() {
+  if (_uTipPanel) return;
+  _uTipOverlay = document.createElement('div');
+  _uTipOverlay.className = 'info-tip-overlay';
+  _uTipOverlay.addEventListener('click', _uHideTip);
+  _uTipPanel = document.createElement('div');
+  _uTipPanel.className = 'info-tip-panel';
+  _uTipPanel.addEventListener('click', e => { if (e.target.classList.contains('info-tip-close')) _uHideTip(); });
+  document.body.append(_uTipOverlay, _uTipPanel);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') _uHideTip(); });
+  document.addEventListener('click', e => {
+    if (_uTipPanel.style.display === 'block' &&
+        !_uTipPanel.contains(e.target) && !e.target.classList.contains('info-icon'))
+      _uHideTip();
+  });
+}
+function _uHideTip() {
+  if (_uTipPanel) _uTipPanel.style.display = '';
+  if (_uTipOverlay) _uTipOverlay.classList.remove('open');
+}
+function _uShowTip(triggerEl, html) {
+  _uInitTip();
+  const isMobile = window.innerWidth < 560 || !window.matchMedia('(hover: hover)').matches;
+  if (isMobile) {
+    _uTipPanel.innerHTML = `<button class="info-tip-close">✕</button>${html}`;
+    _uTipPanel.className = 'info-tip-panel is-modal';
+    _uTipOverlay.classList.add('open');
+  } else {
+    _uTipPanel.innerHTML = html;
+    _uTipPanel.className = 'info-tip-panel';
+    const r = triggerEl.getBoundingClientRect();
+    _uTipPanel.style.left = Math.min(r.left, window.innerWidth - 340) + 'px';
+    _uTipPanel.style.top  = (r.bottom + 6) + 'px';
+  }
+  _uTipPanel.style.display = 'block';
+}
+
+function buildUploadTipMap() {
+  _uTipMap.clear();
+  const h4 = t => `<h4>${t}</h4>`;
+  const med = roleAbilities.medtech || {};
+  const pharmaList = med.pharmaceuticals_list || [];
+  const cryoBenefits = med.specialties?.cryosystem_operation?.benefits || {};
+  _uTipMap.set('med-surgery', `${h4('Chirurgie (Surgery)')}
+    <p>Jeder Punkt = +2 Surgery Skill (max 10).</p>
+    <p>Behandelt: Schwere Critical Injuries (DV 13/15/17), Cyberware installieren/entfernen, Bodysculpting.</p>
+    <p>Exklusiv für Medtechs.</p>`);
+  _uTipMap.set('med-pharma', `${h4('Pharmazeutika')}
+    <p>Jeder Punkt = +1 Medical Tech Skill + 1 Drug freigeschaltet:</p>
+    <ul>${pharmaList.map((p,i) => `<li><strong>${i+1}. ${p.name}:</strong> ${p.effect || ''}</li>`).join('')}</ul>
+    <p>Synthetisieren: DV 13 · 200 eb → X Dosen</p>`);
+  _uTipMap.set('med-cryo', `${h4('Cryosystem Operation')}
+    <p>Jeder Punkt = +1 Medical Tech Skill + Benefit:</p>
+    <ul>${Object.entries(cryoBenefits).map(([k,v]) => `<li><strong>${k} Pkt:</strong> ${v}</li>`).join('')}</ul>`);
+
+  const tech = roleAbilities.tech || {};
+  const dvTable = tech.dv_time_table || {};
+  const dvRows = Object.entries(dvTable).map(([k,v]) => `${k} DV${v.dv}/${v.time}`).join(' · ');
+  const specs = tech.specialties || {};
+  _uTipMap.set('tech-field', `${h4('Field Expertise')}
+    <p>${specs.field_expertise?.description || 'Addiere Specialty-Rang zu Basic Tech / Cybertech / Electronics / Weaponstech / Vehicle Tech Checks (außer Maker-Checks).'}</p>
+    <p>${specs.field_expertise?.extra || 'Bonus: Temporäre Reparatur möglich (10 Min × Rang).'}</p>`);
+  _uTipMap.set('tech-upgrade', `${h4('Upgrade Expertise')}
+    <p>${specs.upgrade_expertise?.description || 'Verbessere ein Item (1 Upgrade/Item):'}</p>
+    <ul><li>Humanity Loss um 1d6 senken</li><li>+1 Option-Slot</li>
+        <li>Reparaturzeit halbieren</li><li>Waffe concealable machen</li>
+        <li>Average → Excellent Quality Waffe</li><li>SP um 1 erhöhen</li></ul>`);
+  _uTipMap.set('tech-fabrication', `${h4('Fabrication Expertise')}
+    <p>${specs.fabrication_expertise?.description || 'Baue Items aus Materialien (1 Preiskategorie günstiger).'}</p>
+    <p><strong>DV/Zeit:</strong> ${dvRows || 'Cheap DV9/1h → Luxury DV29/1M'}</p>`);
+  _uTipMap.set('tech-invention', `${h4('Invention Expertise')}
+    <p>${specs.invention_expertise?.description || 'Erfinde neue Items oder Upgrades (GM-vermittelt).'}</p>
+    <p>Beschreibe Funktion → GM setzt DV &amp; Preiskategorie → Bauen mit Fabrication.</p>`);
+}
+
+function setupUploadInfoIcons() {
+  document.querySelectorAll('.info-icon[data-tip]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const html = _uTipMap.get(btn.dataset.tip);
+      if (html) _uShowTip(btn, html);
+      else _uHideTip();
+    });
+  });
+}
+
+// Load role abilities + set up tooltips
+fetch('./assets/data/role-abilities.json').then(r => r.json()).then(data => {
+  roleAbilities = data;
+  buildUploadTipMap();
+  setupUploadInfoIcons();
+}).catch(() => {});
 
 // ── DOM refs ──────────────────────────────────────────────────
 const dropZone   = document.getElementById('dropZone');
@@ -115,6 +280,14 @@ const progressPct   = document.getElementById('progressPct');
 const progressFill  = document.getElementById('progressFill');
 const statusMsg   = document.getElementById('statusMsg');
 const submitBtn   = document.getElementById('submitBtn');
+
+// ── Role UI ───────────────────────────────────────────────────
+function handleRoleChange() {
+  const role = (document.getElementById('charRole')?.value || '').toLowerCase();
+  document.getElementById('medtechSpecSection').style.display = role === 'medtech' ? '' : 'none';
+  document.getElementById('techSpecSection').style.display    = role === 'tech'    ? '' : 'none';
+}
+document.getElementById('charRole')?.addEventListener('change', handleRoleChange);
 
 // ── File input via label[for="pdfInput"] ─────────────────────
 // label click → browser opens dialog → change fires
@@ -193,6 +366,17 @@ async function handlePDF(file) {
 
     setProgress(100, 'Bereit');
     showStatus(`PDF gelesen: ${parsedResult.character.name || '(kein Handle)'}`, 'success');
+    // Show role selection
+    document.getElementById('roleSection').style.display = '';
+    document.getElementById('rankSection').style.display = '';
+    if (parsedResult.character.role) {
+      const sel = document.getElementById('charRole');
+      // Try exact match or capitalized match
+      const roleVal = parsedResult.character.role;
+      const opt = [...sel.options].find(o => o.value.toLowerCase() === roleVal.toLowerCase());
+      if (opt) sel.value = opt.value;
+      handleRoleChange();
+    }
     updateSubmitState();
   } catch (err) {
     console.error(err);
@@ -215,11 +399,42 @@ submitBtn.addEventListener('click', async () => {
   }
 
   try {
+    const roleVal  = document.getElementById('charRole')?.value || parsedResult.character.role || '';
+    const rankVal  = parseInt(document.getElementById('charRank')?.value) || 4;
+    const roleKey  = roleVal.toLowerCase();
+    let roleAbilityData = {};
+    if (roleKey === 'medtech') {
+      roleAbilityData = { specialtyPoints: {
+        surgery: Math.max(0, parseInt(document.getElementById('uploadSurgery')?.value)||0),
+        pharmaceuticals: Math.min(5, Math.max(0, parseInt(document.getElementById('uploadPharma')?.value)||0)),
+        cryosystem_operation: Math.min(5, Math.max(0, parseInt(document.getElementById('uploadCryo')?.value)||0)),
+      }};
+    } else if (roleKey === 'tech') {
+      roleAbilityData = { specialtyRanks: {
+        field:       Math.max(0, parseInt(document.getElementById('uploadField')?.value)||0),
+        upgrade:     Math.max(0, parseInt(document.getElementById('uploadUpgrade')?.value)||0),
+        fabrication: Math.max(0, parseInt(document.getElementById('uploadFab')?.value)||0),
+        invention:   Math.max(0, parseInt(document.getElementById('uploadInvent')?.value)||0),
+      }};
+    } else if (roleKey === 'solo') {
+      roleAbilityData = { combatAwareness: { damage_deflection:0, fumble_recovery:false,
+        initiative_reaction:0, precision_attack:0, spot_weakness:0, threat_detection:0 }};
+    } else if (roleKey === 'exec') {
+      roleAbilityData = { teamMembers: [] };
+    } else if (roleKey === 'nomad') {
+      roleAbilityData = { vehiclePool: [], activeVehicle: null };
+    } else if (roleKey === 'rockerboy') {
+      roleAbilityData = { fanRelations: '' };
+    }
+
     const character = {
       ...parsedResult.character,
-      name:        nameVal,
-      handle:      nameVal,
-      player_name: playerName.value.trim() || nameVal,
+      name:              nameVal,
+      handle:            nameVal,
+      player_name:       playerName.value.trim() || nameVal,
+      role:              roleVal || parsedResult.character.role || '',
+      role_ability_rank: rankVal,
+      role_ability_data: roleAbilityData,
     };
 
     setProgress(10, 'Erstelle Charakterprofil…');

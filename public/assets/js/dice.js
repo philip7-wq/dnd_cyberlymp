@@ -93,3 +93,31 @@ function parseExpression(expr) {
 // ── Dice-box helper (used by popup) ─────────────────────────
 export function hasDiceBox() { return diceBox !== null; }
 export function getDiceBox() { return diceBox; }
+
+// ── Roll animation ───────────────────────────────────────────
+/**
+ * Rattles a DOM element with fast random numbers, slows down, then reveals finalValue.
+ * Works on both regular elements (textContent) and <input> elements (value).
+ * Returns a Promise that resolves when the animation ends.
+ */
+export function animateRollNumber(el, finalValue, opts = {}) {
+  const { duration = 1500, minVal = 1, maxVal = 20 } = opts;
+  const isInput = el?.tagName === 'INPUT';
+  const setValue = v => { if (isInput) el.value = v; else el.textContent = v; };
+  return new Promise(resolve => {
+    const start = Date.now();
+    const tick = () => {
+      const elapsed  = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      if (progress >= 1) {
+        setValue(finalValue);
+        resolve();
+        return;
+      }
+      setValue(Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal);
+      // Easing: 50ms at start → ~400ms near end
+      setTimeout(tick, 50 + Math.pow(progress, 2.5) * 350);
+    };
+    tick();
+  });
+}

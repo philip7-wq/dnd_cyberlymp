@@ -191,6 +191,11 @@ export async function sendMessage({ sender, sender_role, content, image_url }) {
   if (error) console.error('sendMessage:', error);
 }
 
+export async function patchMessage(id, patch) {
+  const { error } = await supabase.from('messages').update(patch).eq('id', id);
+  if (error) console.error('patchMessage:', error);
+}
+
 export async function getMessages(limit = 50) {
   const { data, error } = await supabase
     .from('messages')
@@ -204,6 +209,7 @@ export async function getMessages(limit = 50) {
 export function subscribeMessages(callback) {
   return supabase.channel('messages-channel')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, callback)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, callback)
     .subscribe();
 }
 

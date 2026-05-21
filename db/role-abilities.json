@@ -1,0 +1,456 @@
+{
+  "source": "Cyberpunk RED Core Rulebook, pg. 144-162 (Role Abilities)",
+  "general_rules": {
+    "rank_range": "1-10",
+    "rank_up_cost": "IP-based, see ip_cost_by_next_rank in items.json Role Ability Upgrades",
+    "starting_rank": "4 (Edgerunner) or higher (Complete Package)"
+  },
+
+  "rockerboy": {
+    "ability_name": "Charismatic Impact",
+    "summary": "Influence fans through sheer presence of personality. Works on Fans only.",
+    "check_formula": "Charismatic Impact Rank + 1d10",
+    "dvs": {
+      "single_fan": 8,
+      "small_group": 10,
+      "huge_group": 12
+    },
+    "ranks": {
+      "1-2": {
+        "venues": "Small local clubs",
+        "single": "Small favor: buy drink/meal, give lift",
+        "group": "Up to 6 fans: autographs, befriend in streets",
+        "huge": "No huge fanbase yet"
+      },
+      "3-4": {
+        "venues": "Well known clubs",
+        "single": "Major favor: go to bed, put in a good word",
+        "group": "Regular hangouts, provide booze/drugs",
+        "huge": "Strong local following, fans buy merch"
+      },
+      "5-6": {
+        "venues": "Large important clubs",
+        "single": "Minor crime: shoplift, help in fight",
+        "group": "Personal posse, constant hangout",
+        "huge": "Citywide fans, strongly loyal, major favors"
+      },
+      "7-8": {
+        "venues": "Small concert halls, local video feed",
+        "single": "Risk life without question",
+        "group": "Minor crime for Rockerboy",
+        "huge": "Rabidly loyal, fight rivals, info networks"
+      },
+      "9": {
+        "venues": "Large concert halls, national video feed",
+        "single": "Major crime: steal expensive item, beat someone up",
+        "group": "Major crime for Rockerboy",
+        "huge": "Cult-like, will riot/destroy/kill"
+      },
+      "10": {
+        "venues": "Stadiums, international video",
+        "single": "Sacrifice self without question",
+        "group": "Risk lives as personal protection",
+        "huge": "Private army based on charisma"
+      }
+    }
+  },
+
+  "solo": {
+    "ability_name": "Combat Awareness",
+    "summary": "Divide Rank points among combat abilities. Can re-divide outside combat, before initiative, or with an Action in combat.",
+    "abilities": {
+      "damage_deflection": {
+        "description": "Decrease the first damage you take this Round",
+        "costs": [
+          { "points": 2, "effect": "-1 damage" },
+          { "points": 4, "effect": "-2 damage" },
+          { "points": 6, "effect": "-3 damage" },
+          { "points": 8, "effect": "-4 damage" },
+          { "points": 10, "effect": "-5 damage" }
+        ]
+      },
+      "fumble_recovery": {
+        "description": "Ignore critical failures (1s) when attacking (still treated as 1)",
+        "costs": [{ "points": 4, "effect": "Ignore crit fails" }]
+      },
+      "initiative_reaction": {
+        "description": "+1 to Initiative rolls per point spent",
+        "scaling": "+1 per point"
+      },
+      "precision_attack": {
+        "description": "Adds bonus to Attack rolls",
+        "costs": [
+          { "points": 3, "effect": "+1 to Attacks" },
+          { "points": 6, "effect": "+2 to Attacks" },
+          { "points": 9, "effect": "+3 to Attacks" }
+        ]
+      },
+      "spot_weakness": {
+        "description": "Adds bonus damage (before armor) to first successful Attack in Round",
+        "scaling": "+1 damage per point"
+      },
+      "threat_detection": {
+        "description": "Enhanced situational awareness, +1 to Perception Checks",
+        "scaling": "+1 per point"
+      }
+    }
+  },
+
+  "netrunner": {
+    "ability_name": "Interface",
+    "summary": "Allows Netrunning. Determines NET Actions per Turn and grants Interface Abilities.",
+    "net_actions_per_turn": {
+      "1-3": 2,
+      "4-6": 3,
+      "7-9": 4,
+      "10": 5
+    },
+    "interface_abilities": {
+      "backdoor": "Break through Passwords and other obstructions in the Architecture",
+      "cloak": "Hide actions in the Architecture before leaving",
+      "control": "Control things attached to the Architecture",
+      "eye_dee": "Identify found data and its value",
+      "pathfinder": "Learn the 'map' of the Architecture",
+      "scanner": "Find locations of systems in an area",
+      "slide": "Slip away from one Black ICE following you",
+      "virus": "Leave a custom virus at the Architecture's core",
+      "zap": "Basic Netrunner attack vs Programs and other Netrunners"
+    }
+  },
+
+  "tech": {
+    "ability_name": "Maker",
+    "summary": "Fix, improve, modify, make, and invent items. Each Rank +1 gives 1 Rank in 2 different Maker Specialties.",
+    "specialties": {
+      "field_expertise": {
+        "description": "Add Rank to Basic Tech/Cybertech/Electronics-Security/Weaponstech/Land-Sea-Air Vehicle Tech Checks (Non-Maker purposes)",
+        "extra": "Can jury-rig items: 10 minutes per Rank to perfect condition, item degrades back after"
+      },
+      "upgrade_expertise": {
+        "description": "Upgrade items (1 upgrade per item from this specialty)",
+        "options": [
+          "Lower Humanity Loss of non-borgware cyberware by 1d6 if HL ≥ 2d6",
+          "Add 1 slot for options/attachments/Programs",
+          "Halve full repair time for the item",
+          "Make non-concealable one-handed weapon concealable",
+          "Upgrade Average to Excellent Quality Weapon",
+          "Grant Attachment Slot to an Exotic Weapon",
+          "Allow Exotic Weapon to fire one variety of Non-Basic Ammo",
+          "Increase item's SP by 1 (if it had any)",
+          "Apply Nomad Rank 1 vehicle upgrade",
+          "Install own Invention Expertise creation"
+        ],
+        "formula": "TECH + relevant Tech Skill + Specialty Rank + 1d10"
+      },
+      "fabrication_expertise": {
+        "description": "Fabricate existing or invented items from materials",
+        "formula": "TECH + relevant Tech Skill + Specialty Rank + 1d10",
+        "material_cost": "1 price category lower than fabricated item (except Super Luxury: half price)"
+      },
+      "invention_expertise": {
+        "description": "Invent new items or upgrades (GM-mediated, results in custom item)"
+      }
+    },
+    "dv_time_table": {
+      "cheap_everyday": { "dv": 9, "time": "1 hour" },
+      "costly": { "dv": 13, "time": "6 hours" },
+      "premium": { "dv": 17, "time": "1 day" },
+      "expensive": { "dv": 21, "time": "1 week" },
+      "very_expensive": { "dv": 24, "time": "2 weeks" },
+      "luxury": { "dv": 29, "time": "1 month" },
+      "super_luxury": { "dv": 29, "time": "1 month per 10,000eb" }
+    }
+  },
+
+  "medtech": {
+    "ability_name": "Medicine",
+    "summary": "Per Rank: allocate 1 point to one of 3 Specialties (Surgery, Pharmaceuticals, Cryosystems).",
+    "specialties": {
+      "surgery": {
+        "description": "Every point = +2 Surgery Skill (max 10). Treats severe Critical Injuries, implants/harvests cyberware.",
+        "exclusive_to": "Medtech only"
+      },
+      "pharmaceuticals": {
+        "description": "Every point = +1 Medical Tech Skill (max 5 points). Each point unlocks one Pharmaceutical.",
+        "synthesize_check": "DV13 Medical Tech",
+        "synthesize_yield": "200eb materials → doses equal to Medical Tech Skill, in 1 hour",
+        "max_points": 5
+      },
+      "cryosystem_operation": {
+        "description": "Every point = +1 Medical Tech Skill (max 5 points). Cryotank benefits.",
+        "max_points": 5,
+        "benefits": {
+          "1": "1 Cryopump",
+          "2": "Registered Cryotank Technician, 24/7 access to 1 Cryotank",
+          "3": "1 personal Cryotank installed",
+          "4": "+2 Cryotanks, Cryopump 2 charges/2 people capacity",
+          "5": "+3 Cryotanks, Cryopump 3 charges/3 people capacity"
+        }
+      }
+    },
+    "pharmaceuticals_list": [
+      {
+        "name": "Antibiotic",
+        "effect": "Already-healing target heals extra 2 HP/day for 1 week. Once at a time."
+      },
+      {
+        "name": "Rapidetox",
+        "effect": "Immediately purges effects of drug/poison/intoxicant."
+      },
+      {
+        "name": "Speedheal",
+        "effect": "Non-Mortally-Wounded target heals BODY + WILL HP instantly. Once per day."
+      },
+      {
+        "name": "Stim",
+        "effect": "Ignore all Seriously Wounded penalties for 1 hour. Once per day."
+      },
+      {
+        "name": "Surge",
+        "effect": "Function without sleep for 24 hours. Once per week."
+      }
+    ],
+    "non_medtech_warning": "Non-Medtechs cannot administer pharmaceuticals correctly. Requires training."
+  },
+
+  "media": {
+    "ability_name": "Credibility",
+    "summary": "Influence audiences, access sources, pick up rumors passively.",
+    "rumor_dvs": {
+      "vague": { "passive": 7, "active": 13 },
+      "typical": { "passive": 9, "active": 15 },
+      "substantial": { "passive": 11, "active": 17 },
+      "detailed": { "passive": 13, "active": 21 }
+    },
+    "passive_rumor_frequency": "GM rolls Credibility Rank + 1d10 twice per week",
+    "ranks": {
+      "1-2": {
+        "access": "Local honcho, gang lord, neighborhood leadership",
+        "audience": "Immediate neighborhood",
+        "believability": "2/10",
+        "impact": "Small-time bad guys may change ways"
+      },
+      "3-4": {
+        "access": "City gang honcho, minor politician, Corp Exec",
+        "audience": "Known on local screamsheet/Data Pool",
+        "believability": "3/10",
+        "impact": "Local bad guys get arrested/removed"
+      },
+      "5-6": {
+        "access": "Major City player, City politico, local celebrity",
+        "audience": "Citywide",
+        "believability": "4/10",
+        "impact": "Citywide change, higher-level bad guys jailed, laws passed"
+      },
+      "7-8": {
+        "access": "Local Corp president, mayor, City celebrity",
+        "audience": "Statewide",
+        "believability": "5/10",
+        "impact": "Mid-level corps/governments toppled, multi-city laws"
+      },
+      "9": {
+        "access": "Divisional Corp head, State politico, well known celebrity",
+        "audience": "National",
+        "believability": "6/10",
+        "impact": "National change, large corps/governments toppled"
+      },
+      "10": {
+        "access": "Major world leader, major Corp head, world-famous celebrity",
+        "audience": "Worldwide",
+        "believability": "7/10",
+        "impact": "Global change, Megacorps fall, international laws"
+      }
+    },
+    "story_bonuses": {
+      "single_evidence_piece": "+1 to Believability Check",
+      "4_plus_evidence_pieces": "+2 to Believability Check (stacks with above)",
+      "luck": "Cannot spend LUCK on Believability Checks"
+    }
+  },
+
+  "exec": {
+    "ability_name": "Teamwork",
+    "summary": "Build a team of corporate-provided members. Get corporate benefits.",
+    "benefits_by_rank": {
+      "1": "Signing Bonus: Businesswear suit (Jacket/Top/Bottom/Footwear) — cannot resell",
+      "2": "Corporate Conapt (free rent while employed)",
+      "3": "First Team Member",
+      "5": "Second Team Member",
+      "6": "Trauma Team Silver coverage (paid by corp)",
+      "7": "Upgraded housing: Beaverville House in Executive Zone",
+      "8": "Trauma Team Executive coverage",
+      "9": "Third Team Member (max)",
+      "10": "Beaverville McMansion OR Luxury Corporate Zone Penthouse"
+    },
+    "team_members": {
+      "max_count": 3,
+      "constraints": [
+        "Built like PCs but do not improve Skills",
+        "Determine and heal HP like PCs",
+        "Cannot wear Armor heavier than Light Armorjack (Company Policy)",
+        "GM controls them, Loyalty determines if they obey"
+      ],
+      "loyalty": {
+        "cap_between_sessions": 10,
+        "no_cap_during_session": true,
+        "loyalty_save": "GM rolls 1d6 vs current Loyalty when task given",
+        "below_zero": "Will actively betray Exec to enemies",
+        "session_end_negative": "Quits or transfers"
+      },
+      "losing_member": "Replaced next session, new Loyalty = 1, costs Exec 200eb bribes to HR"
+    }
+  },
+
+  "lawman": {
+    "ability_name": "Backup",
+    "summary": "Call fellow law enforcers based on Rank.",
+    "call_check": {
+      "formula": "Roll d10, must roll ≤ Backup Rank",
+      "action_required": true,
+      "abuse_penalty": "Boss throws off force or fines",
+      "response_time": "Roll 1d6 for Rounds until arrival",
+      "lucky_roll": "On 1d6=6, next-higher tier backup arrives (Rank 10: two groups)"
+    },
+    "ranks": {
+      "1-2": {
+        "name": "Corporate Security",
+        "count": 4,
+        "combat_number": 8,
+        "sp": 7,
+        "hp": 20,
+        "move_body": 4,
+        "weapons": "Heavy Pistols",
+        "armor": "Kevlar",
+        "transport": "On foot"
+      },
+      "3-4": {
+        "name": "Local Beat Cops",
+        "count": 4,
+        "combat_number": 10,
+        "sp": 7,
+        "hp": 25,
+        "move_body": 5,
+        "weapons": "Heavy Pistols",
+        "armor": "Kevlar",
+        "transport": "Two Compact Groundcars"
+      },
+      "5-7": {
+        "name": "Sheriff's Department (County Mounties)",
+        "count": 2,
+        "combat_number": 14,
+        "sp": 13,
+        "hp": 35,
+        "move_body": 4,
+        "weapons": "Heavy Pistols, Assault Rifles",
+        "armor": "Heavy Armorjack",
+        "transport": "High Performance Groundcar"
+      },
+      "8": {
+        "name": "Recovery Zone Marshal",
+        "count": 1,
+        "combat_number": 16,
+        "sp": 15,
+        "hp": 50,
+        "move_body": 6,
+        "weapons": "Very Heavy Pistol, Assault Rifle, Grenade Launcher",
+        "armor": "Flak Armor",
+        "transport": "Superbike"
+      },
+      "9": {
+        "name": "C-SWAT (Psycho Squad)",
+        "count": 2,
+        "combat_number": 15,
+        "sp": 18,
+        "hp": 35,
+        "move_body": 4,
+        "weapons": "Assault Rifles, Rocket Launchers",
+        "armor": "Metalgear",
+        "transport": "AV-4 (air arrival)"
+      },
+      "10": {
+        "name": "National Law Enforcement/Interpol/FBI/Netwatch",
+        "count": 2,
+        "combat_number": 14,
+        "sp": 11,
+        "hp": 35,
+        "move_body": 6,
+        "weapons": "Very Heavy Pistols, Assault Rifles",
+        "armor": "Light Armorjack",
+        "transport": "AV-4",
+        "special": "Stick around to investigate, same team responds to follow-up calls. Combat Number applies to many skills (Accounting, Acting, Conceal/Reveal, Criminology, Cryptography, Deduction, Education, Forgery, Interrogation, Paramedic, Perception, Personal Grooming, Resist Torture/Drugs, Stealth, Tracking)"
+      }
+    }
+  },
+
+  "fixer": {
+    "ability_name": "Operator",
+    "summary": "Black market access, contacts, deals.",
+    "haggle_formula": "COOL + Trading Skill + Operator Rank + 1d10 vs opposed Check",
+    "deals_per_transaction": 1,
+    "ranks": {
+      "1-2": {
+        "contacts": "Local honcho, gang lord, neighborhood leadership",
+        "reach": "Cheap and Everyday items, piece-by-piece",
+        "haggle": "10% better/worse than market price",
+        "grease": "Local neighborhood cultures + all local gangs"
+      },
+      "3-4": {
+        "contacts": "City gang honcho, minor politician, Corp Exec",
+        "reach": "Up to Expensive items, piece-by-piece",
+        "haggle": "Buy 5+ of same item, get 1 free",
+        "grease": "+1 culture, +1 language at Skill 4"
+      },
+      "5-6": {
+        "contacts": "Major City player, City politico, neighborhood celebrity",
+        "reach": "Set up Night Market 1x/month with other Fixers → access Super Luxury items",
+        "haggle": "Negotiate Job pay +20% per person",
+        "grease": "+2 cultures (3 total), +1 language each at Skill 4"
+      },
+      "7-8": {
+        "contacts": "Local Corp president, mayor, local celebrity",
+        "reach": "Up to Very Expensive items, piece-by-piece",
+        "haggle": "Luxury/Super Luxury: pay half now, half in 1 month (default = blacklist)",
+        "grease": "+3 cultures (6 total)"
+      },
+      "9": {
+        "contacts": "Divisional Corp head, state/zone politico, well-known celebrity",
+        "reach": "Up to Luxury piece-by-piece. Night Market can include Midnight Market (criminal underworld leadership)",
+        "haggle": "20% better/worse than market price",
+        "grease": "Many cultures + Corporate/governmental agencies"
+      },
+      "10": {
+        "contacts": "Major world leader, major Corp head, world-famous celebrity",
+        "reach": "Up to Super Luxury piece-by-piece",
+        "haggle": "Double pay per person on Dangerous Jobs",
+        "grease": "Almost any group including secret societies, cults, exclusive memberships"
+      }
+    }
+  },
+
+  "nomad": {
+    "ability_name": "Moto",
+    "summary": "Add Moto Rank to all vehicle Drive/Pilot/Tech Checks. Family Motorpool access.",
+    "vehicle_skill_bonus": "Moto Rank adds to Drive Land/Pilot Air/Pilot Sea Vehicle, Air/Land/Sea Vehicle Tech",
+    "per_rank_choice": "Either: add stock vehicle (≤ Rank) to Family Pool OR upgrade one Family Vehicle (≤ Rank)",
+    "vehicle_constraints": {
+      "one_at_a_time": "Only one Family Vehicle out at a time (swap takes a day)",
+      "repair_cost": "Destroyed vehicle: Family repairs in 1 week for 500eb (even Family Heads pay)",
+      "daily_repairs": "Nomad's responsibility (e.g., bullet removal)"
+    },
+    "family_motorpool": {
+      "1-4": ["Compact Groundcar", "Gyrocopter", "Jetski", "Roadbike"],
+      "5-6": ["Helicopter", "High Performance Groundcar", "Speedboat"],
+      "7-8": ["AV-4", "Cabin Cruiser", "Superbike"],
+      "9-10": ["Aerozep", "AV-9", "Super Groundcar", "Yacht"]
+    },
+    "rank_10_promotion": {
+      "title": "Family Leadership Position",
+      "perks": [
+        "All Family Vehicles out simultaneously",
+        "Future Family Vehicles at market price",
+        "Future upgrades at 1,000eb each"
+      ]
+    },
+    "vehicle_upgrades_note": "Found in shop items.json under 'Vehicle Upgrade'. Most at Very Expensive (Rank 1) or Luxury (higher Ranks)."
+  }
+}
