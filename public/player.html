@@ -2044,6 +2044,7 @@ async function removeItem(inv, idx) {
 // ── Damage Apply Modal ────────────────────────────────────────
 async function showDamageApplyModal(totalDamage) {
   activeNpcs = await getActiveNpcs();
+  console.log('[DEBUG] getActiveNpcs returned:', activeNpcs);
   const modal = document.getElementById('dmgApplyModal');
   const select = document.getElementById('dmgApplyTarget');
   const calcRow = document.getElementById('dmgApplyCalc');
