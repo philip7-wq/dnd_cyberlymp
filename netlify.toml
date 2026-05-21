@@ -1,0 +1,20 @@
+[build]
+  publish = "public"
+  command = ""
+
+# No-index — keep this app out of Google
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+# Cache-bust the HTML, long-cache static assets
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
