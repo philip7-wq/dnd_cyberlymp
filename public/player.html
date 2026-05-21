@@ -288,7 +288,21 @@ function getInjuries() {
 // ── Boot ──────────────────────────────────────────────────────
 const id = new URLSearchParams(location.search).get('id');
 if (!id) { location.replace('index.html'); }
+
+function setLoaderMsg(msg) {
+  const el = document.getElementById('loader');
+  if (el) el.querySelector('span')?.setAttribute('data-msg', msg) || (el.innerHTML = `<span>${msg}</span><div><span class="loader-dot"></span><span class="loader-dot"></span><span class="loader-dot"></span></div>`);
+}
+
 if (id) {
+  // 15-second timeout — if boot hangs, show a helpful message
+  const bootTimeout = setTimeout(() => {
+    const el = document.getElementById('loader');
+    if (el && el.style.display !== 'none') {
+      el.innerHTML = `<span style="color:var(--red);font-size:.85rem">Timeout: Keine Verbindung zu Supabase.<br>Prüfe Internet / Supabase-Status und lade neu.</span>`;
+    }
+  }, 15000);
+
   try {
     let rawItems;
     [char, injuryData, allChars, combatSession, rawItems, roleAbilities] = await Promise.all([
@@ -305,6 +319,7 @@ if (id) {
     (rawItems || []).filter(i => i.category === 'Skill Upgrade').forEach(i => {
       skillUpgradeMap[i.name] = { ip_cost_multiplier: i.ip_cost_multiplier ?? 1, ip_cost_by_next_level: i.ip_cost_by_next_level || {} };
     });
+    clearTimeout(bootTimeout);
     renderAll();
     show();
     requestNotifPermission();
@@ -357,8 +372,10 @@ if (id) {
       else if (newHp > prevHp) flashScreen('heal');
     });
   } catch(e) {
+    clearTimeout(bootTimeout);
+    console.error('[player] boot error:', e);
     document.getElementById('loader').innerHTML =
-      `<span style="color:var(--red)">Fehler: ${e.message}</span>`;
+      `<span style="color:var(--red);font-size:.85rem">Fehler: ${e.message}</span>`;
   }
 }
 
