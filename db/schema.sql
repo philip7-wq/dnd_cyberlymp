@@ -128,6 +128,12 @@ drop policy if exists "anon all rolls" on rolls;
 create policy "anon all rolls" on rolls
   for all using (true) with check (true);
 
+-- ---------- GRANTS (service_role für seed script) ----------
+grant all on public.characters to service_role;
+grant all on public.items      to service_role;
+grant all on public.rolls      to service_role;
+grant usage, select on sequence rolls_id_seq to service_role;
+
 -- ---------- STORAGE BUCKET (character portraits) ----------
 insert into storage.buckets (id, name, public)
 values ('character-images', 'character-images', true)

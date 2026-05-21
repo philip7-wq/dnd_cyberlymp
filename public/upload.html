@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Character Upload — LZRV D&amp;D Hub</title>
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/upload.css">
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-logo">LZRV<span>HUB</span></span>
+  <a href="index.html" class="btn btn-ghost" style="margin-left:auto">← Zurück</a>
+</nav>
+
+<main class="upload-page">
+
+  <div class="upload-title">
+    <h1>Character hochladen</h1>
+    <p>Ausgefülltes Cyberpunk RED PDF → Datenbank</p>
+  </div>
+
+  <!-- PDF drop zone -->
+  <div class="drop-zone card" id="dropZone">
+    <input type="file" id="pdfInput" accept=".pdf" aria-label="PDF auswählen">
+    <span class="drop-icon">📄</span>
+    <p><strong>PDF hier ablegen</strong> oder klicken</p>
+    <p style="font-size:.8rem;margin-top:.35rem">Cyberpunk RED Charakterbogen (ausgefüllt)</p>
+    <p class="filename" id="pdfName" hidden></p>
+  </div>
+
+  <!-- Player name -->
+  <div class="field-group">
+    <label for="playerName">Spieler-Name</label>
+    <input type="text" id="playerName" placeholder="z.B. Philip" autocomplete="off">
+  </div>
+
+  <!-- Portrait fallback (shown when PDF has no embedded image) -->
+  <div class="image-fallback card" id="imageFallback">
+    <div class="image-fallback-header">
+      <img src="" alt="Portrait preview" class="image-preview" id="imgPreview" hidden>
+      <div>
+        <h3>Portrait</h3>
+        <p class="text-muted" style="font-size:.85rem" id="imgHint">
+          Wird aus dem PDF extrahiert — oder hier manuell hochladen:
+        </p>
+      </div>
+    </div>
+    <div class="image-upload-zone">
+      <label class="btn btn-ghost" style="cursor:pointer">
+        Bild wählen
+        <input type="file" id="manualImg" accept="image/jpeg,image/png,image/webp" class="sr-only">
+      </label>
+      <span class="text-muted" id="manualImgName" style="font-size:.85rem"></span>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap" hidden>
+    <div class="progress-label">
+      <span id="progressLabel">Verarbeite PDF…</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="status-msg" id="statusMsg" role="alert"></div>
+
+  <!-- Submit -->
+  <button class="btn btn-primary btn-upload" id="submitBtn" disabled>
+    Character speichern
+  </button>
+
+</main>
+
+<script type="module">
+import { parsePDF }     from './assets/js/pdf-parser.js';
+import { saveCharacter, uploadPortrait } from './assets/js/supabase.js';
+
+// ── State ─────────────────────────────────────────────────────
+let pdfFile      = null;
+let manualImgBlob = null;
+let parsedResult  = null;   // { character, imageBlob }
+
+// ── DOM refs ──────────────────────────────────────────────────
+const dropZone    = document.getElementById('dropZone');
+const pdfInput    = document.getElementById('pdfInput');
+const pdfName     = document.getElementById('pdfName');
+const playerName  = document.getElementById('playerName');
+const imgPreview  = document.getElementById('imgPreview');
+const imgHint     = document.getElementById('imgHint');
+const manualImg   = document.getElementById('manualImg');
+const manualImgName = document.getElementById('manualImgName');
+const progressWrap  = document.getElementById('progressWrap');
+const progressLabel = document.getElementById('progressLabel');
+const progressPct   = document.getElementById('progressPct');
+const progressFill  = document.getElementById('progressFill');
+const statusMsg   = document.getElementById('statusMsg');
+const submitBtn   = document.getElementById('submitBtn');
+
+// ── Drag & drop ───────────────────────────────────────────────
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file?.type === 'application/pdf') handlePDF(file);
+  else showStatus('Bitte eine PDF-Datei auswählen.', 'error');
+});
+pdfInput.addEventListener('change', () => {
+  if (pdfInput.files[0]) handlePDF(pdfInput.files[0]);
+});
+
+// ── Manual portrait ───────────────────────────────────────────
+manualImg.addEventListener('change', () => {
+  const file = manualImg.files[0];
+  if (!file) return;
+  manualImgBlob = file;
+  manualImgName.textContent = file.name;
+  showPreview(file);
+  updateSubmitState();
+});
+
+// ── PDF processing ────────────────────────────────────────────
+async function handlePDF(file) {
+  pdfFile = file;
+  pdfName.textContent = file.name;
+  pdfName.hidden = false;
+  parsedResult = null;
+  hideStatus();
+  setProgress(5, 'Lese PDF…');
+  progressWrap.hidden = false;
+  submitBtn.disabled = true;
+
+  try {
+    const buf = await file.arrayBuffer();
+    setProgress(30, 'Parse AcroForm-Felder…');
+
+    parsedResult = await parsePDF(buf);
+    setProgress(80, 'Felder gemappt');
+
+    // Pre-fill player name from handle if empty
+    if (!playerName.value && parsedResult.character.handle) {
+      playerName.value = parsedResult.character.handle;
+    }
+
+    // Show extracted image or hint
+    if (parsedResult.imageBlob) {
+      showPreview(parsedResult.imageBlob);
+      imgHint.textContent = '✓ Portrait aus PDF extrahiert';
+      manualImgBlob = null;
+    } else {
+      imgHint.textContent = 'Kein Portrait im PDF — hier manuell hochladen:';
+    }
+
+    setProgress(100, 'Bereit');
+    showStatus(`PDF gelesen: ${parsedResult.character.name || '(kein Handle)'}`, 'success');
+    updateSubmitState();
+  } catch (err) {
+    console.error(err);
+    progressWrap.hidden = true;
+    showStatus(`Fehler beim Parsen: ${err.message}`, 'error');
+  }
+}
+
+// ── Submit ────────────────────────────────────────────────────
+submitBtn.addEventListener('click', async () => {
+  if (!parsedResult) return;
+  submitBtn.disabled = true;
+  hideStatus();
+
+  try {
+    const character = {
+      ...parsedResult.character,
+      player_name: playerName.value.trim() || parsedResult.character.handle || '',
+    };
+
+    setProgress(10, 'Erstelle Charakterprofil…');
+    progressWrap.hidden = false;
+
+    // Insert without image_url first to get the id
+    const saved = await saveCharacter(character);
+
+    // Upload portrait
+    const blob = manualImgBlob ?? parsedResult.imageBlob;
+    if (blob) {
+      setProgress(50, 'Lade Portrait hoch…');
+      const imageUrl = await uploadPortrait(blob, saved.id);
+      await saveCharacter({ id: saved.id, image_url: imageUrl });
+    }
+
+    setProgress(100, 'Gespeichert!');
+    showStatus(`Charakter "${saved.name}" gespeichert — Weiterleitung…`, 'success');
+
+    setTimeout(() => {
+      window.location.href = `player.html?id=${saved.id}`;
+    }, 1200);
+  } catch (err) {
+    console.error(err);
+    showStatus(`Fehler beim Speichern: ${err.message}`, 'error');
+    submitBtn.disabled = false;
+  }
+});
+
+// ── Helpers ───────────────────────────────────────────────────
+function setProgress(pct, label) {
+  progressFill.style.width = pct + '%';
+  if (pct >= 100) progressFill.classList.add('done');
+  else progressFill.classList.remove('done');
+  progressLabel.textContent = label;
+  progressPct.textContent   = pct + '%';
+}
+
+function showStatus(msg, type = 'info') {
+  statusMsg.textContent = msg;
+  statusMsg.className   = `status-msg visible ${type}`;
+}
+function hideStatus() {
+  statusMsg.className = 'status-msg';
+}
+
+function showPreview(source) {
+  const url = source instanceof Blob ? URL.createObjectURL(source) : URL.createObjectURL(source);
+  imgPreview.src    = url;
+  imgPreview.hidden = false;
+}
+
+function updateSubmitState() {
+  submitBtn.disabled = !parsedResult;
+}
+</script>
+
+</body>
+</html>

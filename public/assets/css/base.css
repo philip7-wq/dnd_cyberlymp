@@ -1,0 +1,109 @@
+/* ============================================================
+   LZRV D&D Hub — Base styles (shared across all pages)
+   Palette: near-black bg · #FF2D2D red · #00E5FF cyan
+   Fonts: self-hosted in Phase 6; system fallbacks for now
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #0a0a0f;
+  --bg-card:    #12121a;
+  --bg-input:   #1a1a26;
+  --border:     #2a2a3e;
+  --red:        #FF2D2D;
+  --red-dim:    #cc1f1f;
+  --cyan:       #00E5FF;
+  --cyan-dim:   #00b8cc;
+  --text:       #c8c8d8;
+  --text-muted: #686880;
+  --text-head:  #e8e8f0;
+  --font-display: 'Audiowide', 'Courier New', 'Lucida Console', monospace;
+  --font-body:    'Inter', system-ui, -apple-system, sans-serif;
+  --radius:     4px;
+  --transition: 150ms ease;
+}
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--red); }
+
+/* ── Typography ── */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--text-head);
+  letter-spacing: .05em;
+}
+
+a { color: var(--cyan); text-decoration: none; }
+a:hover { color: var(--cyan-dim); }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .6rem 1.4rem;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: .85rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-primary {
+  background: var(--red);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--red-dim); }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+/* ── Top nav ── */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .75rem 1.5rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--red);
+  letter-spacing: .1em;
+}
+.nav-logo span { color: var(--cyan); }
+
+/* ── Utility ── */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.text-red  { color: var(--red); }
+.text-cyan { color: var(--cyan); }
+.text-muted { color: var(--text-muted); }
