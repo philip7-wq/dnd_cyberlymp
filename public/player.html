@@ -2073,7 +2073,7 @@ async function showDamageApplyModal(totalDamage) {
     let targetName = '';
     if (isNpc) {
       const npc = activeNpcs.find(n => n.id === targetId);
-      sp = npc?.armor ?? 0;
+      sp = 0;  // armor not stored in npcs table
       targetName = npc?.name || 'NPC';
     } else {
       const tchar = _allCharsFull.find(c => c.id === targetId);
@@ -2100,9 +2100,9 @@ async function showDamageApplyModal(totalDamage) {
     try {
       if (isNpc) {
         const npc = activeNpcs.find(n => n.id === targetId);
-        const newHp = Math.max(0, (npc?.current_hp ?? 0) - net);
-        await patchNpc(targetId, { current_hp: newHp, is_eliminated: newHp <= 0 });
-        if (npc) npc.current_hp = newHp;
+        const newHp = Math.max(0, (npc?.hp_current ?? 0) - net);
+        await patchNpc(targetId, { hp_current: newHp });
+        if (npc) npc.hp_current = newHp;
       } else {
         const tchar = _allCharsFull.find(c => c.id === targetId);
         const newHp = Math.max(0, (tchar?.current_hp ?? 0) - net);
@@ -2217,13 +2217,12 @@ async function applyInjury(injury, table) {
     if (isNpc) {
       const npc = activeNpcs.find(n => n.id === targetId);
       const existing = Array.isArray(npc?.critical_injuries) ? npc.critical_injuries : [];
-      const newHp = Math.max(0, (npc?.current_hp ?? 0) - 5);
+      const newHp = Math.max(0, (npc?.hp_current ?? 0) - 5);
       await patchNpc(targetId, {
         critical_injuries: [...existing, { ...injury, table, ts: Date.now() }],
-        current_hp: newHp,
-        is_eliminated: newHp <= 0,
+        hp_current: newHp,
       });
-      if (npc) { npc.critical_injuries = [...existing, { ...injury, table }]; npc.current_hp = newHp; }
+      if (npc) { npc.critical_injuries = [...existing, { ...injury, table }]; npc.hp_current = newHp; }
       logRoll({ characterId: char.id, characterName: char.handle || char.name,
         expression: '2d6', individualRolls: [], modifier: 0, total: 0,
         context: `Critical Injury → NPC ${npc?.name || targetId}: ${injury.name}`,
