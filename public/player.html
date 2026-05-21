@@ -25,6 +25,12 @@
   <a href="index.html" class="btn btn-ghost" style="margin-left:auto;font-size:.75rem">← Übersicht</a>
 </nav>
 
+<!-- Initiative Bar (combat active) -->
+<div class="initiative-bar" id="initiativeBar" style="display:none">
+  <span class="initiative-bar-label">RUNDE <strong id="initRound">1</strong></span>
+  <div class="initiative-list" id="initiativeList"></div>
+</div>
+
 <!-- ── Character header ── -->
 <header class="char-header" id="charHeader" style="display:none">
   <img id="charPortrait" class="char-portrait" src="" alt="Portrait">
@@ -67,6 +73,8 @@
         <span class="luck-count" id="luckCount"></span>
       </div>
     </div>
+    <div class="condition-badges" id="conditionBadges"></div>
+    <button class="death-save-btn" id="deathSaveBtn" style="display:none">☠ DEATH SAVE</button>
   </div>
 </header>
 
@@ -133,7 +141,7 @@
 
 <script type="module">
 console.log('[player] module loaded');
-import { getCharacter, getCharacters, patchCharacter, logRoll } from './assets/js/supabase.js';
+import { getCharacter, getCharacters, patchCharacter, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters } from './assets/js/supabase.js';
 import { roll, initDiceBox } from './assets/js/dice.js';
 
 // ── Constants ─────────────────────────────────────────────────
@@ -180,6 +188,8 @@ let char       = null;
 let injuryData = null;  // { body: [...], head: [...] }
 let allChars   = [];    // alle anderen Charaktere (für Injury-Zuweisung)
 let critTarget = null;  // char-id oder 'npc'
+let combatSession    = null;
+let deathSavePenalty = 0;
 
 function getInjuries() {
   try { return JSON.parse(char.critical_injuries || '[]'); } catch { return []; }
@@ -190,14 +200,31 @@ const id = new URLSearchParams(location.search).get('id');
 if (!id) { location.replace('index.html'); }
 if (id) {
   try {
-    [char, injuryData, allChars] = await Promise.all([
+    [char, injuryData, allChars, combatSession] = await Promise.all([
       getCharacter(id),
       fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
       getCharacters(),
+      getActiveCombat(),
     ]);
     allChars = allChars.filter(c => c.id !== id);
     renderAll();
     show();
+
+    subscribeCombat(payload => {
+      const cs = payload.new;
+      combatSession = cs?.is_active ? cs : null;
+      renderInitiativeBar();
+    });
+
+    subscribeCharacters(payload => {
+      if (payload.new?.id !== char.id) return;
+      Object.assign(char, payload.new);
+      renderConditionBadges();
+      checkDeathSave();
+      updateResDisplay();
+      renderLuck();
+      if ((char.current_hp ?? 0) > 0) deathSavePenalty = 0;
+    });
   } catch(e) {
     document.getElementById('loader').innerHTML =
       `<span style="color:var(--red)">Fehler: ${e.message}</span>`;
@@ -237,6 +264,10 @@ function renderAll() {
   setupTooltip();
   setupRemove();
   setupCritModal();
+  setupSkillFavs();
+  renderConditionBadges();
+  checkDeathSave();
+  renderInitiativeBar();
 }
 
 // ── Header ────────────────────────────────────────────────────
@@ -329,7 +360,9 @@ function renderSkills() {
     el.innerHTML = '<p class="empty-state">Keine Skills gespeichert. PDF-Feldnamen eventuell abweichend.</p>'; return;
   }
 
-  // Group by category, fall back to stat name for unknowns
+  const FAVS_KEY = `lzrv_skill_favs_${char.id}`;
+  const favs = new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || '[]'));
+
   const groups = {};
   for (const [name, data] of Object.entries(skills)) {
     const cat = SKILL_CAT[name] || `Stat: ${data.stat}`;
@@ -337,26 +370,40 @@ function renderSkills() {
     groups[cat].push({ name, ...data });
   }
 
-  // Build ordered output
-  let html = '<div class="skill-row" style="font-size:.62rem;color:var(--text-muted);border-bottom:1px solid var(--border);padding-bottom:.3rem;margin-bottom:.4rem">'
-    + '<span>Skill</span><span style="text-align:center">Stat</span><span style="text-align:center">LVL</span><span style="text-align:center">Base</span><span></span></div>';
+  function skillRowHtml(sk) {
+    const statVal = stats[sk.stat] ?? 0;
+    const base    = statVal + (sk.lvl || 0);
+    const expr    = `1d10+${base}`;
+    return `<div class="skill-row">
+      <button class="skill-fav-btn${favs.has(sk.name) ? ' active' : ''}" data-fav="${sk.name}">★</button>
+      <span class="skill-name">${sk.name}</span>
+      <span class="skill-stat">${sk.stat}</span>
+      <span class="skill-lvl">${sk.lvl ?? 0}</span>
+      <span class="skill-base">${base}</span>
+      <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1">1d10+${base}</button>
+    </div>`;
+  }
+
+  let html = '';
+
+  // Favorites section
+  const favSkills = [...favs].map(name => {
+    const data = skills[name];
+    return data ? { name, ...data } : null;
+  }).filter(Boolean);
+  if (favSkills.length) {
+    html += '<div class="skill-favs-section"><div class="skill-favs-label">★ Favoriten</div>';
+    for (const sk of favSkills) html += skillRowHtml(sk);
+    html += '</div>';
+  }
+
+  html += '<div class="skill-row" style="font-size:.62rem;color:var(--text-muted);border-bottom:1px solid var(--border);padding-bottom:.3rem;margin-bottom:.4rem">'
+    + '<span></span><span>Skill</span><span style="text-align:center">Stat</span><span style="text-align:center">LVL</span><span style="text-align:center">Base</span><span></span></div>';
 
   const orderedCats = [...CAT_ORDER.filter(c => groups[c]), ...Object.keys(groups).filter(c => !CAT_ORDER.includes(c))];
-
   for (const cat of orderedCats) {
     html += `<div class="skill-group"><div class="skill-cat-label">${cat}</div>`;
-    for (const sk of groups[cat].sort((a,b) => a.name.localeCompare(b.name))) {
-      const statVal = stats[sk.stat] ?? 0;
-      const base    = statVal + (sk.lvl || 0);
-      const expr    = `1d10+${base}`;
-      html += `<div class="skill-row">
-        <span class="skill-name">${sk.name}</span>
-        <span class="skill-stat">${sk.stat}</span>
-        <span class="skill-lvl">${sk.lvl ?? 0}</span>
-        <span class="skill-base">${base}</span>
-        <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1">1d10+${base}</button>
-      </div>`;
-    }
+    for (const sk of groups[cat].sort((a,b) => a.name.localeCompare(b.name))) html += skillRowHtml(sk);
     html += '</div>';
   }
 
@@ -568,7 +615,12 @@ function setupDice() {
     const ctx     = btn.dataset.ctx || expr;
     const isSkill = btn.dataset.skill === '1';
     const isDmg   = btn.classList.contains('dmg-btn');
-    if (expr) doRoll(expr, { context: ctx, isSkillCheck: isSkill, isDamageRoll: isDmg });
+    if (!expr) return;
+    if (isSkill) {
+      showSkillCheckModal(expr, ctx);
+    } else {
+      doRoll(expr, { context: ctx, isSkillCheck: false, isDamageRoll: isDmg });
+    }
   });
 }
 
@@ -673,7 +725,8 @@ function setupRemove() {
   document.body.addEventListener('click', e => {
     const btn = e.target.closest('.remove-btn');
     if (!btn) return;
-    removeItem(btn.dataset.inv, btn.dataset.idx);
+    if (btn.dataset.action === 'removeInjury') removeInjury(parseInt(btn.dataset.idx));
+    else removeItem(btn.dataset.inv, btn.dataset.idx);
   });
 }
 
@@ -761,10 +814,12 @@ function showInjuryResult(injury, rollVal, table, already) {
     <div class="crit-modal-btns">
       <button class="btn btn-primary" id="critApply">Apply to Character</button>
       <button class="btn btn-ghost" id="critReroll">Re-roll</button>
+      <button class="btn btn-ghost" id="critBack">← Zurück</button>
       <button class="btn btn-ghost" id="critIgnore">Ignorieren</button>
     </div>`;
   document.getElementById('critApply').onclick  = () => applyInjury(injury, table);
   document.getElementById('critReroll').onclick = () => rollInjury(table);
+  document.getElementById('critBack').onclick   = () => showCritInjuryFlow();
   document.getElementById('critIgnore').onclick = () => { document.getElementById('crit-modal').hidden = true; };
 }
 
@@ -859,6 +914,196 @@ function renderDiceLog() {
       <span class="dice-log-tot">${entry.result.total}</span>
     </div>`;
   }).join('');
+}
+
+// ── Condition colors ──────────────────────────────────────────
+const COND_COLORS = {
+  'Seriously Wounded': '#FF8C00',
+  'Mortally Wounded':  'var(--red)',
+  'Stunned':           '#9B59B6',
+  'Suppressed':        '#2980B9',
+  'Prone':             '#7F8C8D',
+  'Blinded':           '#C0392B',
+  'Deafened':          '#7F8C8D',
+  'On Fire':           '#E67E22',
+  'Bleeding Out':      'var(--red)',
+};
+
+// ── Initiative Bar ────────────────────────────────────────────
+function renderInitiativeBar() {
+  const bar = document.getElementById('initiativeBar');
+  if (!combatSession?.is_active) {
+    bar.style.display = 'none';
+    document.body.classList.remove('my-turn');
+    return;
+  }
+  bar.style.display = 'flex';
+  document.getElementById('initRound').textContent = combatSession.round;
+  const combatants = combatSession.combatants || [];
+  const idx = combatSession.current_turn_index ?? 0;
+  document.getElementById('initiativeList').innerHTML = combatants.map((c, i) =>
+    `<div class="init-chip${i === idx ? ' current' : ''}${c.id === char.id ? ' mine' : ''}">${c.name}</div>`
+  ).join('');
+  checkMyTurn();
+}
+
+function checkMyTurn() {
+  if (!combatSession?.is_active) { document.body.classList.remove('my-turn'); return; }
+  const combatants = combatSession.combatants || [];
+  const current = combatants[combatSession.current_turn_index];
+  const isMyTurn = current?.id === char.id;
+  const was = document.body.classList.contains('my-turn');
+  document.body.classList.toggle('my-turn', isMyTurn);
+  if (isMyTurn && !was) playPingSound();
+}
+
+function playPingSound() {
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(); osc.stop(ctx.currentTime + 0.4);
+  } catch {}
+}
+
+// ── Condition Badges ──────────────────────────────────────────
+function renderConditionBadges() {
+  const wrap = document.getElementById('conditionBadges');
+  if (!wrap) return;
+  const conds = char.conditions || [];
+  wrap.innerHTML = conds.map(c => {
+    const color  = COND_COLORS[c] || 'var(--text-muted)';
+    const isMort = c === 'Mortally Wounded';
+    return `<span class="cond-badge${isMort ? ' cond-mortally' : ''}" style="border-color:${color};color:${color}">${c}</span>`;
+  }).join('');
+}
+
+// ── Death Save ────────────────────────────────────────────────
+function checkDeathSave() {
+  const isMortCond = (char.conditions || []).includes('Mortally Wounded');
+  const show = (char.current_hp ?? 0) <= 0 || isMortCond;
+  document.getElementById('deathSaveBtn').style.display = show ? 'block' : 'none';
+}
+
+document.getElementById('deathSaveBtn').addEventListener('click', async () => {
+  const body   = char.stats?.BODY ?? 0;
+  const target = Math.max(1, (char.death_save ?? body) - deathSavePenalty);
+  const d10    = Math.floor(Math.random() * 10) + 1;
+  deathSavePenalty++;
+
+  const success = d10 !== 10 && d10 <= target;
+  const context = `Death Save (Ziel ≤${target}, Penalty ${deathSavePenalty - 1})`;
+
+  logRoll({
+    characterId: char.id, characterName: char.name,
+    expression: '1d10', individualRolls: [{ die: 10, value: d10 }],
+    modifier: 0, total: d10, context,
+    isCritSuccess: false, isCritFailure: d10 === 10,
+  }).catch(() => {});
+
+  showDeathSaveResult(d10, target, success);
+
+  if (!success) {
+    const conds = [...(char.conditions || [])];
+    if (!conds.includes('Mortally Wounded')) conds.push('Mortally Wounded');
+    await patchCharacter(char.id, { conditions: conds }).catch(() => {});
+  }
+});
+
+function showDeathSaveResult(d10, target, success) {
+  const el = document.createElement('div');
+  el.className = `death-save-result ${success ? 'ds-success' : 'ds-fail'}`;
+  el.innerHTML = `
+    <div class="ds-num">${d10}</div>
+    <div class="ds-label">${success ? `✓ Überlebt (≤ ${target})` : d10 === 10 ? '✗ AUTO-FAIL' : `✗ Gestorben (> ${target})`}</div>`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+
+// ── Skill Check Modal ─────────────────────────────────────────
+function showSkillCheckModal(expr, ctx) {
+  const skillName = ctx.replace(' skill check', '');
+  const skData    = char.skills?.[skillName];
+  const statVal   = skData ? (char.stats?.[skData.stat] ?? 0) : 0;
+  const lvl       = skData?.lvl ?? 0;
+  const base      = statVal + lvl;
+  const statStr   = skData?.stat ?? '?';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'skill-modal-overlay';
+  overlay.innerHTML = `
+    <div class="skill-modal-box">
+      <div class="skill-modal-title">${skillName} CHECK</div>
+      <div class="skill-modal-formula">1d10 + ${statStr} (${statVal}) + Lvl ${lvl} = <strong>1d10 + ${base}</strong></div>
+      <div class="skill-modal-dv">
+        <label>DV (optional):</label>
+        <input type="number" id="skillDvInput" class="ctrl-input" placeholder="—" min="0" style="width:70px;margin-left:.5rem">
+      </div>
+      <div class="skill-modal-result" id="skillResult" style="display:none"></div>
+      <div class="skill-modal-btns">
+        <button class="btn btn-primary" id="skillRollBtn">Würfeln</button>
+        <button class="btn btn-ghost" id="skillCloseBtn">Schließen</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  document.getElementById('skillCloseBtn').onclick = () => overlay.remove();
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  document.getElementById('skillRollBtn').onclick = async () => {
+    const dv     = parseInt(document.getElementById('skillDvInput').value) || null;
+    const ctxStr = dv !== null ? `${skillName} Check vs DV ${dv}` : `${skillName} Check`;
+
+    const result = await roll(expr, {
+      context: ctxStr,
+      isSkillCheck: true,
+      characterId:   char.id,
+      characterName: char.name,
+    });
+
+    const success  = dv !== null ? result.total >= dv : null;
+    const label    = result.isCritSuccess ? '★ CRIT! ' : result.isCritFailure ? '✗ BOTCH! ' : '';
+    const succHtml = dv !== null
+      ? `<div class="skill-result-verdict${success ? ' verdict-ok' : ' verdict-fail'}">
+           ${success ? `✅ Erfolg (DV ${dv} erreicht)` : `❌ Fehlschlag (DV ${dv})`}
+         </div>`
+      : '';
+
+    const resultEl = document.getElementById('skillResult');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `
+      <div class="skill-result-num${result.isCritSuccess ? ' crit-s' : result.isCritFailure ? ' crit-f' : ''}">${label}${result.total}</div>
+      ${succHtml}`;
+
+    // Mirror to main popup log
+    const numEl    = document.getElementById('diceResultNum');
+    const detailEl = document.getElementById('diceResultDetail');
+    numEl.className  = 'dice-result-num pop' + (result.isCritSuccess ? ' crit-s' : result.isCritFailure ? ' crit-f' : '');
+    numEl.textContent = result.total;
+    detailEl.textContent = ctxStr;
+    diceLog.unshift({ expression: expr, result, context: ctxStr });
+    if (diceLog.length > 10) diceLog.pop();
+    renderDiceLog();
+  };
+}
+
+// ── Skill Favorites (body delegation, set up once) ────────────
+function setupSkillFavs() {
+  document.body.addEventListener('click', e => {
+    const btn = e.target.closest('.skill-fav-btn');
+    if (!btn) return;
+    const FAVS_KEY = `lzrv_skill_favs_${char.id}`;
+    const favs = new Set(JSON.parse(localStorage.getItem(FAVS_KEY) || '[]'));
+    const sk = btn.dataset.fav;
+    if (favs.has(sk)) favs.delete(sk); else favs.add(sk);
+    localStorage.setItem(FAVS_KEY, JSON.stringify([...favs]));
+    renderSkills();
+  });
 }
 
 let _toastTimer = null;

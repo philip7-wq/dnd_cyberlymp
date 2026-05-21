@@ -27,7 +27,7 @@ export async function saveCharacter(data) {
 export async function getCharacters() {
   const { data, error } = await supabase
     .from('characters')
-    .select('id, name, handle, role, current_hp, max_hp, image_url, current_humanity, max_humanity, current_luck, critical_injuries')
+    .select('id, name, handle, role, current_hp, max_hp, image_url, current_humanity, max_humanity, current_luck, critical_injuries, conditions, mortally_wounded, stats')
     .order('name');
   if (error) throw error;
   return data;
@@ -129,4 +129,55 @@ export function subscribeRolls(callback) {
     .channel('rolls-live')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rolls' }, callback)
     .subscribe();
+}
+
+// ── Combat Sessions ─────────────────────────────────────────
+
+/** Fetch the currently active combat session (null if none). */
+export async function getActiveCombat() {
+  const { data, error } = await supabase
+    .from('combat_sessions').select('*')
+    .eq('is_active', true).order('created_at', { ascending: false })
+    .limit(1).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** Create or update a combat session. Pass id to update, omit to create new. */
+export async function saveCombat(patch) {
+  if (patch.id) {
+    const { id, ...rest } = patch;
+    const { error } = await supabase.from('combat_sessions').update(rest).eq('id', id);
+    if (error) throw error;
+  } else {
+    await supabase.from('combat_sessions').update({ is_active: false }).eq('is_active', true);
+    const { error } = await supabase.from('combat_sessions').insert({ ...patch, is_active: true });
+    if (error) throw error;
+  }
+}
+
+/** Deactivate a combat session by id. */
+export async function endCombat(id) {
+  const { error } = await supabase.from('combat_sessions')
+    .update({ is_active: false }).eq('id', id);
+  if (error) throw error;
+}
+
+/** Subscribe to live combat session changes. */
+export function subscribeCombat(callback) {
+  return supabase.channel('combat-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'combat_sessions' }, callback)
+    .subscribe();
+}
+
+/** Delete a character and all associated rolls (CASCADE). */
+export async function deleteCharacter(id) {
+  const { error } = await supabase.from('characters').delete().eq('id', id);
+  if (error) throw error;
+}
+
+/** Delete all roll entries from the rolls table. */
+export async function deleteAllRolls() {
+  const { error } = await supabase.from('rolls').delete().gte('id', 0);
+  if (error) throw error;
 }

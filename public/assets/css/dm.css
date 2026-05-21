@@ -260,9 +260,93 @@
 .npc-crit-hint  { font-size: .75rem; color: var(--red); display: flex; align-items: center; margin-bottom: .4rem; flex-wrap: wrap; gap: .3rem; }
 .npc-dmg-preview { font-size: .78rem; color: var(--cyan); margin-top: .25rem; min-height: 1.2em; }
 
+/* ── Card Delete Button ── */
+.dm-card-delete {
+  align-self: flex-end; margin-top: .2rem;
+  background: transparent; border: none;
+  font-size: .7rem; color: var(--text-muted); cursor: pointer;
+  padding: .15rem .3rem; opacity: .35; transition: opacity .15s, color .15s;
+  line-height: 1;
+}
+.dm-card-delete:hover { opacity: 1; color: var(--red); }
+
+/* ── Roll Log Header with Clear ── */
+.roll-log-head { display: flex; justify-content: space-between; align-items: center; }
+.roll-log-clear {
+  background: transparent; border: none; color: var(--text-muted);
+  font-size: .8rem; cursor: pointer; opacity: .4;
+  transition: opacity .15s, color .15s; padding: 0;
+}
+.roll-log-clear:hover { opacity: 1; color: var(--red); }
+
+/* ── DM Dice FAB (mirrors player.html) ── */
+.dice-fab { position: fixed; bottom: 1.5rem; left: 1.5rem; width: 52px; height: 52px; border-radius: 50%; background: var(--red); border: none; color: #fff; font-size: 1.3rem; cursor: pointer; box-shadow: 0 4px 16px rgba(255,45,45,.45); z-index: 100; display: flex; align-items: center; justify-content: center; transition: transform .15s, background .15s; }
+.dice-fab:hover { background: var(--red-dim); transform: scale(1.07); }
+@keyframes fab-pulse { to { box-shadow: 0 4px 24px rgba(255,45,45,.8); transform: scale(1.05); } }
+.dice-popup { position: fixed; bottom: 5.25rem; left: 1.5rem; width: 288px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,.7); z-index: 99; display: none; flex-direction: column; overflow: hidden; }
+.dice-popup.open { display: flex; }
+.dice-popup-head { padding: .55rem .9rem; background: #0c0c16; border-bottom: 1px solid var(--border); font-family: var(--font-display); font-size: .68rem; letter-spacing: .12em; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+.dice-popup-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .95rem; }
+.dice-quick { display: flex; gap: .35rem; padding: .7rem .9rem; flex-wrap: wrap; }
+.die-btn { flex: 1; min-width: 44px; padding: .4rem .2rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--cyan); font-family: var(--font-display); font-size: .72rem; cursor: pointer; text-align: center; transition: border-color .12s, background .12s; }
+.die-btn:hover { border-color: var(--cyan); background: #0f1f22; }
+.dice-custom { padding: 0 .9rem .7rem; display: flex; gap: .35rem; }
+.dice-custom input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: .38rem .6rem; font-size: .85rem; font-family: var(--font-display); }
+.dice-custom input:focus { outline: none; border-color: var(--red); }
+.dice-custom button { background: var(--red); border: none; border-radius: var(--radius); color: #fff; padding: .38rem .75rem; font-family: var(--font-display); font-size: .78rem; cursor: pointer; white-space: nowrap; }
+.dice-custom button:hover { background: var(--red-dim); }
+.dice-result-area { border-top: 1px solid var(--border); padding: .6rem .9rem; min-height: 56px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.dice-result-num { font-family: var(--font-display); font-size: 1.8rem; color: var(--text-head); transition: all .2s; line-height: 1; }
+.dice-result-detail { font-size: .7rem; color: var(--text-muted); margin-top: .2rem; }
+@keyframes roll-pop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+.dice-result-num.pop { animation: roll-pop .35s ease forwards; }
+.dice-log { max-height: 100px; overflow-y: auto; border-top: 1px solid var(--border); }
+.dice-log-row { display: flex; justify-content: space-between; align-items: center; padding: .28rem .9rem; border-bottom: 1px solid #12121c; font-size: .75rem; }
+.dice-log-expr { color: var(--text-muted); }
+.dice-log-tot  { font-family: var(--font-display); color: var(--text); }
+
+/* ── NPC Quick Damage Modal ── */
+.dm-npc-quick-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+.dm-npc-quick-overlay[hidden] { display: none; }
+.dm-npc-quick-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; width: min(360px, 92vw); }
+.dm-npc-quick-head { font-family: var(--font-display); font-size: .68rem; letter-spacing: .18em; color: var(--text-muted); margin-bottom: .9rem; }
+
+/* ── Combat Bar ── */
+.combat-bar { display: flex; align-items: center; gap: 1rem; padding: .5rem 1rem; background: var(--bg-card); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.combat-meta { display: flex; align-items: center; gap: .4rem; }
+.combat-label { font-size: .55rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
+.combat-round-num { font-family: var(--font-display); font-size: 1.1rem; color: var(--cyan); }
+.combat-order { display: flex; gap: .35rem; flex-wrap: wrap; flex: 1; min-width: 0; }
+.combat-turn-chip { display: flex; align-items: center; gap: .3rem; padding: .2rem .55rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 2px; font-size: .72rem; }
+.combat-turn-chip.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,.08); }
+.combat-init { font-family: var(--font-display); font-size: .65rem; color: var(--text-muted); margin-left: .2rem; }
+.combat-remove-btn { background: none; border: none; color: var(--text-muted); font-size: .65rem; cursor: pointer; padding: 0; line-height: 1; margin-left: .25rem; transition: color .12s; }
+.combat-remove-btn:hover { color: var(--red); }
+.combat-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+
+/* ── Combat Setup Panel ── */
+.combat-setup-panel { padding: .75rem 1rem; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+.combat-setup-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: .75rem; }
+.combat-setup-head { font-size: .6rem; text-transform: uppercase; letter-spacing: .14em; color: var(--text-muted); margin-bottom: .4rem; border-bottom: 1px solid var(--border); padding-bottom: .2rem; }
+.combat-setup-check { display: flex; align-items: center; gap: .4rem; font-size: .78rem; padding: .2rem 0; cursor: pointer; }
+.combat-init-small { font-size: .65rem; color: var(--text-muted); }
+.combat-npc-item { display: flex; align-items: center; gap: .4rem; font-size: .75rem; padding: .15rem 0; color: var(--text-muted); }
+.combat-setup-footer { display: flex; gap: .5rem; align-items: center; border-top: 1px solid var(--border); padding-top: .6rem; }
+
+/* ── Conditions on DM Cards ── */
+.dm-card-conditions { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .25rem; }
+.dm-cond-badge { font-size: .58rem; background: rgba(255,45,45,.1); color: var(--red); border: 1px solid rgba(255,45,45,.3); border-radius: 2px; padding: .08rem .28rem; }
+
+/* ── Condition Toggle Buttons (DM Controls) ── */
+.condition-toggle-grid { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .4rem; }
+.cond-toggle-btn { padding: .25rem .5rem; font-size: .68rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 2px; color: var(--text-muted); cursor: pointer; transition: var(--transition); }
+.cond-toggle-btn:hover { border-color: var(--red); color: var(--text); }
+.cond-toggle-btn.active { background: rgba(255,45,45,.14); border-color: var(--red); color: var(--red); }
+
 /* ── Responsive ── */
 @media (max-width: 700px) {
   .dm-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 200px; }
   .roll-log { border-left: none; border-top: 1px solid var(--border); }
   .dm-stats-grid { grid-template-columns: repeat(3, 1fr); }
+  .combat-setup-cols { grid-template-columns: 1fr; }
 }

@@ -40,6 +40,8 @@ create table if not exists characters (
   -- Status text
   critical_injuries text,
   mortally_wounded boolean default false,
+  conditions jsonb default '[]',
+  death_save_penalty int default 0,
   addictions text,
   notes text,
 
@@ -106,17 +108,35 @@ create trigger characters_updated_at
 before update on characters
 for each row execute function set_updated_at();
 
+-- ---------- COMBAT SESSIONS ----------
+create table if not exists combat_sessions (
+  id uuid primary key default gen_random_uuid(),
+  is_active boolean default false,
+  round int default 1,
+  current_turn_index int default 0,
+  combatants jsonb default '[]',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+drop trigger if exists combat_sessions_updated_at on combat_sessions;
+create trigger combat_sessions_updated_at
+before update on combat_sessions
+for each row execute function set_updated_at();
+
 -- ---------- REALTIME ----------
 -- Enables WebSocket subscriptions for live DM dashboard
 alter publication supabase_realtime add table characters;
 alter publication supabase_realtime add table rolls;
+alter publication supabase_realtime add table combat_sessions;
 
 -- ---------- ROW LEVEL SECURITY ----------
 -- Friend group → permissive policies (shared-PIN auth is client-side only).
 -- For a real public app, replace with proper Supabase Auth + per-user policies.
-alter table characters enable row level security;
-alter table items      enable row level security;
-alter table rolls      enable row level security;
+alter table characters     enable row level security;
+alter table items          enable row level security;
+alter table rolls          enable row level security;
+alter table combat_sessions enable row level security;
 
 drop policy if exists "anon all characters" on characters;
 create policy "anon all characters" on characters
@@ -130,17 +150,23 @@ drop policy if exists "anon all rolls" on rolls;
 create policy "anon all rolls" on rolls
   for all using (true) with check (true);
 
+drop policy if exists "anon all combat" on combat_sessions;
+create policy "anon all combat" on combat_sessions
+  for all using (true) with check (true);
+
 -- ---------- GRANTS ----------
 -- service_role: seed script + admin ops
-grant all on public.characters to service_role;
-grant all on public.items      to service_role;
-grant all on public.rolls      to service_role;
+grant all on public.characters      to service_role;
+grant all on public.items           to service_role;
+grant all on public.rolls           to service_role;
+grant all on public.combat_sessions to service_role;
 grant usage, select on sequence rolls_id_seq to service_role;
 
 -- anon + authenticated: client-side app (browser)
-grant all on public.characters to anon, authenticated;
-grant select on public.items   to anon, authenticated;
-grant all on public.rolls      to anon, authenticated;
+grant all on public.characters      to anon, authenticated;
+grant select on public.items        to anon, authenticated;
+grant all on public.rolls           to anon, authenticated;
+grant all on public.combat_sessions to anon, authenticated;
 grant usage, select on sequence rolls_id_seq to anon, authenticated;
 
 -- ---------- STORAGE BUCKET (character portraits) ----------

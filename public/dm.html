@@ -24,8 +24,50 @@
 <nav class="nav">
   <span class="nav-logo">LZRV<span>HUB</span></span>
   <span style="font-family:var(--font-display);font-size:.72rem;color:var(--red);margin-left:.75rem;letter-spacing:.12em">DM DASHBOARD</span>
-  <a href="index.html" class="btn btn-ghost" style="font-size:.75rem;margin-left:auto">← Übersicht</a>
+  <button class="btn btn-ghost" id="newCombatBtn" style="font-size:.75rem;margin-left:auto">⚔ Neuer Kampf</button>
+  <a href="index.html" class="btn btn-ghost" style="font-size:.75rem">← Übersicht</a>
 </nav>
+
+<!-- Combat Bar (sichtbar wenn Kampf aktiv) -->
+<div class="combat-bar" id="combatBar" style="display:none">
+  <div class="combat-meta">
+    <span class="combat-label">RUNDE</span>
+    <span class="combat-round-num" id="combatRound">1</span>
+  </div>
+  <div class="combat-order" id="combatOrder"></div>
+  <div class="combat-actions">
+    <button class="ctrl-btn" id="combatNextTurn">Next Turn →</button>
+    <button class="ctrl-btn" id="combatSetupToggle">⚙ Setup</button>
+    <button class="ctrl-btn ctrl-btn-red" id="combatEndBtn">Kampf beenden</button>
+  </div>
+</div>
+
+<!-- Combat Setup Panel (collapsible) -->
+<div class="combat-setup-panel" id="combatSetupPanel" style="display:none">
+  <div class="combat-setup-cols">
+    <div>
+      <div class="combat-setup-head">Spieler</div>
+      <div id="combatPlayerList"></div>
+    </div>
+    <div>
+      <div class="combat-setup-head">NPC hinzufügen</div>
+      <div class="ctrl-row" style="margin-bottom:.35rem">
+        <input class="ctrl-input" id="npcCombatName" placeholder="Name">
+        <input class="ctrl-input" id="npcCombatHp" placeholder="HP" type="number" style="max-width:60px">
+        <button class="ctrl-btn" id="npcCombatAddBtn">+</button>
+      </div>
+      <div id="combatNpcList"></div>
+    </div>
+    <div>
+      <div class="combat-setup-head">Initiative</div>
+      <div id="combatInitiativeList"></div>
+    </div>
+  </div>
+  <div class="combat-setup-footer">
+    <button class="ctrl-btn" id="combatStartBtn" style="color:var(--cyan)">▶ Kampf starten</button>
+    <button class="ctrl-btn ctrl-btn-red" id="combatCancelSetup">Abbrechen</button>
+  </div>
+</div>
 
 <div class="dm-layout">
   <!-- Character Grid -->
@@ -35,7 +77,7 @@
 
   <!-- Live Roll Log -->
   <div class="roll-log" id="rollLog">
-    <div class="roll-log-head">ROLL LOG</div>
+    <div class="roll-log-head">ROLL LOG <button class="roll-log-clear" id="clearRollLog" title="Alle Würfelwürfe löschen">🗑</button></div>
     <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
   </div>
 </div>
@@ -49,14 +91,70 @@
   </div>
 </div>
 
+<!-- DM Dice FAB -->
+<button class="dice-fab" id="dmDiceFab" title="Würfeln">⚄</button>
+<div class="dice-popup" id="dmDicePopup">
+  <div class="dice-popup-head">
+    <span>DM WÜRFELN</span>
+    <button class="dice-popup-close" id="dmDiceClose">✕</button>
+  </div>
+  <div class="dice-quick">
+    <button class="die-btn" data-expr="1d6">d6</button>
+    <button class="die-btn" data-expr="1d10">d10</button>
+    <button class="die-btn" data-expr="2d6">2d6</button>
+    <button class="die-btn" data-expr="3d6">3d6</button>
+    <button class="die-btn" data-expr="4d6">4d6</button>
+  </div>
+  <div class="dice-custom">
+    <input type="text" id="dmDiceExpr" placeholder="z.B. 3d6+2" spellcheck="false">
+    <button id="dmDiceRollBtn">Roll</button>
+  </div>
+  <div class="dice-result-area">
+    <div class="dice-result-num" id="dmDiceResultNum">—</div>
+    <div class="dice-result-detail" id="dmDiceResultDetail"></div>
+  </div>
+  <div id="dmDiceNpcBtn" style="display:none;padding:.4rem .9rem .6rem">
+    <button class="ctrl-btn" id="dmUseAsNpcDmg" style="width:100%">Als NPC-Damage verwenden →</button>
+  </div>
+  <div class="dice-log" id="dmDiceLog"></div>
+</div>
+
+<!-- NPC Quick-Damage Modal -->
+<div class="dm-npc-quick-overlay" id="dmNpcQuickOverlay" hidden>
+  <div class="dm-npc-quick-box">
+    <div class="dm-npc-quick-head">NPC SCHADEN ANWENDEN</div>
+    <div class="ctrl-row" style="margin-bottom:.5rem">
+      <span class="ctrl-label">Ziel</span>
+      <select class="ctrl-select" id="dmNpcQuickTarget"></select>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Schaden</span>
+      <span id="dmNpcQuickTotal" style="font-family:var(--font-display);font-size:1.2rem;color:var(--text-head);min-width:3ch"></span>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Armor SP</span>
+      <input type="number" class="ctrl-input" id="dmNpcQuickSp" value="0" min="0" style="max-width:70px">
+    </div>
+    <div class="npc-dmg-preview" id="dmNpcQuickPreview"></div>
+    <div class="ctrl-row" style="margin-top:.75rem;justify-content:flex-end;gap:.4rem">
+      <button class="ctrl-btn" id="dmNpcQuickCancel">Abbrechen</button>
+      <button class="ctrl-btn" id="dmNpcQuickApply" style="color:var(--red)">Schaden anwenden</button>
+    </div>
+    <div class="ctrl-msg" id="dmNpcQuickMsg"></div>
+  </div>
+</div>
+
 <script type="module">
 import {
   getCharacters, getCharacter, patchCharacter, getItems, getRolls,
-  subscribeCharacters, subscribeRolls, logRoll,
+  subscribeCharacters, subscribeRolls, logRoll, deleteCharacter, deleteAllRolls,
+  getActiveCombat, saveCombat, endCombat, subscribeCombat,
 } from './assets/js/supabase.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const DM_PIN = 'DM2077';
+const CONDITIONS = ['Seriously Wounded','Mortally Wounded','Stunned','Suppressed',
+  'Prone','Blinded','Deafened','On Fire','Bleeding Out'];
 
 // ── State ─────────────────────────────────────────────────────
 let chars      = [];
@@ -66,6 +164,8 @@ let itemsCache = [];
 let openChar   = null; // full char object currently in modal
 let activeModalTab = 'controls';
 let itemSearchTimer = null;
+let combatSession  = null;
+let setupCombatants = [];
 
 // ── PIN Auth ──────────────────────────────────────────────────
 function checkPin() {
@@ -92,10 +192,11 @@ checkPin();
 // ── Boot ──────────────────────────────────────────────────────
 async function boot() {
   try {
-    [chars, rolls, injData] = await Promise.all([
+    [chars, rolls, injData, combatSession] = await Promise.all([
       getCharacters(),
       getRolls(50),
       fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
+      getActiveCombat(),
     ]);
   } catch (e) {
     document.getElementById('dmGrid').innerHTML =
@@ -105,6 +206,56 @@ async function boot() {
 
   renderGrid();
   renderRollLog();
+  renderCombatBar();
+
+  subscribeCombat(payload => {
+    const cs = payload.new;
+    if (!cs) return;
+    combatSession = cs.is_active ? cs : null;
+    renderCombatBar();
+  });
+
+  // Delegated click on grid: open detail OR delete char
+  document.getElementById('dmGrid').addEventListener('click', async e => {
+    const delBtn = e.target.closest('.dm-card-delete');
+    if (delBtn) {
+      e.stopPropagation();
+      const charId = delBtn.dataset.deleteId;
+      const c = chars.find(x => x.id === charId);
+      if (!c) return;
+      if (!confirm(`Charakter "${c.name}" wirklich löschen?\nDiese Aktion kann nicht rückgängig gemacht werden.`)) return;
+      try {
+        await deleteCharacter(charId);
+        chars = chars.filter(x => x.id !== charId);
+        delBtn.closest('.dm-card').remove();
+      } catch(err) {
+        alert('Fehler beim Löschen: ' + err.message);
+      }
+      return;
+    }
+    const card = e.target.closest('.dm-card');
+    if (card) openDetail(card.dataset.id);
+  });
+
+  // Clear roll history
+  document.getElementById('clearRollLog').addEventListener('click', async () => {
+    if (!confirm('Alle Würfelwürfe löschen?')) return;
+    try {
+      await deleteAllRolls();
+      rolls = [];
+      const log = document.getElementById('rollLog');
+      log.querySelectorAll('.roll-entry').forEach(el => el.remove());
+      if (!document.getElementById('rollEmpty')) {
+        const empty = document.createElement('div');
+        empty.id = 'rollEmpty';
+        empty.className = 'roll-empty';
+        empty.textContent = 'Noch keine Würfe.';
+        log.appendChild(empty);
+      }
+    } catch(e) {
+      alert('Fehler: ' + e.message);
+    }
+  });
 
   subscribeCharacters(payload => {
     const updated = payload.new;
@@ -189,13 +340,14 @@ function renderGrid() {
         </div>
       </div>
       ${injuries.length ? `<div class="inj-badge">${injuries.length} Injur${injuries.length === 1 ? 'y' : 'ies'}</div>` : ''}
+      ${(c.conditions||[]).length
+        ? `<div class="dm-card-conditions">${(c.conditions||[]).map(cd =>
+            `<span class="dm-cond-badge">${cd}</span>`).join('')}</div>`
+        : ''}
       ${weapons ? `<div class="dm-card-weapons">${weapons}</div>` : ''}
+      <button class="dm-card-delete" data-delete-id="${c.id}" title="Charakter löschen">🗑</button>
     </div>`;
   }).join('');
-
-  wrap.querySelectorAll('.dm-card').forEach(card => {
-    card.addEventListener('click', () => openDetail(card.dataset.id));
-  });
 }
 
 // ── Roll Log ──────────────────────────────────────────────────
@@ -512,6 +664,17 @@ function buildControlsHtml() {
     </div>
 
     <div class="ctrl-section">
+      <div class="ctrl-section-head">Conditions</div>
+      <div class="condition-toggle-grid" id="ctrlConditions">
+        ${CONDITIONS.map(cond => {
+          const active = (openChar.conditions || []).includes(cond);
+          return `<button class="cond-toggle-btn${active ? ' active' : ''}" data-cond="${cond}">${cond}</button>`;
+        }).join('')}
+      </div>
+      <div class="ctrl-msg" id="ctrlCondMsg"></div>
+    </div>
+
+    <div class="ctrl-section">
       <div class="ctrl-section-head">NPC greift an</div>
       <div class="ctrl-row">
         <span class="ctrl-label">Würfelausdruck</span>
@@ -635,6 +798,18 @@ function setupControls() {
   searchInput.addEventListener('focus', () => {
     if (searchInput.value.trim().length >= 2) runItemSearch(searchInput.value.trim());
   });
+
+  // Conditions
+  document.getElementById('ctrlConditions').addEventListener('click', async e => {
+    const btn = e.target.closest('.cond-toggle-btn');
+    if (!btn) return;
+    const cond = btn.dataset.cond;
+    const current = [...(openChar.conditions || [])];
+    const idx = current.indexOf(cond);
+    if (idx !== -1) current.splice(idx, 1); else current.push(cond);
+    await ctrlPatch({ conditions: current }, 'ctrlCondMsg', `${cond} ${idx !== -1 ? 'entfernt' : 'gesetzt'}`);
+    btn.classList.toggle('active', idx === -1);
+  });
 }
 
 // ── NPC Attack helpers ────────────────────────────────────────
@@ -757,12 +932,14 @@ function showInjuryResult(inj, rollVal, table) {
       <div style="display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap">
         <button class="ctrl-btn" id="injApplyBtn">Hinzufügen (−5 HP)</button>
         <button class="ctrl-btn" id="injRerollBtn">Neu würfeln</button>
+        <button class="ctrl-btn" id="injBackBtn" style="color:var(--text-muted)">← Zurück</button>
         <button class="ctrl-btn" id="injCancelBtn" style="color:var(--text-muted)">Abbrechen</button>
       </div>
     </div>
   `;
   document.getElementById('injApplyBtn').addEventListener('click', () => applyInjury(inj, table));
   document.getElementById('injRerollBtn').addEventListener('click', () => rollAndPick(table));
+  document.getElementById('injBackBtn').addEventListener('click', () => showInjuryPicker());
   document.getElementById('injCancelBtn').addEventListener('click', () => { document.getElementById('ctrlInjMsg').innerHTML = ''; });
 }
 
@@ -848,6 +1025,257 @@ async function runItemSearch(query) {
     });
   });
 }
+
+// ── DM Dice FAB ───────────────────────────────────────────────
+function dmDoRoll(expr) {
+  const { total, dice } = rollNpcDamage(expr, 0);
+  const hasCrit = dice.filter(d => d.die === 6 && d.value === 6).length >= 2;
+
+  logRoll({ characterId: null, characterName: 'DM',
+    expression: expr, individualRolls: dice, modifier: 0, total,
+    context: 'DM Wurf', isCritSuccess: false, isCritFailure: false }).catch(() => {});
+
+  const numEl = document.getElementById('dmDiceResultNum');
+  numEl.textContent = total;
+  numEl.className = 'dice-result-num pop';
+  document.getElementById('dmDiceResultDetail').textContent = `[${dice.map(d => d.value).join(', ')}]`;
+
+  const logEl = document.getElementById('dmDiceLog');
+  const row = document.createElement('div');
+  row.className = 'dice-log-row';
+  row.innerHTML = `<span class="dice-log-expr">${expr}</span><span class="dice-log-tot">${total}</span>`;
+  logEl.prepend(row);
+
+  document.getElementById('dmDiceNpcBtn').style.display = 'block';
+  document.getElementById('dmUseAsNpcDmg').onclick = () => openNpcQuickModal(total, hasCrit);
+}
+
+function openNpcQuickModal(total) {
+  const overlay   = document.getElementById('dmNpcQuickOverlay');
+  const targetSel = document.getElementById('dmNpcQuickTarget');
+  const totalEl   = document.getElementById('dmNpcQuickTotal');
+  const spInput   = document.getElementById('dmNpcQuickSp');
+  const preview   = document.getElementById('dmNpcQuickPreview');
+  const msg       = document.getElementById('dmNpcQuickMsg');
+
+  targetSel.innerHTML =
+    `<option value="">— Kein Ziel —</option>` +
+    chars.map(c =>
+      `<option value="${c.id}" data-sp="${c.armor?.body?.sp ?? 0}">${c.name}</option>`
+    ).join('');
+  totalEl.textContent = total;
+  msg.textContent = '';
+  spInput.value = 0;
+  preview.textContent = '';
+  overlay.hidden = false;
+
+  const applyBtn = document.getElementById('dmNpcQuickApply');
+  const updatePreview = () => {
+    if (!targetSel.value) { preview.textContent = ''; applyBtn.disabled = true; return; }
+    const sp  = parseInt(spInput.value) || 0;
+    const dmg = Math.max(0, total - sp);
+    preview.textContent = `${total} − SP ${sp} = ${dmg} Schaden`;
+    applyBtn.disabled = false;
+  };
+  const autoFill = () => {
+    const opt = targetSel.selectedOptions[0];
+    spInput.value = opt?.dataset.sp ?? 0;
+    updatePreview();
+  };
+
+  targetSel.onchange = autoFill;
+  spInput.oninput = updatePreview;
+  autoFill();
+
+  document.getElementById('dmNpcQuickCancel').onclick = () => { overlay.hidden = true; };
+  document.getElementById('dmNpcQuickApply').onclick = async () => {
+    const targetId = targetSel.value;
+    const sp  = parseInt(spInput.value) || 0;
+    const dmg = Math.max(0, total - sp);
+    const target = chars.find(c => c.id === targetId);
+    if (!target) return;
+    const newHp = Math.max(0, (target.current_hp ?? 0) - dmg);
+    const patch = { current_hp: newHp };
+    if (newHp === 0) patch.mortally_wounded = true;
+    try {
+      await patchCharacter(targetId, patch);
+      Object.assign(target, patch);
+      renderGrid();
+      msg.style.color = 'var(--cyan)';
+      msg.textContent = `✓ ${dmg} Schaden → ${target.name} HP ${newHp}${newHp === 0 ? ' ⚠ MORTALLY WOUNDED' : ''}`;
+      setTimeout(() => { overlay.hidden = true; msg.textContent = ''; }, 1800);
+    } catch(e) {
+      msg.style.color = 'var(--red)';
+      msg.textContent = 'Fehler: ' + e.message;
+    }
+  };
+}
+
+// ── DM Dice FAB event-listeners ───────────────────────────────
+{
+  const fab   = document.getElementById('dmDiceFab');
+  const popup = document.getElementById('dmDicePopup');
+  fab.addEventListener('click', () => popup.classList.toggle('open'));
+  document.getElementById('dmDiceClose').addEventListener('click', () => popup.classList.remove('open'));
+  document.querySelectorAll('#dmDicePopup .die-btn').forEach(btn => {
+    btn.addEventListener('click', () => dmDoRoll(btn.dataset.expr));
+  });
+  document.getElementById('dmDiceRollBtn').addEventListener('click', () => {
+    const expr = document.getElementById('dmDiceExpr').value.trim();
+    if (expr) dmDoRoll(expr);
+  });
+  document.getElementById('dmDiceExpr').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { const expr = e.target.value.trim(); if (expr) dmDoRoll(expr); }
+  });
+}
+
+// ── Combat Tracker ────────────────────────────────────────────
+function renderCombatBar() {
+  const bar = document.getElementById('combatBar');
+  if (!combatSession?.is_active) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  document.getElementById('combatRound').textContent = combatSession.round;
+  renderCombatOrder();
+}
+
+function renderCombatOrder() {
+  const list = document.getElementById('combatOrder');
+  const combatants = combatSession.combatants || [];
+  const idx = combatSession.current_turn_index ?? 0;
+  list.innerHTML = combatants.map((c, i) => `
+    <div class="combat-turn-chip${i === idx ? ' active' : ''}">
+      <span>${c.name}</span>
+      <span class="combat-init">${c.initiative}</span>
+      <button class="combat-remove-btn" data-ci="${i}" title="Entfernen">✕</button>
+    </div>`).join('');
+  list.querySelectorAll('.combat-remove-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const i = parseInt(btn.dataset.ci);
+      const updated = [...(combatSession.combatants || [])];
+      updated.splice(i, 1);
+      let newIdx = combatSession.current_turn_index;
+      if (newIdx >= updated.length) newIdx = 0;
+      await saveCombat({ ...combatSession, combatants: updated, current_turn_index: newIdx });
+    });
+  });
+}
+
+function openCombatSetup() {
+  document.getElementById('combatSetupPanel').style.display = 'block';
+  renderSetupPlayerList();
+  renderSetupInitiativeList();
+}
+
+function renderSetupPlayerList() {
+  document.getElementById('combatPlayerList').innerHTML = chars.map(c => `
+    <label class="combat-setup-check">
+      <input type="checkbox" class="cbt-char-check" value="${c.id}"
+             data-name="${c.name}" data-hp="${c.current_hp ?? 0}" data-maxhp="${c.max_hp ?? 0}"
+             data-ref="${c.stats?.REF ?? 0}">
+      ${c.name} <span class="combat-init-small">(REF ${c.stats?.REF ?? 0})</span>
+    </label>`).join('');
+}
+
+function renderSetupInitiativeList() {
+  const wrap = document.getElementById('combatInitiativeList');
+  wrap.innerHTML = setupCombatants.map((c, i) => `
+    <div class="ctrl-row combat-init-row" data-si="${i}">
+      <span style="flex:1;font-size:.78rem">${c.name}</span>
+      <input type="number" class="ctrl-input" style="max-width:55px"
+             value="${c.initiative || ''}" placeholder="Init" data-si="${i}">
+      ${!c.isNpc ? `<button class="ctrl-btn combat-roll-init" data-si="${i}" data-ref="${c.ref ?? 0}">🎲</button>` : ''}
+    </div>`).join('');
+  wrap.querySelectorAll('input[type=number]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      setupCombatants[parseInt(inp.dataset.si)].initiative = parseInt(inp.value) || 0;
+    });
+  });
+  wrap.querySelectorAll('.combat-roll-init').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const si  = parseInt(btn.dataset.si);
+      const ref = parseInt(btn.dataset.ref) || 0;
+      const d10 = Math.floor(Math.random() * 10) + 1;
+      const init = d10 + ref;
+      setupCombatants[si].initiative = init;
+      const inp = wrap.querySelector(`input[data-si="${si}"]`);
+      if (inp) inp.value = init;
+    });
+  });
+}
+
+// Combat event handlers
+document.getElementById('newCombatBtn').addEventListener('click', () => {
+  setupCombatants = [];
+  openCombatSetup();
+});
+
+document.getElementById('combatSetupToggle').addEventListener('click', () => {
+  const p = document.getElementById('combatSetupPanel');
+  const isOpen = p.style.display === 'block';
+  p.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    setupCombatants = [...(combatSession?.combatants || [])];
+    renderSetupPlayerList();
+    renderSetupInitiativeList();
+  }
+});
+
+document.getElementById('combatCancelSetup').addEventListener('click', () => {
+  document.getElementById('combatSetupPanel').style.display = 'none';
+});
+
+document.getElementById('npcCombatAddBtn').addEventListener('click', () => {
+  const name = document.getElementById('npcCombatName').value.trim();
+  const hp   = parseInt(document.getElementById('npcCombatHp').value) || 0;
+  if (!name) return;
+  setupCombatants.push({ id: null, name, hp, maxHp: hp, isNpc: true, initiative: 0 });
+  document.getElementById('npcCombatName').value = '';
+  document.getElementById('npcCombatHp').value  = '';
+  renderSetupInitiativeList();
+});
+
+document.getElementById('combatPlayerList').addEventListener('change', e => {
+  const cb = e.target;
+  if (!cb.classList.contains('cbt-char-check')) return;
+  if (cb.checked) {
+    setupCombatants.push({
+      id: cb.value, name: cb.dataset.name,
+      hp: parseInt(cb.dataset.hp) || 0, maxHp: parseInt(cb.dataset.maxhp) || 0,
+      isNpc: false, ref: parseInt(cb.dataset.ref) || 0, initiative: 0,
+    });
+  } else {
+    setupCombatants = setupCombatants.filter(c => c.id !== cb.value);
+  }
+  renderSetupInitiativeList();
+});
+
+document.getElementById('combatStartBtn').addEventListener('click', async () => {
+  if (!setupCombatants.length) return;
+  const sorted = [...setupCombatants].sort((a, b) => b.initiative - a.initiative);
+  await saveCombat({
+    ...(combatSession?.id ? { id: combatSession.id } : {}),
+    is_active: true, round: 1, current_turn_index: 0, combatants: sorted,
+  });
+  document.getElementById('combatSetupPanel').style.display = 'none';
+});
+
+document.getElementById('combatNextTurn').addEventListener('click', async () => {
+  if (!combatSession) return;
+  const combatants = combatSession.combatants || [];
+  const nextIdx = (combatSession.current_turn_index + 1) % combatants.length;
+  const newRound = nextIdx === 0 ? combatSession.round + 1 : combatSession.round;
+  await saveCombat({ ...combatSession, current_turn_index: nextIdx, round: newRound });
+});
+
+document.getElementById('combatEndBtn').addEventListener('click', async () => {
+  if (!combatSession || !confirm('Kampf wirklich beenden?')) return;
+  await endCombat(combatSession.id);
+  combatSession = null;
+  renderCombatBar();
+});
 
 async function grantItem(item) {
   const dest     = routeItem(item);
