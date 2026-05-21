@@ -27,8 +27,15 @@
 
 /* ── Main Layout ── */
 .dm-layout {
-  display: grid; grid-template-columns: 1fr 320px;
+  display: grid; grid-template-columns: 1fr 400px;
   height: calc(100vh - 49px); overflow: hidden;
+}
+
+/* ── Sidebar (Roll Log + DM Notes stacked) ── */
+.dm-sidebar {
+  display: flex; flex-direction: column;
+  border-left: 1px solid var(--border); overflow: hidden;
+  height: 100%;
 }
 
 /* ── Character Grid ── */
@@ -73,8 +80,9 @@
 
 /* ── Roll Log ── */
 .roll-log {
-  border-left: 1px solid var(--border); background: var(--bg-card);
+  background: var(--bg-card);
   overflow-y: auto; display: flex; flex-direction: column;
+  flex: 0 0 200px; min-height: 0;
 }
 .roll-log-head {
   font-family: var(--font-display); font-size: .65rem; letter-spacing: .2em;
@@ -105,13 +113,43 @@
 .dm-modal-overlay[hidden] { display: none; }
 .dm-modal-box {
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); width: min(860px, 95vw);
-  max-height: 88vh; overflow: hidden; display: flex; flex-direction: column;
+  border-radius: var(--radius); width: min(960px, 96vw);
+  max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;
 }
 .dm-modal-header {
   display: flex; gap: .75rem; align-items: center;
   padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
+
+/* 2-column modal layout */
+.dm-modal-content {
+  display: flex; flex: 1; min-height: 0; overflow: hidden;
+}
+.dm-modal-left {
+  width: 200px; flex-shrink: 0; border-right: 1px solid var(--border);
+  overflow-y: auto; padding: .75rem .8rem;
+  background: rgba(0,0,0,.15);
+}
+.dm-modal-right {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* Left panel sections */
+.dm-left-section { margin-bottom: .9rem; }
+.dm-left-hp-bar { height: 5px; background: var(--bg-input); border-radius: 3px; overflow: hidden; margin: .3rem 0 .2rem; }
+.dm-left-hp-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+.dm-left-hp-label { font-size: .68rem; color: var(--text-muted); margin-bottom: .25rem; }
+.dm-left-ip-btns {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; margin-top: .3rem;
+}
+.dm-left-ip-btn {
+  padding: .32rem; font-size: .75rem; background: rgba(0,229,255,.08);
+  border: 1px solid rgba(0,229,255,.4); border-radius: var(--radius);
+  color: var(--cyan); cursor: pointer; font-family: var(--font-display);
+  text-align: center; transition: background .12s;
+}
+.dm-left-ip-btn:hover { background: rgba(0,229,255,.2); }
+.dm-left-empty { font-size: .7rem; color: var(--text-muted); }
 .dm-modal-portrait { width: 52px; height: 52px; border-radius: 2px; object-fit: cover; background: var(--bg-input); }
 .dm-modal-title-wrap { flex: 1; min-width: 0; }
 .dm-modal-name { font-family: var(--font-display); font-size: 1.1rem; color: var(--text-head); }
@@ -344,9 +382,135 @@
 .cond-toggle-btn.active { background: rgba(255,45,45,.14); border-color: var(--red); color: var(--red); }
 
 /* ── Responsive ── */
-@media (max-width: 700px) {
-  .dm-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 200px; }
-  .roll-log { border-left: none; border-top: 1px solid var(--border); }
+@media (max-width: 800px) {
+  .dm-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 320px; }
+  .dm-sidebar { border-left: none; border-top: 1px solid var(--border); }
+  .dm-own-notes-area { min-height: 80px; }
   .dm-stats-grid { grid-template-columns: repeat(3, 1fr); }
   .combat-setup-cols { grid-template-columns: 1fr; }
+  .dm-modal-content { flex-direction: column; }
+  .dm-modal-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
 }
+
+/* ── DM Card Footer ── */
+.dm-card-footer { display: flex; align-items: center; justify-content: flex-end; gap: .3rem; margin-top: .2rem; }
+
+/* ── DM Card Buffs ── */
+.dm-card-buffs { display: flex; flex-wrap: wrap; gap: .2rem; margin-top: .2rem; }
+.dm-buff-badge { font-size: .55rem; padding: .06rem .26rem; background: rgba(0,229,255,.09); border: 1px solid rgba(0,229,255,.4); border-radius: 2px; color: var(--cyan); }
+
+/* ── Buff Preset Grid (DM Controls) ── */
+.buff-preset-grid { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .45rem; }
+.buff-preset-btn { padding: .22rem .45rem; font-size: .67rem; background: var(--bg-input); border: 1px solid var(--cyan); border-radius: 2px; color: var(--cyan); cursor: pointer; transition: var(--transition); }
+.buff-preset-btn:hover { background: rgba(0,229,255,.14); }
+
+/* ── Buff Add Form ── */
+.buff-add-form { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); padding: .55rem .65rem; margin-bottom: .45rem; display: flex; flex-direction: column; gap: .35rem; }
+
+/* ── Active Buff List (DM Controls) ── */
+.ctrl-buff-row { display: flex; align-items: center; gap: .35rem; padding: .18rem 0; font-size: .72rem; }
+.ctrl-buff-name { flex: 1; color: var(--text); }
+.ctrl-buff-time { font-family: var(--font-display); font-size: .62rem; color: var(--text-muted); }
+.ctrl-buff-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .7rem; padding: 0; line-height: 1; }
+.ctrl-buff-remove:hover { color: var(--red); }
+
+/* ── DM Notes Icon ── */
+.dm-notes-icon { background: none; border: none; cursor: pointer; font-size: .82rem; color: var(--text-muted); padding: 0; line-height: 1; }
+.dm-notes-icon:hover { color: var(--cyan); }
+
+/* ── Player Notes Read-only Overlay ── */
+.dm-notes-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 1500; display: flex; align-items: center; justify-content: center; }
+.dm-notes-overlay[hidden] { display: none; }
+.dm-notes-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; width: min(480px, 94vw); max-height: 70vh; overflow-y: auto; }
+.dm-notes-box-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+
+/* ── DM Own Notes ── */
+.dm-own-notes-wrap { border-top: 1px solid var(--border); padding: 0; display: flex; flex-direction: column; }
+.player-notes-area { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: .85rem; padding: .65rem; resize: vertical; line-height: 1.6; width: 100%; box-sizing: border-box; }
+.player-notes-area:focus { outline: none; border-color: var(--cyan); }
+.dm-own-notes-area { min-height: 150px; border: none; border-top: 1px solid var(--border); border-radius: 0; resize: none; }
+
+/* ── DM Chat ── */
+.dm-chat-wrap { display: flex; flex-direction: column; gap: .4rem; padding: .75rem 1rem; border-top: 1px solid var(--border); flex: 1; min-height: 0; }
+.dm-chat-head { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); }
+.dm-chat-img-label { cursor: pointer; font-size: .95rem; color: var(--text-muted); }
+.dm-chat-img-label:hover { color: var(--cyan); }
+.dm-chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: .35rem; min-height: 120px; }
+.dm-chat-messages .chat-msg--dm     { border-left: 3px solid var(--red);  background: rgba(255,45,45,.06); }
+.dm-chat-messages .chat-msg--player { border-left: 3px solid var(--cyan); background: rgba(0,229,255,.05); }
+.dm-chat-img-preview img { max-width: 80px; max-height: 60px; object-fit: contain; border-radius: 3px; }
+/* images inside chat messages */
+.dm-chat-messages .chat-img { max-width: 100%; max-height: 180px; object-fit: contain; border-radius: var(--radius); margin-top: .3rem; display: block; cursor: zoom-in; }
+/* Lightbox (shared with player) */
+.chat-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.88); z-index: 9000; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
+.chat-lightbox img { max-width: 92vw; max-height: 88vh; object-fit: contain; border-radius: 4px; box-shadow: 0 0 40px rgba(0,0,0,.8); }
+.dm-chat-input-row { display: flex; gap: .3rem; align-items: flex-end; }
+.dm-chat-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: .82rem; padding: .4rem .5rem; resize: none; }
+.dm-chat-input:focus { outline: none; border-color: var(--cyan); }
+.dm-chat-send-btn { padding: .45rem .65rem; background: rgba(255,45,45,.1); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-size: .9rem; font-family: var(--font-display); }
+.dm-chat-send-btn:hover { background: rgba(255,45,45,.2); }
+
+/* ── NPC Section ── */
+.npc-section { padding: 1.5rem 2rem; border-top: 2px solid var(--border); }
+.npc-section-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.npc-section-title { font-family: var(--font-display); font-size: .75rem; letter-spacing: .15em; text-transform: uppercase; color: var(--red); }
+.npc-add-btn { padding: .3rem .7rem; background: rgba(255,45,45,.12); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-size: .75rem; }
+.npc-add-btn:hover { background: rgba(255,45,45,.25); }
+
+.npc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1rem; }
+
+.npc-card { background: var(--bg-card); border: 1px solid var(--red); border-radius: var(--radius); padding: .75rem; display: flex; flex-direction: column; gap: .4rem; }
+.npc-card-portrait { width: 100%; aspect-ratio: 1; border-radius: calc(var(--radius) - 2px); background: var(--bg-input); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.npc-card-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.npc-card-name { font-family: var(--font-display); font-size: .8rem; color: var(--red); }
+.npc-card-role { font-size: .65rem; color: var(--text-muted); }
+.npc-hp-bar-wrap { height: 5px; background: rgba(255,255,255,.1); border-radius: 3px; overflow: hidden; }
+.npc-hp-bar { height: 100%; border-radius: 3px; transition: width .3s, background .3s; }
+.npc-card-hp-controls { display: flex; align-items: center; gap: .3rem; font-size: .75rem; }
+.npc-hp-input { width: 42px; text-align: center; background: var(--bg-input); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-size: .8rem; padding: .15rem; }
+.npc-hp-btn { width: 22px; height: 22px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 3px; color: var(--text); cursor: pointer; font-size: .9rem; display: flex; align-items: center; justify-content: center; padding: 0; }
+.npc-card-actions { display: flex; gap: .3rem; flex-wrap: wrap; }
+.npc-visibility-btn { flex: 1; padding: .25rem .4rem; font-size: .65rem; border-radius: var(--radius); cursor: pointer; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-muted); white-space: nowrap; }
+.npc-visibility-btn.active { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,.1); }
+.npc-edit-btn { padding: .25rem .45rem; font-size: .65rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; background: var(--bg-input); color: var(--text-muted); }
+.npc-dice-btn { padding: .25rem .45rem; font-size: .65rem; border: 1px solid var(--cyan); border-radius: var(--radius); cursor: pointer; background: rgba(0,229,255,.08); color: var(--cyan); }
+.npc-card.eliminated { opacity: .45; filter: grayscale(1); }
+.combat-npc-hp-ctrl { display: flex; align-items: center; gap: .2rem; font-size: .68rem; }
+.combat-npc-hp-btn { width: 18px; height: 18px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 2px; color: var(--text); cursor: pointer; font-size: .8rem; display: flex; align-items: center; justify-content: center; padding: 0; }
+.combat-npc-hp-val { font-size: .68rem; color: var(--text-muted); min-width: 3ch; text-align: center; }
+.combat-npc-hp-val.elim { color: var(--red); }
+.combat-char-hp { font-size: .68rem; }
+.npc-eliminated { opacity: .5; }
+
+/* ── NPC Modal ── */
+.npc-modal-content { background: var(--bg-card); border: 1px solid var(--red); border-radius: var(--radius); max-width: 620px; width: 90%; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; }
+.npc-modal-header { padding: .75rem 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-size: .75rem; letter-spacing: .1em; color: var(--red); }
+.npc-modal-body { display: flex; gap: 1.25rem; padding: 1rem; }
+.npc-modal-img-col { display: flex; flex-direction: column; gap: .5rem; align-items: center; flex-shrink: 0; }
+.npc-img-preview { width: 110px; height: 110px; border: 1px solid var(--border); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 3rem; overflow: hidden; background: var(--bg-input); }
+.npc-img-preview img { width: 100%; height: 100%; object-fit: cover; }
+.npc-img-upload-label { font-size: .7rem; color: var(--cyan); cursor: pointer; border: 1px solid var(--cyan); padding: .25rem .5rem; border-radius: var(--radius); text-align: center; display: block; }
+.npc-img-upload-label:hover { background: rgba(0,229,255,.1); }
+.npc-modal-fields { flex: 1; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.npc-field { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: .85rem; padding: .45rem .6rem; width: 100%; box-sizing: border-box; }
+.npc-field:focus { outline: none; border-color: var(--red); }
+.npc-field--notes { resize: none; }
+.npc-field--hp { width: 65px !important; }
+.npc-hp-row { display: flex; align-items: center; gap: .4rem; }
+.npc-stats-details { font-size: .8rem; color: var(--text); }
+.npc-stats-details summary { color: var(--text-muted); cursor: pointer; margin: .25rem 0; user-select: none; }
+.npc-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .3rem; margin-top: .5rem; }
+.npc-stat-entry { display: flex; flex-direction: column; gap: .1rem; }
+.npc-stat-entry label { font-size: .6rem; color: var(--text-muted); }
+.npc-stat-entry input { background: var(--bg-input); border: 1px solid var(--border); border-radius: 3px; color: var(--text); text-align: center; font-size: .8rem; padding: .2rem; width: 100%; box-sizing: border-box; }
+.npc-weapons-wrap { display: flex; flex-direction: column; gap: .4rem; }
+.npc-weapons-head { display: flex; justify-content: space-between; align-items: center; font-size: .72rem; color: var(--text-muted); }
+.npc-add-weapon-btn { font-size: .65rem; color: var(--cyan); border: 1px solid var(--cyan); background: none; border-radius: 3px; padding: .15rem .4rem; cursor: pointer; }
+.npc-weapon-row { display: flex; gap: .3rem; align-items: center; }
+.npc-weapon-row input { flex: 1; }
+.npc-weapon-remove { background: none; border: 1px solid var(--border); border-radius: 3px; color: var(--text-muted); cursor: pointer; padding: .15rem .4rem; flex-shrink: 0; }
+.npc-modal-footer { padding: .75rem 1rem; border-top: 1px solid var(--border); display: flex; gap: .5rem; justify-content: flex-end; }
+.npc-save-btn { padding: .4rem .9rem; background: rgba(255,45,45,.15); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-family: var(--font-display); font-size: .75rem; }
+.npc-save-btn:hover { background: rgba(255,45,45,.3); }
+.npc-delete-btn { padding: .4rem .9rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-muted); cursor: pointer; font-size: .75rem; }
+.npc-delete-btn:hover { border-color: var(--red); color: var(--red); }

@@ -32,6 +32,15 @@ body {
   line-height: 1;
 }
 .hub-logo span { color: var(--red); }
+.hub-logo-img {
+  height: clamp(80px, 18vw, 180px);
+  width: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  animation: neon-pulse 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(255,45,45,.5));
+}
 
 @keyframes neon-pulse {
   0%, 100% {

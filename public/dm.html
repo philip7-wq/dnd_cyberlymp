@@ -22,7 +22,7 @@
 </div>
 
 <nav class="nav">
-  <span class="nav-logo">LZRV<span>HUB</span></span>
+  <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
   <span style="font-family:var(--font-display);font-size:.72rem;color:var(--red);margin-left:.75rem;letter-spacing:.12em">DM DASHBOARD</span>
   <button class="btn btn-ghost" id="newCombatBtn" style="font-size:.75rem;margin-left:auto">⚔ Neuer Kampf</button>
   <a href="index.html" class="btn btn-ghost" style="font-size:.75rem">← Übersicht</a>
@@ -50,7 +50,9 @@
       <div id="combatPlayerList"></div>
     </div>
     <div>
-      <div class="combat-setup-head">NPC hinzufügen</div>
+      <div class="combat-setup-head">NPCs</div>
+      <div id="combatNpcDbList"></div>
+      <div class="combat-setup-head" style="margin-top:.5rem;font-size:.58rem;opacity:.7">Temporär (nicht gespeichert)</div>
       <div class="ctrl-row" style="margin-bottom:.35rem">
         <input class="ctrl-input" id="npcCombatName" placeholder="Name">
         <input class="ctrl-input" id="npcCombatHp" placeholder="HP" type="number" style="max-width:60px">
@@ -75,10 +77,53 @@
     <div style="color:var(--text-muted);font-size:.82rem;padding:.5rem">Lade Charaktere…</div>
   </div>
 
-  <!-- Live Roll Log -->
-  <div class="roll-log" id="rollLog">
-    <div class="roll-log-head">ROLL LOG <button class="roll-log-clear" id="clearRollLog" title="Alle Würfelwürfe löschen">🗑</button></div>
-    <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
+  <!-- Sidebar: Roll Log + DM Notes -->
+  <div class="dm-sidebar">
+    <div class="roll-log" id="rollLog">
+      <div class="roll-log-head">ROLL LOG <button class="roll-log-clear" id="clearRollLog" title="Alle Würfelwürfe löschen">🗑</button></div>
+      <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
+    </div>
+    <div class="dm-chat-wrap">
+      <div class="dm-chat-head">
+        <span>CHAT</span>
+        <label class="dm-chat-img-label" title="Bild anhängen">
+          📎
+          <input type="file" id="dmChatImgInput" accept="image/*" style="display:none">
+        </label>
+      </div>
+      <div class="dm-chat-messages" id="dmChatMessages"></div>
+      <div id="dmChatImgPreview" class="dm-chat-img-preview" style="display:none"></div>
+      <div class="dm-chat-input-row">
+        <textarea id="dmChatInput" class="dm-chat-input" rows="2" placeholder="Nachricht an alle…" maxlength="500"></textarea>
+        <button id="dmChatSend" class="dm-chat-send-btn">→</button>
+      </div>
+    </div>
+    <div class="dm-own-notes-wrap">
+      <div class="roll-log-head">DM NOTIZEN <span style="font-size:.58rem;color:var(--text-muted)">(nur lokal)</span></div>
+      <textarea id="dmOwnNotes" class="player-notes-area dm-own-notes-area" placeholder="Session-Notizen, NPC-Ideen…"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- NPC Section -->
+<section class="npc-section">
+  <div class="npc-section-head">
+    <span class="npc-section-title">NPCs</span>
+    <button id="npcAddBtn" class="npc-add-btn">+ NPC</button>
+  </div>
+  <div class="npc-grid" id="npcGrid">
+    <div style="color:var(--text-muted);font-size:.78rem">Lade NPCs…</div>
+  </div>
+</section>
+
+<!-- Player Notes Read-only Overlay -->
+<div id="dmNotesOverlay" class="dm-notes-overlay" hidden>
+  <div class="dm-notes-box">
+    <div class="dm-notes-box-head">
+      <span id="dmNotesCharName" style="font-family:var(--font-display);font-size:.8rem;color:var(--cyan);letter-spacing:.1em"></span>
+      <button class="dm-modal-close" id="dmNotesClose">✕</button>
+    </div>
+    <pre id="dmNotesContent" style="font-family:var(--font-body);font-size:.85rem;white-space:pre-wrap;color:var(--text);margin-top:.6rem"></pre>
   </div>
 </div>
 
@@ -86,8 +131,13 @@
 <div id="dmModal" class="dm-modal-overlay" hidden>
   <div class="dm-modal-box" id="dmModalBox">
     <div class="dm-modal-header" id="dmModalHeader"></div>
-    <div class="dm-modal-tabs" id="dmModalTabs"></div>
-    <div class="dm-modal-body" id="dmModalBody"></div>
+    <div class="dm-modal-content">
+      <div class="dm-modal-left" id="dmModalLeft"></div>
+      <div class="dm-modal-right">
+        <div class="dm-modal-tabs" id="dmModalTabs"></div>
+        <div class="dm-modal-body" id="dmModalBody"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -144,17 +194,78 @@
   </div>
 </div>
 
+<!-- NPC Modal -->
+<div class="modal-overlay" id="npcModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;align-items:center;justify-content:center">
+  <div class="npc-modal-content">
+    <div class="npc-modal-header">
+      <span id="npcModalTitle">NPC hinzufügen</span>
+      <button id="npcModalClose" class="dm-modal-close">✕</button>
+    </div>
+    <div class="npc-modal-body">
+      <div class="npc-modal-img-col">
+        <div class="npc-img-preview" id="npcImgPreview"><span class="npc-img-placeholder">👤</span></div>
+        <label class="npc-img-upload-label">
+          Bild hochladen
+          <input type="file" id="npcImgInput" accept="image/*" style="display:none">
+        </label>
+      </div>
+      <div class="npc-modal-fields">
+        <input id="npcName"  class="npc-field" placeholder="Name" maxlength="60">
+        <input id="npcRole"  class="npc-field" placeholder="Rolle (z.B. Booster, Corporate)" maxlength="60">
+        <div class="npc-hp-row">
+          <input id="npcHpCurrent" class="npc-field npc-field--hp" type="number" placeholder="HP" min="0">
+          <span style="color:var(--text-muted)">/</span>
+          <input id="npcHpMax" class="npc-field npc-field--hp" type="number" placeholder="Max HP" min="0">
+        </div>
+        <details class="npc-stats-details">
+          <summary>Stats (optional)</summary>
+          <div class="npc-stats-grid" id="npcStatsGrid"></div>
+        </details>
+        <div class="npc-weapons-wrap">
+          <div class="npc-weapons-head">
+            <span>Waffen</span>
+            <button id="npcAddWeaponBtn" type="button" class="npc-add-weapon-btn">+ Waffe</button>
+          </div>
+          <div id="npcWeaponsList"></div>
+        </div>
+        <textarea id="npcNotes" class="npc-field npc-field--notes" placeholder="Notizen…" rows="3" maxlength="500"></textarea>
+      </div>
+    </div>
+    <div class="npc-modal-footer">
+      <button id="npcModalSave" class="npc-save-btn">Speichern</button>
+      <button id="npcModalDelete" class="npc-delete-btn" style="display:none">🗑 Löschen</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import {
   getCharacters, getCharacter, patchCharacter, getItems, getRolls,
   subscribeCharacters, subscribeRolls, logRoll, deleteCharacter, deleteAllRolls,
   getActiveCombat, saveCombat, endCombat, subscribeCombat,
+  sendMessage, getMessages, subscribeMessages, uploadChatImage,
+  getNpcs, saveNpc, patchNpc, deleteNpc, uploadNpcImage, subscribeNpcs,
 } from './assets/js/supabase.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const DM_PIN = 'DM2077';
 const CONDITIONS = ['Seriously Wounded','Mortally Wounded','Stunned','Suppressed',
   'Prone','Blinded','Deafened','On Fire','Bleeding Out'];
+const BUFF_PRESETS = [
+  { name: 'Speedheal',   duration_min: 60,   effect: '+1 HP pro Runde' },
+  { name: 'Bounce Back', duration_min: 60,   effect: '+2 auf alle Death Saves' },
+  { name: 'Graftskin',   duration_min: 60,   effect: '+3 SP auf Body (kein Armor-Penalty)' },
+  { name: 'Black Lace',  duration_min: null, effect: '+2 REF, +2 BODY — Humanity-Verlust bei Nutzung' },
+  { name: 'Adrenaline',  duration_min: null, effect: 'MOVE verdoppelt, ignoriert Seriously Wounded −2 Penalty (1 Runde — manuell entfernen)' },
+];
+
+function formatMs(ms) {
+  if (!ms) return '∞';
+  const s = Math.ceil(ms / 1000);
+  if (s >= 3600) return `${Math.floor(s / 3600)}h`;
+  if (s >= 60)   return `${Math.floor(s / 60)}m`;
+  return `${s}s`;
+}
 
 // ── State ─────────────────────────────────────────────────────
 let chars      = [];
@@ -162,10 +273,15 @@ let rolls      = [];
 let injData    = null;
 let itemsCache = [];
 let openChar   = null; // full char object currently in modal
-let activeModalTab = 'controls';
+let activeModalTab = 'stats';
 let itemSearchTimer = null;
 let combatSession  = null;
+let _dmChatPendingImageUrl = null;
 let setupCombatants = [];
+let _npcs = [];
+let _editingNpcId = null;
+let _npcPendingImageBlob = null;
+let _npcRollContext = null;
 
 // ── PIN Auth ──────────────────────────────────────────────────
 function checkPin() {
@@ -233,6 +349,7 @@ async function boot() {
       }
       return;
     }
+    if (e.target.closest('.dm-notes-icon')) return; // handled by separate listener
     const card = e.target.closest('.dm-card');
     if (card) openDetail(card.dataset.id);
   });
@@ -277,6 +394,58 @@ async function boot() {
     if (rolls.length > 100) rolls.pop();
     prependRollEntry(roll);
     document.getElementById('rollEmpty')?.remove();
+  });
+
+  // Notes icon clicks on grid (delegated)
+  document.getElementById('dmGrid').addEventListener('click', e => {
+    const notesBtn = e.target.closest('.dm-notes-icon');
+    if (!notesBtn) return;
+    e.stopPropagation();
+    const c = chars.find(x => x.id === notesBtn.dataset.cid);
+    if (!c) return;
+    document.getElementById('dmNotesCharName').textContent = c.name + ' — Notizen';
+    document.getElementById('dmNotesContent').textContent = c.session_notes || '(leer)';
+    document.getElementById('dmNotesOverlay').hidden = false;
+  });
+  document.getElementById('dmNotesClose').addEventListener('click', () => {
+    document.getElementById('dmNotesOverlay').hidden = true;
+  });
+  document.getElementById('dmNotesOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('dmNotesOverlay')) document.getElementById('dmNotesOverlay').hidden = true;
+  });
+
+  // DM own notes (localStorage)
+  const dmNotes = document.getElementById('dmOwnNotes');
+  dmNotes.value = localStorage.getItem('lzrv_dm_notes') || '';
+  let dmNotesSaveTimer = null;
+  dmNotes.addEventListener('input', () => {
+    clearTimeout(dmNotesSaveTimer);
+    dmNotesSaveTimer = setTimeout(() => {
+      localStorage.setItem('lzrv_dm_notes', dmNotes.value);
+    }, 1000);
+  });
+
+  // Chat
+  const chatHistory = await getMessages(50);
+  renderDmChat(chatHistory);
+  setupDmChat();
+  subscribeMessages(payload => appendDmChatMessage(payload.new));
+
+  // NPCs
+  try { _npcs = await getNpcs(); } catch(e) { console.warn('getNpcs failed:', e); }
+  renderNpcGrid();
+  setupNpcModal();
+  subscribeNpcs(payload => {
+    if (payload.eventType === 'DELETE') {
+      _npcs = _npcs.filter(n => n.id !== payload.old.id);
+    } else if (payload.eventType === 'INSERT') {
+      _npcs.push(payload.new);
+    } else {
+      const idx = _npcs.findIndex(n => n.id === payload.new.id);
+      if (idx >= 0) _npcs[idx] = payload.new; else _npcs.push(payload.new);
+    }
+    renderNpcGrid();
+    renderCombatSetupNpcList();
   });
 }
 
@@ -344,8 +513,12 @@ function renderGrid() {
         ? `<div class="dm-card-conditions">${(c.conditions||[]).map(cd =>
             `<span class="dm-cond-badge">${cd}</span>`).join('')}</div>`
         : ''}
+      ${(() => { const ab = (c.buffs||[]).filter(b => !b.expires_at || new Date(b.expires_at) > new Date()); return ab.length ? `<div class="dm-card-buffs">${ab.map(b=>`<span class="dm-buff-badge">${b.name}</span>`).join('')}</div>` : ''; })()}
       ${weapons ? `<div class="dm-card-weapons">${weapons}</div>` : ''}
-      <button class="dm-card-delete" data-delete-id="${c.id}" title="Charakter löschen">🗑</button>
+      <div class="dm-card-footer">
+        ${c.session_notes ? `<button class="dm-notes-icon" data-cid="${c.id}" title="Notizen anzeigen">📝</button>` : ''}
+        <button class="dm-card-delete" data-delete-id="${c.id}" title="Charakter löschen">🗑</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -392,6 +565,348 @@ function prependRollEntry(roll) {
   head.insertAdjacentElement('afterend', div.firstElementChild);
 }
 
+// ── Chat ──────────────────────────────────────────────────────
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function openLightbox(src) {
+  const lb = document.createElement('div');
+  lb.className = 'chat-lightbox';
+  lb.innerHTML = `<img src="${src}" alt="">`;
+  lb.addEventListener('click', () => lb.remove());
+  document.body.appendChild(lb);
+}
+
+function appendDmChatMessage(m) {
+  const isDm = m.sender_role === 'dm';
+  const el   = document.createElement('div');
+  el.className = `chat-msg ${isDm ? 'chat-msg--dm' : 'chat-msg--player'}`;
+  const time = new Date(m.created_at).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+  el.innerHTML =
+    `<div class="chat-msg-header">` +
+      `<span class="chat-sender${isDm ? ' chat-sender--dm' : ''}">${isDm ? 'DM' : escapeHtml(m.sender)}</span>` +
+      `<span class="chat-time">${time}</span>` +
+    `</div>` +
+    (m.content   ? `<div class="chat-text">${escapeHtml(m.content)}</div>` : '') +
+    (m.image_url ? `<img class="chat-img" src="${m.image_url}" alt="Bild" data-src="${m.image_url}">` : '');
+  const container = document.getElementById('dmChatMessages');
+  container.appendChild(el);
+  if (m.image_url) {
+    el.querySelector('.chat-img').addEventListener('click', e => openLightbox(e.currentTarget.dataset.src));
+  }
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderDmChat(msgs) {
+  document.getElementById('dmChatMessages').innerHTML = '';
+  msgs.forEach(m => appendDmChatMessage(m));
+}
+
+function setupDmChat() {
+  const sendBtn  = document.getElementById('dmChatSend');
+  const input    = document.getElementById('dmChatInput');
+  const imgInput = document.getElementById('dmChatImgInput');
+  const preview  = document.getElementById('dmChatImgPreview');
+
+  sendBtn.addEventListener('click', async () => {
+    const text = input.value.trim();
+    if (!text && !_dmChatPendingImageUrl) return;
+    input.value = '';
+    const imgUrl = _dmChatPendingImageUrl;
+    _dmChatPendingImageUrl = null;
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+    await sendMessage({ sender: 'DM', sender_role: 'dm', content: text || null, image_url: imgUrl });
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+  });
+
+  imgInput.addEventListener('change', async () => {
+    const file = imgInput.files[0];
+    if (!file) return;
+    imgInput.value = '';
+    sendBtn.disabled = true;
+    sendBtn.textContent = '…';
+    const url = await uploadChatImage(file);
+    sendBtn.disabled = false;
+    sendBtn.textContent = '→';
+    if (!url) return;
+    _dmChatPendingImageUrl = url;
+    preview.style.display = 'block';
+    preview.innerHTML = `<img src="${url}" alt="Vorschau"><button id="dmChatImgRemove" style="margin-left:.3rem;background:none;border:none;color:var(--red);cursor:pointer">✕</button>`;
+    document.getElementById('dmChatImgRemove').addEventListener('click', () => {
+      _dmChatPendingImageUrl = null;
+      preview.style.display = 'none';
+      preview.innerHTML = '';
+    });
+  });
+}
+
+// ── NPCs ─────────────────────────────────────────────────────
+
+function renderNpcGrid() {
+  const grid = document.getElementById('npcGrid');
+  if (!grid) return;
+  if (!_npcs.length) {
+    grid.innerHTML = '<div style="color:var(--text-muted);font-size:.78rem">Noch keine NPCs.</div>';
+    return;
+  }
+  grid.innerHTML = _npcs.map(n => {
+    const hpPct = n.hp_max > 0 ? Math.round((n.hp_current / n.hp_max) * 100) : 0;
+    const hpCol = hpPct > 50 ? '#2ecc71' : hpPct > 25 ? '#f39c12' : '#e74c3c';
+    const isElim = n.hp_max > 0 && n.hp_current <= 0;
+    const portrait = n.image_url
+      ? `<img src="${n.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">`
+      : '<span style="font-size:2rem">👤</span>';
+    return `<div class="npc-card${isElim ? ' eliminated' : ''}" data-npc-id="${n.id}">
+      <div class="npc-card-portrait">${portrait}</div>
+      <div class="npc-card-name">${escapeHtml(n.name)}</div>
+      ${n.role ? `<div class="npc-card-role">${escapeHtml(n.role)}</div>` : ''}
+      <div class="npc-hp-bar-wrap"><div class="npc-hp-bar" style="width:${hpPct}%;background:${hpCol}"></div></div>
+      <div class="npc-card-hp-controls">
+        <button class="npc-hp-btn" data-npc-id="${n.id}" data-delta="-1">−</button>
+        <input class="npc-hp-input" data-npc-id="${n.id}" type="number" value="${n.hp_current}" min="0" max="${n.hp_max}">
+        <span style="color:var(--text-muted);font-size:.72rem">/ ${n.hp_max}</span>
+        <button class="npc-hp-btn" data-npc-id="${n.id}" data-delta="1">+</button>
+      </div>
+      <div class="npc-card-actions">
+        <button class="npc-visibility-btn${n.is_visible_to_players ? ' active' : ''}" data-npc-id="${n.id}">
+          ${n.is_visible_to_players ? '👁 Sichtbar' : '🙈 Versteckt'}
+        </button>
+        <button class="npc-edit-btn" data-npc-id="${n.id}">✎</button>
+        <button class="npc-dice-btn" data-npc-id="${n.id}">🎲</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.npc-hp-input').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const id  = inp.dataset.npcId;
+      const val = Math.max(0, parseInt(inp.value) || 0);
+      inp.value = val;
+      await patchNpc(id, { hp_current: val });
+    });
+  });
+  grid.querySelectorAll('.npc-hp-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const npc = _npcs.find(n => n.id === btn.dataset.npcId);
+      if (!npc) return;
+      const newVal = Math.max(0, (npc.hp_current ?? 0) + parseInt(btn.dataset.delta));
+      await patchNpc(npc.id, { hp_current: newVal });
+    });
+  });
+  grid.querySelectorAll('.npc-visibility-btn').forEach(btn => {
+    btn.addEventListener('click', () => toggleNpcVisibility(btn.dataset.npcId));
+  });
+  grid.querySelectorAll('.npc-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const npc = _npcs.find(n => n.id === btn.dataset.npcId);
+      if (npc) openNpcModal(npc);
+    });
+  });
+  grid.querySelectorAll('.npc-dice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const npc = _npcs.find(n => n.id === btn.dataset.npcId);
+      if (npc) rollForNpc(npc);
+    });
+  });
+}
+
+function renderCombatSetupNpcList() {
+  const wrap = document.getElementById('combatNpcDbList');
+  if (!wrap) return;
+  if (!_npcs.length) {
+    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.72rem;margin-bottom:.3rem">Keine gespeicherten NPCs.</div>';
+    return;
+  }
+  wrap.innerHTML = _npcs.map(n => `
+    <label class="combat-setup-check">
+      <input type="checkbox" class="cbt-npc-check" value="${n.id}"
+             data-name="${escapeHtml(n.name)}" data-hp="${n.hp_current}" data-maxhp="${n.hp_max}"
+             data-ref="${n.stats?.REF || 0}" data-img="${n.image_url || ''}"
+             data-visible="${n.is_visible_to_players}">
+      ${escapeHtml(n.name)} <span class="combat-init-small">(HP ${n.hp_current}/${n.hp_max})</span>
+    </label>`).join('');
+  wrap.querySelectorAll('.cbt-npc-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const npc = _npcs.find(n => n.id === cb.value);
+      if (!npc) return;
+      if (cb.checked) {
+        setupCombatants.push({
+          id: npc.id, name: npc.name,
+          hp: npc.hp_current, maxHp: npc.hp_max,
+          isNpc: true, ref: npc.stats?.REF || 0, initiative: 0,
+          imageUrl: npc.image_url || null,
+          isVisibleToPlayers: npc.is_visible_to_players,
+          npcDbId: npc.id,
+        });
+      } else {
+        setupCombatants = setupCombatants.filter(c => !(c.isNpc && c.npcDbId === cb.value));
+      }
+      renderSetupInitiativeList();
+    });
+  });
+}
+
+function openNpcModal(npc = null) {
+  _editingNpcId = npc?.id || null;
+  _npcPendingImageBlob = null;
+  document.getElementById('npcModalTitle').textContent = npc ? 'NPC bearbeiten' : 'NPC hinzufügen';
+  document.getElementById('npcName').value       = npc?.name || '';
+  document.getElementById('npcRole').value       = npc?.role || '';
+  document.getElementById('npcHpCurrent').value  = npc?.hp_current ?? '';
+  document.getElementById('npcHpMax').value      = npc?.hp_max ?? '';
+  document.getElementById('npcNotes').value      = npc?.notes || '';
+  const imgPreview = document.getElementById('npcImgPreview');
+  imgPreview.innerHTML = npc?.image_url
+    ? `<img src="${npc.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">`
+    : '<span class="npc-img-placeholder">👤</span>';
+  const STAT_KEYS = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP'];
+  document.getElementById('npcStatsGrid').innerHTML = STAT_KEYS.map(s => `
+    <div class="npc-stat-entry">
+      <label>${s}</label>
+      <input type="number" min="1" max="10" value="${npc?.stats?.[s] || ''}" data-stat="${s}">
+    </div>`).join('');
+  renderNpcWeaponsList(npc?.weapons || []);
+  document.getElementById('npcModalDelete').style.display = npc ? 'inline-flex' : 'none';
+  document.getElementById('npcModal').style.display = 'flex';
+}
+
+function renderNpcWeaponsList(weapons) {
+  const list = document.getElementById('npcWeaponsList');
+  list.innerHTML = (weapons || []).map((w, i) => `
+    <div class="npc-weapon-row" data-wi="${i}">
+      <input class="npc-field" placeholder="Waffe" value="${escapeHtml(w.name || '')}" data-wi="${i}" data-field="name">
+      <input class="npc-field npc-field--hp" placeholder="DMG" value="${escapeHtml(w.damage || '')}" data-wi="${i}" data-field="damage">
+      <button class="npc-weapon-remove" data-wi="${i}" type="button">✕</button>
+    </div>`).join('');
+  list.querySelectorAll('.npc-weapon-remove').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.npc-weapon-row').remove());
+  });
+}
+
+function collectNpcWeapons() {
+  return [...document.querySelectorAll('#npcWeaponsList .npc-weapon-row')].map(row => ({
+    name:   row.querySelector('[data-field="name"]').value.trim(),
+    damage: row.querySelector('[data-field="damage"]').value.trim(),
+  })).filter(w => w.name);
+}
+
+function collectNpcStats() {
+  const stats = {};
+  document.querySelectorAll('#npcStatsGrid input[data-stat]').forEach(inp => {
+    const val = parseInt(inp.value);
+    if (val) stats[inp.dataset.stat] = val;
+  });
+  return stats;
+}
+
+async function saveNpcFromModal() {
+  const name = document.getElementById('npcName').value.trim();
+  if (!name) { alert('Name ist erforderlich'); return; }
+  const data = {
+    name,
+    role:       document.getElementById('npcRole').value.trim() || null,
+    hp_current: parseInt(document.getElementById('npcHpCurrent').value) || 0,
+    hp_max:     parseInt(document.getElementById('npcHpMax').value) || 0,
+    notes:      document.getElementById('npcNotes').value.trim() || null,
+    stats:      collectNpcStats(),
+    weapons:    collectNpcWeapons(),
+  };
+  if (_editingNpcId) data.id = _editingNpcId;
+  try {
+    const btn = document.getElementById('npcModalSave');
+    btn.disabled = true; btn.textContent = '…';
+    const row = await saveNpc(data);
+    if (_npcPendingImageBlob) {
+      const url = await uploadNpcImage(_npcPendingImageBlob, row.id);
+      await patchNpc(row.id, { image_url: url });
+    }
+    btn.disabled = false; btn.textContent = 'Speichern';
+    closeNpcModal();
+  } catch(e) {
+    document.getElementById('npcModalSave').disabled = false;
+    document.getElementById('npcModalSave').textContent = 'Speichern';
+    alert('Fehler: ' + e.message);
+  }
+}
+
+function closeNpcModal() {
+  document.getElementById('npcModal').style.display = 'none';
+  _editingNpcId = null;
+  _npcPendingImageBlob = null;
+}
+
+async function toggleNpcVisibility(id) {
+  const npc = _npcs.find(n => n.id === id);
+  if (!npc) return;
+  const newVal = !npc.is_visible_to_players;
+  await patchNpc(id, { is_visible_to_players: newVal });
+  if (combatSession?.combatants) {
+    const updated = combatSession.combatants.map(c =>
+      c.npcDbId === id ? { ...c, isVisibleToPlayers: newVal } : c
+    );
+    if (JSON.stringify(updated) !== JSON.stringify(combatSession.combatants)) {
+      await saveCombat({ ...combatSession, combatants: updated });
+    }
+  }
+}
+
+function rollForNpc(npc) {
+  const weapons = (npc.weapons || []).filter(w => w.damage);
+  const expr    = document.getElementById('dmDiceExpr');
+  if (weapons.length) expr.value = weapons[0].damage;
+  _npcRollContext = `NPC: ${npc.name}`;
+  document.getElementById('dmDicePopup').classList.add('open');
+  expr.focus();
+}
+
+function setupNpcModal() {
+  document.getElementById('npcAddBtn').addEventListener('click', () => openNpcModal());
+  document.getElementById('npcModalClose').addEventListener('click', closeNpcModal);
+  document.getElementById('npcModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('npcModal')) closeNpcModal();
+  });
+  document.getElementById('npcModalSave').addEventListener('click', saveNpcFromModal);
+  document.getElementById('npcModalDelete').addEventListener('click', async () => {
+    if (!_editingNpcId) return;
+    const npc = _npcs.find(n => n.id === _editingNpcId);
+    if (!confirm(`NPC "${npc?.name}" wirklich löschen?`)) return;
+    try {
+      await deleteNpc(_editingNpcId);
+      closeNpcModal();
+    } catch(e) { alert('Fehler: ' + e.message); }
+  });
+  document.getElementById('npcAddWeaponBtn').addEventListener('click', () => {
+    const list = document.getElementById('npcWeaponsList');
+    const idx  = list.querySelectorAll('.npc-weapon-row').length;
+    const div  = document.createElement('div');
+    div.className = 'npc-weapon-row';
+    div.dataset.wi = idx;
+    div.innerHTML = `
+      <input class="npc-field" placeholder="Waffe" data-wi="${idx}" data-field="name">
+      <input class="npc-field npc-field--hp" placeholder="DMG" data-wi="${idx}" data-field="damage">
+      <button class="npc-weapon-remove" type="button">✕</button>`;
+    div.querySelector('.npc-weapon-remove').addEventListener('click', () => div.remove());
+    list.appendChild(div);
+  });
+  document.getElementById('npcImgInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    _npcPendingImageBlob = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById('npcImgPreview').innerHTML =
+        `<img src="${ev.target.result}" alt="" style="width:100%;height:100%;object-fit:cover">`;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+}
+
 // ── Character Detail Modal ─────────────────────────────────────
 async function openDetail(id) {
   document.getElementById('dmModal').hidden = false;
@@ -406,7 +921,7 @@ async function openDetail(id) {
     return;
   }
 
-  activeModalTab = 'controls';
+  activeModalTab = 'stats';
   renderModal();
 }
 
@@ -417,6 +932,7 @@ function refreshModalHeader() {
 
 function renderModal() {
   renderModalHeader();
+  renderModalLeft();
   renderModalTabs();
   renderModalBody();
 }
@@ -442,10 +958,10 @@ function renderModalHeader() {
 
 function renderModalTabs() {
   const tabs = [
-    { key: 'controls', label: 'DM Controls' },
     { key: 'stats',    label: 'Stats' },
     { key: 'skills',   label: 'Skills' },
     { key: 'inventory',label: 'Inventar' },
+    { key: 'mehr',     label: 'Mehr' },
   ];
   document.getElementById('dmModalTabs').innerHTML = tabs.map(t =>
     `<button class="dm-tab-btn${activeModalTab === t.key ? ' active' : ''}" data-tab="${t.key}">${t.label}</button>`
@@ -462,16 +978,148 @@ function renderModalTabs() {
 function renderModalBody() {
   const body = document.getElementById('dmModalBody');
   switch (activeModalTab) {
-    case 'controls':  body.innerHTML = buildControlsHtml(); setupControls(); break;
     case 'stats':     body.innerHTML = buildStatsHtml();    break;
     case 'skills':    body.innerHTML = buildSkillsHtml();   break;
     case 'inventory': body.innerHTML = buildInventoryHtml();break;
+    case 'mehr':      body.innerHTML = buildControlsHtml(); setupControls(); break;
   }
 }
 
 function closeModal() {
   document.getElementById('dmModal').hidden = true;
   openChar = null;
+}
+
+// ── Modal Left Panel ──────────────────────────────────────────
+function renderModalLeft() {
+  document.getElementById('dmModalLeft').innerHTML = buildLeftPanelHtml();
+  setupLeftPanel();
+}
+
+function buildLeftPanelHtml() {
+  const c = openChar;
+  const hpPct = c.max_hp ? Math.round((c.current_hp ?? 0) / c.max_hp * 100) : 0;
+  const hpBarColor = hpPct > 50 ? 'var(--cyan)' : hpPct > 20 ? '#FFD600' : 'var(--red)';
+
+  const condButtons = CONDITIONS.map(cond => {
+    const active = (openChar.conditions || []).includes(cond);
+    return `<button class="cond-toggle-btn${active ? ' active' : ''}" data-cond="${cond}">${cond}</button>`;
+  }).join('');
+
+  const buffs = openChar.buffs || [];
+  const now = Date.now();
+  const buffHtml = buffs.length
+    ? buffs.map(b => {
+        const rem = b.expires_at ? new Date(b.expires_at).getTime() - now : null;
+        const timeStr = rem === null ? '∞' : rem <= 0 ? 'ABG.' : formatMs(rem);
+        return `<div class="ctrl-buff-row">
+          <span class="ctrl-buff-name">${b.name}</span>
+          <span class="ctrl-buff-time">${timeStr}</span>
+          <button class="ctrl-buff-remove" data-bid="${b.id}" title="Entfernen">✕</button>
+        </div>`;
+      }).join('')
+    : '<div class="dm-left-empty">Keine aktiven Buffs.</div>';
+
+  return `
+    <div class="dm-left-section">
+      <div class="ctrl-section-head">HP</div>
+      <div class="dm-left-hp-bar"><div class="dm-left-hp-fill" style="width:${hpPct}%;background:${hpBarColor}"></div></div>
+      <div class="dm-left-hp-label">${c.current_hp ?? 0} / ${c.max_hp ?? 0}</div>
+      <div class="ctrl-row" style="margin-top:.4rem">
+        <input type="number" class="ctrl-input" id="dmLeftHp" value="${c.current_hp ?? 0}" min="0" max="${c.max_hp ?? 999}">
+        <button class="ctrl-btn" id="dmLeftHpSave">↵</button>
+      </div>
+      <div class="ctrl-msg" id="dmLeftHpMsg"></div>
+    </div>
+
+    <div class="dm-left-section">
+      <div class="ctrl-section-head">IP <span id="dmLeftIpVal" style="float:right;color:var(--cyan);font-family:var(--font-display)">${c.improvement_points ?? 0}</span></div>
+      <div class="dm-left-ip-btns">
+        <button class="dm-left-ip-btn" data-amt="5">+5</button>
+        <button class="dm-left-ip-btn" data-amt="10">+10</button>
+        <button class="dm-left-ip-btn" data-amt="25">+25</button>
+        <button class="dm-left-ip-btn" data-amt="50">+50</button>
+      </div>
+      <div class="ctrl-msg" id="dmLeftIpMsg"></div>
+    </div>
+
+    <div class="dm-left-section">
+      <div class="ctrl-section-head">Conditions</div>
+      <div class="condition-toggle-grid" id="dmLeftConditions">${condButtons}</div>
+      <div class="ctrl-msg" id="dmLeftCondMsg"></div>
+    </div>
+
+    <div class="dm-left-section">
+      <div class="ctrl-section-head">Aktive Buffs</div>
+      <div id="dmLeftBuffs">${buffHtml}</div>
+    </div>
+  `;
+}
+
+function setupLeftPanel() {
+  const leftEl = document.getElementById('dmModalLeft');
+  if (!leftEl) return;
+
+  document.getElementById('dmLeftHpSave').addEventListener('click', async () => {
+    const val = parseInt(document.getElementById('dmLeftHp').value);
+    if (isNaN(val)) return;
+    const max = openChar.max_hp ?? 0;
+    const pct = max ? Math.round(val / max * 100) : 0;
+    const barColor = pct > 50 ? 'var(--cyan)' : pct > 20 ? '#FFD600' : 'var(--red)';
+    await ctrlPatch({ current_hp: val }, 'dmLeftHpMsg', `HP → ${val}`);
+    const fill = leftEl.querySelector('.dm-left-hp-fill');
+    if (fill) { fill.style.width = pct + '%'; fill.style.background = barColor; }
+    const label = leftEl.querySelector('.dm-left-hp-label');
+    if (label) label.textContent = `${val} / ${max}`;
+  });
+
+  leftEl.querySelector('.dm-left-ip-btns').addEventListener('click', async e => {
+    const btn = e.target.closest('.dm-left-ip-btn');
+    if (!btn) return;
+    const amt = parseInt(btn.dataset.amt);
+    const newIp = (openChar.improvement_points ?? 0) + amt;
+    await ctrlPatch({ improvement_points: newIp }, 'dmLeftIpMsg', `+${amt} IP → ${newIp}`);
+    const ipValEl = document.getElementById('dmLeftIpVal');
+    if (ipValEl) ipValEl.textContent = newIp;
+  });
+
+  document.getElementById('dmLeftConditions').addEventListener('click', async e => {
+    const btn = e.target.closest('.cond-toggle-btn');
+    if (!btn) return;
+    const cond = btn.dataset.cond;
+    const current = [...(openChar.conditions || [])];
+    const idx = current.indexOf(cond);
+    if (idx !== -1) current.splice(idx, 1); else current.push(cond);
+    await ctrlPatch({ conditions: current }, 'dmLeftCondMsg', `${cond} ${idx !== -1 ? 'entfernt' : 'gesetzt'}`);
+    btn.classList.toggle('active', idx === -1);
+  });
+
+  document.getElementById('dmLeftBuffs').addEventListener('click', async e => {
+    const btn = e.target.closest('.ctrl-buff-remove');
+    if (!btn) return;
+    const newBuffs = (openChar.buffs || []).filter(b => b.id !== btn.dataset.bid);
+    await ctrlPatch({ buffs: newBuffs }, 'dmLeftIpMsg', 'Buff entfernt');
+    renderLeftActiveBuffs();
+    renderCtrlActiveBuffs();
+  });
+}
+
+function renderLeftActiveBuffs() {
+  const wrap = document.getElementById('dmLeftBuffs');
+  if (!wrap) return;
+  const buffs = openChar.buffs || [];
+  const now = Date.now();
+  wrap.innerHTML = buffs.length
+    ? buffs.map(b => {
+        const rem = b.expires_at ? new Date(b.expires_at).getTime() - now : null;
+        const timeStr = rem === null ? '∞' : rem <= 0 ? 'ABG.' : formatMs(rem);
+        return `<div class="ctrl-buff-row">
+          <span class="ctrl-buff-name">${b.name}</span>
+          <span class="ctrl-buff-time">${timeStr}</span>
+          <button class="ctrl-buff-remove" data-bid="${b.id}" title="Entfernen">✕</button>
+        </div>`;
+      }).join('')
+    : '<div class="dm-left-empty">Keine aktiven Buffs.</div>';
 }
 
 // ── Stats Tab ─────────────────────────────────────────────────
@@ -592,16 +1240,6 @@ function buildControlsHtml() {
 
   return `
     <div class="ctrl-section">
-      <div class="ctrl-section-head">HP</div>
-      <div class="ctrl-row">
-        <span class="ctrl-label">Current HP</span>
-        <input type="number" class="ctrl-input" id="ctrlHp" value="${c.current_hp ?? 0}" min="0" max="${c.max_hp ?? 999}">
-        <button class="ctrl-btn" id="ctrlHpSave">Setzen</button>
-      </div>
-      <div class="ctrl-msg" id="ctrlHpMsg"></div>
-    </div>
-
-    <div class="ctrl-section">
       <div class="ctrl-section-head">Cash</div>
       <div class="ctrl-row">
         <span class="ctrl-label">Betrag (eb)</span>
@@ -611,17 +1249,6 @@ function buildControlsHtml() {
       </div>
       <div style="font-size:.72rem;color:var(--text-muted)">Aktuell: ${c.cash ?? 0} eb</div>
       <div class="ctrl-msg" id="ctrlCashMsg"></div>
-    </div>
-
-    <div class="ctrl-section">
-      <div class="ctrl-section-head">Improvement Points</div>
-      <div class="ctrl-row">
-        <span class="ctrl-label">Betrag</span>
-        <input type="number" class="ctrl-input" id="ctrlIpAmt" placeholder="10" min="0">
-        <button class="ctrl-btn" id="ctrlIpAdd">+ IP</button>
-      </div>
-      <div style="font-size:.72rem;color:var(--text-muted)">Aktuell: ${c.improvement_points ?? 0} IP</div>
-      <div class="ctrl-msg" id="ctrlIpMsg"></div>
     </div>
 
     <div class="ctrl-section">
@@ -664,14 +1291,34 @@ function buildControlsHtml() {
     </div>
 
     <div class="ctrl-section">
-      <div class="ctrl-section-head">Conditions</div>
-      <div class="condition-toggle-grid" id="ctrlConditions">
-        ${CONDITIONS.map(cond => {
-          const active = (openChar.conditions || []).includes(cond);
-          return `<button class="cond-toggle-btn${active ? ' active' : ''}" data-cond="${cond}">${cond}</button>`;
-        }).join('')}
+      <div class="ctrl-section-head">Buffs / Pharma</div>
+      <div class="buff-preset-grid" id="ctrlBuffPresets">
+        ${BUFF_PRESETS.map(p => `<button class="buff-preset-btn"
+          data-name="${p.name}" data-duration="${p.duration_min}"
+          data-effect="${p.effect}">${p.name}</button>`).join('')}
       </div>
-      <div class="ctrl-msg" id="ctrlCondMsg"></div>
+      <!-- Buff-Formular (erscheint nach Klick auf Vorlage) -->
+      <div class="buff-add-form" id="ctrlBuffForm" style="display:none">
+        <div class="ctrl-row" style="gap:.4rem;flex-wrap:wrap">
+          <input type="text" class="ctrl-input" id="ctrlBuffName" placeholder="Name" style="flex:1;min-width:100px">
+        </div>
+        <div class="ctrl-row" style="gap:.4rem;align-items:center">
+          <span class="ctrl-label">Dauer (Min)</span>
+          <input type="number" class="ctrl-input" id="ctrlBuffDuration" placeholder="60" min="0" style="max-width:65px">
+          <span style="font-size:.68rem;color:var(--text-muted)">0 = unbegrenzt</span>
+        </div>
+        <div style="margin:.25rem 0">
+          <textarea class="ctrl-input" id="ctrlBuffEffect" rows="2"
+            placeholder="Effekt…"
+            style="width:100%;resize:none;font-family:var(--font-body);font-size:.78rem;box-sizing:border-box"></textarea>
+        </div>
+        <div class="ctrl-row" style="gap:.4rem">
+          <button class="ctrl-btn" id="ctrlBuffStart" style="color:var(--cyan)">▶ Starten</button>
+          <button class="ctrl-btn" id="ctrlBuffCancel">Abbrechen</button>
+        </div>
+      </div>
+      <div id="ctrlActiveBuffs"></div>
+      <div class="ctrl-msg" id="ctrlBuffMsg"></div>
     </div>
 
     <div class="ctrl-section">
@@ -702,13 +1349,6 @@ function buildControlsHtml() {
 function setupControls() {
   const c = openChar;
 
-  // HP
-  document.getElementById('ctrlHpSave').addEventListener('click', async () => {
-    const val = parseInt(document.getElementById('ctrlHp').value);
-    if (isNaN(val)) return;
-    await ctrlPatch({ current_hp: val }, 'ctrlHpMsg', `HP → ${val}`);
-  });
-
   // Cash
   document.getElementById('ctrlCashAdd').addEventListener('click', async () => {
     const amt = parseInt(document.getElementById('ctrlCashAmt').value);
@@ -721,13 +1361,6 @@ function setupControls() {
     if (isNaN(amt) || amt <= 0) return;
     const newCash = Math.max(0, (openChar.cash ?? 0) - amt);
     await ctrlPatch({ cash: newCash }, 'ctrlCashMsg', `−${amt} eb`);
-  });
-
-  // IP
-  document.getElementById('ctrlIpAdd').addEventListener('click', async () => {
-    const amt = parseInt(document.getElementById('ctrlIpAmt').value);
-    if (isNaN(amt) || amt <= 0) return;
-    await ctrlPatch({ improvement_points: (openChar.improvement_points ?? 0) + amt }, 'ctrlIpMsg', `+${amt} IP`);
   });
 
   // Role Rank
@@ -799,17 +1432,57 @@ function setupControls() {
     if (searchInput.value.trim().length >= 2) runItemSearch(searchInput.value.trim());
   });
 
-  // Conditions
-  document.getElementById('ctrlConditions').addEventListener('click', async e => {
-    const btn = e.target.closest('.cond-toggle-btn');
+  // Buffs
+  renderCtrlActiveBuffs();
+
+  function showBuffForm(name, durationMin, effect) {
+    document.getElementById('ctrlBuffName').value     = name;
+    document.getElementById('ctrlBuffDuration').value = durationMin ?? '';
+    document.getElementById('ctrlBuffEffect').value   = effect;
+    document.getElementById('ctrlBuffForm').style.display = 'block';
+    document.getElementById('ctrlBuffName').focus();
+  }
+  function hideBuffForm() {
+    document.getElementById('ctrlBuffForm').style.display = 'none';
+  }
+
+  document.getElementById('ctrlBuffPresets').addEventListener('click', e => {
+    const btn = e.target.closest('.buff-preset-btn');
     if (!btn) return;
-    const cond = btn.dataset.cond;
-    const current = [...(openChar.conditions || [])];
-    const idx = current.indexOf(cond);
-    if (idx !== -1) current.splice(idx, 1); else current.push(cond);
-    await ctrlPatch({ conditions: current }, 'ctrlCondMsg', `${cond} ${idx !== -1 ? 'entfernt' : 'gesetzt'}`);
-    btn.classList.toggle('active', idx === -1);
+    showBuffForm(btn.dataset.name, btn.dataset.duration !== 'null' ? btn.dataset.duration : '', btn.dataset.effect);
   });
+
+  document.getElementById('ctrlBuffCancel').addEventListener('click', hideBuffForm);
+
+  document.getElementById('ctrlBuffStart').addEventListener('click', async () => {
+    const name    = document.getElementById('ctrlBuffName').value.trim();
+    const durMin  = parseInt(document.getElementById('ctrlBuffDuration').value) || 0;
+    const effect  = document.getElementById('ctrlBuffEffect').value.trim();
+    if (!name) return;
+    const durationMs = durMin > 0 ? durMin * 60 * 1000 : null;
+    const newBuff = {
+      id: crypto.randomUUID(),
+      name,
+      effect,
+      expires_at: durationMs ? new Date(Date.now() + durationMs).toISOString() : null,
+      duration_label: durMin > 0 ? `${durMin} Min` : '∞',
+    };
+    const newBuffs = [...(openChar.buffs || []), newBuff];
+    await ctrlPatch({ buffs: newBuffs }, 'ctrlBuffMsg', `${name} gestartet`);
+    hideBuffForm();
+    renderCtrlActiveBuffs();
+    renderLeftActiveBuffs();
+  });
+
+  document.getElementById('ctrlActiveBuffs').addEventListener('click', async e => {
+    const btn = e.target.closest('.ctrl-buff-remove');
+    if (!btn) return;
+    const newBuffs = (openChar.buffs || []).filter(b => b.id !== btn.dataset.bid);
+    await ctrlPatch({ buffs: newBuffs }, 'ctrlBuffMsg', 'Buff entfernt');
+    renderCtrlActiveBuffs();
+    renderLeftActiveBuffs();
+  });
+
 }
 
 // ── NPC Attack helpers ────────────────────────────────────────
@@ -866,8 +1539,16 @@ function showNpcResult(total, dice, mod, hasCrit) {
     if (newHp === 0) patch.mortally_wounded = true;
     await ctrlPatch(patch, 'ctrlNpcMsg',
       `${dmg} Schaden → HP ${newHp}${newHp === 0 ? ' ⚠ MORTALLY WOUNDED' : ''}`);
-    const hpInput = document.getElementById('ctrlHp');
-    if (hpInput) hpInput.value = newHp;
+    const hpInput = document.getElementById('dmLeftHp');
+    if (hpInput) {
+      hpInput.value = newHp;
+      const max = openChar.max_hp ?? 0;
+      const pct = max ? Math.round(newHp / max * 100) : 0;
+      const fill = document.querySelector('.dm-left-hp-fill');
+      if (fill) { fill.style.width = pct + '%'; fill.style.background = pct > 50 ? 'var(--cyan)' : pct > 20 ? '#FFD600' : 'var(--red)'; }
+      const label = document.querySelector('.dm-left-hp-label');
+      if (label) label.textContent = `${newHp} / ${max}`;
+    }
     res.style.display = 'none';
   });
 
@@ -877,6 +1558,23 @@ function showNpcResult(total, dice, mod, hasCrit) {
       showInjuryPicker();
     });
   }
+}
+
+function renderCtrlActiveBuffs() {
+  const wrap = document.getElementById('ctrlActiveBuffs');
+  if (!wrap) return;
+  const buffs = openChar.buffs || [];
+  if (!buffs.length) { wrap.innerHTML = '<div style="font-size:.72rem;color:var(--text-muted);margin:.2rem 0">Keine aktiven Buffs.</div>'; return; }
+  const now = Date.now();
+  wrap.innerHTML = buffs.map(b => {
+    const rem = b.expires_at ? new Date(b.expires_at).getTime() - now : null;
+    const timeStr = rem === null ? '∞' : rem <= 0 ? 'ABGELAUFEN' : formatMs(rem);
+    return `<div class="ctrl-buff-row">
+      <span class="ctrl-buff-name">${b.name}</span>
+      <span class="ctrl-buff-time">${timeStr}</span>
+      <button class="ctrl-buff-remove" data-bid="${b.id}" title="Entfernen">✕</button>
+    </div>`;
+  }).join('');
 }
 
 async function ctrlPatch(patch, msgId, successText) {
@@ -958,7 +1656,16 @@ async function applyInjury(inj, table) {
       <span class="ctrl-inj-table">${(i2.table || '').toUpperCase()}</span>
       <button class="ctrl-inj-remove" data-idx="${idx}" title="Entfernen">✕</button>
     </div>`).join('');
-  document.getElementById('ctrlHp').value = newHp;
+  const hpInputLeft = document.getElementById('dmLeftHp');
+  if (hpInputLeft) {
+    hpInputLeft.value = newHp;
+    const max = openChar.max_hp ?? 0;
+    const pct = max ? Math.round(newHp / max * 100) : 0;
+    const fill = document.querySelector('.dm-left-hp-fill');
+    if (fill) { fill.style.width = pct + '%'; fill.style.background = pct > 50 ? 'var(--cyan)' : pct > 20 ? '#FFD600' : 'var(--red)'; }
+    const label = document.querySelector('.dm-left-hp-label');
+    if (label) label.textContent = `${newHp} / ${max}`;
+  }
 }
 
 // ── Custom Item Grant ─────────────────────────────────────────
@@ -1030,10 +1737,12 @@ async function runItemSearch(query) {
 function dmDoRoll(expr) {
   const { total, dice } = rollNpcDamage(expr, 0);
   const hasCrit = dice.filter(d => d.die === 6 && d.value === 6).length >= 2;
+  const ctx = _npcRollContext || 'DM Wurf';
+  _npcRollContext = null;
 
   logRoll({ characterId: null, characterName: 'DM',
     expression: expr, individualRolls: dice, modifier: 0, total,
-    context: 'DM Wurf', isCritSuccess: false, isCritFailure: false }).catch(() => {});
+    context: ctx, isCritSuccess: false, isCritFailure: false }).catch(() => {});
 
   const numEl = document.getElementById('dmDiceResultNum');
   numEl.textContent = total;
@@ -1145,12 +1854,22 @@ function renderCombatOrder() {
   const list = document.getElementById('combatOrder');
   const combatants = combatSession.combatants || [];
   const idx = combatSession.current_turn_index ?? 0;
-  list.innerHTML = combatants.map((c, i) => `
-    <div class="combat-turn-chip${i === idx ? ' active' : ''}">
-      <span>${c.name}</span>
+  list.innerHTML = combatants.map((c, i) => {
+    const isElim = c.isNpc && c.hp <= 0;
+    const hpBar = c.isNpc
+      ? `<div class="combat-npc-hp-ctrl">
+          <button class="combat-npc-hp-btn" data-ci="${i}" data-delta="-1">−</button>
+          <span class="combat-npc-hp-val${isElim ? ' elim' : ''}">${isElim ? '💀' : `${c.hp}/${c.maxHp}`}</span>
+          <button class="combat-npc-hp-btn" data-ci="${i}" data-delta="1">+</button>
+        </div>`
+      : `<span class="combat-char-hp" style="font-size:.68rem;color:${hpColor(c.hp, c.maxHp)}">${c.hp}/${c.maxHp}</span>`;
+    return `<div class="combat-turn-chip${i === idx ? ' active' : ''}${isElim ? ' npc-eliminated' : ''}">
+      <span>${escapeHtml(c.name)}</span>
       <span class="combat-init">${c.initiative}</span>
+      ${hpBar}
       <button class="combat-remove-btn" data-ci="${i}" title="Entfernen">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   list.querySelectorAll('.combat-remove-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const i = parseInt(btn.dataset.ci);
@@ -1161,11 +1880,22 @@ function renderCombatOrder() {
       await saveCombat({ ...combatSession, combatants: updated, current_turn_index: newIdx });
     });
   });
+  list.querySelectorAll('.combat-npc-hp-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const ci = parseInt(btn.dataset.ci);
+      const delta = parseInt(btn.dataset.delta);
+      const updated = combatSession.combatants.map((c, i) =>
+        i === ci ? { ...c, hp: Math.max(0, (c.hp ?? 0) + delta) } : c
+      );
+      await saveCombat({ ...combatSession, combatants: updated });
+    });
+  });
 }
 
 function openCombatSetup() {
   document.getElementById('combatSetupPanel').style.display = 'block';
   renderSetupPlayerList();
+  renderCombatSetupNpcList();
   renderSetupInitiativeList();
 }
 
@@ -1173,9 +1903,9 @@ function renderSetupPlayerList() {
   document.getElementById('combatPlayerList').innerHTML = chars.map(c => `
     <label class="combat-setup-check">
       <input type="checkbox" class="cbt-char-check" value="${c.id}"
-             data-name="${c.name}" data-hp="${c.current_hp ?? 0}" data-maxhp="${c.max_hp ?? 0}"
-             data-ref="${c.stats?.REF ?? 0}">
-      ${c.name} <span class="combat-init-small">(REF ${c.stats?.REF ?? 0})</span>
+             data-name="${escapeHtml(c.name)}" data-hp="${c.current_hp ?? 0}" data-maxhp="${c.max_hp ?? 0}"
+             data-ref="${c.stats?.REF ?? 0}" data-img="${c.image_url || ''}">
+      ${escapeHtml(c.name)} <span class="combat-init-small">(REF ${c.stats?.REF ?? 0})</span>
     </label>`).join('');
 }
 
@@ -1219,6 +1949,7 @@ document.getElementById('combatSetupToggle').addEventListener('click', () => {
   if (!isOpen) {
     setupCombatants = [...(combatSession?.combatants || [])];
     renderSetupPlayerList();
+    renderCombatSetupNpcList();
     renderSetupInitiativeList();
   }
 });
@@ -1231,7 +1962,8 @@ document.getElementById('npcCombatAddBtn').addEventListener('click', () => {
   const name = document.getElementById('npcCombatName').value.trim();
   const hp   = parseInt(document.getElementById('npcCombatHp').value) || 0;
   if (!name) return;
-  setupCombatants.push({ id: null, name, hp, maxHp: hp, isNpc: true, initiative: 0 });
+  setupCombatants.push({ id: null, name, hp, maxHp: hp, isNpc: true, initiative: 0,
+    imageUrl: null, isVisibleToPlayers: false, npcDbId: null });
   document.getElementById('npcCombatName').value = '';
   document.getElementById('npcCombatHp').value  = '';
   renderSetupInitiativeList();
@@ -1245,6 +1977,7 @@ document.getElementById('combatPlayerList').addEventListener('change', e => {
       id: cb.value, name: cb.dataset.name,
       hp: parseInt(cb.dataset.hp) || 0, maxHp: parseInt(cb.dataset.maxhp) || 0,
       isNpc: false, ref: parseInt(cb.dataset.ref) || 0, initiative: 0,
+      imageUrl: cb.dataset.img || null, isVisibleToPlayers: true, npcDbId: null,
     });
   } else {
     setupCombatants = setupCombatants.filter(c => c.id !== cb.value);

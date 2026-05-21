@@ -27,7 +27,7 @@ export async function saveCharacter(data) {
 export async function getCharacters() {
   const { data, error } = await supabase
     .from('characters')
-    .select('id, name, handle, role, current_hp, max_hp, image_url, current_humanity, max_humanity, current_luck, critical_injuries, conditions, mortally_wounded, stats')
+    .select('id, name, handle, role, current_hp, max_hp, image_url, current_humanity, max_humanity, current_luck, critical_injuries, conditions, mortally_wounded, stats, buffs, session_notes, improvement_points')
     .order('name');
   if (error) throw error;
   return data;
@@ -180,4 +180,79 @@ export async function deleteCharacter(id) {
 export async function deleteAllRolls() {
   const { error } = await supabase.from('rolls').delete().gte('id', 0);
   if (error) throw error;
+}
+
+// ── Chat Messages ────────────────────────────────────────────
+
+export async function sendMessage({ sender, sender_role, content, image_url }) {
+  const { error } = await supabase.from('messages').insert({
+    sender, sender_role, content: content || null, image_url: image_url || null,
+  });
+  if (error) console.error('sendMessage:', error);
+}
+
+export async function getMessages(limit = 50) {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .limit(limit);
+  if (error) { console.error('getMessages:', error); return []; }
+  return data || [];
+}
+
+export function subscribeMessages(callback) {
+  return supabase.channel('messages-channel')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, callback)
+    .subscribe();
+}
+
+export async function uploadChatImage(file) {
+  const ext  = file.name.split('.').pop();
+  const path = `chat/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from('chat-images').upload(path, file, { upsert: false });
+  if (error) { console.error('uploadChatImage:', error); return null; }
+  const { data } = supabase.storage.from('chat-images').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+// ── NPCs ─────────────────────────────────────────────────────
+
+export async function getNpcs() {
+  const { data, error } = await supabase.from('npcs').select('*').order('name');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function saveNpc(data) {
+  const { data: row, error } = await supabase
+    .from('npcs').upsert(data, { onConflict: 'id' }).select().single();
+  if (error) throw error;
+  return row;
+}
+
+export async function patchNpc(id, patch) {
+  const { error } = await supabase.from('npcs').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteNpc(id) {
+  const { error } = await supabase.from('npcs').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function uploadNpcImage(blob, npcId) {
+  const ext  = blob.type === 'image/png' ? 'png' : 'jpg';
+  const path = `${npcId}.${ext}`;
+  const { error: upErr } = await supabase.storage
+    .from('npc-images').upload(path, blob, { upsert: true, contentType: blob.type });
+  if (upErr) throw upErr;
+  const { data } = supabase.storage.from('npc-images').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export function subscribeNpcs(callback) {
+  return supabase.channel('npcs-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'npcs' }, callback)
+    .subscribe();
 }

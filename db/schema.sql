@@ -44,6 +44,8 @@ create table if not exists characters (
   death_save_penalty int default 0,
   addictions text,
   notes text,
+  session_notes text default '',         -- player's own session notes (auto-saved)
+  buffs jsonb default '[]',             -- [{id, name, effect, expires_at, duration_label}]
 
   created_at timestamptz default now(),
   updated_at timestamptz default now()

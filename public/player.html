@@ -19,16 +19,18 @@
 </div>
 
 <nav class="nav" id="topNav" style="display:none">
-  <span class="nav-logo">LZRV<span>HUB</span></span>
+  <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
   <span id="navName" style="font-family:var(--font-display);font-size:.85rem;color:var(--red);margin-left:.75rem"></span>
   <a id="shopLink" href="#" class="btn btn-ghost" style="font-size:.75rem">Shop</a>
   <a href="index.html" class="btn btn-ghost" style="margin-left:auto;font-size:.75rem">← Übersicht</a>
 </nav>
 
-<!-- Initiative Bar (combat active) -->
-<div class="initiative-bar" id="initiativeBar" style="display:none">
-  <span class="initiative-bar-label">RUNDE <strong id="initRound">1</strong></span>
-  <div class="initiative-list" id="initiativeList"></div>
+<!-- Combat Panel (combat active) -->
+<div class="combat-panel" id="combatPanel" style="display:none">
+  <div class="combat-panel-header">
+    <span class="combat-panel-label">KAMPF — RUNDE <strong id="initRound">1</strong></span>
+  </div>
+  <div class="combat-combatants" id="combatCombatants"></div>
 </div>
 
 <!-- ── Character header ── -->
@@ -73,8 +75,17 @@
         <span class="luck-count" id="luckCount"></span>
       </div>
     </div>
+    <!-- Buff Bar -->
+    <div class="buff-bar" id="buffBar" style="display:none">
+      <div class="buff-bar-label">BUFFS</div>
+      <div class="buff-list" id="buffList"></div>
+    </div>
     <div class="condition-badges" id="conditionBadges"></div>
     <button class="death-save-btn" id="deathSaveBtn" style="display:none">☠ DEATH SAVE</button>
+  </div>
+  <div class="char-ip-badge" id="charIpBadge">
+    <div class="char-ip-label">IP</div>
+    <div class="char-ip-value" id="charIpValue">0</div>
   </div>
 </header>
 
@@ -88,6 +99,7 @@
   <button class="tab-btn" data-tab="gear">Gear</button>
   <button class="tab-btn" data-tab="lifepath">Lifepath</button>
   <button class="tab-btn" data-tab="injuries">Injuries<span id="injuryBadge" class="injury-badge" hidden></span></button>
+  <button class="tab-btn" data-tab="notes">Notes</button>
 </div>
 
 <!-- ── Tab panels ── -->
@@ -99,6 +111,28 @@
 <div class="tab-panel" id="tab-gear"></div>
 <div class="tab-panel" id="tab-lifepath"></div>
 <div class="tab-panel" id="tab-injuries"></div>
+<div class="tab-panel" id="tab-notes">
+  <div class="notes-wrap">
+    <div class="notes-header">Meine Notizen</div>
+    <textarea id="playerNotesArea" class="player-notes-area" placeholder="Items gefunden, Quests, NPCs…"></textarea>
+    <div class="notes-save-status" id="notesSaveStatus"></div>
+  </div>
+</div>
+<!-- Floating Chat Panel -->
+<div id="chatPanel" class="chat-panel">
+  <div class="chat-panel-header">
+    <span class="chat-panel-title">CHAT</span>
+    <button id="chatPanelClose" class="chat-panel-close">✕</button>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input-row">
+    <textarea id="chatInput" class="chat-input" rows="2" placeholder="Nachricht…" maxlength="500"></textarea>
+    <button id="chatSendBtn" class="chat-send-btn">↑</button>
+  </div>
+</div>
+<button id="chatToggle" class="chat-toggle-btn">
+  💬<span class="chat-unread-badge" id="chatUnreadBadge" style="display:none">0</span>
+</button>
 
 <!-- Critical Injury Modal -->
 <div id="crit-modal" class="crit-modal-overlay" hidden>
@@ -141,11 +175,23 @@
 
 <script type="module">
 console.log('[player] module loaded');
-import { getCharacter, getCharacters, patchCharacter, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters } from './assets/js/supabase.js';
+import { getCharacter, getCharacters, patchCharacter, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages } from './assets/js/supabase.js';
 import { roll, initDiceBox } from './assets/js/dice.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const STATS_ORDER = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP'];
+
+const COND_COLORS = {
+  'Seriously Wounded': '#FF8C00',
+  'Mortally Wounded':  'var(--red)',
+  'Stunned':           '#9B59B6',
+  'Suppressed':        '#2980B9',
+  'Prone':             '#7F8C8D',
+  'Blinded':           '#C0392B',
+  'Deafened':          '#7F8C8D',
+  'On Fire':           '#E67E22',
+  'Bleeding Out':      'var(--red)',
+};
 
 const SKILL_CAT = {
   'Concentration':'Awareness','Conceal/Reveal Object':'Awareness','Lip Reading':'Awareness',
@@ -188,8 +234,15 @@ let char       = null;
 let injuryData = null;  // { body: [...], head: [...] }
 let allChars   = [];    // alle anderen Charaktere (für Injury-Zuweisung)
 let critTarget = null;  // char-id oder 'npc'
-let combatSession    = null;
-let deathSavePenalty = 0;
+let combatSession       = null;
+let _allCharsFull       = [];
+let deathSavePenalty    = 0;
+let deathSaveStabilized = false;
+let skillUpgradeMap     = {};   // skillName → { ip_cost_multiplier, ip_cost_by_next_level }
+let buffTimerHandle     = null;
+const notifiedBuffIds   = new Set();
+let notesSaveTimer      = null;
+let chatUnread          = 0;
 
 function getInjuries() {
   try { return JSON.parse(char.critical_injuries || '[]'); } catch { return []; }
@@ -200,30 +253,59 @@ const id = new URLSearchParams(location.search).get('id');
 if (!id) { location.replace('index.html'); }
 if (id) {
   try {
-    [char, injuryData, allChars, combatSession] = await Promise.all([
+    let rawItems;
+    [char, injuryData, allChars, combatSession, rawItems] = await Promise.all([
       getCharacter(id),
       fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
       getCharacters(),
       getActiveCombat(),
+      fetch('./assets/data/items.json').then(r => r.json()).then(d => d.items || d).catch(() => []),
     ]);
+    _allCharsFull = allChars;
     allChars = allChars.filter(c => c.id !== id);
+    (rawItems || []).filter(i => i.category === 'Skill Upgrade').forEach(i => {
+      skillUpgradeMap[i.name] = { ip_cost_multiplier: i.ip_cost_multiplier ?? 1, ip_cost_by_next_level: i.ip_cost_by_next_level || {} };
+    });
     renderAll();
     show();
+    requestNotifPermission();
+
+    const chatHistory = await getMessages(50);
+    renderChatMessages(chatHistory);
+    setupChat();
+    subscribeMessages(payload => {
+      appendChatMessage(payload.new);
+      if (!document.querySelector('[data-tab="chat"]')?.classList.contains('active')) {
+        chatUnread++;
+        const badge = document.getElementById('chatUnreadBadge');
+        badge.textContent = chatUnread;
+        badge.style.display = 'inline';
+      }
+    });
 
     subscribeCombat(payload => {
       const cs = payload.new;
       combatSession = cs?.is_active ? cs : null;
-      renderInitiativeBar();
+      renderCombatPanel();
     });
 
     subscribeCharacters(payload => {
-      if (payload.new?.id !== char.id) return;
-      Object.assign(char, payload.new);
+      const updated = payload.new;
+      if (!updated?.id) return;
+      const fi = _allCharsFull.findIndex(c => c.id === updated.id);
+      if (fi >= 0) Object.assign(_allCharsFull[fi], updated);
+      if (updated.id !== char.id) {
+        renderCombatPanel();
+        return;
+      }
+      Object.assign(char, updated);
       renderConditionBadges();
       checkDeathSave();
       updateResDisplay();
       renderLuck();
+      renderBuffs();
       if ((char.current_hp ?? 0) > 0) deathSavePenalty = 0;
+      renderCombatPanel();
     });
   } catch(e) {
     document.getElementById('loader').innerHTML =
@@ -265,9 +347,12 @@ function renderAll() {
   setupRemove();
   setupCritModal();
   setupSkillFavs();
+  setupSkillUpgrades();
+  setupNotes();
   renderConditionBadges();
+  renderBuffs();
   checkDeathSave();
-  renderInitiativeBar();
+  renderCombatPanel();
 }
 
 // ── Header ────────────────────────────────────────────────────
@@ -280,6 +365,9 @@ function renderHeader() {
                char.player_name ? `(${char.player_name})` : null]
     .filter(Boolean).join(' · ');
   document.getElementById('charSub').textContent = sub || '—';
+
+  const ipBadgeEl = document.getElementById('charIpValue');
+  if (ipBadgeEl) ipBadgeEl.textContent = char.improvement_points ?? 0;
 
   const img = document.getElementById('charPortrait');
   if (char.image_url) { img.src = char.image_url; img.alt = char.name; }
@@ -299,7 +387,9 @@ function updateResDisplay() {
   document.getElementById('hpMax').textContent  = maxHp;
   document.getElementById('humCur').textContent = hum;
   document.getElementById('humMax').textContent = maxHum;
-  document.getElementById('hpFill').style.width  = maxHp  ? (hp  / maxHp  * 100) + '%' : '0%';
+  const hpFill = document.getElementById('hpFill');
+  hpFill.style.width = maxHp ? (hp / maxHp * 100) + '%' : '0%';
+  hpFill.classList.toggle('critical', hp > 0 && hp < 2);
   document.getElementById('humFill').style.width = maxHum ? (hum / maxHum * 100) + '%' : '0%';
 }
 
@@ -371,20 +461,32 @@ function renderSkills() {
   }
 
   function skillRowHtml(sk) {
-    const statVal = stats[sk.stat] ?? 0;
-    const base    = statVal + (sk.lvl || 0);
-    const expr    = `1d10+${base}`;
+    const statVal  = stats[sk.stat] ?? 0;
+    const base     = statVal + (sk.lvl || 0);
+    const expr     = `1d10+${base}`;
+    const upData   = skillUpgradeMap[sk.name] || {};
+    const nextLvl  = (sk.lvl ?? 0) + 1;
+    const cost     = upData.ip_cost_by_next_level?.[String(nextLvl)]
+                   ?? (20 * (upData.ip_cost_multiplier ?? 1) * (sk.lvl ?? 1));
+    const ip       = char.improvement_points ?? 0;
+    const canAfford = ip >= cost && nextLvl <= 10;
+    const upgradeBtn = nextLvl <= 10
+      ? `<button class="skill-up-btn${canAfford ? '' : ' unaffordable'}"
+                 data-skill="${sk.name}" data-cost="${cost}" data-nextlvl="${nextLvl}"
+                 title="${canAfford ? `${cost} IP → Lvl ${nextLvl}` : `${cost - ip} IP fehlen`}">▲</button>`
+      : `<span class="skill-maxed" title="Max">—</span>`;
     return `<div class="skill-row">
       <button class="skill-fav-btn${favs.has(sk.name) ? ' active' : ''}" data-fav="${sk.name}">★</button>
       <span class="skill-name">${sk.name}</span>
       <span class="skill-stat">${sk.stat}</span>
       <span class="skill-lvl">${sk.lvl ?? 0}</span>
       <span class="skill-base">${base}</span>
-      <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1">1d10+${base}</button>
+      <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1" title="1d10+${base}">⚄</button>
+      ${upgradeBtn}
     </div>`;
   }
 
-  let html = '';
+  let html = `<div class="skill-ip-banner">Verfügbare IP: <strong id="skillIpDisplay">${char.improvement_points ?? 0}</strong></div>`;
 
   // Favorites section
   const favSkills = [...favs].map(name => {
@@ -398,7 +500,7 @@ function renderSkills() {
   }
 
   html += '<div class="skill-row" style="font-size:.62rem;color:var(--text-muted);border-bottom:1px solid var(--border);padding-bottom:.3rem;margin-bottom:.4rem">'
-    + '<span></span><span>Skill</span><span style="text-align:center">Stat</span><span style="text-align:center">LVL</span><span style="text-align:center">Base</span><span></span></div>';
+    + '<span></span><span>Skill</span><span style="text-align:center">Stat</span><span style="text-align:center">LVL</span><span style="text-align:center">Base</span><span></span><span style="text-align:center">UP</span></div>';
 
   const orderedCats = [...CAT_ORDER.filter(c => groups[c]), ...Object.keys(groups).filter(c => !CAT_ORDER.includes(c))];
   for (const cat of orderedCats) {
@@ -916,34 +1018,57 @@ function renderDiceLog() {
   }).join('');
 }
 
-// ── Condition colors ──────────────────────────────────────────
-const COND_COLORS = {
-  'Seriously Wounded': '#FF8C00',
-  'Mortally Wounded':  'var(--red)',
-  'Stunned':           '#9B59B6',
-  'Suppressed':        '#2980B9',
-  'Prone':             '#7F8C8D',
-  'Blinded':           '#C0392B',
-  'Deafened':          '#7F8C8D',
-  'On Fire':           '#E67E22',
-  'Bleeding Out':      'var(--red)',
-};
 
-// ── Initiative Bar ────────────────────────────────────────────
-function renderInitiativeBar() {
-  const bar = document.getElementById('initiativeBar');
+// ── Combat Panel ──────────────────────────────────────────────
+function renderCombatPanel() {
+  const panel = document.getElementById('combatPanel');
   if (!combatSession?.is_active) {
-    bar.style.display = 'none';
-    document.body.classList.remove('my-turn');
+    panel.style.display = 'none';
+    document.body.classList.remove('my-turn', 'combat-active');
     return;
   }
-  bar.style.display = 'flex';
-  document.getElementById('initRound').textContent = combatSession.round;
+  document.body.classList.add('combat-active');
+  panel.style.display = 'block';
+  document.getElementById('initRound').textContent = combatSession.round ?? 1;
   const combatants = combatSession.combatants || [];
   const idx = combatSession.current_turn_index ?? 0;
-  document.getElementById('initiativeList').innerHTML = combatants.map((c, i) =>
-    `<div class="init-chip${i === idx ? ' current' : ''}${c.id === char.id ? ' mine' : ''}">${c.name}</div>`
-  ).join('');
+  document.getElementById('combatCombatants').innerHTML = combatants.map((c, i) => {
+    const isActive = i === idx;
+    const isMe     = !c.isNpc && c.id === char.id;
+    if (c.isNpc) {
+      if (!c.isVisibleToPlayers) return '';
+      return `<div class="combat-card combat-card--npc${isActive ? ' combat-card--active' : ''}">
+        <div class="combat-card-portrait">
+          ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${escapeHtml(c.name)}">` : '<div class="combat-portrait-placeholder">👤</div>'}
+        </div>
+        <div class="combat-card-info">
+          <div class="combat-card-name">${escapeHtml(c.name)}</div>
+          <div class="npc-label">FEIND</div>
+        </div>
+        ${isActive ? '<div class="combat-turn-indicator">▶</div>' : ''}
+      </div>`;
+    }
+    const liveChar = _allCharsFull.find(ch => ch.id === c.id);
+    const hpCur = liveChar?.current_hp ?? c.hp;
+    const hpMax = liveChar?.max_hp ?? c.maxHp;
+    const hpPct = hpMax > 0 ? Math.round((hpCur / hpMax) * 100) : 0;
+    const hpCol = hpPct > 50 ? '#2ecc71' : hpPct > 25 ? '#f39c12' : '#e74c3c';
+    const conds = liveChar?.conditions || [];
+    return `<div class="combat-card combat-card--player${isActive ? ' combat-card--active' : ''}${isMe ? ' combat-card--mine' : ''}">
+      <div class="combat-card-portrait">
+        ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${escapeHtml(c.name)}">` : '<div class="combat-portrait-placeholder">⚡</div>'}
+      </div>
+      <div class="combat-card-info">
+        <div class="combat-card-name">${escapeHtml(c.name)}</div>
+        <div class="combat-hp-bar-wrap">
+          <div class="combat-hp-bar" style="width:${hpPct}%;background:${hpCol}"></div>
+        </div>
+        <div class="combat-hp-text">${hpCur} / ${hpMax}</div>
+        ${conds.length ? `<div class="combat-conditions">${conds.map(cd => `<span class="cond-badge">${escapeHtml(cd)}</span>`).join('')}</div>` : ''}
+      </div>
+      ${isActive ? '<div class="combat-turn-indicator">▶</div>' : ''}
+    </div>`;
+  }).join('');
   checkMyTurn();
 }
 
@@ -987,10 +1112,31 @@ function renderConditionBadges() {
 function checkDeathSave() {
   const isMortCond = (char.conditions || []).includes('Mortally Wounded');
   const show = (char.current_hp ?? 0) <= 0 || isMortCond;
-  document.getElementById('deathSaveBtn').style.display = show ? 'block' : 'none';
+  const btn = document.getElementById('deathSaveBtn');
+  btn.style.display = show ? 'block' : 'none';
+  // Reset stabilized state if healed
+  if (!show && deathSaveStabilized) {
+    deathSaveStabilized = false;
+    deathSavePenalty = 0;
+  }
+  if (!show) {
+    btn.textContent = '☠ DEATH SAVE';
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    btn.style.animation = '';
+  }
+  document.body.classList.toggle('near-death', show && !deathSaveStabilized);
 }
 
 document.getElementById('deathSaveBtn').addEventListener('click', async () => {
+  // If stabilized, clicking again means next-round re-roll
+  if (deathSaveStabilized) {
+    deathSaveStabilized = false;
+    checkDeathSave();
+    return;
+  }
+
   const body   = char.stats?.BODY ?? 0;
   const target = Math.max(1, (char.death_save ?? body) - deathSavePenalty);
   const d10    = Math.floor(Math.random() * 10) + 1;
@@ -1008,7 +1154,19 @@ document.getElementById('deathSaveBtn').addEventListener('click', async () => {
 
   showDeathSaveResult(d10, target, success);
 
-  if (!success) {
+  if (success) {
+    deathSaveStabilized = true;
+    // HP auf 1 + Mortally Wounded entfernen damit Reload korrekt ist
+    const conds = (char.conditions || []).filter(c => c !== 'Mortally Wounded');
+    char.current_hp = 1;
+    char.conditions = conds;
+    await patchCharacter(char.id, { current_hp: 1, conditions: conds }).catch(() => {});
+    updateResDisplay();
+    renderConditionBadges();
+    document.body.classList.remove('near-death');
+    const btn = document.getElementById('deathSaveBtn');
+    btn.style.display = 'none';
+  } else {
     const conds = [...(char.conditions || [])];
     if (!conds.includes('Mortally Wounded')) conds.push('Mortally Wounded');
     await patchCharacter(char.id, { conditions: conds }).catch(() => {});
@@ -1103,6 +1261,175 @@ function setupSkillFavs() {
     if (favs.has(sk)) favs.delete(sk); else favs.add(sk);
     localStorage.setItem(FAVS_KEY, JSON.stringify([...favs]));
     renderSkills();
+  });
+}
+
+// ── Skill IP Upgrade ──────────────────────────────────────────
+function setupSkillUpgrades() {
+  document.body.addEventListener('click', async e => {
+    const btn = e.target.closest('.skill-up-btn');
+    if (!btn || btn.classList.contains('unaffordable')) return;
+    const skillName = btn.dataset.skill;
+    const cost      = parseInt(btn.dataset.cost);
+    const nextLvl   = parseInt(btn.dataset.nextlvl);
+    const newIp     = (char.improvement_points ?? 0) - cost;
+    const newSkills = JSON.parse(JSON.stringify(char.skills || {}));
+    if (newSkills[skillName]) newSkills[skillName] = { ...newSkills[skillName], lvl: nextLvl };
+    try {
+      await patchCharacter(char.id, { improvement_points: newIp, skills: newSkills });
+      char.improvement_points = newIp;
+      char.skills = newSkills;
+      renderSkills();
+      const banner = document.getElementById('skillIpDisplay');
+      if (banner) banner.textContent = newIp;
+      const ipBadgeEl = document.getElementById('charIpValue');
+      if (ipBadgeEl) ipBadgeEl.textContent = newIp;
+      renderStats();
+    } catch (err) {
+      console.error('[player] skill upgrade failed:', err);
+    }
+  });
+}
+
+// ── Session Notes ─────────────────────────────────────────────
+function setupNotes() {
+  const area = document.getElementById('playerNotesArea');
+  if (!area) return;
+  area.value = char.session_notes || '';
+  area.addEventListener('input', () => {
+    const statusEl = document.getElementById('notesSaveStatus');
+    clearTimeout(notesSaveTimer);
+    if (statusEl) statusEl.textContent = '…';
+    notesSaveTimer = setTimeout(async () => {
+      await patchCharacter(char.id, { session_notes: area.value }).catch(() => {});
+      if (statusEl) {
+        statusEl.textContent = '✓ Gespeichert';
+        setTimeout(() => { statusEl.textContent = ''; }, 2000);
+      }
+    }, 2000);
+  });
+}
+
+// ── Buff Timer ────────────────────────────────────────────────
+function formatRemaining(ms) {
+  const s = Math.ceil(ms / 1000);
+  if (s >= 3600) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+  if (s >= 60)   return `${Math.floor(s / 60)}m ${s % 60}s`;
+  return `${s}s`;
+}
+
+function renderBuffs() {
+  const buffs = char.buffs || [];
+  const bar   = document.getElementById('buffBar');
+  if (!bar) return;
+  if (!buffs.length) {
+    bar.style.display = 'none';
+    clearInterval(buffTimerHandle); buffTimerHandle = null;
+    return;
+  }
+  bar.style.display = 'flex';
+  const list = document.getElementById('buffList');
+  const now  = Date.now();
+
+  list.innerHTML = buffs.map(b => {
+    const remaining = b.expires_at ? new Date(b.expires_at).getTime() - now : null;
+    const expired   = remaining !== null && remaining <= 0;
+
+    if (expired && !notifiedBuffIds.has(b.id)) {
+      notifiedBuffIds.add(b.id);
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(`⚠ ${b.name} abgelaufen`, { body: char.name });
+      }
+      setTimeout(async () => {
+        char.buffs = (char.buffs || []).filter(x => x.id !== b.id);
+        await patchCharacter(char.id, { buffs: char.buffs }).catch(() => {});
+        renderBuffs();
+      }, 0);
+    }
+
+    const timeStr = remaining === null ? '∞' : expired ? 'ABGELAUFEN' : formatRemaining(remaining);
+    return `<div class="buff-chip${expired ? ' expired' : ''}" title="${b.effect || ''}">
+      <span class="buff-name">${b.name}</span>
+      <span class="buff-time">${timeStr} ⏱</span>
+    </div>`;
+  }).join('');
+
+  if (!buffTimerHandle) {
+    buffTimerHandle = setInterval(renderBuffs, 1000);
+  }
+}
+
+async function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+}
+
+// ── Chat ──────────────────────────────────────────────────────
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function openLightbox(src) {
+  const lb = document.createElement('div');
+  lb.className = 'chat-lightbox';
+  lb.innerHTML = `<img src="${src}" alt="">`;
+  lb.addEventListener('click', () => lb.remove());
+  document.body.appendChild(lb);
+}
+
+function appendChatMessage(m) {
+  const isDm = m.sender_role === 'dm';
+  const el   = document.createElement('div');
+  el.className = `chat-msg ${isDm ? 'chat-msg--dm' : 'chat-msg--player'}`;
+  const time = new Date(m.created_at).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+  el.innerHTML =
+    `<div class="chat-msg-header">` +
+      `<span class="chat-sender${isDm ? ' chat-sender--dm' : ''}">${isDm ? 'DM' : escapeHtml(m.sender)}</span>` +
+      `<span class="chat-time">${time}</span>` +
+    `</div>` +
+    (m.content   ? `<div class="chat-text">${escapeHtml(m.content)}</div>` : '') +
+    (m.image_url ? `<img class="chat-img" src="${m.image_url}" alt="Bild" data-src="${m.image_url}">` : '');
+  const container = document.getElementById('chatMessages');
+  container.appendChild(el);
+  if (m.image_url) {
+    el.querySelector('.chat-img').addEventListener('click', e => openLightbox(e.currentTarget.dataset.src));
+  }
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderChatMessages(msgs) {
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '';
+  msgs.forEach(m => appendChatMessage(m));
+}
+
+function setupChat() {
+  const sendBtn = document.getElementById('chatSendBtn');
+  const input   = document.getElementById('chatInput');
+  const panel   = document.getElementById('chatPanel');
+  const toggle  = document.getElementById('chatToggle');
+  const close   = document.getElementById('chatPanelClose');
+
+  toggle.addEventListener('click', () => {
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) {
+      chatUnread = 0;
+      const badge = document.getElementById('chatUnreadBadge');
+      badge.style.display = 'none';
+      document.getElementById('chatMessages').scrollTop = 999999;
+    }
+  });
+  close.addEventListener('click', () => panel.classList.remove('open'));
+
+  sendBtn.addEventListener('click', async () => {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    await sendMessage({ sender: char.handle || char.name, sender_role: 'player', content: text });
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
   });
 }
 
