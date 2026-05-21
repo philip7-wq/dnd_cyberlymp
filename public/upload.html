@@ -30,6 +30,12 @@
     <p class="filename" id="pdfName" hidden></p>
   </div>
 
+  <!-- Character name (pre-filled from PDF, editable) -->
+  <div class="field-group">
+    <label for="charName">Character-Name (Handle) <span class="text-red">*</span></label>
+    <input type="text" id="charName" placeholder="Wird aus PDF gelesen…" autocomplete="off">
+  </div>
+
   <!-- Player name -->
   <div class="field-group">
     <label for="playerName">Spieler-Name</label>
@@ -90,6 +96,7 @@ let parsedResult  = null;   // { character, imageBlob }
 const dropZone    = document.getElementById('dropZone');
 const pdfInput    = document.getElementById('pdfInput');
 const pdfName     = document.getElementById('pdfName');
+const charName    = document.getElementById('charName');
 const playerName  = document.getElementById('playerName');
 const imgPreview  = document.getElementById('imgPreview');
 const imgHint     = document.getElementById('imgHint');
@@ -144,7 +151,14 @@ async function handlePDF(file) {
     parsedResult = await parsePDF(buf);
     setProgress(80, 'Felder gemappt');
 
-    // Pre-fill player name from handle if empty
+    // Log raw fields to console for field-name debugging
+    console.log('[pdf-parser] parsed character:', parsedResult.character);
+    console.log('[pdf-parser] imageBlob:', parsedResult.imageBlob);
+
+    // Pre-fill editable name fields
+    if (parsedResult.character.name && parsedResult.character.name !== 'Unnamed') {
+      charName.value = parsedResult.character.name;
+    }
     if (!playerName.value && parsedResult.character.handle) {
       playerName.value = parsedResult.character.handle;
     }
@@ -174,10 +188,19 @@ submitBtn.addEventListener('click', async () => {
   submitBtn.disabled = true;
   hideStatus();
 
+  const nameVal = charName.value.trim();
+  if (!nameVal) {
+    showStatus('Bitte einen Character-Namen eingeben.', 'error');
+    submitBtn.disabled = false;
+    return;
+  }
+
   try {
     const character = {
       ...parsedResult.character,
-      player_name: playerName.value.trim() || parsedResult.character.handle || '',
+      name:        nameVal,
+      handle:      nameVal,
+      player_name: playerName.value.trim() || nameVal,
     };
 
     setProgress(10, 'Erstelle Charakterprofil…');

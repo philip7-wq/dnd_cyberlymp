@@ -30,9 +30,13 @@ export async function parsePDF(arrayBuffer) {
   const raw = extractRawFields(form);
   const imageBlob = extractCharacterImage(form, pdfDoc);
 
+  // Log all field names+values so we can fix mappings if needed
+  console.log('[pdf-parser] raw fields:', raw);
+
   return {
     character: mapToCharacter(raw),
     imageBlob,
+    _raw: raw,   // exposed for debugging
   };
 }
 
