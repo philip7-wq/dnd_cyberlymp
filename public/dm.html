@@ -110,11 +110,12 @@
 <div class="dm-chat-bottom">
   <div class="dm-chat-bottom-left">
     <div class="dm-chat-head">
-      <span>CHAT</span>
+      <span>CHAT <span class="chat-unread-badge" id="chatUnreadBadge" style="display:none">0</span></span>
       <label class="dm-chat-img-label" title="Bild anhängen">
         📎
         <input type="file" id="dmChatImgInput" accept="image/*" style="display:none">
       </label>
+      <button class="dm-chat-collapse-btn" id="dmChatCollapseBtn" title="Chat einklappen">⌄</button>
     </div>
     <div class="dm-chat-messages" id="dmChatMessages"></div>
     <div id="dmChatImgPreview" class="dm-chat-img-preview" style="display:none"></div>
@@ -182,7 +183,7 @@
     <div class="dice-result-detail" id="dmDiceResultDetail"></div>
   </div>
   <div id="dmDiceNpcBtn" style="display:none">
-    <button class="ctrl-btn" id="dmUseAsNpcDmg">Als NPC-Damage verwenden →</button>
+    <button class="ctrl-btn" id="dmUseAsNpcDmg">&#x2694; Ziel &amp; Schaden anwenden</button>
   </div>
   <div class="dp-section">
     <div class="dp-sec-label">Verlauf</div>
@@ -461,6 +462,27 @@ async function boot() {
   const chatHistory = await getMessages(50);
   renderDmChat(chatHistory);
   setupDmChat();
+
+  // Chat collapse
+  let _chatUnread = 0;
+  const _collapseBtn  = document.getElementById('dmChatCollapseBtn');
+  const _unreadBadge  = document.getElementById('chatUnreadBadge');
+  function setChatCollapsed(collapsed) {
+    document.body.classList.toggle('chat-collapsed', collapsed);
+    _collapseBtn.textContent = collapsed ? '⌃' : '⌄';
+    _collapseBtn.title = collapsed ? 'Chat ausklappen' : 'Chat einklappen';
+    if (!collapsed) {
+      _chatUnread = 0;
+      _unreadBadge.style.display = 'none';
+    }
+  }
+  setChatCollapsed(localStorage.getItem('lzrv_dm_chat_collapsed') === '1');
+  _collapseBtn.addEventListener('click', () => {
+    const next = !document.body.classList.contains('chat-collapsed');
+    localStorage.setItem('lzrv_dm_chat_collapsed', next ? '1' : '0');
+    setChatCollapsed(next);
+  });
+
   subscribeMessages(payload => {
     if (payload.eventType === 'UPDATE') {
       const row = document.querySelector(`[data-msg-id="${payload.new.id}"]`);
@@ -471,6 +493,11 @@ async function boot() {
       }
     } else {
       appendDmChatMessage(payload.new);
+      if (document.body.classList.contains('chat-collapsed')) {
+        _chatUnread++;
+        _unreadBadge.textContent = _chatUnread;
+        _unreadBadge.style.display = 'inline-flex';
+      }
     }
   });
 

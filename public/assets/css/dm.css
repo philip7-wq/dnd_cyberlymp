@@ -586,6 +586,30 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .chat-msg--highlighted { border-color: #f39c12 !important; background: rgba(243,156,18,.08) !important;
   box-shadow: 0 0 8px rgba(243,156,18,.2); }
 
+/* ── Chat Collapse ── */
+.dm-chat-collapse-btn {
+  background: none; border: none; color: var(--text-muted); cursor: pointer;
+  font-size: 1rem; padding: 0 .1rem; line-height: 1; margin-left: .3rem;
+  transition: color .12s;
+}
+.dm-chat-collapse-btn:hover { color: var(--cyan); }
+
+.chat-unread-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--red); color: #fff; font-size: .52rem;
+  border-radius: 50%; width: 14px; height: 14px;
+  font-family: var(--font-display); vertical-align: middle; margin-left: .2rem;
+}
+
+body.chat-collapsed .dm-chat-bottom { height: 40px; min-height: 40px; }
+body.chat-collapsed .dm-chat-messages,
+body.chat-collapsed .dm-chat-input-row,
+body.chat-collapsed #dmChatImgPreview { display: none !important; }
+body.chat-collapsed .dm-chat-head { margin-bottom: 0; }
+body.chat-collapsed .dm-chat-bottom-left { justify-content: center; }
+body.chat-collapsed .dice-fab { bottom: calc(40px + .75rem); }
+body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
+
 /* ── 3D Dice Roll Overlay (center-bottom) ── */
 @keyframes dice-spin {
   0%   { transform: perspective(420px) rotateY(0deg)   scale(0.45); opacity: 0; }
