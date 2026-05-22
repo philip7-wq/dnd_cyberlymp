@@ -267,6 +267,20 @@
       <select id="dmItemsCharTarget" class="ctrl-select" style="max-width:160px;font-size:.72rem"></select>
       <button id="dmItemsClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;margin-left:auto">✕</button>
     </div>
+    <!-- Ammo geben Sektion -->
+    <div style="padding:.5rem 1rem;border-top:1px solid var(--border);background:rgba(0,229,255,.04);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <span style="font-size:.68rem;color:var(--cyan);font-family:Audiowide,sans-serif;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0">🎯 Ammo geben</span>
+      <select id="dmAmmoCharSel" class="ctrl-select" style="font-size:.72rem;max-width:140px"></select>
+      <select id="dmAmmoTypeSel" class="ctrl-select" style="font-size:.72rem">
+        <option value="pistol">Pistol</option>
+        <option value="rifle">Rifle</option>
+        <option value="shotgun">Shotgun</option>
+        <option value="arrow">Arrow</option>
+      </select>
+      <input type="number" id="dmAmmoQty" class="ctrl-input" value="30" min="1" max="999" style="width:60px;font-size:.78rem">
+      <span style="font-size:.68rem;color:var(--text-muted)">Schuss</span>
+      <button id="dmAmmoGiveBtn" class="btn btn-primary" style="font-size:.72rem;padding:.25rem .65rem">Geben</button>
+    </div>
     <div id="dmItemsGrid" style="overflow-y:auto;padding:.75rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.4rem;flex:1"></div>
   </div>
 </div>
@@ -604,6 +618,19 @@ function cardWeapons(char) {
   return ws.slice(0, 3).map(w => `${w.name}${w.damage ? ` <span style="color:var(--text-muted)">${w.damage}</span>` : ''}`).join(' · ');
 }
 
+function cardAmmo(char) {
+  const inv = char.ammo_inventory || {};
+  const weapons = Array.isArray(char.weapons) ? char.weapons : [];
+  const neededTypes = new Set(weapons.map(w => w.ammo).filter(Boolean));
+  if (!neededTypes.size) return '';
+  const chips = [...neededTypes].map(t => {
+    const qty = inv[t] || 0;
+    const cls = qty === 0 ? 'warn' : '';
+    return `<span class="dm-ammo-chip ${cls}">${t}: ${qty}${qty === 0 ? '⚠' : ''}</span>`;
+  });
+  return `<div class="char-card-ammo">${chips.join('')}</div>`;
+}
+
 function renderGrid() {
   const wrap = document.getElementById('dmGrid');
   if (!chars.length) {
@@ -653,6 +680,7 @@ function renderGrid() {
         : ''}
       ${(() => { const ab = (c.buffs||[]).filter(b => !b.expires_at || new Date(b.expires_at) > new Date()); return ab.length ? `<div class="dm-card-buffs">${ab.map(b=>`<span class="dm-buff-badge">${b.name}</span>`).join('')}</div>` : ''; })()}
       ${weapons ? `<div class="dm-card-weapons">${weapons}</div>` : ''}
+      ${cardAmmo(c)}
       <div class="dm-card-footer">
         ${c.session_notes ? `<button class="dm-notes-icon" data-cid="${c.id}" title="Notizen anzeigen">📝</button>` : ''}
         <button class="dm-card-delete" data-delete-id="${c.id}" title="Charakter löschen">🗑</button>
@@ -2826,8 +2854,11 @@ function setupDmItemsModal() {
 
   document.getElementById('dmItemsBtn')?.addEventListener('click', async () => {
     // Char-Dropdown befüllen
-    charSel.innerHTML = `<option value="">— Spieler wählen —</option>` +
+    const charDropdownHtml = `<option value="">— Spieler wählen —</option>` +
       chars.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    charSel.innerHTML = charDropdownHtml;
+    const ammoCharSel = document.getElementById('dmAmmoCharSel');
+    if (ammoCharSel) ammoCharSel.innerHTML = charDropdownHtml;
     // Items lazy-laden
     if (!_dmItemsAllItems.length) {
       grid.innerHTML = '<div style="color:var(--text-muted);font-size:.78rem;padding:1rem">Lade Items…</div>';
@@ -2835,6 +2866,16 @@ function setupDmItemsModal() {
     }
     modal.hidden = false; modal.style.display = 'flex';
     renderDmItemsGrid();
+  });
+
+  // Ammo geben
+  document.getElementById('dmAmmoGiveBtn')?.addEventListener('click', async () => {
+    const charId   = document.getElementById('dmAmmoCharSel')?.value;
+    const ammoType = document.getElementById('dmAmmoTypeSel')?.value;
+    const qty      = parseInt(document.getElementById('dmAmmoQty')?.value) || 0;
+    if (!charId) { alert('Spieler wählen!'); return; }
+    if (!ammoType || qty <= 0) return;
+    await dmGiveAmmo(charId, ammoType, qty);
   });
 
   document.getElementById('dmItemsClose')?.addEventListener('click', () => {

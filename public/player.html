@@ -312,6 +312,7 @@ let char       = null;
 let injuryData = null;  // { body: [...], head: [...] }
 let allChars   = [];    // alle anderen Charaktere (für Injury-Zuweisung)
 let critTarget = null;  // char-id oder 'npc'
+let AMMO_DATA  = null;  // ammunition.json data
 let combatSession       = null;
 let _allCharsFull       = [];
 let deathSavePenalty    = 0;
@@ -326,6 +327,7 @@ let roleAbilities       = null;
 let activeNpcs          = [];
 let _tipPanel = null, _tipOverlay = null, _tipMap = new Map();
 let _diceAutoClose = null;
+const _autofireActive = new Set();  // weapon indices with autofire mode on
 
 function getInjuries() {
   try { return JSON.parse(char.critical_injuries || '[]'); } catch { return []; }
@@ -383,13 +385,14 @@ if (id) {
 
   try {
     let rawItems;
-    [char, injuryData, allChars, combatSession, rawItems, roleAbilities] = await Promise.all([
+    [char, injuryData, allChars, combatSession, rawItems, roleAbilities, AMMO_DATA] = await Promise.all([
       getCharacter(id),
       fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
       getCharacters(),
       getActiveCombat(),
       fetch('./assets/data/items.json').then(r => r.json()).then(d => d.items || d).catch(() => []),
       fetch('./assets/data/role-abilities.json').then(r => r.json()).catch(() => ({})),
+      fetch('./assets/data/ammunition.json').then(r => r.json()).catch(() => ({ ammo_types: [], weapon_ammo_mapping: {} })),
     ]);
     _allCharsFull = allChars;
     allChars = allChars.filter(c => c.id !== id);
@@ -900,20 +903,70 @@ function renderWeapons() {
   const weapons = char.weapons || [];
   const el = document.getElementById('tab-weapons');
 
-  if (!weapons.length) { el.innerHTML = '<p class="empty-state">Keine Waffen eingetragen.</p>'; return; }
+  if (!weapons.length) {
+    el.innerHTML = '<p class="empty-state">Keine Waffen eingetragen.</p>';
+    renderAmmoInventory();
+    return;
+  }
+
+  const ammoTypes = AMMO_DATA?.ammo_types || [];
+  const inv = char.ammo_inventory || {};
 
   el.innerHTML = weapons.map((w, i) => {
     const sellPrice = Math.round((w.price || 0) * 0.65);
     const meta = [w.ammo ? `Ammo: ${w.ammo}` : '', w.rof ? `ROF: ${w.rof}` : '', w.hands ? `Hands: ${w.hands}` : ''].filter(Boolean).join(' · ');
+
+    // Magazine display
+    let magHtml = '';
+    if (w.magazine_max != null) {
+      const curr = w.ammo_current ?? 0;
+      const max  = w.magazine_max;
+      const pct  = max > 0 ? Math.round((curr / max) * 100) : 0;
+      const magCls = curr === 0 ? 'mag-empty' : pct < 10 ? 'mag-critical' : pct < 50 ? 'mag-low' : 'mag-ok';
+      const emptyBadge = curr === 0 ? '<span class="mag-empty-badge">LEER</span>' : '';
+      magHtml = `<div class="weapon-mag-row">
+        <span class="weapon-mag-label">Mag:</span>
+        <span class="weapon-mag-val ${magCls}">${curr}/${max}${emptyBadge}</span>
+        <div class="weapon-hp-bar-wrap"><div class="weapon-hp-bar ${magCls}" style="width:${pct}%"></div></div>
+      </div>`;
+    }
+
+    // Ammo type selector — only show special ammos the player has in stock
+    let ammoSelectHtml = '';
+    if (w.ammo) {
+      const availableSpecial = ammoTypes.filter(a => a.ammo_type === w.ammo && a.special && (inv[a.id] || 0) > 0);
+      const loadedAmmo = w.loaded_ammo || 'basic';
+      ammoSelectHtml = `<select class="ammo-type-select" data-weapon-idx="${i}">
+        <option value="basic" ${loadedAmmo === 'basic' ? 'selected' : ''}>Basic</option>
+        ${availableSpecial.map(a => `<option value="${a.id}" ${loadedAmmo === a.id ? 'selected' : ''}>${a.name.replace(new RegExp(w.ammo + ' ','i'),'')}</option>`).join('')}
+      </select>`;
+    }
+
+    // Reload button
+    const reloadBtn = (w.ammo && w.magazine_max != null) ? (() => {
+      const curr = w.ammo_current ?? 0;
+      const full = curr >= w.magazine_max;
+      const stockOk = (inv[w.ammo] || 0) + curr > 0;
+      return `<button class="gear-action-btn reload-btn" data-reload-idx="${i}" ${full ? 'disabled' : ''}>🔄 ${full ? 'Voll' : 'Nachladen'}</button>`;
+    })() : '';
+
+    // Autofire toggle (only for autofire-capable weapons)
+    const autofireBtn = w.is_autofire ? `<button class="gear-action-btn autofire-toggle${_autofireActive.has(i) ? ' active' : ''}" data-autofire-idx="${i}">🔫 ${_autofireActive.has(i) ? 'Autofire AN' : 'Autofire AUS'}</button>` : '';
+
     return `<div class="weapon-card">
       <div class="weapon-header">
         <span class="weapon-name">${w.name}</span>
         ${w.price ? `<span class="gear-item-price">${w.price.toLocaleString('de-DE')} eb</span>` : ''}
-        ${w.damage ? `<button class="roll-btn dmg-btn" data-expr="${w.damage}" data-ctx="${w.name} damage">${w.damage}</button>` : ''}
+        ${w.damage ? `<button class="roll-btn dmg-btn" data-expr="${w.damage}" data-ctx="${w.name} damage" data-weapon-idx="${i}">${w.damage}</button>` : ''}
       </div>
       ${meta ? `<div class="weapon-meta">${meta}</div>` : ''}
+      ${w.loaded_ammo && w.loaded_ammo !== 'basic' ? (() => { const a = ammoTypes.find(x => x.id === w.loaded_ammo); return a ? `<div class="weapon-ammo-loaded"><span class="ammo-special-badge-small">${a.special?.replace(/_/g,' ').toUpperCase() || w.loaded_ammo}</span> ${a.effect}</div>` : ''; })() : ''}
+      ${magHtml}
       ${w.notes ? `<div class="weapon-notes">${w.notes}</div>` : ''}
       <div class="gear-item-actions" style="margin-top:.4rem">
+        ${reloadBtn}
+        ${ammoSelectHtml}
+        ${autofireBtn}
         <button class="gear-action-btn unequip-btn" data-inv="weapons" data-idx="${i}">📦 Abrüsten</button>
         ${sellPrice > 0 ? `<button class="gear-action-btn gear-sell-btn" data-sell-inv="weapons" data-sell-idx="${i}">💰 ${sellPrice.toLocaleString('de-DE')} eb</button>` : ''}
         <button class="gear-action-btn gear-del-btn remove-btn" data-inv="weapons" data-idx="${i}">✕ Löschen</button>
@@ -921,9 +974,112 @@ function renderWeapons() {
     </div>`;
   }).join('');
 
+  // Ammo inventory section at bottom of weapons tab
+  renderAmmoInventory();
+
   el.querySelectorAll('.gear-sell-btn').forEach(btn => {
     btn.addEventListener('click', () => sellItem(btn.dataset.sellInv, parseInt(btn.dataset.sellIdx)));
   });
+
+  el.querySelectorAll('[data-reload-idx]').forEach(btn => {
+    btn.addEventListener('click', () => reloadWeapon(parseInt(btn.dataset.reloadIdx)));
+  });
+
+  el.querySelectorAll('[data-autofire-idx]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.autofireIdx);
+      if (_autofireActive.has(idx)) _autofireActive.delete(idx);
+      else _autofireActive.add(idx);
+      renderWeapons();
+    });
+  });
+
+  el.querySelectorAll('.ammo-type-select').forEach(sel => {
+    sel.addEventListener('change', () => changeLoadedAmmo(parseInt(sel.dataset.weaponIdx), sel.value));
+  });
+}
+
+async function reloadWeapon(idx) {
+  const w = char.weapons[idx];
+  if (!w?.magazine_max) return;
+  const needed = w.magazine_max - (w.ammo_current || 0);
+  if (needed <= 0) return;
+  const inv = char.ammo_inventory || {};
+  const stock = inv[w.ammo] || 0;
+  if (stock < needed) {
+    showToast(`Nur ${stock}/${needed} ${w.ammo} Schuss — reicht nicht!`, 'red');
+    return;
+  }
+  char.weapons[idx].ammo_current = w.magazine_max;
+  const newInv = { ...inv, [w.ammo]: stock - needed };
+  char.ammo_inventory = newInv;
+  await patchCharacter(char.id, { weapons: char.weapons, ammo_inventory: newInv });
+  renderWeapons();
+  showToast(`🔄 ${w.name} nachgeladen (${w.magazine_max} Schuss)`, 'cyan');
+}
+
+async function changeLoadedAmmo(weaponIdx, ammoId) {
+  const w = char.weapons[weaponIdx];
+  if (!w || w.loaded_ammo === ammoId) return;
+  if (!confirm(`${w.name}: Magazin entladen und ${ammoId === 'basic' ? 'Basic' : ammoId} Ammo laden?`)) return;
+  const inv = { ...(char.ammo_inventory || {}) };
+  // Return current ammo to inventory
+  if ((w.ammo_current || 0) > 0) {
+    const returnKey = (w.loaded_ammo && w.loaded_ammo !== 'basic') ? w.loaded_ammo : w.ammo;
+    inv[returnKey] = (inv[returnKey] || 0) + (w.ammo_current || 0);
+  }
+  // Load new ammo
+  const loadKey = (ammoId !== 'basic') ? ammoId : w.ammo;
+  const available = inv[loadKey] || 0;
+  const fill = Math.min(available, w.magazine_max || 0);
+  char.weapons[weaponIdx].ammo_current = fill;
+  char.weapons[weaponIdx].loaded_ammo = ammoId;
+  if (fill > 0) inv[loadKey] = available - fill;
+  char.ammo_inventory = inv;
+  await patchCharacter(char.id, { weapons: char.weapons, ammo_inventory: inv });
+  renderWeapons();
+  showToast(`${w.name}: ${ammoId === 'basic' ? 'Basic' : ammoId} geladen (${fill} Schuss)`, 'cyan');
+}
+
+// ── Ammo Inventory Display (appended to Weapons tab) ─────────
+function renderAmmoInventory() {
+  const tabEl = document.getElementById('tab-weapons');
+  if (!tabEl) return;
+  let section = tabEl.querySelector('.ammo-inventory-section');
+  if (!section) {
+    section = document.createElement('div');
+    section.className = 'ammo-inventory-section';
+    tabEl.appendChild(section);
+  }
+
+  const inv = char.ammo_inventory || {};
+  const weapons = char.weapons || [];
+  const ammoTypes = AMMO_DATA?.ammo_types || [];
+
+  // Show types that are relevant (weapon needs it, or stock > 0)
+  const relevantTypes = new Set([
+    ...weapons.map(w => w.ammo).filter(Boolean),
+    ...Object.keys(inv).filter(k => (inv[k] || 0) > 0),
+  ]);
+
+  if (!relevantTypes.size) {
+    section.innerHTML = `<div class="section-header" style="margin-top:.75rem">🎯 MUNITIONS-VORRAT</div><p class="empty-state" style="font-size:.75rem">Keine Munition. Im Shop kaufen.</p>`;
+    return;
+  }
+
+  const chips = [...relevantTypes].map(t => {
+    const qty = inv[t] || 0;
+    const cls = qty === 0 ? 'ammo-inv-empty' : qty < 20 ? 'ammo-inv-low' : 'ammo-inv-ok';
+    return `<div class="ammo-inv-chip ${cls}">${t} <strong>${qty}</strong>${qty === 0 ? ' ⚠' : ''}</div>`;
+  });
+
+  // Also show special ammos with stock
+  const specialChips = ammoTypes
+    .filter(a => a.special && (inv[a.id] || 0) > 0)
+    .map(a => `<div class="ammo-inv-chip ammo-inv-ok" title="${a.effect}">${a.name.replace(/ Ammo| Shell| Arrow/i,'')} <strong>${inv[a.id]}</strong></div>`);
+
+  section.innerHTML = `<div class="section-header" style="margin-top:.75rem">🎯 MUNITIONS-VORRAT</div>
+    <div class="ammo-inventory-grid">${[...chips, ...specialChips].join('')}</div>`;
 }
 
 // ── Armor tab ─────────────────────────────────────────────────
@@ -2388,7 +2544,7 @@ function setupDice() {
   exprIn.addEventListener('keydown', e => { if (e.key === 'Enter') doRoll(exprIn.value.trim() || '1d10'); });
 
   // Inline roll buttons (weapons DMG + skill roll buttons) — delegated
-  document.body.addEventListener('click', e => {
+  document.body.addEventListener('click', async e => {
     const btn = e.target.closest('.roll-btn, .dmg-btn');
     if (!btn) return;
     const expr    = btn.dataset.expr;
@@ -2396,10 +2552,37 @@ function setupDice() {
     const isSkill = btn.dataset.skill === '1';
     const isDmg   = btn.classList.contains('dmg-btn');
     if (!expr) return;
+
     if (isSkill) {
       showSkillCheckModal(expr, ctx);
-    } else {
-      doRoll(expr, { context: ctx, isSkillCheck: false, isDamageRoll: isDmg });
+      return;
+    }
+
+    // Ammo check for damage rolls from weapons
+    const weaponIdx = btn.dataset.weaponIdx != null ? parseInt(btn.dataset.weaponIdx) : null;
+    const w = (weaponIdx != null) ? char.weapons?.[weaponIdx] : null;
+
+    if (isDmg && w?.magazine_max != null) {
+      const curr = w.ammo_current ?? 0;
+      if (curr <= 0) {
+        showToast('Magazin leer — erst nachladen!', 'red');
+        return;
+      }
+    }
+
+    await doRoll(expr, { context: ctx, isSkillCheck: false, isDamageRoll: isDmg });
+
+    // Ammo consumption after roll
+    if (isDmg && w?.magazine_max != null) {
+      const isAutofire = w.is_autofire && _autofireActive.has(weaponIdx);
+      const cost = isAutofire ? 10 : 1;
+      const newAmmo = Math.max(0, (w.ammo_current ?? 0) - cost);
+      char.weapons[weaponIdx].ammo_current = newAmmo;
+      await patchCharacter(char.id, { weapons: char.weapons });
+      if (newAmmo === 0) {
+        showToast('⚠ Magazin leer! Nachladen kostet 1 Action.', 'red');
+      }
+      renderWeapons();
     }
   });
 }

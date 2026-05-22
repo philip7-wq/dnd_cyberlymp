@@ -226,3 +226,34 @@
   .shop-main.detail-open { grid-template-columns: 1fr; grid-template-rows: 1fr 360px; }
   .shop-detail { border-left: none; border-top: 1px solid var(--border); }
 }
+
+/* ── Ammo Shop ── */
+.ammo-inventory-bar {
+  font-size: .72rem; color: var(--text-muted);
+  padding: .5rem .75rem; background: var(--bg-card);
+  border-radius: var(--radius); margin-bottom: .5rem;
+  border: 1px solid var(--border); display: flex; gap: .75rem; flex-wrap: wrap;
+}
+.ammo-type-badge {
+  display: inline-block; font-size: .6rem; padding: .1rem .35rem;
+  border-radius: 3px; text-transform: uppercase;
+  letter-spacing: .06em; font-family: Audiowide, sans-serif; margin: .2rem 0;
+}
+.ammo-pistol   { background: rgba(0,229,255,.15);   color: var(--cyan); }
+.ammo-rifle    { background: rgba(255,45,45,.15);    color: var(--red); }
+.ammo-shotgun  { background: rgba(255,160,0,.15);    color: #ffa000; }
+.ammo-arrow    { background: rgba(100,220,100,.15);  color: #64dc64; }
+.ammo-grenade  { background: rgba(200,100,255,.15);  color: #c864ff; }
+.ammo-rocket   { background: rgba(255,100,0,.15);    color: #ff6400; }
+.ammo-special-badge {
+  font-size: .62rem; color: var(--cyan); border: 1px solid var(--cyan);
+  padding: .1rem .3rem; border-radius: 3px; display: inline-block; margin-top: .2rem;
+}
+.ammo-buy-row {
+  display: flex; align-items: center; gap: .4rem; margin-top: .5rem;
+}
+.ammo-qty-input {
+  width: 50px; padding: .2rem .4rem; font-size: .8rem;
+  background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--radius);
+}

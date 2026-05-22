@@ -177,6 +177,16 @@ let items  = [];           // all fetched items
 let activeCategory = SHOP_CATEGORIES[0];
 let selectedItem   = null;
 let armorSlot      = 'body';
+let AMMO_DATA      = null;
+
+async function loadAmmoData() {
+  if (AMMO_DATA) return AMMO_DATA;
+  try {
+    const r = await fetch('/assets/data/ammunition.json');
+    AMMO_DATA = await r.json();
+  } catch { AMMO_DATA = { ammo_types: [], weapon_ammo_mapping: {} }; }
+  return AMMO_DATA;
+}
 
 // ── Boot ──────────────────────────────────────────────────────
 if (!id) {
@@ -189,6 +199,7 @@ if (!id) {
     [char, items] = await Promise.all([
       getCharacter(id),
       getItems(SHOP_CATEGORIES),
+      loadAmmoData(),
     ]);
     renderNav();
     renderCatButtons();
@@ -423,8 +434,96 @@ function renderCatButtons() {
   });
 }
 
+// ── Ammo grid (client-side, from ammunition.json) ─────────────
+function buildAmmoInventoryBar() {
+  const inv = char.ammo_inventory || {};
+  const types = ['pistol','rifle','shotgun','arrow'];
+  const parts = types.map(t => {
+    const qty = inv[t] || 0;
+    const warn = qty === 0 ? '⚠' : '';
+    return `<span style="color:${qty===0?'var(--red)':'var(--text-muted)'}">${t.charAt(0).toUpperCase()+t.slice(1)}: ${qty}${warn}</span>`;
+  });
+  return `<div class="ammo-inventory-bar">Vorrat: ${parts.join(' &nbsp;|&nbsp; ')}</div>`;
+}
+
+function renderAmmoGrid() {
+  const wrap = document.getElementById('shopGridWrap');
+  const ammoTypes = AMMO_DATA?.ammo_types || [];
+  if (!ammoTypes.length) {
+    wrap.innerHTML = `<p class="shop-empty">Munitionsdaten nicht verfügbar.</p>`;
+    return;
+  }
+
+  const inv = char.ammo_inventory || {};
+
+  // Group by ammo_type
+  const groups = {};
+  for (const a of ammoTypes) {
+    if (!groups[a.ammo_type]) groups[a.ammo_type] = [];
+    groups[a.ammo_type].push(a);
+  }
+
+  const typeLabels = { pistol:'Pistol', rifle:'Rifle', shotgun:'Shotgun', arrow:'Arrow', grenade:'Grenade', rocket:'Rocket' };
+
+  wrap.innerHTML = buildAmmoInventoryBar() + Object.entries(groups).map(([type, list]) => `
+    <div class="shop-section-head">${typeLabels[type] || type}</div>
+    <div class="shop-grid">
+      ${list.map(a => {
+        const stock = inv[a.ammo_type] || 0;
+        const specialLabel = a.special ? a.special.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '';
+        return `
+        <div class="shop-card ammo-card" data-ammo-id="${a.id}">
+          <div class="shop-card-name">${a.name}</div>
+          <div class="ammo-type-badge ammo-${a.ammo_type}">${(typeLabels[a.ammo_type]||a.ammo_type).toUpperCase()}</div>
+          <div class="shop-card-price">${a.price} eb · ${a.quantity_per_purchase} Schuss</div>
+          <div class="ammo-effect" style="font-size:.68rem;color:var(--text-muted);margin:.2rem 0;line-height:1.4">${a.effect}</div>
+          ${specialLabel ? `<div class="ammo-special-badge">${specialLabel}</div>` : ''}
+          <div class="ammo-stock" style="font-size:.68rem;color:var(--text-muted);margin-top:.2rem">Vorrat: <strong style="color:${stock===0?'var(--red)':'var(--cyan)'}">${stock} Schuss</strong></div>
+          <div class="ammo-buy-row">
+            <label style="font-size:.7rem;color:var(--text-muted)">Packs:</label>
+            <input type="number" class="ammo-qty-input" value="1" min="1" max="20" data-ammo-id="${a.id}">
+            <button class="btn btn-primary ammo-buy-btn" style="font-size:.72rem;padding:.25rem .65rem" data-ammo-id="${a.id}">Kaufen</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+
+  wrap.querySelectorAll('.ammo-buy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ammoItem = ammoTypes.find(a => a.id === btn.dataset.ammoId);
+      if (!ammoItem) return;
+      const qtyInput = wrap.querySelector(`.ammo-qty-input[data-ammo-id="${ammoItem.id}"]`);
+      const qty = Math.max(1, parseInt(qtyInput?.value) || 1);
+      buyAmmo(ammoItem, qty);
+    });
+  });
+}
+
+async function buyAmmo(ammoItem, qty) {
+  const total = ammoItem.price * qty;
+  const shots = ammoItem.quantity_per_purchase * qty;
+  if ((char.cash || 0) < total) {
+    document.getElementById('buyMsg')?.textContent && (document.getElementById('buyMsg').textContent = '');
+    alert('Nicht genug eb!');
+    return;
+  }
+  if (!confirm(`${qty}× ${ammoItem.name} für ${total} eb kaufen? (+${shots} Schuss)`)) return;
+  const inv = { ...(char.ammo_inventory || {}) };
+  inv[ammoItem.ammo_type] = (inv[ammoItem.ammo_type] || 0) + shots;
+  char.ammo_inventory = inv;
+  const newCash = char.cash - total;
+  char.cash_log = await patchCash(char.id, newCash, -total, `Ammo: ${ammoItem.name} ×${qty}`, char.cash_log);
+  char.cash = newCash;
+  await patchCharacter(char.id, { ammo_inventory: inv });
+  updateNavDisplay();
+  renderAmmoGrid();
+}
+
 // ── Item grid ─────────────────────────────────────────────────
 function renderGrid() {
+  if (activeCategory === 'Ammunition') { renderAmmoGrid(); return; }
+
   const wrap = document.getElementById('shopGridWrap');
   const list = items.filter(i => i.category === activeCategory);
 
@@ -634,10 +733,18 @@ function routeItem(item) {
 function buildSnapshot(item) {
   const x = item.extra || {};
   switch (routeItem(item)) {
-    case 'weapons':
-      return { name: item.name, damage: item.damage || null, ammo: item.ammo || null,
-               rof: item.rof || null, notes: item.notes || null,
-               price: item.price, raw_cost: item.raw_cost, category: item.category };
+    case 'weapons': {
+      const mapping = AMMO_DATA?.weapon_ammo_mapping?.[item.name];
+      return {
+        name: item.name, damage: item.damage || null, ammo: item.ammo || null,
+        rof: item.rof || null, notes: item.notes || null,
+        price: item.price, raw_cost: item.raw_cost, category: item.category,
+        magazine_max:  mapping?.magazine  ?? null,
+        ammo_current:  mapping?.magazine  ?? null,
+        loaded_ammo:   mapping ? 'basic' : null,
+        is_autofire:   mapping?.autofire  ?? false,
+      };
+    }
     case 'armor':
       return { name: item.name, category: item.category,
                sp: parseInt(x.sp) || 0,
