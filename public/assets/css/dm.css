@@ -875,6 +875,7 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   border-radius: 4px;
 }
 .bm-player-check:hover { border-color: var(--red); }
+.bm-player-check.selected { border-color: var(--red); background: rgba(255,45,45,.12); color: #fff; }
 .bm-door-grid {
   display: flex;
   gap: .75rem;

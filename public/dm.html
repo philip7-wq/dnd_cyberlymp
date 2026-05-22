@@ -3272,18 +3272,42 @@ let _bmSelected = new Set();
 let _bmDoor     = 1;
 let _bmActive   = {};  // charId → blackmarket_state
 
+function bmShowError(msg) {
+  let el = document.getElementById('bmErrorMsg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'bmErrorMsg';
+    el.style.cssText = 'color:#FF2D2D;font-size:.72rem;margin:.4rem 0 0;padding:.3rem .5rem;background:rgba(255,45,45,.1);border:1px solid rgba(255,45,45,.3);border-radius:4px;display:none';
+    const step1 = document.getElementById('bmStep1');
+    if (step1) step1.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+function bmClearError() { bmShowError(''); }
+
 function openBmPanel() {
   const panel = document.getElementById('bmPanel');
   panel.hidden = false;
   panel.style.display = 'flex';
-  // Populate player checkboxes
+  bmClearError();
+  // If no active session: reset selection so a fresh open always starts clean
+  if (Object.keys(_bmActive).length === 0) _bmSelected.clear();
+  // Rebuild checkboxes, restoring checked state from _bmSelected
   const wrap = document.getElementById('bmPlayerChecks');
-  wrap.innerHTML = _bmChars().map(c => `
-    <label class="bm-player-check">
-      <input type="checkbox" value="${c.id}" onchange="bmTogglePlayer(this)">
-      <span>${c.handle || c.name || '—'}</span>
-    </label>`).join('');
-  // Pre-select door 1
+  const chars = _bmChars();
+  if (!chars.length) {
+    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.75rem">Keine Charaktere geladen.</div>';
+  } else {
+    wrap.innerHTML = chars.map(c => {
+      const sel = _bmSelected.has(c.id);
+      return `<label class="bm-player-check${sel ? ' selected' : ''}">
+        <input type="checkbox" value="${c.id}" onchange="bmTogglePlayer(this)"${sel ? ' checked' : ''}>
+        <span>${c.handle || c.name || '—'}</span>
+      </label>`;
+    }).join('');
+  }
+  // Pre-select current door
   bmSelectDoor(_bmDoor);
   // If already active, restore state
   if (Object.keys(_bmActive).length > 0) {
@@ -3305,6 +3329,7 @@ function closeBmPanel() {
 function bmTogglePlayer(cb) {
   if (cb.checked) _bmSelected.add(cb.value);
   else            _bmSelected.delete(cb.value);
+  cb.closest('.bm-player-check')?.classList.toggle('selected', cb.checked);
 }
 
 function bmSelectDoor(n) {
@@ -3315,18 +3340,31 @@ function bmSelectDoor(n) {
 }
 
 async function bmActivate() {
-  if (_bmSelected.size === 0) { alert('Bitte mindestens einen Spieler auswählen.'); return; }
-  const initState = { active: true, door: _bmDoor, door_open: false, offer: null, negotiation: null, status: 'open', paid: false };
-  for (const charId of _bmSelected) {
-    await _bmPatch(charId, { blackmarket_state: initState });
-    _bmActive[charId] = { ...initState };
+  if (_bmSelected.size === 0) {
+    bmShowError('Bitte mindestens einen Spieler auswählen.');
+    return;
   }
-  document.getElementById('bmStep2').style.display = '';
-  document.getElementById('bmStep3').style.display = '';
-  document.getElementById('bmStep4').style.display = '';
-  document.getElementById('bmCloseAllBtn').style.display = '';
-  bmRenderLevers();
-  bmRefreshStatus();
+  const btn = document.getElementById('bmActivateBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Öffne…'; }
+  bmClearError();
+  const initState = { active: true, door: _bmDoor, door_open: false, offer: null, negotiation: null, status: 'open', paid: false };
+  try {
+    for (const charId of _bmSelected) {
+      await _bmPatch(charId, { blackmarket_state: initState });
+      _bmActive[charId] = { ...initState };
+    }
+    document.getElementById('bmStep2').style.display = '';
+    document.getElementById('bmStep3').style.display = '';
+    document.getElementById('bmStep4').style.display = '';
+    document.getElementById('bmCloseAllBtn').style.display = '';
+    bmRenderLevers();
+    bmRefreshStatus();
+  } catch(err) {
+    console.error('[BM] bmActivate:', err);
+    bmShowError('Fehler: ' + (err.message || err) + (err.code === '42703' ? ' — SQL-Migration noch nicht ausgeführt?' : ''));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🚪 Schwarzmarkt öffnen'; }
+  }
 }
 
 function bmRenderLevers() {
@@ -3348,24 +3386,37 @@ async function bmToggleDoor(charId) {
   if (!state) return;
   const newOpen = !state.door_open;
   state.door_open = newOpen;
-  await _bmPatch(charId, { blackmarket_state: { ...state } });
-  bmRenderLevers();
+  bmRenderLevers(); // optimistic
+  try {
+    await _bmPatch(charId, { blackmarket_state: { ...state } });
+  } catch(err) {
+    console.error('[BM] bmToggleDoor:', err);
+    state.door_open = !newOpen; // revert
+    bmRenderLevers();
+    bmShowError('Fehler beim Türwechsel: ' + (err.message || err));
+  }
 }
 
 async function bmSendOffer() {
   const item  = document.getElementById('bmOfferItem').value.trim();
   const price = parseInt(document.getElementById('bmOfferPrice').value);
   const notes = document.getElementById('bmOfferNotes').value.trim();
-  if (!item) { alert('Bitte einen Item-Namen eingeben.'); return; }
-  if (!price || price <= 0) { alert('Bitte einen gültigen Preis eingeben.'); return; }
+  if (!item)  { bmShowError('Bitte einen Item-Namen eingeben.'); return; }
+  if (!price || price <= 0) { bmShowError('Bitte einen gültigen Preis eingeben.'); return; }
+  bmClearError();
   const offer = { item_name: item, price, notes: notes || null };
-  for (const charId of Object.keys(_bmActive)) {
-    const state = _bmActive[charId];
-    const next  = { ...state, offer, status: 'offered' };
-    _bmActive[charId] = next;
-    await _bmPatch(charId, { blackmarket_state: next });
+  try {
+    for (const charId of Object.keys(_bmActive)) {
+      const state = _bmActive[charId];
+      const next  = { ...state, offer, status: 'offered' };
+      _bmActive[charId] = next;
+      await _bmPatch(charId, { blackmarket_state: next });
+    }
+    bmRefreshStatus();
+  } catch(err) {
+    console.error('[BM] bmSendOffer:', err);
+    bmShowError('Fehler beim Senden: ' + (err.message || err));
   }
-  bmRefreshStatus();
 }
 
 function bmRefreshStatus() {
@@ -3401,21 +3452,28 @@ async function bmAcceptNeg(charId) {
   if (!state?.negotiation?.player_price) return;
   const next = { ...state, status: 'neg_accepted' };
   _bmActive[charId] = next;
-  await _bmPatch(charId, { blackmarket_state: next });
   bmRefreshStatus();
+  try { await _bmPatch(charId, { blackmarket_state: next }); }
+  catch(err) { console.error('[BM] bmAcceptNeg:', err); bmShowError(err.message || err); }
 }
 
 async function bmDeclineNeg(charId) {
   const state = _bmActive[charId];
   const next  = { ...state, status: 'neg_declined' };
   _bmActive[charId] = next;
-  await _bmPatch(charId, { blackmarket_state: next });
   bmRefreshStatus();
+  try { await _bmPatch(charId, { blackmarket_state: next }); }
+  catch(err) { console.error('[BM] bmDeclineNeg:', err); bmShowError(err.message || err); }
 }
 
 async function bmCloseAll() {
-  for (const charId of Object.keys(_bmActive)) {
-    await _bmPatch(charId, { blackmarket_state: null });
+  try {
+    for (const charId of Object.keys(_bmActive)) {
+      await _bmPatch(charId, { blackmarket_state: null });
+    }
+  } catch(err) {
+    console.error('[BM] bmCloseAll:', err);
+    bmShowError('Fehler beim Schließen: ' + (err.message || err));
   }
   _bmActive = {};
   _bmSelected.clear();
