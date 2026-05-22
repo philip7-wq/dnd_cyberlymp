@@ -196,8 +196,10 @@ if (!id) {
     renderCatButtons();
     renderGrid();
   } catch (e) {
-    document.getElementById('shopLoader').innerHTML =
-      `<span style="color:var(--red)">Fehler: ${e.message}</span>`;
+    const msg = (e.code === 'NOT_FOUND' || e.code === 'PGRST116')
+      ? `Charakter nicht gefunden. <a href="index.html" style="color:var(--cyan)">← Zurück zur Übersicht</a>`
+      : `Fehler: ${e.message}`;
+    document.getElementById('shopLoader').innerHTML = `<span style="color:var(--red)">${msg}</span>`;
   }
 }
 

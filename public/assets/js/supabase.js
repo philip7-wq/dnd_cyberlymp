@@ -33,14 +33,15 @@ export async function getCharacters() {
   return data;
 }
 
-/** Fetch a single character by id. */
+/** Fetch a single character by id. Returns null if not found. */
 export async function getCharacter(id) {
   const { data, error } = await supabase
     .from('characters')
     .select('*')
     .eq('id', id)
-    .single();
+    .maybeSingle();
   if (error) throw error;
+  if (!data) throw Object.assign(new Error('Charakter nicht gefunden — bitte zurück zur Übersicht.'), { code: 'NOT_FOUND' });
   return data;
 }
 

@@ -375,8 +375,13 @@ if (id) {
   } catch(e) {
     clearTimeout(bootTimeout);
     console.error('[player] boot error:', e);
-    document.getElementById('loader').innerHTML =
-      `<span style="color:var(--red);font-size:.85rem">Fehler: ${e.message}</span>`;
+    if (e.code === 'NOT_FOUND' || e.code === 'PGRST116') {
+      document.getElementById('loader').innerHTML =
+        `<span style="color:var(--red);font-size:.85rem">Charakter nicht gefunden.<br><a href="index.html" style="color:var(--cyan)">← Zurück zur Übersicht</a></span>`;
+    } else {
+      document.getElementById('loader').innerHTML =
+        `<span style="color:var(--red);font-size:.85rem">Fehler: ${e.message}</span>`;
+    }
   }
 }
 
