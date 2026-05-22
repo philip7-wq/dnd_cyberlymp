@@ -179,6 +179,20 @@ export async function endCombat(id) {
   if (error) throw error;
 }
 
+/** Set or clear the timer on the active (or latest) combat session. */
+export async function saveTimer(timerData) {
+  const { data: active } = await supabase.from('combat_sessions')
+    .select('id').eq('is_active', true).limit(1).maybeSingle();
+  const targetId = active?.id ?? (await supabase.from('combat_sessions')
+    .select('id').order('created_at', { ascending: false }).limit(1).maybeSingle()).data?.id;
+
+  if (targetId) {
+    await supabase.from('combat_sessions').update({ timer: timerData }).eq('id', targetId);
+  } else {
+    await supabase.from('combat_sessions').insert({ timer: timerData });
+  }
+}
+
 /** Subscribe to live combat session changes. */
 export function subscribeCombat(callback) {
   return supabase.channel('combat-live')

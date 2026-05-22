@@ -99,6 +99,41 @@
 
   <!-- Sidebar: Roll Log + DM Notes -->
   <div class="dm-sidebar">
+    <!-- ── DM Timer ── -->
+    <div class="dm-timer-section">
+      <div class="roll-log-head">⏱ TIMER</div>
+      <div class="dm-timer-config">
+        <input id="dmTimerLabel" class="ctrl-input" placeholder="Label (z.B. Bomben-Timer)" value="Timer" maxlength="40" style="font-size:.75rem">
+        <div class="timer-time-row">
+          <input type="number" id="dmTimerMin" class="ctrl-input" min="0" max="99" value="1" style="width:52px;text-align:center"> min
+          <input type="number" id="dmTimerSec" class="ctrl-input" min="0" max="59" value="0" style="width:52px;text-align:center"> sek
+        </div>
+        <div class="timer-quick-btns">
+          <button type="button" class="timer-quick-btn" data-sec="10">10s</button>
+          <button type="button" class="timer-quick-btn" data-sec="30">30s</button>
+          <button type="button" class="timer-quick-btn" data-sec="60">1min</button>
+          <button type="button" class="timer-quick-btn" data-sec="120">2min</button>
+          <button type="button" class="timer-quick-btn" data-sec="300">5min</button>
+        </div>
+        <div class="timer-warning-row">
+          Warnung bei
+          <input type="number" id="dmTimerWarn" class="ctrl-input" min="3" max="300" value="10" style="width:52px;text-align:center"> sek
+        </div>
+      </div>
+      <div class="timer-ctrl-row">
+        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerStartBtn">▶ Start</button>
+        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerPauseBtn" disabled>⏸ Pause</button>
+        <button type="button" class="ctrl-btn ctrl-btn-red timer-ctrl-btn" id="timerStopBtn" disabled>⏹ Stop</button>
+        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerRestartBtn" disabled>🔄 Neu</button>
+      </div>
+      <div id="dmTimerPreview" class="dm-timer-preview" style="display:none">
+        <span class="timer-preview-label" id="dmPreviewLabel">Timer</span>
+        <span class="timer-preview-countdown" id="dmPreviewCountdown">0:00</span>
+        <div class="timer-progress-wrap" style="flex:1;height:5px">
+          <div class="timer-progress-fill" id="dmPreviewFill" style="width:100%"></div>
+        </div>
+      </div>
+    </div>
     <div class="roll-log" id="rollLog">
       <div class="roll-log-head">ROLL LOG <button class="roll-log-clear" id="clearRollLog" title="Alle Würfelwürfe löschen">🗑</button></div>
       <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
@@ -349,6 +384,7 @@ import {
   sendMessage, getMessages, subscribeMessages, uploadChatImage, patchMessage,
   getNpcs, saveNpc, patchNpc, deleteNpc, uploadNpcImage, subscribeNpcs,
   patchCash, getRoomItems, addRoomItem, removeRoomItem, clearRoomItems, setRoomDescription, subscribeRoomItems,
+  saveTimer,
 } from './assets/js/supabase.js';
 import { animateRollNumber } from './assets/js/dice.js';
 
@@ -390,6 +426,8 @@ let _npcPendingImageBlob = null;
 let _npcRollContext = null;
 let _highlightedMsgId = null;
 let roleAbilities     = null;
+let _dmTimerState    = null;
+let _dmTimerInterval = null;
 
 // ── PIN Auth ──────────────────────────────────────────────────
 function checkPin() {
@@ -432,12 +470,14 @@ async function boot() {
   renderGrid();
   renderRollLog();
   renderCombatBar();
+  updateDmTimer(combatSession?.timer ?? null);
 
   subscribeCombat(payload => {
     const cs = payload.new;
     if (!cs) return;
     combatSession = cs.is_active ? cs : null;
     renderCombatBar();
+    updateDmTimer(cs.timer ?? null);
   });
 
   // Delegated click on grid: open detail OR delete char
@@ -2960,6 +3000,98 @@ async function grantItem(item) {
 
   await ctrlPatch(patch, 'ctrlItemMsg', `${item.name} hinzugefügt`);
 }
+
+// ── DM Timer ──────────────────────────────────────────────────
+async function dmStartTimer() {
+  const label    = document.getElementById('dmTimerLabel').value.trim() || 'Timer';
+  const mins     = parseInt(document.getElementById('dmTimerMin').value)  || 0;
+  const secs     = parseInt(document.getElementById('dmTimerSec').value)  || 0;
+  const duration = mins * 60 + secs;
+  const warning  = parseInt(document.getElementById('dmTimerWarn').value) || 10;
+  if (duration <= 0) return;
+  await saveTimer({ active: true, duration_seconds: duration, started_at: new Date().toISOString(), label, warning_seconds: warning });
+}
+
+async function dmPauseTimer() {
+  if (!_dmTimerState) return;
+  if (_dmTimerState.active) {
+    const elapsed   = (Date.now() - new Date(_dmTimerState.started_at).getTime()) / 1000;
+    const remaining = Math.max(0, _dmTimerState.duration_seconds - elapsed);
+    await saveTimer({ ..._dmTimerState, active: false, pause_remaining_seconds: remaining });
+  } else {
+    const resumeStartedAt = new Date(Date.now() - (_dmTimerState.duration_seconds - (_dmTimerState.pause_remaining_seconds || 0)) * 1000).toISOString();
+    const { pause_remaining_seconds: _, ...rest } = _dmTimerState;
+    await saveTimer({ ...rest, active: true, started_at: resumeStartedAt });
+  }
+}
+
+async function dmStopTimer()    { await saveTimer(null); }
+
+async function dmRestartTimer() {
+  if (!_dmTimerState) return;
+  const { pause_remaining_seconds: _, started_at: __, ...rest } = _dmTimerState;
+  await saveTimer({ ...rest, active: true, started_at: new Date().toISOString() });
+}
+
+function updateDmTimer(timerData) {
+  _dmTimerState = timerData;
+  clearInterval(_dmTimerInterval);
+  const preview    = document.getElementById('dmTimerPreview');
+  const startBtn   = document.getElementById('timerStartBtn');
+  const pauseBtn   = document.getElementById('timerPauseBtn');
+  const stopBtn    = document.getElementById('timerStopBtn');
+  const restartBtn = document.getElementById('timerRestartBtn');
+  if (!startBtn) return;
+
+  if (!timerData) {
+    preview.style.display = 'none';
+    startBtn.disabled   = false;
+    pauseBtn.disabled   = true;
+    stopBtn.disabled    = true;
+    restartBtn.disabled = true;
+    return;
+  }
+
+  preview.style.display = 'flex';
+  startBtn.disabled   = true;
+  pauseBtn.disabled   = false;
+  stopBtn.disabled    = false;
+  restartBtn.disabled = false;
+  document.getElementById('dmPreviewLabel').textContent = timerData.label || 'Timer';
+  pauseBtn.textContent = timerData.active ? '⏸ Pause' : '▶ Fortsetzen';
+
+  if (timerData.active) {
+    _dmTimerInterval = setInterval(() => {
+      if (!_dmTimerState?.active) return;
+      const elapsed   = (Date.now() - new Date(_dmTimerState.started_at).getTime()) / 1000;
+      const remaining = Math.max(0, _dmTimerState.duration_seconds - elapsed);
+      renderDmTimerPreview(remaining, _dmTimerState.duration_seconds);
+      if (remaining <= 0) clearInterval(_dmTimerInterval);
+    }, 250);
+  } else {
+    renderDmTimerPreview(timerData.pause_remaining_seconds ?? 0, timerData.duration_seconds);
+  }
+}
+
+function renderDmTimerPreview(remaining, total) {
+  const mins = Math.floor(remaining / 60);
+  const secs = Math.floor(remaining % 60);
+  document.getElementById('dmPreviewCountdown').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+  const pct = total > 0 ? (remaining / total) * 100 : 0;
+  document.getElementById('dmPreviewFill').style.width = `${pct}%`;
+}
+
+document.getElementById('timerStartBtn').addEventListener('click',   dmStartTimer);
+document.getElementById('timerPauseBtn').addEventListener('click',   dmPauseTimer);
+document.getElementById('timerStopBtn').addEventListener('click',    dmStopTimer);
+document.getElementById('timerRestartBtn').addEventListener('click', dmRestartTimer);
+document.querySelectorAll('.timer-quick-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const sec = parseInt(btn.dataset.sec);
+    document.getElementById('dmTimerMin').value = Math.floor(sec / 60);
+    document.getElementById('dmTimerSec').value = sec % 60;
+  });
+});
 </script>
 
 </body>
