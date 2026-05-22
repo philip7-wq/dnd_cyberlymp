@@ -742,3 +742,14 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   content: ' 🔴PSYCHO'; font-size:.58rem; color:#7B2FBE;
   font-family:Audiowide,sans-serif; letter-spacing:.06em;
 }
+
+/* ── DM Ammo Summary ── */
+.char-card-ammo {
+  display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .3rem;
+}
+.dm-ammo-chip {
+  font-size: .6rem; padding: .1rem .3rem; border-radius: 3px;
+  background: var(--bg-input); color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.dm-ammo-chip.warn { color: var(--red); border-color: var(--red); }

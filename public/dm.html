@@ -2930,6 +2930,18 @@ function renderDmItemsGrid() {
     </div>`).join('');
 }
 
+async function dmGiveAmmo(charId, ammoType, qty) {
+  const target = chars.find(c => c.id === charId);
+  if (!target) return;
+  const inv = { ...(target.ammo_inventory || {}) };
+  inv[ammoType] = (inv[ammoType] || 0) + qty;
+  target.ammo_inventory = inv;
+  await patchCharacter(charId, { ammo_inventory: inv });
+  renderGrid();
+  const nameEl = document.getElementById('dmAmmoGiveBtn');
+  if (nameEl) { nameEl.textContent = '✓ Gegeben'; setTimeout(() => { nameEl.textContent = 'Geben'; }, 1500); }
+}
+
 async function grantItem(item) {
   const dest     = routeItem(item);
   const snapshot = buildSnapshot(item);
