@@ -929,15 +929,24 @@ function buildAmmoInventoryHtml() {
   const inv = char.ammo_inventory || {};
   const weapons = char.weapons || [];
   const ammoTypes = AMMO_DATA?.ammo_types || [];
-  const relevantTypes = new Set([
-    ...weapons.map(w => w.ammo).filter(Boolean),
-    ...Object.keys(inv).filter(k => (inv[k] || 0) > 0 && !k.startsWith('ammo-')),
-  ]);
-  if (!relevantTypes.size && !ammoTypes.some(a => a.special && (inv[a.id] || 0) > 0)) return '';
+
+  // Normalize weapon ammo labels to lowercase canonical types
+  // Old weapons may have "M Pistol", "Arrow" etc — map to standard keys
+  const AMMO_NORM = { 'M Pistol':'pistol','Medium Pistol':'pistol','Heavy Pistol':'pistol','Light Pistol':'pistol','Very Heavy Pistol':'pistol','Pistol':'pistol','Arrow':'arrow','Rifle':'rifle','Shotgun':'shotgun','SMG':'rifle' };
+  const weaponTypes = new Set(weapons.map(w => {
+    if (!w.ammo) return null;
+    const lower = w.ammo.toLowerCase();
+    return AMMO_NORM[w.ammo] || lower;
+  }).filter(Boolean));
+
+  // Basic ammo keys in inventory (non-id keys)
+  const invBasicTypes = new Set(Object.keys(inv).filter(k => !k.startsWith('ammo-') && (inv[k] || 0) > 0));
+  const relevantTypes = new Set([...weaponTypes, ...invBasicTypes]);
+
   const chips = [...relevantTypes].map(t => {
     const qty = inv[t] || 0;
     const cls = qty === 0 ? 'ammo-inv-empty' : qty < 20 ? 'ammo-inv-low' : 'ammo-inv-ok';
-    return `<div class="ammo-inv-chip ${cls}">${t} <strong>${qty}</strong>${qty === 0 ? ' ⚠' : ''}</div>`;
+    return `<div class="ammo-inv-chip ${cls}">${t.charAt(0).toUpperCase()+t.slice(1)} <strong>${qty}</strong>${qty === 0 ? ' ⚠' : ''}</div>`;
   });
   const specialChips = ammoTypes
     .filter(a => a.special && (inv[a.id] || 0) > 0)
@@ -985,11 +994,12 @@ function renderWeapons() {
     // Ammo type selector — only show special ammos the player has in stock
     let ammoSelectHtml = '';
     if (w.ammo) {
-      const availableSpecial = ammoTypes.filter(a => a.ammo_type === w.ammo && a.special && (inv[a.id] || 0) > 0);
+      const wAmmoNorm = w.ammo.toLowerCase();
+      const availableSpecial = ammoTypes.filter(a => a.ammo_type === wAmmoNorm && a.special && (inv[a.id] || 0) > 0);
       const loadedAmmo = w.loaded_ammo || 'basic';
       ammoSelectHtml = `<select class="ammo-type-select" data-weapon-idx="${i}">
         <option value="basic" ${loadedAmmo === 'basic' ? 'selected' : ''}>Basic</option>
-        ${availableSpecial.map(a => `<option value="${a.id}" ${loadedAmmo === a.id ? 'selected' : ''}>${a.name.replace(new RegExp(w.ammo + ' ','i'),'')}</option>`).join('')}
+        ${availableSpecial.map(a => `<option value="${a.id}" ${loadedAmmo === a.id ? 'selected' : ''}>${a.name.replace(new RegExp(wAmmoNorm,'i'),'').replace(/^\s+/,'').replace(/Ammo|Shell|Arrow/i,'').trim() || a.name}</option>`).join('')}
       </select>`;
     }
 
@@ -1004,24 +1014,39 @@ function renderWeapons() {
     // Autofire toggle (only for autofire-capable weapons)
     const autofireBtn = w.is_autofire ? `<button class="gear-action-btn autofire-toggle${_autofireActive.has(i) ? ' active' : ''}" data-autofire-idx="${i}">🔫 ${_autofireActive.has(i) ? 'Autofire AN' : 'Autofire AUS'}</button>` : '';
 
-    return `<div class="weapon-card">
-      <div class="weapon-header">
-        <span class="weapon-name">${w.name}</span>
-        ${w.price ? `<span class="gear-item-price">${w.price.toLocaleString('de-DE')} eb</span>` : ''}
-        ${w.damage ? `<button class="roll-btn dmg-btn" data-expr="${w.damage}" data-ctx="${w.name} damage" data-weapon-idx="${i}">${w.damage}</button>` : ''}
+    // Special ammo tooltip block (shown on right when loaded)
+    const specialAmmoInfo = (() => {
+      if (!w.loaded_ammo || w.loaded_ammo === 'basic') return '';
+      const a = ammoTypes.find(x => x.id === w.loaded_ammo);
+      if (!a) return '';
+      const label = (a.special || w.loaded_ammo).replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      return `<div class="weapon-ammo-info-block">
+        <div class="weapon-ammo-info-badge">${label}</div>
+        <div class="weapon-ammo-info-effect">${a.effect}</div>
+        ${a.requires ? `<div class="weapon-ammo-info-req">Benötigt: ${a.requires}</div>` : ''}
+      </div>`;
+    })();
+
+    return `<div class="weapon-card${specialAmmoInfo ? ' weapon-card--ammo' : ''}">
+      <div class="weapon-card-main">
+        <div class="weapon-header">
+          <span class="weapon-name">${w.name}</span>
+          ${w.price ? `<span class="gear-item-price">${w.price.toLocaleString('de-DE')} eb</span>` : ''}
+          ${w.damage ? `<button class="roll-btn dmg-btn" data-expr="${w.damage}" data-ctx="${w.name} damage" data-weapon-idx="${i}">${w.damage}</button>` : ''}
+        </div>
+        ${meta ? `<div class="weapon-meta">${meta}</div>` : ''}
+        ${magHtml}
+        ${w.notes ? `<div class="weapon-notes">${w.notes}</div>` : ''}
+        <div class="gear-item-actions" style="margin-top:.4rem">
+          ${reloadBtn}
+          ${ammoSelectHtml}
+          ${autofireBtn}
+          <button class="gear-action-btn unequip-btn" data-inv="weapons" data-idx="${i}">📦 Abrüsten</button>
+          ${sellPrice > 0 ? `<button class="gear-action-btn gear-sell-btn" data-sell-inv="weapons" data-sell-idx="${i}">💰 ${sellPrice.toLocaleString('de-DE')} eb</button>` : ''}
+          <button class="gear-action-btn gear-del-btn remove-btn" data-inv="weapons" data-idx="${i}">✕ Löschen</button>
+        </div>
       </div>
-      ${meta ? `<div class="weapon-meta">${meta}</div>` : ''}
-      ${w.loaded_ammo && w.loaded_ammo !== 'basic' ? (() => { const a = ammoTypes.find(x => x.id === w.loaded_ammo); return a ? `<div class="weapon-ammo-loaded"><span class="ammo-special-badge-small">${a.special?.replace(/_/g,' ').toUpperCase() || w.loaded_ammo}</span> ${a.effect}</div>` : ''; })() : ''}
-      ${magHtml}
-      ${w.notes ? `<div class="weapon-notes">${w.notes}</div>` : ''}
-      <div class="gear-item-actions" style="margin-top:.4rem">
-        ${reloadBtn}
-        ${ammoSelectHtml}
-        ${autofireBtn}
-        <button class="gear-action-btn unequip-btn" data-inv="weapons" data-idx="${i}">📦 Abrüsten</button>
-        ${sellPrice > 0 ? `<button class="gear-action-btn gear-sell-btn" data-sell-inv="weapons" data-sell-idx="${i}">💰 ${sellPrice.toLocaleString('de-DE')} eb</button>` : ''}
-        <button class="gear-action-btn gear-del-btn remove-btn" data-inv="weapons" data-idx="${i}">✕ Löschen</button>
-      </div>
+      ${specialAmmoInfo}
     </div>`;
   }).join('');
 
@@ -1053,13 +1078,15 @@ async function reloadWeapon(idx) {
   const needed = w.magazine_max - (w.ammo_current || 0);
   if (needed <= 0) return;
   const inv = char.ammo_inventory || {};
-  const stock = inv[w.ammo] || 0;
+  // Use loaded ammo id for special, or normalized ammo_type for basic
+  const reloadKey = (w.loaded_ammo && w.loaded_ammo !== 'basic') ? w.loaded_ammo : (w.ammo || '').toLowerCase();
+  const stock = inv[reloadKey] || 0;
   if (stock < needed) {
-    showToast(`Nur ${stock}/${needed} ${w.ammo} Schuss — reicht nicht!`, 'red');
+    showToast(`Nur ${stock}/${needed} Schuss — reicht nicht!`, 'red');
     return;
   }
   char.weapons[idx].ammo_current = w.magazine_max;
-  const newInv = { ...inv, [w.ammo]: stock - needed };
+  const newInv = { ...inv, [reloadKey]: stock - needed };
   char.ammo_inventory = newInv;
   await patchCharacter(char.id, { weapons: char.weapons, ammo_inventory: newInv });
   renderWeapons();
@@ -1071,13 +1098,14 @@ async function changeLoadedAmmo(weaponIdx, ammoId) {
   if (!w || w.loaded_ammo === ammoId) return;
   if (!confirm(`${w.name}: Magazin entladen und ${ammoId === 'basic' ? 'Basic' : ammoId} Ammo laden?`)) return;
   const inv = { ...(char.ammo_inventory || {}) };
+  const wAmmoBasicKey = (w.ammo || '').toLowerCase();
   // Return current ammo to inventory
   if ((w.ammo_current || 0) > 0) {
-    const returnKey = (w.loaded_ammo && w.loaded_ammo !== 'basic') ? w.loaded_ammo : w.ammo;
+    const returnKey = (w.loaded_ammo && w.loaded_ammo !== 'basic') ? w.loaded_ammo : wAmmoBasicKey;
     inv[returnKey] = (inv[returnKey] || 0) + (w.ammo_current || 0);
   }
   // Load new ammo
-  const loadKey = (ammoId !== 'basic') ? ammoId : w.ammo;
+  const loadKey = (ammoId !== 'basic') ? ammoId : wAmmoBasicKey;
   const available = inv[loadKey] || 0;
   const fill = Math.min(available, w.magazine_max || 0);
   char.weapons[weaponIdx].ammo_current = fill;

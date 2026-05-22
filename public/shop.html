@@ -465,7 +465,8 @@ function renderAmmoGrid() {
   const typeLabels = { pistol:'Pistol', rifle:'Rifle', shotgun:'Shotgun', arrow:'Arrow', grenade:'Grenade', rocket:'Rocket' };
 
   const buildAmmoCard = a => {
-    const stock      = inv[a.ammo_type] || 0;
+    const invKey     = a.special ? a.id : a.ammo_type;
+    const stock      = inv[invKey] || 0;
     const specialLabel = a.special ? a.special.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '';
     const qty        = _ammoQtys[a.id] || 1;
     const totalCost  = a.price * qty;
@@ -541,7 +542,9 @@ async function buyAmmo(ammoItem, qty) {
   });
   if (!confirmed) return;
   const inv = { ...(char.ammo_inventory || {}) };
-  inv[ammoItem.ammo_type] = (inv[ammoItem.ammo_type] || 0) + shots;
+  // Special ammo stored by id; basic ammo stored by ammo_type
+  const invKey = ammoItem.special ? ammoItem.id : ammoItem.ammo_type;
+  inv[invKey] = (inv[invKey] || 0) + shots;
   char.ammo_inventory = inv;
   const newCash = char.cash - total;
   char.cash_log = await patchCash(char.id, newCash, -total, `Ammo: ${ammoItem.name} ×${qty}`, char.cash_log);
