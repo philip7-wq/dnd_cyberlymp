@@ -553,10 +553,10 @@ function renderSpecialties() {
       <div class="spec-card-name">${name}</div>
       <div class="spec-card-desc">${desc}</div>
       <div class="spec-card-controls">
-        <button class="spec-card-btn" id="${id}-btn-m" disabled>−</button>
+        <button type="button" class="spec-card-btn" id="${id}-btn-m" disabled>−</button>
         <div class="spec-card-value" id="${id}-val">0</div>
         <input type="hidden" id="${id}" value="0">
-        <button class="spec-card-btn" id="${id}-btn-p" ${max <= 0 ? 'disabled' : ''}>+</button>
+        <button type="button" class="spec-card-btn" id="${id}-btn-p" ${max <= 0 ? 'disabled' : ''}>+</button>
       </div>
     </div>`;
   }
@@ -567,10 +567,10 @@ function renderSpecialties() {
       <div class="spec-card-name">${name}</div>
       <div class="spec-card-desc">${desc}</div>
       <div class="spec-card-controls">
-        <button class="spec-card-btn" id="${id}-btn-m" disabled>−</button>
+        <button type="button" class="spec-card-btn" id="${id}-btn-m" disabled>−</button>
         <div class="spec-card-value" id="${id}-val">0</div>
         <input type="hidden" id="${id}" value="0">
-        <button class="spec-card-btn" id="${id}-btn-p">+</button>
+        <button type="button" class="spec-card-btn" id="${id}-btn-p">+</button>
       </div>
     </div>`;
   }
@@ -581,7 +581,7 @@ function renderSpecialties() {
       <div class="spec-card-name">${name}</div>
       <div class="spec-card-desc">${desc}</div>
       <input type="hidden" id="${id}" value="0">
-      <button class="spec-toggle-btn" id="${id}-btn">Inaktiv</button>
+      <button type="button" class="spec-toggle-btn" id="${id}-btn">Inaktiv</button>
     </div>`;
   }
 
