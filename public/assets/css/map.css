@@ -449,6 +449,45 @@ canvas#mapCanvas {
 .ctrl-btn.red:hover { border-color: var(--red); }
 .ctrl-btn:disabled { opacity: .4; cursor: default; }
 
+/* ── Player panel: armor / injuries / buffs ── */
+.player-map-section {
+  padding: .45rem .75rem;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.player-map-section-label {
+  font-size: .52rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: .25rem;
+}
+.pmap-bar-val {
+  font-size: .65rem; color: var(--text-muted);
+  font-family: Audiowide, sans-serif; white-space: nowrap;
+}
+.pmap-armor-row {
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .7rem;
+}
+.pmap-armor-lbl {
+  font-size: .55rem; color: var(--text-muted);
+  font-family: Audiowide, sans-serif; min-width: 38px;
+}
+.pmap-armor-name { flex: 1; color: var(--text); font-size: .68rem; }
+.pmap-armor-sp { font-family: Audiowide, sans-serif; font-size: .72rem; }
+.pmap-cond-list { display: flex; flex-wrap: wrap; gap: .2rem; }
+.pmap-cond {
+  font-size: .6rem; border: 1px solid; border-radius: 3px;
+  padding: .07rem .3rem; font-family: Audiowide, sans-serif;
+}
+.pmap-none { font-size: .65rem; color: var(--text-muted); font-style: italic; }
+.pmap-inj-list { display: flex; flex-direction: column; gap: .15rem; }
+.pmap-inj {
+  font-size: .65rem; color: #FF8C00;
+  padding: .05rem 0;
+}
+.pmap-buff-list { display: flex; flex-direction: column; gap: .15rem; }
+.pmap-buff {
+  font-size: .65rem; color: var(--cyan);
+}
+
 /* ── Phase 2: On Fire animation ── */
 @keyframes fire-flicker {
   0%,100% { box-shadow: 0 0 8px #FF6B35; }

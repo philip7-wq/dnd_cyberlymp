@@ -31,6 +31,15 @@
   <div class="map-ctx-item danger" id="ctxAoeRemove">✕ Entfernen</div>
 </div>
 
+<!-- Context Menu (Cover) -->
+<div id="ctxCoverMenu" class="map-ctx-menu" style="display:none">
+  <div class="map-ctx-item" id="ctxCoverDmg">🔨 Schaden zuweisen</div>
+  <div class="map-ctx-item" id="ctxCoverHp">❤ HP setzen</div>
+  <div class="map-ctx-item" id="ctxCoverRepair">🔧 Reparieren (volle HP)</div>
+  <div class="map-ctx-sep"></div>
+  <div class="map-ctx-item danger" id="ctxCoverRemove">✕ Entfernen</div>
+</div>
+
 <!-- Hover Tooltip -->
 <div id="mapTooltip" class="map-tooltip" style="display:none">
   <div class="map-tooltip-name" id="ttName"></div>
@@ -53,6 +62,7 @@
         <button class="token-picker-tab" data-tab="custom">Custom</button>
         <button class="token-picker-tab" data-tab="vehicle">Fahrzeug</button>
       </div>
+      <div id="tokenAddedBanner" style="display:none;padding:.3rem .6rem;background:rgba(0,229,255,.1);border-bottom:1px solid rgba(0,229,255,.2);font-size:.68rem;color:var(--cyan);font-family:Audiowide,sans-serif;letter-spacing:.06em"></div>
       <div id="tokenPickerChars" class="token-picker-grid"></div>
       <div id="tokenPickerNpcs"  class="token-picker-grid" style="display:none"></div>
       <div id="tokenPickerCustom" class="custom-token-form" style="display:none">
@@ -65,6 +75,9 @@
         <button id="customAddBtn" class="ctrl-btn">+ Hinzufügen</button>
       </div>
       <div id="tokenPickerVehicle" class="token-picker-grid" style="display:none"></div>
+    </div>
+    <div style="padding:.5rem .75rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end">
+      <button id="tokenModalDone" class="ctrl-btn" style="border-color:var(--cyan);color:var(--cyan)">✓ Fertig</button>
     </div>
   </div>
 </div>
@@ -244,6 +257,7 @@ import {
   getCharacters, getCharacter, getNpcs, getActiveCombat,
   getLatestMap, getMap, saveMap, subscribeMaps,
   uploadMapBackground, subscribeCombat, subscribeCharacters,
+  subscribeNpcs,
   saveCombat as saveCombatDb,
 } from './assets/js/supabase.js';
 
@@ -496,11 +510,19 @@ function applyMapData(m) {
 function stripImages(t) { const {_img,_imgLoaded,...r}=t; return r; }
 
 // ── Save helpers ──────────────────────────────────────────────
+// Accumulate all patches within the debounce window into one DB call.
+// Using clearTimeout + replace would silently drop earlier patches (e.g.
+// saveTokens then saveAoe within 150ms → tokens patch lost → Realtime
+// fires with stale DB row → mergeTokens([]) wipes all tokens).
+let _pendingSave = {};
 function scheduleSave(patch) {
+  Object.assign(_pendingSave, patch);
   clearTimeout(S.saveTimer);
   S.saveTimer = setTimeout(async () => {
-    if (!S.mapId) return;
-    try { await saveMap({ id:S.mapId, ...patch }); } catch(e) { console.warn('saveMap:', e); }
+    if (!S.mapId) { _pendingSave = {}; return; }
+    const toSave = { ..._pendingSave };
+    _pendingSave = {};
+    try { await saveMap({ id:S.mapId, ...toSave }); } catch(e) { console.warn('saveMap:', e); }
   }, 150);
 }
 const saveTokens   = () => scheduleSave({ tokens:   S.tokens.map(stripImages) });
@@ -877,6 +899,22 @@ function drawTokens() {
         roundRectPath(ctx, cx-vw/2-4/S.scale, cy-vh/2-4/S.scale, vw+8/S.scale, vh+8/S.scale, 7/S.scale);
         ctx.stroke(); ctx.setLineDash([]);
       }
+      // Vehicle dead overlay
+      const vDead = token.maxSdp > 0 && (token.sdp ?? token.maxSdp) <= 0;
+      if (vDead) {
+        ctx.save();
+        roundRectPath(ctx, cx-vw/2, cy-vh/2, vw, vh, 5/S.scale);
+        ctx.fillStyle='rgba(30,30,30,.75)'; ctx.fill();
+        ctx.strokeStyle='#555'; ctx.lineWidth=2/S.scale; ctx.stroke();
+        const pad=Math.min(vw,vh)*0.3;
+        ctx.strokeStyle='#FF2D2D'; ctx.lineWidth=2.5/S.scale; ctx.lineCap='round';
+        ctx.beginPath(); ctx.moveTo(cx-pad,cy-pad); ctx.lineTo(cx+pad,cy+pad); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx+pad,cy-pad); ctx.lineTo(cx-pad,cy+pad); ctx.stroke();
+        ctx.fillStyle='#FF2D2D'; ctx.font=`bold ${9/S.scale}px Audiowide`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('ZERSTÖRT',cx,cy);
+        ctx.restore();
+      }
       ctx.restore();
       continue; // Skip regular circle rendering for vehicles
     }
@@ -958,6 +996,29 @@ function drawTokens() {
         ctx.fillText(`+${conds.length-3}`, startX+shown.length*(dotR*2+2/S.scale)+2/S.scale, dotY);
       }
     }
+
+    // Dead overlay — grey wash + red ✕
+    const isDead = token.maxHp != null && (token.hp ?? token.maxHp) <= 0;
+    if (isDead) {
+      ctx.save();
+      // Grey wash
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(30,30,30,.72)'; ctx.fill();
+      // Grey border override
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 2/S.scale; ctx.stroke();
+      // Red X
+      const pad = r * 0.35;
+      ctx.strokeStyle = '#FF2D2D'; ctx.lineWidth = 2.5/S.scale;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(cx-pad, cy-pad); ctx.lineTo(cx+pad, cy+pad); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+pad, cy-pad); ctx.lineTo(cx-pad, cy+pad); ctx.stroke();
+      // "TOT" label
+      ctx.fillStyle = '#FF2D2D'; ctx.font = `bold ${9/S.scale}px Audiowide`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('TOT', cx, cy);
+      ctx.restore();
+    }
+
     ctx.restore();
   }
 }
@@ -1256,7 +1317,52 @@ function showAoeCtxMenu(cx, cy, idx) {
   m.style.display='block'; m.style.left=cx+'px'; m.style.top=cy+'px';
 }
 function hideAoeCtxMenu() { document.getElementById('ctxAoeMenu').style.display='none'; _ctxAoeIdx=-1; }
-document.addEventListener('click', () => { hideCtxMenu(); hideAoeCtxMenu(); });
+
+// Cover context menu
+let _ctxCoverIdx = -1;
+document.getElementById('ctxCoverDmg').addEventListener('click', e => {
+  e.stopPropagation();
+  if (_ctxCoverIdx < 0) return;
+  const c = S.coverObjects[_ctxCoverIdx]; if (!c) return;
+  const v = prompt(`Schaden für "${c.label||c.material}" (aktuell HP ${c.hp}/${c.maxHp}):`);
+  if (v === null) return;
+  const dmg = parseInt(v) || 0;
+  c.hp = Math.max(0, c.hp - dmg);
+  if (c.hp <= 0) c.destroyed = true;
+  saveCover(); markDirty(); hideCoverCtxMenu();
+});
+document.getElementById('ctxCoverHp').addEventListener('click', e => {
+  e.stopPropagation();
+  if (_ctxCoverIdx < 0) return;
+  const c = S.coverObjects[_ctxCoverIdx]; if (!c) return;
+  const v = prompt(`HP setzen für "${c.label||c.material}" (max ${c.maxHp}):`, c.hp);
+  if (v === null) return;
+  c.hp = Math.max(0, Math.min(c.maxHp, parseInt(v)||0));
+  c.destroyed = c.hp <= 0;
+  saveCover(); markDirty(); hideCoverCtxMenu();
+});
+document.getElementById('ctxCoverRepair').addEventListener('click', e => {
+  e.stopPropagation();
+  if (_ctxCoverIdx < 0) return;
+  const c = S.coverObjects[_ctxCoverIdx]; if (!c) return;
+  c.hp = c.maxHp; c.destroyed = false;
+  saveCover(); markDirty(); hideCoverCtxMenu();
+});
+document.getElementById('ctxCoverRemove').addEventListener('click', e => {
+  e.stopPropagation();
+  if (_ctxCoverIdx >= 0) { S.coverObjects.splice(_ctxCoverIdx, 1); saveCover(); markDirty(); }
+  hideCoverCtxMenu();
+});
+function showCoverCtxMenu(cx, cy, idx) {
+  _ctxCoverIdx = idx;
+  const c = S.coverObjects[idx];
+  document.getElementById('ctxCoverDmg').textContent = `🔨 Schaden (HP: ${c.hp}/${c.maxHp})`;
+  const m = document.getElementById('ctxCoverMenu');
+  m.style.display='block'; m.style.left=cx+'px'; m.style.top=cy+'px';
+}
+function hideCoverCtxMenu() { document.getElementById('ctxCoverMenu').style.display='none'; _ctxCoverIdx=-1; }
+
+document.addEventListener('click', () => { hideCtxMenu(); hideAoeCtxMenu(); hideCoverCtxMenu(); });
 
 // ── Mouse events ──────────────────────────────────────────────
 function getPos(e) {
@@ -1458,7 +1564,9 @@ canvas.addEventListener('contextmenu', e=>{
   if (hit) { showCtxMenu(e.clientX,e.clientY,hit); return; }
   const ha=hitAoe(wp.x,wp.y);
   if (ha>=0) { showAoeCtxMenu(e.clientX,e.clientY,ha); return; }
-  hideCtxMenu(); hideAoeCtxMenu();
+  const hc=hitCover(wp.x,wp.y);
+  if (hc) { showCoverCtxMenu(e.clientX,e.clientY,hc.idx); return; }
+  hideCtxMenu(); hideAoeCtxMenu(); hideCoverCtxMenu();
 });
 
 // Keyboard shortcuts
@@ -1716,7 +1824,7 @@ function renderTokenPicker() {
         bodyMaxSP:c.armor?.body?.max_sp??c.armor?.body?.sp??0,
         grapplePartner:null, humanShield:null,
       });
-      closeTokenModal();
+      flashAddedBanner(c.handle||c.name);
     });
   });
 
@@ -1735,7 +1843,7 @@ function renderTokenPicker() {
         armorPenalty:0,critInjuries:[],headSP:0,bodySP:0,headMaxSP:0,bodyMaxSP:0,
         grapplePartner:null,humanShield:null,
       });
-      closeTokenModal();
+      flashAddedBanner(n.name);
     });
   });
 
@@ -1755,7 +1863,7 @@ function renderTokenPicker() {
         move:v.move,stats:{MOVE:v.move},conditions:[],
         grapplePartner:null,humanShield:null,
       });
-      closeTokenModal();
+      flashAddedBanner(v.name);
     });
   });
 }
@@ -1787,10 +1895,24 @@ document.getElementById('customAddBtn').addEventListener('click',()=>{
   const color=document.getElementById('customColor').value||'#FF8C00';
   const maxHp=parseInt(document.getElementById('customHp').value)||null;
   addToken({type:'custom',label,name,imageUrl:null,color,hp:maxHp,maxHp,conditions:[],stats:{MOVE:4},armorPenalty:0,critInjuries:[]});
-  closeTokenModal();
+  document.getElementById('customLabel').value='';
+  document.getElementById('customName').value='';
+  document.getElementById('customHp').value='';
+  flashAddedBanner(name);
 });
 document.getElementById('tokenModalClose').addEventListener('click',closeTokenModal);
+document.getElementById('tokenModalDone').addEventListener('click',closeTokenModal);
 document.getElementById('tokenModal').addEventListener('click',e=>{ if(e.target===document.getElementById('tokenModal'))closeTokenModal(); });
+
+let _bannerTimer=null;
+function flashAddedBanner(name) {
+  const el=document.getElementById('tokenAddedBanner');
+  if(!el) return;
+  el.textContent=`✓ ${name} hinzugefügt`;
+  el.style.display='block';
+  clearTimeout(_bannerTimer);
+  _bannerTimer=setTimeout(()=>{ el.style.display='none'; }, 2000);
+}
 
 // ── On Fire Modal ─────────────────────────────────────────────
 function openFireModal(token) {
@@ -2102,7 +2224,44 @@ function buildPlayerPanel() {
   });
 
   const conds=c.conditions||[];
-  const COND_C={'Seriously Wounded':'#FF8C00','Mortally Wounded':'#FF2D2D','Stunned':'#FFD700','Suppressed':'#A78BFA','Prone':'#6B7280','Bleeding Out':'#DC2626','On Fire':'#FF6B35','Blinded':'#6B7280','Deafened':'#6B7280'};
+  const COND_C={'Seriously Wounded':'#FF8C00','Mortally Wounded':'#FF2D2D','Stunned':'#FFD700','Suppressed':'#A78BFA','Prone':'#6B7280','Bleeding Out':'#DC2626','On Fire (Mild)':'#FF8C00','On Fire (Severe)':'#FF6B35','On Fire (Deadly)':'#FF2D2D','On Fire':'#FF6B35','Blinded':'#888','Deafened':'#888','Grappled':'#94A3B8'};
+
+  // Armor rows (only slots with a name equipped)
+  const armorSlots=[['HEAD',c.armor?.head],['BODY',c.armor?.body],['SHIELD',c.armor?.shield]];
+  const armorHtml=armorSlots.filter(([,s])=>s?.name).map(([lbl,s])=>{
+    const cur=s.sp??0, max=s.max_sp??s.sp??0;
+    const pct=max>0?Math.round(cur/max*100):0;
+    const col=pct>50?'#00E5FF':pct>20?'#FFA000':'#FF2D2D';
+    const destroyed=cur<=0;
+    return `<div class="pmap-armor-row">
+      <span class="pmap-armor-lbl">${lbl}</span>
+      <span class="pmap-armor-name">${s.name}</span>
+      <span class="pmap-armor-sp" style="color:${destroyed?'#FF2D2D':col}">${cur}${max&&max!==cur?`/${max}`:''}</span>
+      ${destroyed?'<span style="font-size:.55rem;color:#FF2D2D;font-family:Audiowide,sans-serif">ZERSTÖRT</span>':''}
+    </div>
+    <div class="sp-bar-wrap" style="margin:1px 0 4px"><div class="sp-bar-fill" style="width:${pct}%;background:${col}"></div></div>`;
+  }).join('');
+
+  // Critical injuries
+  const injuries=parseInjuries(c.critical_injuries);
+  const injHtml=injuries.length
+    ?`<div class="player-map-section">
+      <div class="player-map-section-label">Verletzungen <span style="color:#FF2D2D">(${injuries.length})</span></div>
+      <div class="pmap-inj-list">${injuries.map(inj=>`<span class="pmap-inj">${inj.name||inj}</span>`).join('')}</div>
+    </div>`:''
+
+  // Buffs
+  const buffs=c.buffs||[];
+  const now=Date.now();
+  const buffHtml=buffs.length
+    ?`<div class="player-map-section">
+      <div class="player-map-section-label">Buffs <span style="color:#00E5FF">(${buffs.length})</span></div>
+      <div class="pmap-buff-list">${buffs.map(b=>{
+        const rem=b.expires_at?new Date(b.expires_at).getTime()-now:null;
+        const timeStr=rem===null?'∞':rem<=0?'ABG.':Math.ceil(rem/60000)+'min';
+        return `<span class="pmap-buff">${b.name} <span style="color:var(--text-muted);font-size:.6rem">${timeStr}</span></span>`;
+      }).join('')}</div>
+    </div>`:''
 
   document.getElementById('playerPanel').innerHTML=`
     <div class="player-map-portrait">
@@ -2123,18 +2282,19 @@ function buildPlayerPanel() {
         <div class="pmap-bar-wrap"><div class="pmap-bar-fill" style="width:${humPct}%;background:#00E5FF"></div></div>
         <span class="pmap-bar-val">${c.current_humanity??'?'}/${c.max_humanity??'?'}</span>
       </div>
-      <div class="pmap-sp-row">
-        <span>HEAD <span class="pmap-sp-val">${c.armor?.head?.sp??0}</span></span>
-        <span>BODY <span class="pmap-sp-val">${c.armor?.body?.sp??0}</span></span>
-        ${c.armor?.shield?.sp?`<span>SHIELD <span class="pmap-sp-val">${c.armor.shield.sp}</span></span>`:''}
-      </div>
     </div>
+    ${armorHtml?`<div class="player-map-section">
+      <div class="player-map-section-label">Rüstung</div>
+      ${armorHtml}
+    </div>`:''}
     <div class="player-map-section">
       <div class="player-map-section-label">Conditions</div>
       <div class="pmap-cond-list">
-        ${conds.length?conds.map(c=>`<span class="pmap-cond" style="color:${COND_C[c]||'#888'};border-color:${COND_C[c]||'#888'}">${c}</span>`).join(''):'<span class="pmap-none">keine</span>'}
+        ${conds.length?conds.map(cd=>`<span class="pmap-cond" style="color:${COND_C[cd]||'#888'};border-color:${COND_C[cd]||'#888'}">${cd}</span>`).join(''):'<span class="pmap-none">keine</span>'}
       </div>
     </div>
+    ${injHtml}
+    ${buffHtml}
     <div class="weapon-selector-wrap">
       <div class="weapon-selector-label">Aktive Waffe / Item</div>
       <select id="weaponSelector">
@@ -2304,6 +2464,65 @@ function computeArmorPenalty(armor) {
 }
 function parseInjuries(raw) { try{return JSON.parse(raw)||[];}catch{return[];} }
 
+// ── Live sync helpers ─────────────────────────────────────────
+
+/** Apply a characters-table row to the matching map token in memory. */
+function applyCharToToken(ch) {
+  const tok = S.tokens.find(t => t.charId === ch.id);
+  if (!tok) return;
+  tok.hp          = ch.current_hp;
+  tok.maxHp       = ch.max_hp;
+  tok.conditions  = ch.conditions || [];
+  tok.critInjuries = parseInjuries(ch.critical_injuries);
+  // Armor SP (only overwrite if the payload actually has armor)
+  if (ch.armor !== undefined) {
+    tok.headSP    = ch.armor?.head?.sp    ?? tok.headSP    ?? 0;
+    tok.bodySP    = ch.armor?.body?.sp    ?? tok.bodySP    ?? 0;
+    tok.headMaxSP = ch.armor?.head?.max_sp ?? ch.armor?.head?.sp ?? tok.headMaxSP ?? 0;
+    tok.bodyMaxSP = ch.armor?.body?.max_sp ?? ch.armor?.body?.sp ?? tok.bodyMaxSP ?? 0;
+  }
+  // Persist to maps.tokens so new clients load current data
+  saveTokens();
+  markDirty();
+}
+
+/** Apply an npcs-table row to the matching map token in memory. */
+function applyNpcToToken(n) {
+  const tok = S.tokens.find(t => t.npcId === n.id);
+  if (!tok) return;
+  tok.hp    = n.hp_current;
+  tok.maxHp = n.hp_max;
+  if (n.critical_injuries !== undefined)
+    tok.critInjuries = parseInjuries(n.critical_injuries);
+  saveTokens();
+  markDirty();
+}
+
+/**
+ * After the map loads, cross-reference token HP/conditions with
+ * the already-fetched S.chars + S.npcs so the display is always fresh
+ * even before any realtime event fires.
+ */
+function syncTokensWithLiveData() {
+  let changed = false;
+  for (const c of S.chars) {
+    const tok = S.tokens.find(t => t.charId === c.id);
+    if (!tok) continue;
+    tok.hp         = c.current_hp;
+    tok.maxHp      = c.max_hp;
+    tok.conditions = c.conditions || [];
+    changed = true;
+  }
+  for (const n of S.npcs) {
+    const tok = S.tokens.find(t => t.npcId === n.id);
+    if (!tok) continue;
+    tok.hp    = n.hp_current;
+    tok.maxHp = n.hp_max;
+    changed = true;
+  }
+  if (changed) { saveTokens(); markDirty(); }
+}
+
 // ── Boot ──────────────────────────────────────────────────────
 async function boot() {
   try {
@@ -2311,8 +2530,11 @@ async function boot() {
     S.chars=chars||[]; S.npcs=npcs||[]; S.combatSession=combat?.is_active?combat:null;
 
     if (CHAR_ID) {
-      S.char=S.chars.find(c=>c.id===CHAR_ID)||null;
-      if (!S.char) { try{S.char=await getCharacter(CHAR_ID);}catch(_){} }
+      // Always fetch full char data — getCharacters() only returns a partial select
+      // (no weapons, armor, cyberware, buffs, critical_injuries)
+      try { S.char = await getCharacter(CHAR_ID); } catch(_) {
+        S.char = S.chars.find(c=>c.id===CHAR_ID) || null;
+      }
     }
 
     const mapData=MAP_ID?await getMap(MAP_ID):await getLatestMap();
@@ -2335,10 +2557,18 @@ async function boot() {
     else if (CHAR_ID) back.href=`player.html?id=${CHAR_ID}`;
 
     subscribeMaps(payload=>{
-      if (S.localDragging) return;
       const m=payload.new;
       if (!m||m.id!==S.mapId) return;
-      applyMapData(m);
+      if (S.localDragging && S.dragging) {
+        // Preserve only the dragged token's current position — apply everything else
+        const dragId = S.dragging.token.id;
+        const savedX = S.dragging.token.x, savedY = S.dragging.token.y;
+        applyMapData(m);
+        const tok = S.tokens.find(t=>t.id===dragId);
+        if (tok) { tok.x=savedX; tok.y=savedY; }
+      } else {
+        applyMapData(m);
+      }
     });
     subscribeCombat(payload=>{
       S.combatSession=payload.new?.is_active?payload.new:null;
@@ -2348,18 +2578,26 @@ async function boot() {
       }
       markDirty();
     });
-    if (!IS_DM && CHAR_ID) {
-      subscribeCharacters(payload=>{
-        if (payload.new?.id===CHAR_ID) {
-          Object.assign(S.char, payload.new);
-          buildPlayerPanel();
-          // Sync token HP
-          const tok=S.tokens.find(t=>t.charId===CHAR_ID);
-          if (tok) { tok.hp=payload.new.current_hp; tok.maxHp=payload.new.max_hp; tok.conditions=payload.new.conditions||[]; }
-          markDirty();
-        }
-      });
-    }
+    // Sync all token HPs/conditions from fresh chars/npcs after map load
+    syncTokensWithLiveData();
+
+    // Character changes → update matching token on ALL clients (DM + player)
+    subscribeCharacters(payload=>{
+      const ch = payload.new; if (!ch) return;
+      // Update own char state + player panel
+      if (!IS_DM && ch.id===CHAR_ID) {
+        Object.assign(S.char, ch);
+        buildPlayerPanel();
+      }
+      applyCharToToken(ch);
+    });
+
+    // NPC changes → update matching token on ALL clients
+    subscribeNpcs(payload=>{
+      const n = payload.new; if (!n) return;
+      applyNpcToToken(n);
+    });
+
     window.addEventListener('resize',resizeCanvas);
   } catch(e) {
     document.getElementById('mapLoader').textContent='Fehler: '+e.message;
