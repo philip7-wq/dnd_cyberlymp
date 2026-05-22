@@ -83,7 +83,7 @@
 </div>
 
 <script type="module">
-import { getCharacter, getItems, patchCharacter, subscribeCharacters } from './assets/js/supabase.js';
+import { getCharacter, getItems, patchCharacter, patchCash, subscribeCharacters } from './assets/js/supabase.js';
 
 // ── Cyberware slot mapping ────────────────────────────────────
 const CYBERWARE_SLOT_MAP = {
@@ -236,11 +236,13 @@ function calcEMP(humanity) { return Math.floor((humanity ?? 0) / 10); }
 
 // ── Cyberpsychosis-Status ─────────────────────────────────────
 function getCyberpsychosisStatus(humanity) {
-  if (humanity <= 0)  return { level: 5, color: '#FF0000', label: 'CYBERPSYCHOSIS',          pulse: true,  blink: false };
-  if (humanity <= 9)  return { level: 4, color: '#FF0000', label: '💀 KRITISCH',               pulse: false, blink: true  };
-  if (humanity <= 19) return { level: 3, color: '#FF2D2D', label: 'Cyberpsychosis-Risiko',    pulse: true,  blink: false };
-  if (humanity <= 39) return { level: 2, color: '#FF8C00', label: 'Gefährliche Instabilität', pulse: false, blink: false };
-  if (humanity <= 59) return { level: 1, color: '#FFD700', label: 'Humanity sinkt',           pulse: false, blink: false };
+  const h = typeof humanity === 'number' && !isNaN(humanity) ? humanity : null;
+  if (h === null) return null;
+  if (h <= 0)  return { level: 5, color: '#FF0000', label: 'CYBERPSYCHOSIS — GM übernimmt Kontrolle',       pulse: true,  blink: false };
+  if (h <= 9)  return { level: 4, color: '#FF0000', label: '💀 KRITISCH — eine schlechte Entscheidung noch',  pulse: false, blink: true  };
+  if (h <= 19) return { level: 3, color: '#FF2D2D', label: '🔴 Cyberpsychosis-Risiko — Therapie empfohlen',  pulse: true,  blink: false };
+  if (h <= 39) return { level: 2, color: '#FF8C00', label: '🟠 Gefährliche Instabilität — EMP beeinträchtigt', pulse: false, blink: false };
+  if (h <= 59) return { level: 1, color: '#FFD700', label: '⚠ Humanity sinkt — achte auf Implantate',        pulse: false, blink: false };
   return null;
 }
 
@@ -637,17 +639,17 @@ function buildSnapshot(item) {
                rof: item.rof || null, notes: item.notes || null,
                price: item.price, raw_cost: item.raw_cost, category: item.category };
     case 'armor':
-      return { name: item.name,
+      return { name: item.name, category: item.category,
                sp: parseInt(x.sp) || 0,
                penalty: (x.armor_penalty && x.armor_penalty !== 'None') ? parseInt(x.armor_penalty) || 0 : 0,
                notes: item.notes || null, price: item.price, raw_cost: item.raw_cost };
     case 'cyberware':
-      return { name: item.name, notes: item.notes || null,
+      return { name: item.name, category: item.category, notes: item.notes || null,
                install: x.install || null, humanity_loss: x.humanity_loss || null,
                price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null,
                slotCost: getSlotCost(item) };
     default:
-      return { name: item.name, notes: item.notes || null,
+      return { name: item.name, category: item.category, notes: item.notes || null,
                price: item.price, raw_cost: item.raw_cost };
   }
 }
@@ -700,8 +702,10 @@ function showHumanityConfirmModal(amount, expr) {
     const empWarn = oldEMP !== newEMP
       ? `<div style="color:#FF8C00;margin-top:.5rem;font-size:.82rem">⚠ EMP sinkt: ${oldEMP} → ${newEMP}</div>`
       : '';
-    const psychoWarn = getCyberpsychosisStatus(newH) && !getCyberpsychosisStatus(curH)
-      ? `<div style="color:#FF2D2D;margin-top:.4rem;font-size:.78rem">⚠ ${getCyberpsychosisStatus(newH).label}</div>`
+    const _newSt = getCyberpsychosisStatus(newH);
+    const _curSt = getCyberpsychosisStatus(curH);
+    const psychoWarn = (_newSt && !_curSt)
+      ? `<div style="color:#FF2D2D;margin-top:.4rem;font-size:.78rem">⚠ ${_newSt.label ?? ''}</div>`
       : '';
 
     document.getElementById('humanityModalText').innerHTML =
@@ -806,7 +810,13 @@ async function buyItem(item, override = false) {
   msg.textContent = '';
 
   try {
-    await patchCharacter(char.id, patch);
+    // Cash-Log: patchCash loggt den Kauf automatisch, anderes via patchCharacter
+    const cashPatch = { ...patch };
+    delete cashPatch.cash;
+    const newCash   = patch.cash;
+    const newCashLog = await patchCash(char.id, newCash, -(price), item.name, char.cash_log);
+    if (Object.keys(cashPatch).length) await patchCharacter(char.id, cashPatch);
+    patch.cash_log = newCashLog;
     Object.assign(char, patch);
     updateNavDisplay();
     msg.textContent = `✓ ${item.name} gekauft`;

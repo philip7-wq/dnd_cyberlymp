@@ -12,6 +12,30 @@
 </head>
 <body>
 
+<!-- Armor Slot Modal -->
+<div id="armorSlotModal" hidden style="position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center">
+  <div style="background:#111;border:1px solid #00E5FF;border-radius:6px;padding:1.5rem;max-width:280px;width:90%">
+    <div style="font-family:Audiowide,sans-serif;font-size:.75rem;color:#00E5FF;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem">Slot wählen</div>
+    <div style="display:flex;flex-direction:column;gap:.4rem">
+      <button data-armor-slot="head"   style="background:#1a1a1a;border:1px solid #00E5FF;color:#00E5FF;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem">🪖 HEAD</button>
+      <button data-armor-slot="body"   style="background:#1a1a1a;border:1px solid #00E5FF;color:#00E5FF;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem">🛡 BODY</button>
+      <button data-armor-slot="shield" style="background:#1a1a1a;border:1px solid #00E5FF;color:#00E5FF;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem">🛡 SHIELD</button>
+    </div>
+    <button id="armorSlotCancel" style="margin-top:.75rem;width:100%;background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:.35rem;cursor:pointer;font-size:.78rem">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Cash Log Modal -->
+<div id="cashLogModal" hidden style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center">
+  <div style="background:#111;border:1px solid var(--border);border-radius:6px;padding:1.25rem;max-width:400px;width:92%;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <span style="font-family:Audiowide,sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)">Transaktionsverlauf</span>
+      <button id="cashLogClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem">✕</button>
+    </div>
+    <div id="cashLogContent" style="font-size:.78rem;display:flex;flex-direction:column;gap:.3rem"></div>
+  </div>
+</div>
+
 <!-- Cyberpsychosis Modal (Player) -->
 <div id="playerPsychosisModal" hidden style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center">
   <div style="background:#0d0000;border:2px solid #FF0000;border-radius:8px;padding:2rem;max-width:400px;width:92%;text-align:center">
@@ -34,6 +58,7 @@
   <span id="navName" style="font-family:var(--font-display);font-size:.85rem;color:var(--red);margin-left:.75rem"></span>
   <a id="shopLink" href="#" class="btn btn-ghost" style="font-size:.75rem">Shop</a>
   <span id="navCash" class="nav-cash" style="margin-left:auto">—</span>
+  <button id="cashLogBtn" title="Transaktionsverlauf" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.85rem;padding:0 .3rem;margin-left:.2rem;opacity:.7">📜</button>
   <a href="index.html" class="btn btn-ghost" style="font-size:.75rem">← Übersicht</a>
 </nav>
 
@@ -310,6 +335,16 @@ let _lastEffEMP     = null;
 let _psychosisShown = false;
 let _roomItems      = [];
 
+function updateNavCash() {
+  const cash = char.cash ?? 0;
+  const el   = document.getElementById('navCash');
+  if (!el) return;
+  el.textContent = cash < 0
+    ? `💸 ${cash.toLocaleString('de-DE')} eb`
+    : `${cash.toLocaleString('de-DE')} eb`;
+  el.style.color = cash < 0 ? 'var(--red)' : '';
+}
+
 const SVG_ZONE_SLOTS = {
   head:     ['neuralLink','rightCybereye','leftCybereye','cyberaudio'],
   rightArm: ['rightCyberarm'],
@@ -413,7 +448,7 @@ if (id) {
       renderCyberware();
       if ((char.current_hp ?? 0) > 0) deathSavePenalty = 0;
       renderCombatPanel();
-      document.getElementById('navCash').textContent = `${(char.cash ?? 0).toLocaleString('de-DE')} eb`;
+      updateNavCash();
       const newHp = char.current_hp ?? 0;
       if (newHp < prevHp) flashScreen('damage');
       else if (newHp > prevHp) flashScreen('heal');
@@ -464,6 +499,7 @@ function renderAll() {
   setupDice();
   setupTooltip();
   setupRemove();
+  setupCashLog();
   setupCritModal();
   setupSkillFavs();
   setupSkillUpgrades();
@@ -484,7 +520,7 @@ function renderHeader() {
                char.player_name ? `(${char.player_name})` : null]
     .filter(Boolean).join(' · ');
   document.getElementById('charSub').textContent = sub || '—';
-  document.getElementById('navCash').textContent = `${(char.cash ?? 0).toLocaleString('de-DE')} eb`;
+  updateNavCash();
 
   const ipBadgeEl = document.getElementById('charIpValue');
   if (ipBadgeEl) ipBadgeEl.textContent = char.improvement_points ?? 0;
@@ -498,11 +534,13 @@ function renderHeader() {
 }
 
 function getPsychosisStatus(humanity) {
-  if (humanity <= 0)  return { color: '#FF0000', label: 'CYBERPSYCHOSIS',          pulse: true,  blink: false };
-  if (humanity <= 9)  return { color: '#FF0000', label: '💀 KRITISCH',               pulse: false, blink: true  };
-  if (humanity <= 19) return { color: '#FF2D2D', label: 'Cyberpsychosis-Risiko',    pulse: true,  blink: false };
-  if (humanity <= 39) return { color: '#FF8C00', label: 'Gefährliche Instabilität', pulse: false, blink: false };
-  if (humanity <= 59) return { color: '#FFD700', label: 'Humanity sinkt',           pulse: false, blink: false };
+  const h = typeof humanity === 'number' && !isNaN(humanity) ? humanity : null;
+  if (h === null) return null;
+  if (h <= 0)  return { color: '#FF0000', label: 'CYBERPSYCHOSIS — GM übernimmt Kontrolle',       pulse: true,  blink: false };
+  if (h <= 9)  return { color: '#FF0000', label: '💀 KRITISCH — eine schlechte Entscheidung noch',  pulse: false, blink: true  };
+  if (h <= 19) return { color: '#FF2D2D', label: '🔴 Cyberpsychosis-Risiko — Therapie empfohlen',  pulse: true,  blink: false };
+  if (h <= 39) return { color: '#FF8C00', label: '🟠 Gefährliche Instabilität — EMP beeinträchtigt', pulse: false, blink: false };
+  if (h <= 59) return { color: '#FFD700', label: '⚠ Humanity sinkt — achte auf Implantate',        pulse: false, blink: false };
   return null;
 }
 
@@ -530,8 +568,8 @@ function updateResDisplay() {
   const st  = getPsychosisStatus(hum);
   const lbl = document.getElementById('psychosisLabel');
   if (lbl) {
-    lbl.textContent = st ? st.label : '';
-    lbl.style.color = st ? st.color : '';
+    lbl.textContent = st?.label ?? '';
+    lbl.style.color = st?.color ?? '';
     lbl.style.animation = st?.blink ? 'psychosis-blink .5s step-end infinite'
                         : st?.pulse ? 'psychosis-pulse 1s ease-in-out infinite' : '';
   }
@@ -539,8 +577,8 @@ function updateResDisplay() {
   // EMP-Effektivwert (floor(humanity/10), max stats.EMP)
   updateEffectiveEMP(hum);
 
-  // Cyberpsychosis-Event bei 0
-  if (hum <= 0) showPsychosisModal();
+  // Cyberpsychosis-Event nur wenn Charakter wirklich Humanity hat (nicht default 0)
+  if (maxHum > 0 && hum <= 0) showPsychosisModal();
 }
 
 function updateEffectiveEMP(humanity) {
@@ -570,7 +608,8 @@ function showPsychosisModal() {
   _psychosisShown = true;
   const modal = document.getElementById('playerPsychosisModal');
   if (modal) { modal.hidden = false; modal.style.display = 'flex'; }
-  sendMessage({ sender: char.name || 'Spieler', sender_role: char.role || '', content: `⚠ ${char.name} hat Cyberpsychosis! (Humanity 0)` }).catch(() => {});
+  const charName = char.name || char.handle || 'Unbekannt';
+  sendMessage({ sender: charName, sender_role: char.role || '', content: `⚠ ${charName} hat Cyberpsychosis! (Humanity 0)` }).catch(() => {});
 }
 
 function resetPsychosisModal() { _psychosisShown = false; }
@@ -864,19 +903,17 @@ function renderWeapons() {
   if (!weapons.length) { el.innerHTML = '<p class="empty-state">Keine Waffen eingetragen.</p>'; return; }
 
   el.innerHTML = weapons.map((w, i) => `
-    <div class="weapon-card has-tooltip" data-tooltip='${safeJson(w)}'>
-      <div class="weapon-name">
-        ${w.name}
-        <button class="remove-btn" data-inv="weapons" data-idx="${i}">✕</button>
+    <div class="weapon-card">
+      <div class="weapon-header">
+        <span class="weapon-name">${w.name}</span>
+        <span style="display:flex;gap:.25rem;align-items:center;margin-left:auto">
+          ${w.damage ? `<button class="roll-btn dmg-btn" data-expr="${w.damage}" data-ctx="${w.name} damage" style="font-size:.75rem;padding:.2rem .5rem">${w.damage}</button>` : ''}
+          <button class="unequip-btn" data-inv="weapons" data-idx="${i}" title="Abrüsten → Gear" style="background:none;border:none;cursor:pointer;font-size:.75rem;opacity:.6;padding:0 .2rem">📦</button>
+          <button class="remove-btn" data-inv="weapons" data-idx="${i}">✕</button>
+        </span>
       </div>
-      <div class="weapon-stats">
-        <div class="ws-pair"><span class="ws-label">Damage</span>
-          <span class="ws-val">${w.damage
-            ? `<button class="roll-btn dmg-btn" data-expr="${w.damage}" data-ctx="${w.name} damage">${w.damage}</button>`
-            : '—'}</span>
-        </div>
-        <div class="ws-pair"><span class="ws-label">ROF</span><span class="ws-val">${w.rof || '—'}</span></div>
-        <div class="ws-pair"><span class="ws-label">Ammo</span><span class="ws-val">${w.ammo || '—'}</span></div>
+      <div class="weapon-meta">
+        ${[w.ammo ? `Ammo: ${w.ammo}` : '', w.rof ? `ROF: ${w.rof}` : '', w.hands ? `Hands: ${w.hands}` : ''].filter(Boolean).join(' · ')}
       </div>
       ${w.notes ? `<div class="weapon-notes">${w.notes}</div>` : ''}
     </div>`).join('');
@@ -895,7 +932,7 @@ function renderArmor() {
   document.getElementById('tab-armor').innerHTML =
     `<div class="armor-grid">${slots.map(([label, s, slotKey]) => `
       <div class="armor-slot">
-        <div class="armor-slot-label">${label}${s.name ? `<button class="remove-btn" data-inv="armor" data-idx="${slotKey}" style="float:right">✕</button>` : ''}</div>
+        <div class="armor-slot-label">${label}${s.name ? `<span style="float:right;display:flex;gap:.2rem"><button class="unequip-btn" data-inv="armor" data-idx="${slotKey}" title="Ablegen → Gear" style="background:none;border:none;cursor:pointer;font-size:.7rem;opacity:.6">📦</button><button class="remove-btn" data-inv="armor" data-idx="${slotKey}">✕</button></span>` : ''}</div>
         <div class="armor-name">${s.name || '—'}</div>
         <div class="armor-sp">${s.sp ?? 0}</div>
         <div class="armor-pen">${s.penalty ? `−${s.penalty} REF` : 'kein Malus'}</div>
@@ -978,6 +1015,7 @@ function renderCyberware() {
           <div class="cyber-items">
             ${items.map((item, i) => `
               <span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
+              <button class="cyber-uninstall-btn" data-slot="${slot}" data-idx="${i}" title="Ausoperieren → Gear" style="background:none;border:none;cursor:pointer;font-size:.65rem;opacity:.5;padding:0 .15rem">🩺</button>
               <button class="remove-btn" data-inv="cyberware" data-slot="${slot}" data-idx="${i}">✕</button>
             `).join('')}
           </div>
@@ -1022,19 +1060,180 @@ function renderCyberware() {
 }
 
 // ── Gear tab ──────────────────────────────────────────────────
+function detectItemCategory(g) {
+  if (g.category) return g.category;
+  if (g.damage || g.rof != null)  return 'Ranged Weapon';
+  if (g.sp != null)               return 'Armor';
+  const sub = (g.subcategory || '').toLowerCase();
+  if (sub.includes('cyber') || sub.includes('ware') || g.humanity_loss) return 'Cyberware';
+  return null;
+}
+
+function getEquipButton(g, i) {
+  const cat = detectItemCategory(g);
+  if (!cat) return '';
+  if (['Ranged Weapon','Melee Weapon','Exotic Weapon'].includes(cat))
+    return `<button class="equip-btn" data-equip-idx="${i}" data-equip-type="weapon" title="Ausrüsten" style="background:none;border:none;cursor:pointer;font-size:.72rem;color:var(--cyan);padding:0 .2rem">⚔</button>`;
+  if (cat === 'Armor')
+    return `<button class="equip-btn" data-equip-idx="${i}" data-equip-type="armor" title="Anziehen" style="background:none;border:none;cursor:pointer;font-size:.72rem;color:var(--cyan);padding:0 .2rem">🛡</button>`;
+  if (cat === 'Cyberware')
+    return `<button class="equip-btn" data-equip-idx="${i}" data-equip-type="cyberware" title="Einbauen" style="background:none;border:none;cursor:pointer;font-size:.72rem;color:var(--cyan);padding:0 .2rem">🔧</button>`;
+  return '';
+}
+
 function renderGear() {
   const gear = char.gear || [];
   const el   = document.getElementById('tab-gear');
   if (!gear.length) { el.innerHTML = '<p class="empty-state">Kein Gear eingetragen.</p>'; return; }
   el.innerHTML = `<div class="gear-list">${gear.map((g, i) =>
-    `<div class="gear-item has-tooltip" data-tooltip='${safeJson(g)}'>
+    `<div class="gear-item" data-tooltip='${safeJson(g)}'>
       <div class="gear-item-name">
         ${g.name}
-        <button class="remove-btn" data-inv="gear" data-idx="${i}">✕</button>
-        <button class="drop-btn" data-inv="gear" data-idx="${i}" title="In Raum legen" style="background:none;border:none;cursor:pointer;font-size:.75rem;opacity:.6;padding:0 .2rem">📦</button>
+        <span style="display:flex;gap:.1rem;margin-left:auto;align-items:center">
+          ${getEquipButton(g, i)}
+          <button class="remove-btn" data-inv="gear" data-idx="${i}">✕</button>
+          <button class="drop-btn" data-inv="gear" data-idx="${i}" title="In Raum legen" style="background:none;border:none;cursor:pointer;font-size:.75rem;opacity:.6;padding:0 .2rem">📦</button>
+        </span>
       </div>
       ${g.notes ? `<div class="gear-item-notes">${g.notes}</div>` : ''}
+      ${g.damage ? `<div class="gear-item-notes">DMG: ${g.damage}${g.rof ? ` · ROF: ${g.rof}` : ''}</div>` : ''}
+      ${g.sp != null && g.sp > 0 ? `<div class="gear-item-notes">SP: ${g.sp}${g.penalty ? ` · Penalty: ${g.penalty}` : ''}</div>` : ''}
     </div>`).join('')}</div>`;
+
+  // Equip-Button Handler
+  el.querySelectorAll('.equip-btn').forEach(btn => {
+    btn.addEventListener('click', () => equipFromGear(parseInt(btn.dataset.equipIdx), btn.dataset.equipType));
+  });
+}
+
+function showArmorSlotModal() {
+  return new Promise(resolve => {
+    const modal = document.getElementById('armorSlotModal');
+    modal.hidden = false; modal.style.display = 'flex';
+    const cleanup = val => { modal.hidden = true; modal.style.display = ''; resolve(val); };
+    modal.querySelectorAll('[data-armor-slot]').forEach(btn => {
+      btn.onclick = () => cleanup(btn.dataset.armorSlot);
+    });
+    document.getElementById('armorSlotCancel').onclick = () => cleanup(null);
+  });
+}
+
+async function equipFromGear(idx, type) {
+  const item = (char.gear || [])[idx];
+  if (!item) return;
+
+  if (type === 'weapon') {
+    const snap = { ...item, category: item.category || 'Ranged Weapon' };
+    char.weapons = [...(char.weapons || []), snap];
+    char.gear    = char.gear.filter((_, i) => i !== idx);
+    try {
+      await patchCharacter(char.id, { weapons: char.weapons, gear: char.gear });
+      renderWeapons(); renderGear();
+      showToast(`⚔ ${item.name} ausgerüstet`);
+    } catch(e) { showToast('Fehler: ' + e.message); }
+    return;
+  }
+
+  if (type === 'armor') {
+    const slot = await showArmorSlotModal();
+    if (!slot) return;
+    const snap = { ...item, category: 'Armor' };
+    char.armor = { ...(char.armor || {}), [slot]: snap };
+    char.gear  = char.gear.filter((_, i) => i !== idx);
+    try {
+      await patchCharacter(char.id, { armor: char.armor, gear: char.gear });
+      renderArmor(); renderGear();
+      showToast(`🛡 ${item.name} in ${slot.toUpperCase()} angelegt`);
+    } catch(e) { showToast('Fehler: ' + e.message); }
+    return;
+  }
+
+  if (type === 'cyberware') {
+    await equipCyberwareFromGear(item, idx);
+  }
+}
+
+async function equipCyberwareFromGear(item, gearIdx) {
+  // Slot bestimmen
+  const sub   = item.subcategory || '';
+  const CMAP  = { 'Fashionware':['fashionware'], 'Neuralware / Chipware':['neuralLink'], 'Chipware':['neuralLink'],
+    'Cybereye / Cybereye Option':['rightCybereye','leftCybereye'], 'Cybereye Option':['rightCybereye','leftCybereye'],
+    'Cyberaudio Suite / Option':['cyberaudio'], 'Cyberaudio Option':['cyberaudio'],
+    'Internal Cyberware':['internal'], 'External Cyberware':['external'],
+    'Cyberarm / Cyberarm Option':['rightCyberarm','leftCyberarm'], 'Cyberarm Option':['rightCyberarm','leftCyberarm'],
+    'Cyberarm/Cyberleg/Cyberlimb Option':['rightCyberarm','leftCyberarm','rightCyberleg','leftCyberleg'],
+    'Cyberleg/Cyberlimb Option':['rightCyberleg','leftCyberleg'], 'Borgware':['borgware'] };
+  const slots = CMAP[sub] || ['internal'];
+
+  let chosenSlot = slots[0];
+  if (slots.length > 1) {
+    chosenSlot = await new Promise(resolve => {
+      // Mini-Slot-Picker (reuse existing slot modal pattern)
+      const modal = document.getElementById('armorSlotModal');
+      const title = modal.querySelector('div');
+      const origTitle = title?.textContent;
+      if (title) title.textContent = `${item.name} — Slot wählen`;
+      const btns = modal.querySelectorAll('[data-armor-slot]');
+      btns.forEach(b => { b.style.display = 'none'; });
+      modal.hidden = false; modal.style.display = 'flex';
+      const cleanup = val => {
+        modal.hidden = true; modal.style.display = '';
+        btns.forEach(b => { b.style.display = ''; b.onclick = null; });
+        if (title) title.textContent = origTitle;
+        resolve(val);
+      };
+      const SLOTLABELS = { rightCybereye:'Rechtes Auge', leftCybereye:'Linkes Auge', rightCyberarm:'Rechter Arm', leftCyberarm:'Linker Arm', rightCyberleg:'Rechtes Bein', leftCyberleg:'Linkes Bein', neuralLink:'Neural Link', cyberaudio:'Cyberaudio', internal:'Intern', external:'Extern', fashionware:'Fashionware', borgware:'Borgware' };
+      const container = modal.querySelector('div:nth-child(2)');
+      const dynBtns = slots.map(s => {
+        const b = document.createElement('button');
+        b.style.cssText = 'background:#1a1a1a;border:1px solid #00E5FF;color:#00E5FF;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem';
+        b.textContent = SLOTLABELS[s] || s;
+        b.onclick = () => cleanup(s);
+        return b;
+      });
+      if (container) { container.innerHTML = ''; dynBtns.forEach(b => container.appendChild(b)); }
+      document.getElementById('armorSlotCancel').onclick = () => cleanup(null);
+    });
+    if (!chosenSlot) return;
+  }
+
+  // Humanity Roll
+  let humanityLost = 0;
+  const hlStr = item.humanity_loss || item.extra?.humanity_loss;
+  if (hlStr && !String(hlStr).startsWith('0')) {
+    const parenM = String(hlStr).match(/\((\d+d\d+(?:[+-]\d+)?)\)/i);
+    const diceExpr = parenM ? parenM[1] : String(hlStr);
+    const m = diceExpr.match(/^(\d+)d(\d+)(?:\+(\d+))?$/i);
+    if (m) {
+      let sum = 0;
+      for (let i = 0; i < +m[1]; i++) sum += Math.ceil(Math.random() * +m[2]);
+      humanityLost = Math.max(0, sum + (+m[3] || 0));
+    } else {
+      humanityLost = parseInt(hlStr) || 0;
+    }
+    if (humanityLost > 0) {
+      const curH  = char.current_humanity ?? 0;
+      const newH  = Math.max(0, curH - humanityLost);
+      const confirmed = await new Promise(resolve => {
+        if (!confirm(`Humanity-Verlust: ${humanityLost}\n(${curH} → ${newH})\n\nEinbauen bestätigen?`)) resolve(false); else resolve(true);
+      });
+      if (!confirmed) return;
+    }
+  }
+
+  // Einbauen
+  const existingCw = (char.cyberware && !Array.isArray(char.cyberware)) ? char.cyberware : {};
+  const snap = { ...item, category: 'Cyberware', slotCost: 1 };
+  const newCw = { ...existingCw, [chosenSlot]: [...(existingCw[chosenSlot] || []), snap] };
+  char.gear = char.gear.filter((_, i) => i !== gearIdx);
+  const patch = { cyberware: newCw, gear: char.gear };
+  if (humanityLost > 0) patch.current_humanity = Math.max(0, (char.current_humanity ?? 0) - humanityLost);
+  try {
+    await patchCharacter(char.id, patch);
+    Object.assign(char, patch);
+    renderCyberware(); renderGear(); updateResDisplay();
+    showToast(`🔧 ${item.name} installiert`);
+  } catch(e) { showToast('Fehler: ' + e.message); }
 }
 
 // ── Raum-Inventar ─────────────────────────────────────────────
@@ -2335,8 +2534,87 @@ function setupTooltip() {
 }
 
 // ── Item removal ──────────────────────────────────────────────
+function setupCashLog() {
+  document.getElementById('cashLogBtn')?.addEventListener('click', () => {
+    const modal = document.getElementById('cashLogModal');
+    const content = document.getElementById('cashLogContent');
+    const log = char.cash_log || [];
+    if (!log.length) {
+      content.innerHTML = '<div style="color:var(--text-muted)">Noch keine Transaktionen aufgezeichnet.</div>';
+    } else {
+      content.innerHTML = log.map(e => {
+        const sign  = e.delta >= 0 ? '+' : '';
+        const color = e.delta >= 0 ? '#2ecc71' : 'var(--red)';
+        const t     = new Date(e.ts).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+        return `<div style="display:flex;gap:.5rem;align-items:baseline;border-bottom:1px solid var(--border);padding:.25rem 0">
+          <span style="color:${color};font-family:Audiowide,sans-serif;font-size:.75rem;min-width:80px">${sign}${e.delta?.toLocaleString('de-DE')} eb</span>
+          <span style="flex:1;color:var(--text)">${e.reason || '—'}</span>
+          <span style="color:var(--text-muted);font-size:.65rem">${t}</span>
+          <span style="color:var(--text-muted);font-size:.65rem">${e.balance?.toLocaleString('de-DE')} eb</span>
+        </div>`;
+      }).join('');
+    }
+    modal.hidden = false;
+    modal.style.display = 'flex';
+  });
+  document.getElementById('cashLogClose')?.addEventListener('click', () => {
+    const modal = document.getElementById('cashLogModal');
+    modal.hidden = true; modal.style.display = '';
+  });
+  document.getElementById('cashLogModal')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) { e.currentTarget.hidden = true; e.currentTarget.style.display = ''; }
+  });
+}
+
 function setupRemove() {
   document.body.addEventListener('click', async e => {
+    // Cyberware uninstall → gear
+    const uninstBtn = e.target.closest('.cyber-uninstall-btn');
+    if (uninstBtn) {
+      const slot = uninstBtn.dataset.slot;
+      const idx  = parseInt(uninstBtn.dataset.idx);
+      const item = (char.cyberware?.[slot] || [])[idx];
+      if (!item) return;
+      if (!confirm(`"${item.name}" ausoperieren?\n(Humanity wird NICHT zurückgegeben)`)) return;
+      try {
+        const updated = [...(char.cyberware[slot] || [])];
+        updated.splice(idx, 1);
+        char.cyberware = { ...char.cyberware, [slot]: updated };
+        char.gear = [...(char.gear || []), { ...item, category: 'Cyberware' }];
+        await patchCharacter(char.id, { cyberware: char.cyberware, gear: char.gear });
+        renderCyberware(); renderGear();
+        showToast(`🩺 ${item.name} entfernt → Gear`);
+      } catch(err) { showToast('Fehler: ' + err.message); }
+      return;
+    }
+
+    // Unequip weapon/armor back to gear
+    const unequipBtn = e.target.closest('.unequip-btn');
+    if (unequipBtn) {
+      const inv = unequipBtn.dataset.inv;
+      const idxRaw = unequipBtn.dataset.idx; // string for armor (slot key), int for weapons
+      try {
+        let item;
+        if (inv === 'armor') {
+          item = char.armor?.[idxRaw];
+          if (!item?.name) return;
+          char.armor = { ...(char.armor || {}), [idxRaw]: { name: '', sp: 0, penalty: 0 } };
+        } else {
+          const idx = parseInt(idxRaw);
+          item = (char[inv] || [])[idx];
+          if (!item) return;
+          char[inv] = char[inv].filter((_, i) => i !== idx);
+        }
+        char.gear = [...(char.gear || []), { ...item, category: item.category || (inv === 'weapons' ? 'Ranged Weapon' : 'Armor') }];
+        await patchCharacter(char.id, { [inv]: char[inv], gear: char.gear });
+        if (inv === 'weapons') renderWeapons();
+        if (inv === 'armor')   renderArmor();
+        renderGear();
+        showToast(`📦 ${item.name} in Gear`);
+      } catch(err) { showToast('Fehler: ' + err.message); }
+      return;
+    }
+
     // Drop to room
     const dropBtn = e.target.closest('.drop-btn');
     if (dropBtn) {
