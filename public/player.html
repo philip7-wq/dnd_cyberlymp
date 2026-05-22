@@ -472,7 +472,8 @@ if (id) {
         renderCombatPanel();
         return;
       }
-      const prevHp = char.current_hp ?? 0;
+      const prevHp     = char.current_hp ?? 0;
+      const prevBmJson = JSON.stringify(char.blackmarket_state);
       Object.assign(char, updated);
       renderConditionBadges();
       checkDeathSave();
@@ -488,8 +489,10 @@ if (id) {
       const newHp = char.current_hp ?? 0;
       if (newHp < prevHp) flashScreen('damage');
       else if (newHp > prevHp) flashScreen('heal');
-      // Black Market: react to DM state changes
-      if ('blackmarket_state' in updated) checkBlackmarket(char.blackmarket_state);
+      // Black Market: only react when the state actually changed, not on every HP update
+      if (JSON.stringify(char.blackmarket_state) !== prevBmJson) {
+        checkBlackmarket(char.blackmarket_state);
+      }
     });
   } catch(e) {
     clearTimeout(bootTimeout);
@@ -550,8 +553,8 @@ function renderAll() {
   checkDeathSave();
   renderCombatPanel();
   updateTimerFromDb(combatSession?.timer ?? null);
-  // Check Black Market state on initial load
-  if (char.blackmarket_state?.active) checkBlackmarket(char.blackmarket_state);
+  // Always sync BM button/popup on load (hides button if BM is closed)
+  checkBlackmarket(char.blackmarket_state);
 }
 
 // ── Header ────────────────────────────────────────────────────
@@ -4004,7 +4007,8 @@ window._bmUpdateCash   = () => updateNavCash();
 <div id="bmModal" hidden style="position:fixed;inset:0;z-index:10500;display:none;align-items:center;justify-content:center">
   <div class="bm-vignette"></div>
   <div class="bm-door-container">
-    <img id="bmDoorImg" class="bm-door-img" src="" alt="Tür">
+    <img id="bmDoorImgA" class="bm-door-img bm-door-layer" src="" alt="Tür">
+    <img id="bmDoorImgB" class="bm-door-img bm-door-layer" src="" alt="" style="opacity:0">
     <!-- Offer card -->
     <div id="bmOfferCard" class="bm-offer-card" style="display:none">
       <div class="bm-offer-header">🚪 SCHWARZMARKT</div>
@@ -4067,10 +4071,14 @@ function bmShowPopup() {
   const modal = document.getElementById('bmModal');
   modal.hidden = false;
   modal.style.display = 'flex';
-  // Start with closed door, then open after 1.5s if door_open
-  const img = document.getElementById('bmDoorImg');
-  img.style.opacity = '1';
-  img.src = bmDoorSrc(state.door, false);
+  // Reset layers: A visible (closed door), B hidden
+  _bmActiveLayer = 'A';
+  const imgA = document.getElementById('bmDoorImgA');
+  const imgB = document.getElementById('bmDoorImgB');
+  imgA.src           = bmDoorSrc(state.door, false);
+  imgA.style.opacity = '1';
+  imgB.src           = '';
+  imgB.style.opacity = '0';
   if (state.door_open) {
     setTimeout(() => bmCrossfade(state.door, true), 1500);
   }
@@ -4087,9 +4095,9 @@ function bmUpdate(state, skipDoor = false) {
   if (!state) return;
   // Sync door image (skip when bmShowPopup handles the intro animation itself)
   if (!skipDoor) {
-    const img = document.getElementById('bmDoorImg');
-    const want = bmDoorSrc(state.door, state.door_open);
-    if (img.src && !img.src.endsWith(want)) bmCrossfade(state.door, state.door_open);
+    const front = document.getElementById('bmDoorImg' + _bmActiveLayer);
+    const want  = bmDoorSrc(state.door, state.door_open);
+    if (front.src && !front.src.endsWith(want)) bmCrossfade(state.door, state.door_open);
   }
 
   // Offer card
@@ -4128,13 +4136,22 @@ function bmUpdate(state, skipDoor = false) {
   negRow.style.display = 'none'; // Reset negotiation row on update
 }
 
+let _bmActiveLayer = 'A'; // tracks which img is currently on top
+
 function bmCrossfade(door, open) {
-  const img = document.getElementById('bmDoorImg');
-  img.style.opacity = '0';
-  setTimeout(() => {
-    img.src = bmDoorSrc(door, open);
-    img.style.opacity = '1';
-  }, 400);
+  const newSrc = bmDoorSrc(door, open);
+  const front = document.getElementById('bmDoorImg' + _bmActiveLayer);
+  const back  = document.getElementById('bmDoorImg' + (_bmActiveLayer === 'A' ? 'B' : 'A'));
+  // Load new image into the hidden back layer, then swap opacities simultaneously
+  back.src = newSrc;
+  back.style.transition  = 'none';
+  back.style.opacity     = '0';
+  // Force reflow so transition triggers
+  back.offsetHeight; // eslint-disable-line no-unused-expressions
+  back.style.transition  = '';
+  back.style.opacity     = '1';
+  front.style.opacity    = '0';
+  _bmActiveLayer = _bmActiveLayer === 'A' ? 'B' : 'A';
 }
 
 async function bmAccept() {
