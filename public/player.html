@@ -608,6 +608,15 @@ function setupStatEditing() {
 }
 
 // ── Skills tab ────────────────────────────────────────────────
+function getFightNpcs() {
+  const fightIds = new Set(
+    (combatSession?.combatants || [])
+      .filter(c => c.isNpc && c.isVisibleToPlayers && c.npcDbId)
+      .map(c => c.npcDbId)
+  );
+  return activeNpcs.filter(n => fightIds.has(n.id));
+}
+
 function getArmorRefPenalty() {
   const a = char?.armor || {};
   return (a.head?.penalty ?? 0) + (a.body?.penalty ?? 0) + (a.shield?.penalty ?? 0);
@@ -2082,10 +2091,11 @@ async function showDamageApplyModal(totalDamage) {
   calcRow.textContent = '';
   confirmBtn.disabled = true;
 
-  // Build target dropdown (fresh NPC list)
+  // Build target dropdown — only NPCs in active fight that DM made visible
+  const fightNpcs  = getFightNpcs();
   const playerOpts = allChars.map(c =>
     `<option value="char:${c.id}">${c.handle || c.name}</option>`).join('');
-  const npcOpts = activeNpcs.map(n => `<option value="npc:${n.id}">${n.name}</option>`).join('');
+  const npcOpts = fightNpcs.map(n => `<option value="npc:${n.id}">${n.name}</option>`).join('');
   select.innerHTML = `<option value="">— Ziel wählen —</option>`
     + (playerOpts ? `<optgroup label="── Spieler ──">${playerOpts}</optgroup>` : '')
     + (npcOpts   ? `<optgroup label="── NPCs ──">${npcOpts}</optgroup>` : '');
@@ -2147,11 +2157,12 @@ async function showDamageApplyModal(totalDamage) {
 
 async function showCritInjuryFlow() {
   activeNpcs = await getActiveNpcs();
-  critTarget = allChars.length === 1 && activeNpcs.length === 0 ? `char:${allChars[0].id}` : null;
+  const fightNpcs = getFightNpcs();
+  critTarget = allChars.length === 1 && fightNpcs.length === 0 ? `char:${allChars[0].id}` : null;
 
   const playerOpts = allChars.map(c =>
-    `<option value="char:${c.id}"${allChars.length === 1 && activeNpcs.length === 0 ? ' selected' : ''}>${c.handle || c.name}</option>`).join('');
-  const npcOpts = activeNpcs.map(n => `<option value="npc:${n.id}">${n.name}</option>`).join('');
+    `<option value="char:${c.id}"${allChars.length === 1 && fightNpcs.length === 0 ? ' selected' : ''}>${c.handle || c.name}</option>`).join('');
+  const npcOpts = fightNpcs.map(n => `<option value="npc:${n.id}">${n.name}</option>`).join('');
   const targetOptions = `<option value="">— Ziel wählen —</option>`
     + (playerOpts ? `<optgroup label="── Spieler ──">${playerOpts}</optgroup>` : '')
     + (npcOpts   ? `<optgroup label="── NPCs ──">${npcOpts}</optgroup>` : '');
