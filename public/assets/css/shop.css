@@ -172,6 +172,46 @@
   font-size: .85rem; color: var(--text-muted); letter-spacing: .1em;
 }
 
+/* ── Role Highlight ── */
+.shop-card.role-highlight { background: #1c1a10; border-color: #8a7800; }
+.shop-card.role-highlight:hover { border-color: #FFD700; }
+.role-badge { position: absolute; top: .3rem; right: .3rem; font-size: .75rem; cursor: help; line-height: 1; }
+.rec-toggle { border-top: 1px solid var(--border); margin-top: .5rem; padding-top: .6rem; color: var(--text-muted); }
+.rec-toggle.active { background: #2a2500; border-left-color: #FFD700; color: #FFD700; }
+
+/* ── Install Badges ── */
+.install-badge { font-size: .62rem; padding: .1rem .4rem; border-radius: 3px; display: inline-block; margin-top: .2rem; line-height: 1.4; }
+.install-clinic   { color: #00E5FF; border: 1px solid #00E5FF; background: rgba(0,229,255,.07); }
+.install-hospital { color: #FF8C00; border: 1px solid #FF8C00; background: rgba(255,140,0,.07); }
+
+/* ── Humanity Cost Preview ── */
+.humanity-cost-preview {
+  font-size: .8rem; color: #aaa; margin: .4rem 0;
+  padding: .35rem .6rem; background: #1a1010;
+  border-left: 2px solid var(--red); border-radius: 0 3px 3px 0;
+}
+.humanity-cost-preview strong { color: var(--red); }
+
+/* ── Slot Info ── */
+.slot-info { font-size: .68rem; color: var(--text-muted); margin: .25rem 0 .1rem; }
+.slot-info.slot-warn { color: #FF8C00; }
+.shop-card.slot-full { opacity: .45; }
+.shop-card.slot-full:not(.active):hover { border-color: var(--border); cursor: not-allowed; }
+
+/* ── Cyberpsychosis Pulse ── */
+@keyframes psychosis-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .35; }
+}
+
+/* ── Psychosis Modal ── */
+#psychosisModal .psychosis-title {
+  font-family: Audiowide, sans-serif; font-size: 1.1rem;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: #FF0000; margin-bottom: .5rem;
+  animation: psychosis-pulse .8s ease-in-out infinite;
+}
+
 /* ── Responsive: stack on narrow screens ── */
 @media (max-width: 600px) {
   .shop-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }

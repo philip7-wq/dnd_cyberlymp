@@ -16,6 +16,7 @@
   <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
   <span id="navCharName" style="font-family:var(--font-display);font-size:.85rem;color:var(--red);margin-left:.75rem"></span>
   <span class="nav-cash" id="navCash"></span>
+  <span id="psychosisStatus"></span>
   <a id="backLink" href="index.html" class="btn btn-ghost" style="font-size:.75rem;margin-left:1rem">← Charakter</a>
 </nav>
 
@@ -44,6 +45,16 @@
     <div id="slotModalTitle" style="font-family:Audiowide,sans-serif;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:#00E5FF;margin-bottom:1rem"></div>
     <div id="slotModalBtns" style="display:flex;flex-wrap:wrap;gap:.5rem"></div>
     <button id="slotModalCancel" style="margin-top:1rem;background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:.35rem .8rem;cursor:pointer;font-size:.78rem;width:100%">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Cyberpsychosis Modal -->
+<div id="psychosisModal" hidden style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.85);align-items:center;justify-content:center">
+  <div style="background:#0d0000;border:2px solid #FF0000;border-radius:6px;padding:2rem;max-width:380px;width:92%;text-align:center">
+    <div class="psychosis-title">⚠ CYBERPSYCHOSIS ⚠</div>
+    <div style="color:#FF2D2D;font-size:.95rem;margin-bottom:1rem;line-height:1.6">Humanity auf <strong>0</strong> gesunken.<br>Der GM übernimmt die Kontrolle über diesen Charakter.</div>
+    <div style="color:#aaa;font-size:.78rem;margin-bottom:1.25rem">Cyberpunk RED Core Rulebook S. 229</div>
+    <button id="psychosisModalClose" style="background:#FF0000;border:none;color:#fff;border-radius:4px;padding:.5rem 2rem;cursor:pointer;font-family:Audiowide,sans-serif;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase">Verstanden</button>
   </div>
 </div>
 
@@ -89,6 +100,62 @@ const SLOT_LABELS = {
   fashionware:'Fashionware', borgware:'Borgware',
 };
 
+// ── Role-spezifische Highlights (CP RED Rulebook) ─────────────
+const ROLE_HIGHLIGHTS = {
+  Rockerboy: ['Audio Recorder','Chemskin','Cyberaudio Suite','Tech Hair',
+              'Very Heavy Pistol','Heavy Melee Weapon','Flashbang Grenade','Teargas Grenade','Light Armorjack'],
+  Solo:      ['Biomonitor','Neural Link','Sandevistan','Speedware','Wolvers',
+              'Assault Rifle','Very Heavy Pistol','Heavy Melee Weapon','Bulletproof Shield','Light Armorjack'],
+  Netrunner: ['Interface Plugs','Neural Link','Shift Tacts',
+              'Very Heavy Pistol','Light Armorjack','Body Armor','Head Armor','Cyberdeck'],
+  Tech:      ['Cybereye','MicroOptics','Skinwatch','Tool Hand',
+              'Shotgun','Assault Rifle','Flashbang Grenade','Light Armorjack','Techtool'],
+  Medtech:   ['Biomonitor','Cybereye','Nasal Filters','Toxin Binders','TeleOptics',
+              'Shotgun','Assault Rifle','Smoke Grenade','Bulletproof Shield','Light Armorjack','Medtech Bag'],
+  Media:     ['Amplified Hearing','Voice Stress Analyzer','Cyberaudio Suite','Light Tattoo',
+              'Heavy Pistol','Very Heavy Pistol','Light Armorjack'],
+  Lawman:    ['Hidden Holster','Subdermal Pocket',
+              'Assault Rifle','Shotgun','Heavy Pistol','Bulletproof Shield','Smoke Grenade','Light Armorjack'],
+  Exec:      ['Biomonitor','Tech Hair','Cyberaudio Suite','Internal Agent','Toxin Binders','Nasal Filters',
+              'Very Heavy Pistol','Light Armorjack'],
+  Fixer:     ['Cyberaudio Suite','Internal Agent','Subdermal Pocket','Voice Stress Analyzer','Amplified Hearing',
+              'Heavy Pistol','Very Heavy Pistol','Light Melee Weapon','Light Armorjack'],
+  Nomad:     ['Interface Plugs','Wolvers','Neural Link',
+              'Heavy Pistol','Very Heavy Pistol','Heavy Melee Weapon','Light Armorjack'],
+};
+
+// ── Foundational-Voraussetzungen für Cyberware-Options ────────
+const FOUNDATIONAL_REQ = {
+  'Cybereye Option':           { name: 'Cybereye',        slots: ['rightCybereye','leftCybereye'] },
+  'Cyberarm Option':           { name: 'Cyberarm',        slots: ['rightCyberarm','leftCyberarm'] },
+  'Cyberleg/Cyberlimb Option': { name: 'Cyberleg',        slots: ['rightCyberleg','leftCyberleg'] },
+  'Cyberaudio Option':         { name: 'Cyberaudio Suite',slots: ['cyberaudio'] },
+};
+
+// ── Critical Injury → gesperrte Cyberware-Subcategories ───────
+const INJURY_BLOCKS = [
+  { injuries: ['Broken Arm','Dismembered Arm','Dismembered Hand','Crushed Fingers'],
+    subcategories: ['Cyberarm Option','Cyberarm / Cyberarm Option'] },
+  { injuries: ['Broken Leg','Dismembered Leg'],
+    subcategories: ['Cyberleg/Cyberlimb Option'] },
+  { injuries: ['Lost Eye','Damaged Eye'],
+    subcategories: ['Cybereye / Cybereye Option','Cybereye Option'] },
+  { injuries: ['Lost Ear','Damaged Ear'],
+    subcategories: ['Cyberaudio Suite / Option','Cyberaudio Option'] },
+  { injuries: ['Brain Injury','Cracked Skull'],
+    subcategories: ['Neuralware / Chipware','Chipware'] },
+];
+
+// ── Maximale Option-Slots pro Slot-Typ ────────────────────────
+const SLOT_MAXES = {
+  rightCybereye: 3, leftCybereye:  3,
+  rightCyberarm: 4, leftCyberarm:  4,
+  rightCyberleg: 4, leftCyberleg:  4,
+  cyberaudio: 3, neuralLink: 5,
+  fashionware: 7, internal: 7, external: 7,
+  borgware: Infinity,
+};
+
 // ── Config ────────────────────────────────────────────────────
 const SHOP_CATEGORIES = [
   'Ranged Weapon',
@@ -111,6 +178,7 @@ let items  = [];           // all fetched items
 let activeCategory = SHOP_CATEGORIES[0];
 let selectedItem   = null;
 let armorSlot      = 'body';
+let showOnlyRecommended = false;
 
 // ── Boot ──────────────────────────────────────────────────────
 if (!id) {
@@ -142,9 +210,81 @@ function parseMaxHumanityLoss(str) {
   return isNaN(num) ? 0 : num;
 }
 
+// ── Role-Highlight-Check ──────────────────────────────────────
+function isRoleHighlight(item) {
+  const keywords = ROLE_HIGHLIGHTS[char?.role] || [];
+  return keywords.some(k => item.name.toLowerCase().includes(k.toLowerCase()));
+}
+
+// ── Critical Injuries aus JSON-String parsen ──────────────────
+function parseInjuries() {
+  try { return JSON.parse(char.critical_injuries || '[]'); } catch { return []; }
+}
+
+// ── EMP aus Humanity berechnen ────────────────────────────────
+function calcEMP(humanity) { return Math.floor((humanity ?? 0) / 10); }
+
+// ── Cyberpsychosis-Status ─────────────────────────────────────
+function getCyberpsychosisStatus(humanity) {
+  if (humanity <= 0)  return { level: 4, color: '#FF0000', label: 'CYBERPSYCHOSIS', pulse: false };
+  if (humanity <= 19) return { level: 3, color: '#FF2D2D', label: 'Cyberpsychosis-Risiko', pulse: true };
+  if (humanity <= 39) return { level: 2, color: '#FF8C00', label: 'Gefährliche Instabilität', pulse: false };
+  if (humanity <= 59) return { level: 1, color: '#FFD700', label: 'Humanity sinkt', pulse: false };
+  return null;
+}
+
+// ── Foundational Piece Check ──────────────────────────────────
+function getFoundationalBlock(item) {
+  if (item.category !== 'Cyberware') return null;
+  const sub = item.subcategory || '';
+
+  // Neuralware-Options erkennen: Subcategory "Neuralware / Chipware" + "Requires Neural Link" in notes
+  if ((sub === 'Neuralware / Chipware' || sub === 'Chipware') && item.notes?.includes('Requires Neural Link')) {
+    const cw = char.cyberware || {};
+    return (cw.neuralLink || []).some(c => c.name === 'Neural Link') ? null : 'Neural Link';
+  }
+
+  const req = FOUNDATIONAL_REQ[sub];
+  if (!req) return null;
+
+  // Cyberleg selbst blockiert sich nicht
+  if (sub === 'Cyberleg/Cyberlimb Option' && item.name === 'Cyberleg') return null;
+
+  const cw = char.cyberware || {};
+  return req.slots.some(s => (cw[s] || []).some(c => c.name === req.name)) ? null : req.name;
+}
+
+// ── Critical Injury Block ─────────────────────────────────────
+function getInjuryBlock(item) {
+  if (item.category !== 'Cyberware') return null;
+  const activeNames = parseInjuries().map(i => i.name || i);
+  for (const rule of INJURY_BLOCKS) {
+    if (rule.subcategories.includes(item.subcategory)) {
+      const blocking = rule.injuries.find(inj => activeNames.includes(inj));
+      if (blocking) return blocking;
+    }
+  }
+  return null;
+}
+
+// ── Slot-Kosten eines Items (aus notes) ───────────────────────
+function getSlotCost(item) {
+  const m = (item.notes || '').match(/takes (\d+) Option Slot/i);
+  return m ? parseInt(m[1]) : 1;
+}
+
+// ── Slot-Auslastung prüfen ────────────────────────────────────
+function getSlotStatus(slot, newItemCost = 0) {
+  const max = SLOT_MAXES[slot] ?? Infinity;
+  if (!isFinite(max)) return { full: false, used: 0, max };
+  const existing = (char.cyberware || {})[slot] || [];
+  const used = existing.reduce((s, c) => s + (c.slotCost || 1), 0);
+  return { full: used + newItemCost > max, used, max };
+}
+
 function getGates(item) {
   const x   = item.extra || {};
-  const out = { cash: true, rank: true, humanity: true };
+  const out = { cash: true, rank: true, humanity: true, foundational: null, injuryBlock: null, slotFull: false };
 
   out.cash = (char.cash ?? 0) >= (item.price ?? 0);
 
@@ -163,6 +303,19 @@ function getGates(item) {
     }
   }
 
+  if (item.category === 'Cyberware') {
+    out.foundational = getFoundationalBlock(item);
+    out.injuryBlock  = getInjuryBlock(item);
+
+    // Slot-Auslastung: bei Single-Slot-Items vorab prüfen
+    const sub   = item.subcategory || '';
+    const slots = CYBERWARE_SLOT_MAP[sub];
+    if (slots?.length === 1) {
+      const st = getSlotStatus(slots[0], getSlotCost(item));
+      if (st.full) { out.slotFull = true; out.slotStatus = st; }
+    }
+  }
+
   return out;
 }
 
@@ -170,25 +323,46 @@ function getGates(item) {
 function renderNav() {
   document.title = `Shop — ${char.name}`;
   document.getElementById('navCharName').textContent = char.name;
-  updateCashDisplay();
+  updateNavDisplay();
 }
 
-function updateCashDisplay() {
+function updateNavDisplay() {
   document.getElementById('navCash').textContent = `💰 ${char.cash ?? 0} eb`;
+  const st  = getCyberpsychosisStatus(char.current_humanity ?? 0);
+  const el  = document.getElementById('psychosisStatus');
+  if (st) {
+    el.textContent = st.label;
+    el.style.cssText = `color:${st.color};font-size:.72rem;margin-left:.75rem;font-family:Audiowide,sans-serif;letter-spacing:.06em${st.pulse ? ';animation:psychosis-pulse 1s ease-in-out infinite' : ''}`;
+  } else {
+    el.textContent = '';
+    el.style.cssText = '';
+  }
 }
 
 // ── Category sidebar ──────────────────────────────────────────
+const REC_TOGGLE_CATS = ['Cyberware','Ranged Weapon','Melee Weapon','Exotic Weapon','Armor','Gear'];
+
 function renderCatButtons() {
   const wrap = document.getElementById('catButtons');
+  const showToggle = REC_TOGGLE_CATS.includes(activeCategory) && ROLE_HIGHLIGHTS[char?.role];
   wrap.innerHTML = SHOP_CATEGORIES.map(cat => `
     <button class="cat-btn${cat === activeCategory ? ' active' : ''}" data-cat="${cat}">${cat}</button>
-  `).join('');
+  `).join('')
+  + (showToggle ? `<button id="recToggle" class="cat-btn rec-toggle${showOnlyRecommended ? ' active' : ''}">⭐ Nur Empfohlen</button>` : '');
+
   wrap.addEventListener('click', e => {
+    if (e.target.id === 'recToggle') {
+      showOnlyRecommended = !showOnlyRecommended;
+      e.target.classList.toggle('active', showOnlyRecommended);
+      renderGrid();
+      return;
+    }
     const btn = e.target.closest('.cat-btn');
-    if (!btn) return;
+    if (!btn || btn.id === 'recToggle') return;
     activeCategory = btn.dataset.cat;
     selectedItem   = null;
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderCatButtons(); // re-render um Toggle-Sichtbarkeit zu aktualisieren
     renderGrid();
     closeDetail();
   });
@@ -197,10 +371,12 @@ function renderCatButtons() {
 // ── Item grid ─────────────────────────────────────────────────
 function renderGrid() {
   const wrap = document.getElementById('shopGridWrap');
-  const list = items.filter(i => i.category === activeCategory);
+  let list = items.filter(i => i.category === activeCategory);
+
+  if (showOnlyRecommended) list = list.filter(i => isRoleHighlight(i));
 
   if (!list.length) {
-    wrap.innerHTML = `<p class="shop-empty">Keine Items in dieser Kategorie.</p>`;
+    wrap.innerHTML = `<p class="shop-empty">${showOnlyRecommended ? 'Keine empfohlenen Items in dieser Kategorie.' : 'Keine Items in dieser Kategorie.'}</p>`;
     return;
   }
 
@@ -216,19 +392,38 @@ function renderGrid() {
     ${sub ? `<div class="shop-section-head">${sub}</div>` : ''}
     <div class="shop-grid">
       ${groupItems.map(item => {
-        const g        = getGates(item);
-        const isLocked = !g.rank || !g.humanity;
-        const cashOut  = !g.cash;
-        let lockTip    = '';
-        if (!g.rank)          lockTip = `Benötigt Nomad Rank ${g.rankRequired} (du hast Rank ${g.rankCurrent})`;
-        else if (!g.humanity) lockTip = `Nicht genug Humanity (riskiert Cyberpsychose)`;
+        const g          = getGates(item);
+        const highlighted = isRoleHighlight(item);
+        const isLocked   = !g.rank || !g.humanity || !!g.foundational || !!g.injuryBlock;
+        const cashOut    = !g.cash;
+        const slotFull   = g.slotFull;
+
+        let lockTip = '';
+        if (!g.rank)            lockTip = `Benötigt Nomad Rank ${g.rankRequired} (du hast Rank ${g.rankCurrent})`;
+        else if (!g.humanity)   lockTip = `Nicht genug Humanity (riskiert Cyberpsychose)`;
+        else if (g.foundational) lockTip = `Benötigt zuerst: ${g.foundational}`;
+        else if (g.injuryBlock) lockTip = `Critical Injury: ${g.injuryBlock} — erst heilen`;
+
+        const installBadge = (() => {
+          const inst = item.extra?.install;
+          if (inst === 'Clinic')   return `<div class="install-badge install-clinic">Ripperdoc / Medtech</div>`;
+          if (inst === 'Hospital') return `<div class="install-badge install-hospital">⚠ Hospital</div>`;
+          return '';
+        })();
+
+        const slotBadge = slotFull
+          ? `<div style="font-size:.62rem;color:#FF8C00;margin-top:.2rem">Maximale Slots (${g.slotStatus.used}/${g.slotStatus.max})</div>`
+          : '';
+
         return `
-        <div class="shop-card${selectedItem?.id === item.id ? ' active' : ''}${cashOut ? ' card-no-cash' : ''}${isLocked ? ' card-locked' : ''}"
+        <div class="shop-card${selectedItem?.id === item.id ? ' active' : ''}${cashOut ? ' card-no-cash' : ''}${isLocked ? ' card-locked' : ''}${slotFull ? ' slot-full' : ''}${highlighted ? ' role-highlight' : ''}"
              data-id="${item.id}">
           <div class="shop-card-name">${item.name}</div>
           <div class="shop-card-price">${item.price != null ? item.price + ' eb' : '—'}</div>
+          ${installBadge}${slotBadge}
           ${item.notes ? `<div class="shop-card-notes">${item.notes}</div>` : ''}
           ${isLocked ? `<div class="lock-icon" title="${lockTip}">🔒</div>` : ''}
+          ${highlighted ? `<span class="role-badge" title="Core Item für ${char.role} laut CP RED Rulebook">⭐</span>` : ''}
         </div>`;
       }).join('')}
     </div>
@@ -265,7 +460,13 @@ function openDetail(item) {
   if (x.sp)         fields.push(['SP',        x.sp]);
   if (x.armor_penalty && x.armor_penalty !== 'None')
                      fields.push(['Penalty',  x.armor_penalty]);
-  if (x.install)     fields.push(['Install',  x.install]);
+  if (x.install && x.install !== 'Mall') {
+    const cls = x.install === 'Hospital' ? 'install-hospital' : 'install-clinic';
+    const msg = x.install === 'Hospital'
+      ? '⚠ Hospital — seltene Einrichtung'
+      : 'Benötigt Ripperdoc oder Medtech zur Installation';
+    fields.push(['Install', `<span class="install-badge ${cls}">${msg}</span>`]);
+  }
   if (x.humanity_loss) fields.push(['Humanity', x.humanity_loss]);
   if (x.concealable) fields.push(['Concealable', 'Ja']);
   if (x.magazine)    fields.push(['Magazine', x.magazine]);
@@ -292,13 +493,43 @@ function openDetail(item) {
 
   let btnClass = 'buy-btn', btnLabel = 'Kaufen', btnDisabled = false;
   if (!g.cash) {
-    btnClass += ' no-cash';     btnLabel = 'Nicht genug eb';                    btnDisabled = true;
+    btnClass += ' no-cash';     btnLabel = 'Nicht genug eb';                             btnDisabled = true;
   } else if (!g.rank) {
-    btnClass += ' no-rank';     btnLabel = `🔒 Rank ${g.rankRequired} erforderlich`; btnDisabled = true;
+    btnClass += ' no-rank';     btnLabel = `🔒 Rank ${g.rankRequired} erforderlich`;     btnDisabled = true;
+  } else if (g.foundational) {
+    btnClass += ' no-rank';     btnLabel = `🔒 Benötigt: ${g.foundational}`;             btnDisabled = true;
+  } else if (g.injuryBlock) {
+    btnClass += ' no-rank';     btnLabel = `🔒 Critical Injury: ${g.injuryBlock}`;       btnDisabled = true;
+  } else if (g.slotFull) {
+    btnClass += ' no-rank';     btnLabel = `🔒 Maximale Slots (${g.slotStatus.used}/${g.slotStatus.max})`; btnDisabled = true;
   } else if (!g.humanity) {
-    btnClass += ' no-humanity'; btnLabel = '🔒 Nicht genug Humanity';           btnDisabled = true;
+    btnClass += ' no-humanity'; btnLabel = '🔒 Nicht genug Humanity';                    btnDisabled = true;
   }
-  const showOverride = g.rank && g.cash && !g.humanity;
+  const showOverride = g.rank && g.cash && !g.humanity && !g.foundational && !g.injuryBlock && !g.slotFull;
+
+  // Humanity-Vorschau: Würfelausdruck aus Klammern extrahieren
+  const humanityPreviewHtml = (() => {
+    if (item.category !== 'Cyberware' || !x.humanity_loss || x.humanity_loss.startsWith('0')) return '';
+    const parenM = String(x.humanity_loss).match(/\(([^)]+)\)/);
+    const costDisplay = parenM ? parenM[1] : x.humanity_loss;
+    const curH = char.current_humanity ?? 0;
+    return `<div class="humanity-cost-preview">Kostet <strong>${costDisplay} Humanity</strong> (du hast noch ${curH})</div>`;
+  })();
+
+  // Slot-Info im Detail
+  const slotInfoHtml = (() => {
+    if (item.category !== 'Cyberware') return '';
+    const sub = item.subcategory || '';
+    const slots = CYBERWARE_SLOT_MAP[sub];
+    if (!slots?.length) return '';
+    return slots.map(s => {
+      const max = SLOT_MAXES[s];
+      if (!max || !isFinite(max)) return '';
+      const st = getSlotStatus(s);
+      const cls = st.used >= max ? 'slot-info slot-warn' : 'slot-info';
+      return `<div class="${cls}">${SLOT_LABELS[s]}: ${st.used}/${max} Slots belegt</div>`;
+    }).join('');
+  })();
 
   panel.innerHTML = `
     <div>
@@ -307,9 +538,11 @@ function openDetail(item) {
     </div>
     <div class="detail-price">${priceLabel}</div>
     ${fieldsHtml}
+    ${slotInfoHtml}
     ${armorSlotHtml}
     ${item.notes ? `<div class="detail-notes">${item.notes}</div>` : ''}
     <div style="margin-top:auto">
+      ${humanityPreviewHtml}
       <button class="${btnClass}" id="buyBtn" ${btnDisabled ? 'disabled' : ''}>${btnLabel}</button>
       ${showOverride ? `<button class="override-btn" id="overrideBtn">DM Override: Trotzdem kaufen</button>` : ''}
       <div class="buy-msg" id="buyMsg"></div>
@@ -357,7 +590,8 @@ function buildSnapshot(item) {
     case 'cyberware':
       return { name: item.name, notes: item.notes || null,
                install: x.install || null, humanity_loss: x.humanity_loss || null,
-               price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null };
+               price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null,
+               slotCost: getSlotCost(item) };
     default:
       return { name: item.name, notes: item.notes || null,
                price: item.price, raw_cost: item.raw_cost };
@@ -365,12 +599,15 @@ function buildSnapshot(item) {
 }
 
 function rollHumanityLoss(expr) {
-  if (!expr || expr === '0') return 0;
-  const m = String(expr).match(/^(\d+)d(\d+)(?:\+(\d+))?$/i);
+  if (!expr || String(expr).startsWith('0')) return 0;
+  // Format "7 (2d6)" → Würfelausdruck aus Klammern extrahieren
+  const parenM = String(expr).match(/\((\d+d\d+(?:[+-]\d+)?)\)/i);
+  const diceExpr = parenM ? parenM[1] : String(expr);
+  const m = diceExpr.match(/^(\d+)d(\d+)(?:\+(\d+))?(?:-(\d+))?$/i);
   if (!m) { const n = parseInt(expr); return isNaN(n) ? 0 : n; }
   let sum = 0;
   for (let i = 0; i < +m[1]; i++) sum += Math.ceil(Math.random() * +m[2]);
-  return sum + (+m[3] || 0);
+  return Math.max(0, sum + (+m[3] || 0) - (+m[4] || 0));
 }
 
 function showSlotPickerModal(slots, itemName) {
@@ -398,12 +635,26 @@ function showSlotPickerModal(slots, itemName) {
 
 function showHumanityConfirmModal(amount, expr) {
   return new Promise(resolve => {
-    const modal = document.getElementById('humanityModal');
-    const isRoll = String(expr).match(/d/i);
+    const modal   = document.getElementById('humanityModal');
+    const isRoll  = String(expr).match(/d/i);
+    const parenM  = String(expr).match(/\(([^)]+)\)/);
+    const exprDisp = parenM ? parenM[1] : expr;
+    const curH    = char.current_humanity ?? 0;
+    const newH    = Math.max(0, curH - amount);
+    const oldEMP  = calcEMP(curH);
+    const newEMP  = calcEMP(newH);
+    const empWarn = oldEMP !== newEMP
+      ? `<div style="color:#FF8C00;margin-top:.5rem;font-size:.82rem">⚠ EMP sinkt: ${oldEMP} → ${newEMP}</div>`
+      : '';
+    const psychoWarn = getCyberpsychosisStatus(newH) && !getCyberpsychosisStatus(curH)
+      ? `<div style="color:#FF2D2D;margin-top:.4rem;font-size:.78rem">⚠ ${getCyberpsychosisStatus(newH).label}</div>`
+      : '';
+
     document.getElementById('humanityModalText').innerHTML =
-      `Humanity-Verlust: <strong style="color:#FF2D2D;font-size:1.1rem">${amount}</strong>`
-      + (isRoll ? ` <span style="color:#aaa;font-size:.8rem">(gewürfelt aus ${expr})</span>` : '')
-      + `<br>Aktuell: ${char.current_humanity ?? '?'} → Nach Kauf: ${Math.max(0, (char.current_humanity ?? 0) - amount)}`;
+      `Verlust: <strong style="color:#FF2D2D;font-size:1.1rem">${amount}</strong>`
+      + (isRoll ? ` <span style="color:#aaa;font-size:.8rem">(gewürfelt: ${exprDisp})</span>` : '')
+      + `<br>Humanity: ${curH} → <strong style="color:${newH <= 19 ? '#FF2D2D' : newH <= 39 ? '#FF8C00' : '#eee'}">${newH}</strong>`
+      + empWarn + psychoWarn;
     modal.hidden = false;
     modal.style.display = 'flex';
     const cleanup = (val) => { modal.hidden = true; modal.style.display = ''; resolve(val); };
@@ -428,6 +679,16 @@ async function buyItem(item, override = false) {
     msg.className   = 'buy-msg';
     return;
   }
+  if (!override && g.foundational) {
+    msg.textContent = `Benötigt zuerst: ${g.foundational}`;
+    msg.className   = 'buy-msg';
+    return;
+  }
+  if (!override && g.injuryBlock) {
+    msg.textContent = `Critical Injury: ${g.injuryBlock} — erst heilen`;
+    msg.className   = 'buy-msg';
+    return;
+  }
 
   const dest     = routeItem(item);
   const snapshot = buildSnapshot(item);
@@ -444,6 +705,16 @@ async function buyItem(item, override = false) {
     if (slots.length > 1) {
       chosenSlot = await showSlotPickerModal(slots, item.name);
       if (!chosenSlot) return;
+    }
+
+    // Slot-Auslastung nach Slot-Wahl prüfen
+    if (!override) {
+      const slotSt = getSlotStatus(chosenSlot, getSlotCost(item));
+      if (slotSt.full) {
+        msg.textContent = `Maximale Slots erreicht (${slotSt.used}/${slotSt.max}) in ${SLOT_LABELS[chosenSlot] || chosenSlot}`;
+        msg.className   = 'buy-msg';
+        return;
+      }
     }
 
     // Humanity loss
@@ -478,10 +749,21 @@ async function buyItem(item, override = false) {
   try {
     await patchCharacter(char.id, patch);
     Object.assign(char, patch);
-    updateCashDisplay();
+    updateNavDisplay();
     msg.textContent = `✓ ${item.name} gekauft`;
     msg.className   = 'buy-msg buy-success';
+    renderGrid();
     openDetail(item);
+
+    // Cyberpsychosis bei 0 Humanity
+    if (patch.current_humanity !== undefined && patch.current_humanity <= 0) {
+      const pm = document.getElementById('psychosisModal');
+      pm.hidden = false;
+      pm.style.display = 'flex';
+      document.getElementById('psychosisModalClose').onclick = () => {
+        pm.hidden = true; pm.style.display = '';
+      };
+    }
   } catch (e) {
     msg.textContent = `Fehler: ${e.message}`;
     msg.className   = 'buy-msg';
