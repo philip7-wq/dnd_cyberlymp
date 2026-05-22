@@ -3,7 +3,7 @@
 // Raw queries only here — page files never call supabase directly.
 // ============================================================
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 const SUPABASE_URL      = 'https://vegzlsfgjixvvjgojwuu.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3psc2Znaml4dnZqZ29qd3V1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNjYyNzIsImV4cCI6MjA5NDk0MjI3Mn0.WVyJ6IO-NBYWrPnM9bWFXf-dhxyLwiJDhiRmn94VBSk';
@@ -61,7 +61,8 @@ export async function patchCharacter(id, patch) {
   const { error } = await supabase
     .from('characters')
     .update(patch)
-    .eq('id', id);
+    .eq('id', id)
+    .select('id');
   if (error) throw error;
 }
 
