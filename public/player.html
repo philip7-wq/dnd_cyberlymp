@@ -6,7 +6,7 @@
   <title>Character — LZRV Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Caveat&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/player.css">
 </head>
@@ -79,6 +79,7 @@
   <span id="navName" style="font-family:var(--font-display);font-size:.85rem;color:var(--red);margin-left:.75rem"></span>
   <a id="shopLink" href="#" class="btn btn-ghost" style="font-size:.75rem">Shop</a>
   <a id="mapLink" href="map.html" class="btn btn-ghost" style="font-size:.75rem">🗺 Karte</a>
+  <button id="bmBtn" class="btn btn-ghost bm-topbar-btn" onclick="bmShowPopup()" style="font-size:.75rem;display:none">🚪 Schwarzmarkt</button>
   <span id="navCash" class="nav-cash" style="margin-left:auto">—</span>
   <button id="cashLogBtn" title="Transaktionsverlauf" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.85rem;padding:0 .3rem;margin-left:.2rem;opacity:.7">📜</button>
   <a href="index.html" class="btn btn-ghost" style="font-size:.75rem">← Übersicht</a>
@@ -487,6 +488,8 @@ if (id) {
       const newHp = char.current_hp ?? 0;
       if (newHp < prevHp) flashScreen('damage');
       else if (newHp > prevHp) flashScreen('heal');
+      // Black Market: react to DM state changes
+      if ('blackmarket_state' in updated) checkBlackmarket(char.blackmarket_state);
     });
   } catch(e) {
     clearTimeout(bootTimeout);
@@ -547,6 +550,8 @@ function renderAll() {
   checkDeathSave();
   renderCombatPanel();
   updateTimerFromDb(combatSession?.timer ?? null);
+  // Check Black Market state on initial load
+  if (char.blackmarket_state?.active) checkBlackmarket(char.blackmarket_state);
 }
 
 // ── Header ────────────────────────────────────────────────────
@@ -3985,6 +3990,202 @@ function _timerExpired() {
 document.getElementById('timerExpiredOk').addEventListener('click', () => {
   document.getElementById('timerExpiredModal').style.display = 'none';
 });
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- BLACK MARKET MODAL                                          -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="bmModal" hidden style="position:fixed;inset:0;z-index:10500;display:none;align-items:center;justify-content:center">
+  <div class="bm-vignette"></div>
+  <div class="bm-door-container">
+    <img id="bmDoorImg" class="bm-door-img" src="" alt="Tür">
+    <!-- Offer card -->
+    <div id="bmOfferCard" class="bm-offer-card" style="display:none">
+      <div class="bm-offer-header">🚪 SCHWARZMARKT</div>
+      <div class="bm-offer-item" id="bmCardItem"></div>
+      <div class="bm-offer-notes" id="bmCardNotes" style="display:none"></div>
+      <div class="bm-offer-price-row">
+        <span>Preis: <b id="bmCardPrice"></b> eb</span>
+        <span>Guthaben: <b id="bmCardCash"></b> eb</span>
+      </div>
+      <div id="bmOfferActions" class="bm-offer-actions" style="display:none">
+        <button type="button" class="bm-btn bm-accept"  onclick="bmAccept()">✅ Akzeptieren</button>
+        <button type="button" class="bm-btn bm-neg"     onclick="bmNegStart()">💬 Verhandeln</button>
+        <button type="button" class="bm-btn bm-decline" onclick="bmDecline()">❌ Ablehnen</button>
+      </div>
+      <div id="bmNegRow" class="bm-neg-row" style="display:none">
+        <input id="bmNegPrice" type="number" class="bm-neg-input" placeholder="Dein Preis (eb)" min="1">
+        <button type="button" class="bm-btn bm-accept" onclick="bmNegSend()">📤 Senden</button>
+      </div>
+      <div id="bmStatusMsg" class="bm-status-msg"></div>
+    </div>
+  </div>
+  <button type="button" class="bm-x-btn" onclick="bmHidePopup()">✕</button>
+</div>
+
+<script>
+// ── Black Market Player Logic ─────────────────────────────────
+function bmDoorSrc(door, open) {
+  return `assets/images/blackmarket/door${door}_${open ? 'open' : 'close'}.jpg`;
+}
+
+function checkBlackmarket(state) {
+  const btn = document.getElementById('bmBtn');
+  if (!state?.active) {
+    btn.style.display = 'none';
+    bmHidePopup();
+    return;
+  }
+  btn.style.display = '';
+  const modal = document.getElementById('bmModal');
+  const isVisible = modal.style.display !== 'none' && !modal.hidden;
+  if (isVisible) {
+    bmUpdate(state);
+  } else if (state.status === 'open' || state.status === 'offered') {
+    bmShowPopup();
+  }
+  if (state.status === 'neg_accepted' && !state.paid) bmAutoDeduct(state);
+  if (state.status === 'closed') bmHandleClose();
+}
+
+function bmShowPopup() {
+  const state = char.blackmarket_state;
+  if (!state) return;
+  const modal = document.getElementById('bmModal');
+  modal.hidden = false;
+  modal.style.display = 'flex';
+  // Start with closed door, then open after 1.5s if door_open
+  const img = document.getElementById('bmDoorImg');
+  img.style.opacity = '1';
+  img.src = bmDoorSrc(state.door, false);
+  if (state.door_open) {
+    setTimeout(() => bmCrossfade(state.door, true), 1500);
+  }
+  bmUpdate(state);
+}
+
+function bmHidePopup() {
+  const modal = document.getElementById('bmModal');
+  modal.hidden = true;
+  modal.style.display = '';
+}
+
+function bmUpdate(state) {
+  if (!state) return;
+  // Sync door image
+  const img = document.getElementById('bmDoorImg');
+  const want = bmDoorSrc(state.door, state.door_open);
+  // Only crossfade if image is loaded and src actually changed
+  if (img.src && !img.src.endsWith(want)) bmCrossfade(state.door, state.door_open);
+
+  // Offer card
+  const card = document.getElementById('bmOfferCard');
+  if (state.offer && state.status !== 'closed') {
+    card.style.display = 'flex';
+    document.getElementById('bmCardItem').textContent  = state.offer.item_name || '—';
+    const notesEl = document.getElementById('bmCardNotes');
+    notesEl.textContent    = state.offer.notes || '';
+    notesEl.style.display  = state.offer.notes ? '' : 'none';
+    document.getElementById('bmCardPrice').textContent = (state.offer.price ?? 0).toLocaleString('de-DE');
+    document.getElementById('bmCardCash').textContent  = (char.cash ?? 0).toLocaleString('de-DE');
+  } else {
+    card.style.display = 'none';
+  }
+
+  // Status messages
+  const msg  = document.getElementById('bmStatusMsg');
+  const acts = document.getElementById('bmOfferActions');
+  const negRow = document.getElementById('bmNegRow');
+  const statusLabels = {
+    open:          '',
+    offered:       '',
+    accepted:      '✅ Gekauft!',
+    declined:      '❌ Abgelehnt',
+    negotiating:   '⏳ Warte auf Antwort des DM...',
+    neg_declined:  '❌ DM lehnt Gegenangebot ab',
+    neg_accepted:  '✅ DM akzeptiert!',
+    closed:        ''
+  };
+  msg.textContent = statusLabels[state.status] || '';
+
+  // Show action buttons only if offer is fresh and not yet acted on
+  const canAct = state.status === 'offered';
+  acts.style.display   = canAct ? 'flex' : 'none';
+  negRow.style.display = 'none'; // Reset negotiation row on update
+}
+
+function bmCrossfade(door, open) {
+  const img = document.getElementById('bmDoorImg');
+  img.style.opacity = '0';
+  setTimeout(() => {
+    img.src = bmDoorSrc(door, open);
+    img.style.opacity = '1';
+  }, 400);
+}
+
+async function bmAccept() {
+  const state = char.blackmarket_state;
+  if (!state?.offer) return;
+  const price = state.offer.price;
+  if ((char.cash ?? 0) < price) {
+    if (!confirm(`Nicht genug eb!\nGuthaben: ${char.cash ?? 0} eb | Preis: ${price} eb\n\nTrotzdem kaufen (geht ins Minus)?`)) return;
+  }
+  const newCash = (char.cash ?? 0) - price;
+  char.cash_log = await patchCash(char.id, newCash, -price, `Schwarzmarkt: ${state.offer.item_name}`, char.cash_log);
+  char.cash = newCash;
+  updateNavCash();
+  const next = { ...state, status: 'accepted', paid: true };
+  char.blackmarket_state = next;
+  await patchCharacter(char.id, { blackmarket_state: next });
+  bmUpdate(next);
+}
+
+async function bmDecline() {
+  const state = char.blackmarket_state;
+  if (!state) return;
+  const next = { ...state, status: 'declined' };
+  char.blackmarket_state = next;
+  await patchCharacter(char.id, { blackmarket_state: next });
+  bmUpdate(next);
+}
+
+function bmNegStart() {
+  document.getElementById('bmNegRow').style.display      = 'flex';
+  document.getElementById('bmOfferActions').style.display = 'none';
+  document.getElementById('bmNegPrice').focus();
+}
+
+async function bmNegSend() {
+  const state = char.blackmarket_state;
+  const playerPrice = parseInt(document.getElementById('bmNegPrice').value);
+  if (!playerPrice || playerPrice <= 0) return;
+  const next = { ...state, status: 'negotiating', negotiation: { player_price: playerPrice } };
+  char.blackmarket_state = next;
+  await patchCharacter(char.id, { blackmarket_state: next });
+  bmUpdate(next);
+}
+
+async function bmAutoDeduct(state) {
+  if (!state?.negotiation?.player_price) return;
+  const price    = state.negotiation.player_price;
+  const newCash  = (char.cash ?? 0) - price;
+  char.cash_log  = await patchCash(char.id, newCash, -price, `Schwarzmarkt (Verh.): ${state.offer?.item_name || '?'}`, char.cash_log);
+  char.cash      = newCash;
+  updateNavCash();
+  const next = { ...state, paid: true };
+  char.blackmarket_state = next;
+  await patchCharacter(char.id, { blackmarket_state: next });
+  bmUpdate(next);
+}
+
+function bmHandleClose() {
+  const state = char.blackmarket_state;
+  bmCrossfade(state?.door ?? 1, false);
+  setTimeout(() => {
+    bmHidePopup();
+    document.getElementById('bmBtn').style.display = 'none';
+  }, 1500);
+}
 </script>
 
 </body>

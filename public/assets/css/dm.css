@@ -813,3 +813,192 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   font-family: Audiowide, sans-serif; font-size: 1rem;
   color: var(--cyan); min-width: 52px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   BLACK MARKET DM PANEL
+   ═══════════════════════════════════════════════════════════════ */
+.bm-dm-panel {
+  background: #0d0d0d;
+  border: 1px solid rgba(255,50,50,.35);
+  border-radius: 8px;
+  padding: 1.25rem;
+  width: 560px;
+  max-width: 96vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+.bm-dm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-family: Audiowide, sans-serif;
+  font-size: .8rem;
+  color: var(--red);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.bm-step {
+  margin-bottom: .75rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.bm-step:last-of-type { border-bottom: none; }
+.bm-step-title {
+  font-size: .68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: .5rem;
+  font-family: Audiowide, sans-serif;
+}
+.bm-step-sub {
+  font-size: .72rem;
+  color: var(--text-muted);
+  margin-bottom: .35rem;
+}
+.bm-player-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-bottom: .5rem;
+}
+.bm-player-check {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .78rem;
+  cursor: pointer;
+  padding: .2rem .5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.bm-player-check:hover { border-color: var(--red); }
+.bm-door-grid {
+  display: flex;
+  gap: .75rem;
+  margin: .25rem 0 .75rem;
+}
+.bm-door-card {
+  flex: 1;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+.bm-door-card:hover  { border-color: rgba(255,45,45,.5); }
+.bm-door-card.selected { border-color: var(--red); box-shadow: 0 0 8px rgba(255,45,45,.3); }
+.bm-door-card img { width: 100%; height: 110px; object-fit: cover; display: block; }
+.bm-door-card-label {
+  text-align: center;
+  font-size: .62rem;
+  color: var(--text-muted);
+  padding: .22rem;
+  background: rgba(0,0,0,.4);
+}
+.bm-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: .4rem .6rem;
+  color: var(--text);
+  font-size: .78rem;
+  margin-bottom: .4rem;
+  box-sizing: border-box;
+}
+.bm-input:focus { outline: none; border-color: rgba(255,45,45,.5); }
+.bm-action-btn {
+  width: 100%;
+  padding: .42rem;
+  background: rgba(255,45,45,.1);
+  border: 1px solid rgba(255,45,45,.35);
+  color: var(--red);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: .75rem;
+  margin-top: .25rem;
+  transition: background .2s;
+}
+.bm-action-btn:hover { background: rgba(255,45,45,.2); }
+.bm-close-all-btn {
+  width: 100%;
+  margin-top: 1rem;
+  padding: .45rem;
+  background: #1a0000;
+  border: 1px solid var(--red);
+  color: var(--red);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: .75rem;
+  transition: background .2s;
+}
+.bm-close-all-btn:hover { background: rgba(255,45,45,.15); }
+/* Lever toggle */
+.bm-lever-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .4rem .6rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: .35rem;
+}
+.bm-lever-name { font-size: .78rem; }
+.bm-lever {
+  position: relative;
+  width: 44px;
+  height: 22px;
+  background: #222;
+  border-radius: 11px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: background .25s;
+  flex-shrink: 0;
+}
+.bm-lever::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  background: #555;
+  border-radius: 50%;
+  transition: transform .25s, background .25s;
+}
+.bm-lever.open { background: rgba(255,45,45,.25); border-color: var(--red); }
+.bm-lever.open::after { transform: translateX(22px); background: var(--red); }
+/* Status rows */
+.bm-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .4rem;
+  padding: .35rem .5rem;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  font-size: .75rem;
+}
+.bm-status-badge {
+  font-size: .68rem;
+  padding: .1rem .38rem;
+  border-radius: 3px;
+  border: 1px solid;
+}
+.bm-status-badge.waiting  { color: #777; border-color: #333; }
+.bm-status-badge.accepted { color: #00cc66; border-color: #00cc66; }
+.bm-status-badge.declined { color: var(--red); border-color: var(--red); }
+.bm-status-badge.neg      { color: #FFA000; border-color: #FFA000; }
+.bm-neg-accept-btn,
+.bm-neg-decline-btn {
+  font-size: .68rem;
+  padding: .15rem .45rem;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: background .15s;
+}
+.bm-neg-accept-btn  { color: #00cc66; border-color: #00cc66; background: rgba(0,204,102,.08); }
+.bm-neg-accept-btn:hover  { background: rgba(0,204,102,.2); }
+.bm-neg-decline-btn { color: var(--red); border-color: var(--red); background: rgba(255,45,45,.08); }
+.bm-neg-decline-btn:hover { background: rgba(255,45,45,.18); }

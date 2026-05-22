@@ -487,7 +487,11 @@ function mergeTokens(incoming) {
   const old = new Map(S.tokens.map(t=>[t.id,t]));
   S.tokens = incoming.map(t => {
     const prev = old.get(t.id);
-    const m = { ...t, _img: prev?._img, _imgLoaded: prev?._imgLoaded };
+    // Only reuse _img if it's actually loaded (prev._img is the Image object).
+    // Never copy _imgLoaded without _img — that would mark loading as "done" on
+    // the new object before the onload fires, so the image would never appear.
+    const m = { ...t, _img: prev?._img || null };
+    m._imgLoaded = !!m._img;
     if (!m._imgLoaded && t.imageUrl) loadTokenImage(m);
     return m;
   });
@@ -614,16 +618,18 @@ function drawCoverObjects() {
     const mat = COVER_MATERIALS[c.material] || { color:'#888', hp:10 };
     const destroyed = c.hp <= 0;
     ctx.save();
-    ctx.fillStyle = destroyed ? 'rgba(255,45,45,.18)' : hexToRgba(mat.color, .38);
-    ctx.strokeStyle = destroyed ? '#FF2D2D' : mat.color;
-    ctx.lineWidth = 2 / S.scale;
+    ctx.fillStyle = destroyed ? 'rgba(80,80,80,.18)' : hexToRgba(mat.color, .38);
+    ctx.strokeStyle = destroyed ? 'rgba(120,120,120,.4)' : mat.color;
+    ctx.lineWidth = destroyed ? 1/S.scale : 2/S.scale;
+    ctx.globalAlpha = destroyed ? 0.22 : 1;
     ctx.fillRect(c.x, c.y, c.w, c.h);
     ctx.strokeRect(c.x, c.y, c.w, c.h);
+    ctx.globalAlpha = 1;
     if (destroyed) {
-      ctx.fillStyle='rgba(255,45,45,.7)';
-      ctx.font=`bold ${13/S.scale}px Audiowide`;
+      ctx.fillStyle='rgba(160,160,160,.7)';
+      ctx.font=`bold ${11/S.scale}px Audiowide`;
       ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
+      ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=3/S.scale;
       ctx.fillText('DESTROYED', c.x+c.w/2, c.y+c.h/2);
       ctx.shadowBlur=0;
     } else {
@@ -991,14 +997,27 @@ function drawTokens() {
     ctx.fillStyle = isChar ? 'rgba(0,229,255,.1)' : isNpc ? 'rgba(255,45,45,.12)' : hexToRgba(token.color||'#FF8C00',.12);
     ctx.fill();
     if (token._img) {
+      // Portrait loaded — clip-draw
       ctx.save();
       ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.clip();
       ctx.drawImage(token._img,cx-r,cy-r,r*2,r*2);
       ctx.restore();
+    } else if (token.imageUrl) {
+      // Image URL exists but still loading — draw pulsing placeholder ring
+      const pulse = 0.35 + 0.25*Math.sin(Date.now()/350);
+      ctx.strokeStyle = hexToRgba(borderColor, pulse);
+      ctx.lineWidth = 1.5/S.scale;
+      ctx.setLineDash([4/S.scale,4/S.scale]);
+      ctx.beginPath(); ctx.arc(cx,cy,r*.6,0,Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
     } else {
-      const lbl=token.label||(token.name?.[0]||'?');
-      ctx.fillStyle='#fff'; ctx.font=`bold ${r*.9}px Audiowide`;
-      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(lbl,cx,cy);
+      // No image URL at all — draw a simple silhouette icon (head + body)
+      ctx.fillStyle = hexToRgba(borderColor, 0.55);
+      // Head
+      ctx.beginPath(); ctx.arc(cx, cy-r*.22, r*.28, 0, Math.PI*2); ctx.fill();
+      // Body arc
+      ctx.beginPath();
+      ctx.arc(cx, cy+r*.7, r*.5, Math.PI, 0); ctx.fill();
     }
     // Border
     ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
@@ -1670,13 +1689,19 @@ canvas.addEventListener('contextmenu', e=>{
 });
 
 // Keyboard shortcuts
+function isInputFocused() {
+  const t = document.activeElement?.tagName;
+  return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT'
+    || document.activeElement?.isContentEditable;
+}
+
 document.addEventListener('keydown', e=>{
   if (e.code==='Space'&&e.target===document.body) { e.preventDefault(); S.spaceDown=true; setCursor('grab'); }
-  if (IS_DM) {
+  if (IS_DM && !isInputFocused()) {
     const map={'KeyV':'select','KeyM':'measure','KeyA':'aoe','KeyP':'pen','KeyR':'rect','KeyC':'circle','KeyD':'delete','KeyO':'cover','KeyU':'suppressive'};
     if (map[e.code]) setTool(map[e.code]);
   }
-  if ((e.code==='Delete'||e.code==='Backspace')&&e.target===document.body&&IS_DM) {
+  if ((e.code==='Delete'||e.code==='Backspace')&&!isInputFocused()&&IS_DM) {
     if (S.selectedToken) {
       S.tokens=S.tokens.filter(t=>t!==S.selectedToken);
       S.selectedToken=null; saveTokens(); markDirty();
