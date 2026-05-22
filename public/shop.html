@@ -157,6 +157,7 @@ const SLOT_MAXES = {
 };
 
 // ── Config ────────────────────────────────────────────────────
+const REC_TOGGLE_CATS = ['Cyberware','Ranged Weapon','Melee Weapon','Exotic Weapon','Armor','Gear'];
 const SHOP_CATEGORIES = [
   'Ranged Weapon',
   'Melee Weapon',
@@ -342,8 +343,6 @@ function updateNavDisplay() {
 }
 
 // ── Category sidebar ──────────────────────────────────────────
-const REC_TOGGLE_CATS = ['Cyberware','Ranged Weapon','Melee Weapon','Exotic Weapon','Armor','Gear'];
-
 function renderCatButtons() {
   const wrap = document.getElementById('catButtons');
   const showToggle = REC_TOGGLE_CATS.includes(activeCategory) && ROLE_HIGHLIGHTS[char?.role];
