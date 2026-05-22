@@ -257,3 +257,31 @@
   background: var(--bg-input); border: 1px solid var(--border);
   color: var(--text); border-radius: var(--radius);
 }
+
+/* ── Ammo Pack Selector ── */
+.ammo-buy-section { margin-top: .6rem; }
+.ammo-price-per-pack { font-size: .65rem; color: var(--text-muted); margin-bottom: .35rem; }
+.ammo-buy-controls {
+  display: flex; align-items: center; gap: .4rem;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: .35rem .5rem;
+}
+.ammo-qty-btn {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border: 1px solid var(--border); background: var(--bg-card);
+  color: var(--text); border-radius: 4px; cursor: pointer;
+  font-size: 1.1rem; line-height: 1; display: flex;
+  align-items: center; justify-content: center;
+}
+.ammo-qty-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.ammo-qty-display { flex: 1; text-align: center; }
+.ammo-qty-num {
+  display: block; font-size: 1.15rem;
+  font-family: Audiowide, sans-serif; color: var(--cyan);
+}
+.ammo-qty-sub { display: block; font-size: .6rem; color: var(--text-muted); }
+.ammo-buy-total {
+  font-size: .9rem; font-family: Audiowide, sans-serif;
+  text-align: center; margin-top: .35rem;
+}
+.ammo-stock { font-size: .68rem; color: var(--text-muted); margin: .25rem 0; }

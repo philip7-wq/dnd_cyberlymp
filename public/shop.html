@@ -178,6 +178,7 @@ let activeCategory = SHOP_CATEGORIES[0];
 let selectedItem   = null;
 let armorSlot      = 'body';
 let AMMO_DATA      = null;
+const _ammoQtys    = {};   // ammo id → selected pack quantity
 
 async function loadAmmoData() {
   if (AMMO_DATA) return AMMO_DATA;
@@ -263,7 +264,8 @@ function showBuyConfirmModal(item) {
     const price = item.price != null ? item.price + ' eb' : 'kostenlos';
     document.getElementById('buyConfirmText').innerHTML =
       `<strong style="color:#eee">${item.name}</strong><br>`
-      + `<span style="color:var(--cyan,#00E5FF);font-family:Audiowide,sans-serif">${price}</span>`;
+      + `<span style="color:var(--cyan,#00E5FF);font-family:Audiowide,sans-serif">${price}</span>`
+      + (item._extraLine ? `<br><span style="font-size:.78rem;color:var(--text-muted);margin-top:.2rem;display:block">${item._extraLine}</span>` : '');
     modal.hidden = false;
     modal.style.display = 'flex';
     const cleanup = val => { modal.hidden = true; modal.style.display = ''; resolve(val); };
@@ -455,60 +457,89 @@ function renderAmmoGrid() {
   }
 
   const inv = char.ammo_inventory || {};
-
-  // Group by ammo_type
   const groups = {};
   for (const a of ammoTypes) {
     if (!groups[a.ammo_type]) groups[a.ammo_type] = [];
     groups[a.ammo_type].push(a);
   }
-
   const typeLabels = { pistol:'Pistol', rifle:'Rifle', shotgun:'Shotgun', arrow:'Arrow', grenade:'Grenade', rocket:'Rocket' };
+
+  const buildAmmoCard = a => {
+    const stock      = inv[a.ammo_type] || 0;
+    const specialLabel = a.special ? a.special.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '';
+    const qty        = _ammoQtys[a.id] || 1;
+    const totalCost  = a.price * qty;
+    const totalShots = a.quantity_per_purchase * qty;
+    const canAfford  = (char.cash || 0) >= totalCost;
+    return `
+    <div class="shop-card ammo-card" data-ammo-id="${a.id}">
+      <div class="shop-card-name">${a.name}</div>
+      <div class="ammo-type-badge ammo-${a.ammo_type}">${(typeLabels[a.ammo_type]||a.ammo_type).toUpperCase()}</div>
+      ${specialLabel ? `<div class="ammo-special-badge" style="margin:.2rem 0">${specialLabel}</div>` : ''}
+      <div class="ammo-effect" style="font-size:.68rem;color:var(--text-muted);margin:.2rem 0;line-height:1.4">${a.effect}</div>
+      <div class="ammo-stock">Vorrat: <strong style="color:${stock===0?'var(--red)':'var(--cyan)'}">${stock} Schuss</strong></div>
+      <div class="ammo-buy-section">
+        <div class="ammo-price-per-pack">${a.price} eb pro Pack · ${a.quantity_per_purchase} Schuss</div>
+        <div class="ammo-buy-controls">
+          <button class="ammo-qty-btn ammo-qty-minus" data-ammo-id="${a.id}">−</button>
+          <div class="ammo-qty-display">
+            <span class="ammo-qty-num">${qty}</span>
+            <span class="ammo-qty-sub">${qty === 1 ? 'Pack' : 'Packs'} · ${totalShots} Schuss</span>
+          </div>
+          <button class="ammo-qty-btn ammo-qty-plus" data-ammo-id="${a.id}">+</button>
+        </div>
+        <div class="ammo-buy-total" style="color:${canAfford?'var(--cyan)':'var(--red)'}">${totalCost.toLocaleString('de-DE')} eb</div>
+        <button class="btn btn-primary ammo-buy-btn" data-ammo-id="${a.id}" ${!canAfford?'disabled':''} style="width:100%;margin-top:.4rem;font-size:.8rem">${canAfford ? 'Kaufen' : 'Nicht genug eb'}</button>
+      </div>
+    </div>`;
+  };
 
   wrap.innerHTML = buildAmmoInventoryBar() + Object.entries(groups).map(([type, list]) => `
     <div class="shop-section-head">${typeLabels[type] || type}</div>
-    <div class="shop-grid">
-      ${list.map(a => {
-        const stock = inv[a.ammo_type] || 0;
-        const specialLabel = a.special ? a.special.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '';
-        return `
-        <div class="shop-card ammo-card" data-ammo-id="${a.id}">
-          <div class="shop-card-name">${a.name}</div>
-          <div class="ammo-type-badge ammo-${a.ammo_type}">${(typeLabels[a.ammo_type]||a.ammo_type).toUpperCase()}</div>
-          <div class="shop-card-price">${a.price} eb · ${a.quantity_per_purchase} Schuss</div>
-          <div class="ammo-effect" style="font-size:.68rem;color:var(--text-muted);margin:.2rem 0;line-height:1.4">${a.effect}</div>
-          ${specialLabel ? `<div class="ammo-special-badge">${specialLabel}</div>` : ''}
-          <div class="ammo-stock" style="font-size:.68rem;color:var(--text-muted);margin-top:.2rem">Vorrat: <strong style="color:${stock===0?'var(--red)':'var(--cyan)'}">${stock} Schuss</strong></div>
-          <div class="ammo-buy-row">
-            <label style="font-size:.7rem;color:var(--text-muted)">Packs:</label>
-            <input type="number" class="ammo-qty-input" value="1" min="1" max="20" data-ammo-id="${a.id}">
-            <button class="btn btn-primary ammo-buy-btn" style="font-size:.72rem;padding:.25rem .65rem" data-ammo-id="${a.id}">Kaufen</button>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
+    <div class="shop-grid">${list.map(buildAmmoCard).join('')}</div>
   `).join('');
 
-  wrap.querySelectorAll('.ammo-buy-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const ammoItem = ammoTypes.find(a => a.id === btn.dataset.ammoId);
-      if (!ammoItem) return;
-      const qtyInput = wrap.querySelector(`.ammo-qty-input[data-ammo-id="${ammoItem.id}"]`);
-      const qty = Math.max(1, parseInt(qtyInput?.value) || 1);
-      buyAmmo(ammoItem, qty);
-    });
-  });
 }
+
+// Wire ammo grid interactions once — delegated on the wrap container
+(function setupAmmoGridEvents() {
+  const wrap = document.getElementById('shopGridWrap');
+  wrap.addEventListener('click', e => {
+    if (activeCategory !== 'Ammunition') return;
+    const ammoTypes = AMMO_DATA?.ammo_types || [];
+    const minusBtn = e.target.closest('.ammo-qty-minus');
+    const plusBtn  = e.target.closest('.ammo-qty-plus');
+    const buyBtn   = e.target.closest('.ammo-buy-btn');
+    if (minusBtn) {
+      const id = minusBtn.dataset.ammoId;
+      _ammoQtys[id] = Math.max(1, (_ammoQtys[id] || 1) - 1);
+      renderAmmoGrid();
+    } else if (plusBtn) {
+      const id = plusBtn.dataset.ammoId;
+      _ammoQtys[id] = Math.min(20, (_ammoQtys[id] || 1) + 1);
+      renderAmmoGrid();
+    } else if (buyBtn && !buyBtn.disabled) {
+      const ammoItem = ammoTypes.find(a => a.id === buyBtn.dataset.ammoId);
+      if (!ammoItem) return;
+      const qty = _ammoQtys[ammoItem.id] || 1;
+      buyAmmo(ammoItem, qty).then(() => { _ammoQtys[ammoItem.id] = 1; renderAmmoGrid(); });
+    }
+  });
+})();
 
 async function buyAmmo(ammoItem, qty) {
   const total = ammoItem.price * qty;
   const shots = ammoItem.quantity_per_purchase * qty;
   if ((char.cash || 0) < total) {
-    document.getElementById('buyMsg')?.textContent && (document.getElementById('buyMsg').textContent = '');
     alert('Nicht genug eb!');
     return;
   }
-  if (!confirm(`${qty}× ${ammoItem.name} für ${total} eb kaufen? (+${shots} Schuss)`)) return;
+  const confirmed = await showBuyConfirmModal({
+    name: `${qty}× ${ammoItem.name}`,
+    price: total,
+    _extraLine: `+${shots} Schuss ${ammoItem.ammo_type.charAt(0).toUpperCase() + ammoItem.ammo_type.slice(1)}`,
+  });
+  if (!confirmed) return;
   const inv = { ...(char.ammo_inventory || {}) };
   inv[ammoItem.ammo_type] = (inv[ammoItem.ammo_type] || 0) + shots;
   char.ammo_inventory = inv;

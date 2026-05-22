@@ -406,6 +406,7 @@ if (id) {
     // Notification nur nach User-Gesture anfragen
     document.addEventListener('click', () => requestNotifPermission(), { once: true });
     initRoomItems();
+    migrateWeaponsMagazines().catch(() => {});
 
     const chatHistory = await getMessages(50);
     renderChatMessages(chatHistory);
@@ -449,6 +450,7 @@ if (id) {
       renderBuffs();
       renderCritInjuries();
       renderCyberware();
+      renderWeapons();
       if ((char.current_hp ?? 0) > 0) deathSavePenalty = 0;
       renderCombatPanel();
       updateNavCash();
@@ -898,21 +900,70 @@ function renderSkills() {
   el.innerHTML = html;
 }
 
+// ── Lazy migration: set magazine_max on existing weapons ──────
+async function migrateWeaponsMagazines() {
+  if (!AMMO_DATA?.weapon_ammo_mapping) return;
+  const weapons = char.weapons || [];
+  let changed = false;
+  weapons.forEach((w, i) => {
+    if (w.ammo && w.magazine_max == null) {
+      const mapping = AMMO_DATA.weapon_ammo_mapping[w.name];
+      if (mapping) {
+        weapons[i].magazine_max = mapping.magazine;
+        weapons[i].ammo_current = mapping.magazine;
+        weapons[i].loaded_ammo  = 'basic';
+        weapons[i].is_autofire  = mapping.autofire ?? false;
+        changed = true;
+      }
+    }
+  });
+  if (changed) {
+    char.weapons = weapons;
+    await patchCharacter(char.id, { weapons: char.weapons });
+    renderWeapons();
+  }
+}
+
+// ── Ammo inventory HTML builder (prepended to weapons tab) ───
+function buildAmmoInventoryHtml() {
+  const inv = char.ammo_inventory || {};
+  const weapons = char.weapons || [];
+  const ammoTypes = AMMO_DATA?.ammo_types || [];
+  const relevantTypes = new Set([
+    ...weapons.map(w => w.ammo).filter(Boolean),
+    ...Object.keys(inv).filter(k => (inv[k] || 0) > 0 && !k.startsWith('ammo-')),
+  ]);
+  if (!relevantTypes.size && !ammoTypes.some(a => a.special && (inv[a.id] || 0) > 0)) return '';
+  const chips = [...relevantTypes].map(t => {
+    const qty = inv[t] || 0;
+    const cls = qty === 0 ? 'ammo-inv-empty' : qty < 20 ? 'ammo-inv-low' : 'ammo-inv-ok';
+    return `<div class="ammo-inv-chip ${cls}">${t} <strong>${qty}</strong>${qty === 0 ? ' ⚠' : ''}</div>`;
+  });
+  const specialChips = ammoTypes
+    .filter(a => a.special && (inv[a.id] || 0) > 0)
+    .map(a => `<div class="ammo-inv-chip ammo-inv-ok" title="${a.effect}">${a.name.replace(/ Ammo| Shell| Arrow/i, '')} <strong>${inv[a.id]}</strong></div>`);
+  const allChips = [...chips, ...specialChips];
+  if (!allChips.length) return '';
+  return `<div class="ammo-inventory-section">
+    <div class="section-header">🎯 MUNITIONS-VORRAT</div>
+    <div class="ammo-inventory-grid">${allChips.join('')}</div>
+  </div>`;
+}
+
 // ── Weapons tab ───────────────────────────────────────────────
 function renderWeapons() {
   const weapons = char.weapons || [];
   const el = document.getElementById('tab-weapons');
 
   if (!weapons.length) {
-    el.innerHTML = '<p class="empty-state">Keine Waffen eingetragen.</p>';
-    renderAmmoInventory();
+    el.innerHTML = buildAmmoInventoryHtml() + '<p class="empty-state">Keine Waffen eingetragen.</p>';
     return;
   }
 
   const ammoTypes = AMMO_DATA?.ammo_types || [];
   const inv = char.ammo_inventory || {};
 
-  el.innerHTML = weapons.map((w, i) => {
+  el.innerHTML = buildAmmoInventoryHtml() + weapons.map((w, i) => {
     const sellPrice = Math.round((w.price || 0) * 0.65);
     const meta = [w.ammo ? `Ammo: ${w.ammo}` : '', w.rof ? `ROF: ${w.rof}` : '', w.hands ? `Hands: ${w.hands}` : ''].filter(Boolean).join(' · ');
 
@@ -973,9 +1024,6 @@ function renderWeapons() {
       </div>
     </div>`;
   }).join('');
-
-  // Ammo inventory section at bottom of weapons tab
-  renderAmmoInventory();
 
   el.querySelectorAll('.gear-sell-btn').forEach(btn => {
     btn.addEventListener('click', () => sellItem(btn.dataset.sellInv, parseInt(btn.dataset.sellIdx)));
@@ -1039,47 +1087,6 @@ async function changeLoadedAmmo(weaponIdx, ammoId) {
   await patchCharacter(char.id, { weapons: char.weapons, ammo_inventory: inv });
   renderWeapons();
   showToast(`${w.name}: ${ammoId === 'basic' ? 'Basic' : ammoId} geladen (${fill} Schuss)`, 'cyan');
-}
-
-// ── Ammo Inventory Display (appended to Weapons tab) ─────────
-function renderAmmoInventory() {
-  const tabEl = document.getElementById('tab-weapons');
-  if (!tabEl) return;
-  let section = tabEl.querySelector('.ammo-inventory-section');
-  if (!section) {
-    section = document.createElement('div');
-    section.className = 'ammo-inventory-section';
-    tabEl.appendChild(section);
-  }
-
-  const inv = char.ammo_inventory || {};
-  const weapons = char.weapons || [];
-  const ammoTypes = AMMO_DATA?.ammo_types || [];
-
-  // Show types that are relevant (weapon needs it, or stock > 0)
-  const relevantTypes = new Set([
-    ...weapons.map(w => w.ammo).filter(Boolean),
-    ...Object.keys(inv).filter(k => (inv[k] || 0) > 0),
-  ]);
-
-  if (!relevantTypes.size) {
-    section.innerHTML = `<div class="section-header" style="margin-top:.75rem">🎯 MUNITIONS-VORRAT</div><p class="empty-state" style="font-size:.75rem">Keine Munition. Im Shop kaufen.</p>`;
-    return;
-  }
-
-  const chips = [...relevantTypes].map(t => {
-    const qty = inv[t] || 0;
-    const cls = qty === 0 ? 'ammo-inv-empty' : qty < 20 ? 'ammo-inv-low' : 'ammo-inv-ok';
-    return `<div class="ammo-inv-chip ${cls}">${t} <strong>${qty}</strong>${qty === 0 ? ' ⚠' : ''}</div>`;
-  });
-
-  // Also show special ammos with stock
-  const specialChips = ammoTypes
-    .filter(a => a.special && (inv[a.id] || 0) > 0)
-    .map(a => `<div class="ammo-inv-chip ammo-inv-ok" title="${a.effect}">${a.name.replace(/ Ammo| Shell| Arrow/i,'')} <strong>${inv[a.id]}</strong></div>`);
-
-  section.innerHTML = `<div class="section-header" style="margin-top:.75rem">🎯 MUNITIONS-VORRAT</div>
-    <div class="ammo-inventory-grid">${[...chips, ...specialChips].join('')}</div>`;
 }
 
 // ── Armor tab ─────────────────────────────────────────────────
