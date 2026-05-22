@@ -76,13 +76,13 @@ body.combat-active .char-sub {
 .res-fill.hp.critical { animation: hp-critical-pulse .75s ease-in-out infinite; }
 .res-controls { display: flex; align-items: center; gap: 3px; font-size: .78rem; }
 .res-btn {
-  width: 20px; height: 20px; border-radius: 2px;
-  background: var(--bg-input); border: 1px solid var(--border);
-  color: var(--text-muted); font-size: .85rem; cursor: pointer; line-height: 1;
+  width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text); font-size: 1.2rem; cursor: pointer; line-height: 1;
   display: flex; align-items: center; justify-content: center;
-  transition: border-color .15s, color .15s;
+  transition: border-color .15s, color .15s, background .15s;
 }
-.res-btn:hover { border-color: var(--red); color: var(--red); }
+.res-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--bg-input); }
 .res-cur {
   min-width: 28px; text-align: center;
   font-family: var(--font-display); font-size: .9rem; color: var(--text-head);
@@ -240,12 +240,12 @@ body.combat-active .char-sub {
 .gear-item-meta { font-size: .72rem; color: var(--text-muted); line-height: 1.4; }
 .gear-item-actions { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .1rem; }
 .gear-action-btn {
-  padding: .25rem .6rem; font-size: .72rem; border-radius: var(--radius);
+  padding: .35rem .85rem; font-size: .78rem; border-radius: var(--radius);
   border: 1px solid var(--border); background: transparent;
   color: var(--text-muted); cursor: pointer; transition: var(--transition);
-  font-family: var(--font-body);
+  font-family: var(--font-body); white-space: nowrap;
 }
-.gear-action-btn:hover { background: var(--bg-input); color: var(--text); }
+.gear-action-btn:hover { background: var(--bg-input); color: var(--text); border-color: var(--text-muted); }
 .gear-equip-btn { border-color: var(--cyan); color: var(--cyan); }
 .gear-equip-btn:hover { background: rgba(0,229,255,.08); }
 .gear-sell-btn  { border-color: #4a9a4a; color: #4a9a4a; }
@@ -1040,16 +1040,20 @@ body.near-death::before {
   border: 1px solid var(--cyan); padding: .05rem .3rem;
   border-radius: 2px; margin-right: .3rem;
 }
+.reload-btn { border-color: #4a9a4a !important; color: #4a9a4a !important; font-weight: 600; }
+.reload-btn:hover:not(:disabled) { background: rgba(74,154,74,.12) !important; }
+.reload-btn:disabled { opacity: .35; cursor: not-allowed; }
+.autofire-toggle { border-color: var(--red) !important; color: var(--red) !important; }
+.autofire-toggle:hover { background: rgba(255,45,45,.08) !important; }
+.autofire-toggle.active {
+  background: var(--red) !important; color: #fff !important; border-color: var(--red) !important;
+}
+.unequip-btn { border-color: #555 !important; color: #999 !important; }
 .ammo-type-select {
-  font-size: .7rem; padding: .2rem .4rem;
+  font-size: .78rem; padding: .32rem .5rem;
   background: var(--bg-input); border: 1px solid var(--border);
   color: var(--text); border-radius: var(--radius); cursor: pointer;
-}
-.reload-btn { border-color: #4a9a4a !important; color: #4a9a4a !important; }
-.reload-btn:disabled { opacity: .4; cursor: not-allowed; }
-.autofire-toggle { border-color: var(--red) !important; color: var(--red) !important; }
-.autofire-toggle.active {
-  background: var(--red) !important; color: #fff !important;
+  height: 30px;
 }
 .ammo-inventory-section { margin-top: .5rem; }
 .ammo-inventory-grid {

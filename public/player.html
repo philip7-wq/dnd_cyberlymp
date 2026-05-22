@@ -1096,7 +1096,6 @@ async function reloadWeapon(idx) {
 async function changeLoadedAmmo(weaponIdx, ammoId) {
   const w = char.weapons[weaponIdx];
   if (!w || w.loaded_ammo === ammoId) return;
-  if (!confirm(`${w.name}: Magazin entladen und ${ammoId === 'basic' ? 'Basic' : ammoId} Ammo laden?`)) return;
   const inv = { ...(char.ammo_inventory || {}) };
   const wAmmoBasicKey = (w.ammo || '').toLowerCase();
   // Return current ammo to inventory
