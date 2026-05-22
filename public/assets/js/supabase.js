@@ -3,7 +3,7 @@
 // Raw queries only here — page files never call supabase directly.
 // ============================================================
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL      = 'https://vegzlsfgjixvvjgojwuu.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZ3psc2Znaml4dnZqZ29qd3V1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNjYyNzIsImV4cCI6MjA5NDk0MjI3Mn0.WVyJ6IO-NBYWrPnM9bWFXf-dhxyLwiJDhiRmn94VBSk';
@@ -56,14 +56,28 @@ export async function getItems(categories = []) {
   return data;
 }
 
-/** Patch individual fields (e.g. HP update from DM dashboard). */
+/** Patch individual fields (e.g. HP update from DM dashboard).
+ *  Uses raw fetch with Prefer: return=minimal to avoid PostgREST's
+ *  "Cannot coerce the result to a single JSON object" bug in some
+ *  supabase-js versions that send return=representation by default. */
 export async function patchCharacter(id, patch) {
-  const { error } = await supabase
-    .from('characters')
-    .update(patch)
-    .eq('id', id)
-    .select('id');
-  if (error) throw error;
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/characters?id=eq.${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(patch),
+    }
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(body.message || `HTTP ${res.status}`), body);
+  }
 }
 
 // ── Storage ─────────────────────────────────────────────────
