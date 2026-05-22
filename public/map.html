@@ -502,16 +502,27 @@ function mergeTokens(incoming) {
 }
 
 function applyMapData(m) {
-  S.mapId          = m.id;
-  S.mapName        = m.name || 'Karte';
-  S.gridSize       = m.grid_size    ?? 50;
-  S.gridEnabled    = m.grid_enabled ?? true;
-  S.drawings       = m.drawings     ?? [];
-  S.coverObjects   = m.cover_objects     ?? [];
-  S.aoeMarkers     = m.aoe_markers       ?? [];
-  S.suppressiveZones = m.suppressive_zones ?? [];
-  mergeTokens(m.tokens ?? []);
-  if (m.background_url !== S.bgUrl) loadBackground(m.background_url || null);
+  S.mapId = m.id;
+  // Guard every field: a Realtime payload for a partial UPDATE (e.g. saveAoe)
+  // may omit columns that weren't changed. Without guards, those fields would
+  // default to [] and wipe existing local state (tokens, drawings, etc.).
+  if (m.name          !== undefined) S.mapName           = m.name || 'Karte';
+  if (m.grid_size     !== undefined) S.gridSize          = m.grid_size    ?? 50;
+  if (m.grid_enabled  !== undefined) S.gridEnabled       = m.grid_enabled ?? true;
+  if (m.drawings      !== undefined) S.drawings          = m.drawings     ?? [];
+  if (m.cover_objects !== undefined) S.coverObjects      = m.cover_objects ?? [];
+  if (m.aoe_markers   !== undefined) S.aoeMarkers        = m.aoe_markers  ?? [];
+  if (m.suppressive_zones !== undefined) S.suppressiveZones = m.suppressive_zones ?? [];
+  // Extra-safe token guard: never wipe existing tokens with an empty/null payload.
+  // If DB tokens are genuinely empty they will only be applied when S.tokens is
+  // also empty (fresh page load or all tokens already removed locally).
+  const incomingTokens = m.tokens;
+  if (incomingTokens != null) {
+    if (incomingTokens.length > 0 || S.tokens.length === 0) {
+      mergeTokens(incomingTokens);
+    }
+  }
+  if (m.background_url !== undefined && m.background_url !== S.bgUrl) loadBackground(m.background_url || null);
   document.getElementById('mapNameDisplay').textContent = S.mapName;
   if (IS_DM) {
     const ni = document.getElementById('mapNameInput');

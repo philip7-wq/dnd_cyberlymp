@@ -3198,6 +3198,10 @@ document.querySelectorAll('.timer-quick-btn').forEach(btn => {
     document.getElementById('dmTimerSec').value = sec % 60;
   });
 });
+
+// Expose module-scoped vars for the BM plain script below
+window._bmGetChars  = () => chars;
+window._bmPatchChar = (id, patch) => patchCharacter(id, patch);
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
@@ -3260,6 +3264,10 @@ document.querySelectorAll('.timer-quick-btn').forEach(btn => {
 
 <script>
 // ── Black Market DM State ──────────────────────────────────────
+// chars + patchCharacter live in the module script above; access via window bridge.
+const _bmChars = () => window._bmGetChars?.() ?? [];
+const _bmPatch = (id, p) => window._bmPatchChar?.(id, p) ?? Promise.resolve();
+
 let _bmSelected = new Set();
 let _bmDoor     = 1;
 let _bmActive   = {};  // charId → blackmarket_state
@@ -3270,10 +3278,10 @@ function openBmPanel() {
   panel.style.display = 'flex';
   // Populate player checkboxes
   const wrap = document.getElementById('bmPlayerChecks');
-  wrap.innerHTML = chars.map(c => `
+  wrap.innerHTML = _bmChars().map(c => `
     <label class="bm-player-check">
       <input type="checkbox" value="${c.id}" onchange="bmTogglePlayer(this)">
-      <span>${c.name || '—'}</span>
+      <span>${c.handle || c.name || '—'}</span>
     </label>`).join('');
   // Pre-select door 1
   bmSelectDoor(_bmDoor);
@@ -3310,7 +3318,7 @@ async function bmActivate() {
   if (_bmSelected.size === 0) { alert('Bitte mindestens einen Spieler auswählen.'); return; }
   const initState = { active: true, door: _bmDoor, door_open: false, offer: null, negotiation: null, status: 'open', paid: false };
   for (const charId of _bmSelected) {
-    await patchCharacter(charId, { blackmarket_state: initState });
+    await _bmPatch(charId, { blackmarket_state: initState });
     _bmActive[charId] = { ...initState };
   }
   document.getElementById('bmStep2').style.display = '';
@@ -3324,8 +3332,8 @@ async function bmActivate() {
 function bmRenderLevers() {
   const wrap = document.getElementById('bmLevers');
   wrap.innerHTML = Object.entries(_bmActive).map(([id, state]) => {
-    const c = chars.find(x => x.id === id);
-    const name = c?.name || id;
+    const c = _bmChars().find(x => x.id === id);
+    const name = c?.handle || c?.name || id;
     const open = state?.door_open ?? false;
     return `<div class="bm-lever-wrap">
       <span class="bm-lever-name">${name}</span>
@@ -3340,7 +3348,7 @@ async function bmToggleDoor(charId) {
   if (!state) return;
   const newOpen = !state.door_open;
   state.door_open = newOpen;
-  await patchCharacter(charId, { blackmarket_state: { ...state } });
+  await _bmPatch(charId, { blackmarket_state: { ...state } });
   bmRenderLevers();
 }
 
@@ -3355,7 +3363,7 @@ async function bmSendOffer() {
     const state = _bmActive[charId];
     const next  = { ...state, offer, status: 'offered' };
     _bmActive[charId] = next;
-    await patchCharacter(charId, { blackmarket_state: next });
+    await _bmPatch(charId, { blackmarket_state: next });
   }
   bmRefreshStatus();
 }
@@ -3364,8 +3372,8 @@ function bmRefreshStatus() {
   const wrap = document.getElementById('bmStatusRows');
   if (!wrap) return;
   wrap.innerHTML = Object.entries(_bmActive).map(([id, state]) => {
-    const c    = chars.find(x => x.id === id);
-    const name = c?.name || id;
+    const c    = _bmChars().find(x => x.id === id);
+    const name = c?.handle || c?.name || id;
     if (!state) return '';
     let badgeClass = 'waiting', badgeText = '⏳ Warten';
     if (state.status === 'offered')    { badgeClass = 'waiting';  badgeText = '📤 Angebot gesendet'; }
@@ -3393,7 +3401,7 @@ async function bmAcceptNeg(charId) {
   if (!state?.negotiation?.player_price) return;
   const next = { ...state, status: 'neg_accepted' };
   _bmActive[charId] = next;
-  await patchCharacter(charId, { blackmarket_state: next });
+  await _bmPatch(charId, { blackmarket_state: next });
   bmRefreshStatus();
 }
 
@@ -3401,13 +3409,13 @@ async function bmDeclineNeg(charId) {
   const state = _bmActive[charId];
   const next  = { ...state, status: 'neg_declined' };
   _bmActive[charId] = next;
-  await patchCharacter(charId, { blackmarket_state: next });
+  await _bmPatch(charId, { blackmarket_state: next });
   bmRefreshStatus();
 }
 
 async function bmCloseAll() {
   for (const charId of Object.keys(_bmActive)) {
-    await patchCharacter(charId, { blackmarket_state: null });
+    await _bmPatch(charId, { blackmarket_state: null });
   }
   _bmActive = {};
   _bmSelected.clear();
