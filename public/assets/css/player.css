@@ -208,6 +208,10 @@ body.combat-active .char-sub {
 .armor-name { font-size: .75rem; color: var(--text); min-height: 1.5em; }
 .armor-sp   { font-family: var(--font-display); font-size: 1.6rem; color: var(--cyan); }
 .armor-pen  { font-size: .68rem; color: var(--text-muted); }
+.armor-total-row { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; padding: .5rem .75rem; background: rgba(255,45,45,.06); border: 1px solid rgba(255,45,45,.25); border-radius: var(--radius); }
+.armor-total-label { font-size: .6rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); flex: 1; }
+.armor-total-val { font-family: var(--font-display); font-size: 1.4rem; color: var(--red); }
+.armor-total-pen { font-size: .72rem; color: var(--red); opacity: .7; }
 
 /* ── Cyberware ── */
 .cyber-slot {

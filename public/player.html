@@ -736,6 +736,8 @@ function renderArmor() {
     ['BODY',   armor.body   || {}, 'body'],
     ['SHIELD', armor.shield || {}, 'shield'],
   ];
+  const totalSp = slots.reduce((sum, [, s]) => sum + (s.sp ?? 0), 0);
+  const totalPenalty = slots.reduce((sum, [, s]) => sum + (s.penalty ?? 0), 0);
   document.getElementById('tab-armor').innerHTML =
     `<div class="armor-grid">${slots.map(([label, s, slotKey]) => `
       <div class="armor-slot">
@@ -744,6 +746,11 @@ function renderArmor() {
         <div class="armor-sp">${s.sp ?? 0}</div>
         <div class="armor-pen">${s.penalty ? `−${s.penalty} REF` : 'kein Malus'}</div>
       </div>`).join('')}
+    </div>
+    <div class="armor-total-row">
+      <span class="armor-total-label">Gesamt SP</span>
+      <span class="armor-total-val">${totalSp}</span>
+      ${totalPenalty ? `<span class="armor-total-pen">−${totalPenalty} REF</span>` : ''}
     </div>`;
 }
 
@@ -2044,7 +2051,6 @@ async function removeItem(inv, idx) {
 // ── Damage Apply Modal ────────────────────────────────────────
 async function showDamageApplyModal(totalDamage) {
   activeNpcs = await getActiveNpcs();
-  console.log('[DEBUG] getActiveNpcs returned:', activeNpcs);
   const modal = document.getElementById('dmgApplyModal');
   const select = document.getElementById('dmgApplyTarget');
   const calcRow = document.getElementById('dmgApplyCalc');
