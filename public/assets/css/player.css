@@ -971,3 +971,5 @@ body.near-death::before {
 /* ── Crit optgroup colours ──────────────────────────────────── */
 .crit-group-player, select optgroup[label*="Spieler"] { color: var(--cyan); }
 .crit-group-npc,    select optgroup[label*="NPCs"]    { color: var(--red);  }
+
+@keyframes psychosis-pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }

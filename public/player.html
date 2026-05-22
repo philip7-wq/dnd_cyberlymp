@@ -70,6 +70,7 @@
           </div>
         </div>
       </div>
+      <div id="psychosisLabel" style="font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;font-family:Audiowide,sans-serif;min-height:.9rem;margin-top:.1rem;padding-left:2.5rem"></div>
       <!-- Luck dots -->
       <div class="luck-row">
         <span class="luck-label">LUCK</span>
@@ -451,6 +452,14 @@ function renderHeader() {
   renderLuck();
 }
 
+function getPsychosisStatus(humanity) {
+  if (humanity <= 0)  return { color: '#FF0000', label: 'CYBERPSYCHOSIS', pulse: true };
+  if (humanity <= 5)  return { color: '#FF2D2D', label: 'Cyberpsychosis-Risiko', pulse: true };
+  if (humanity <= 20) return { color: '#FF8C00', label: 'Gefährliche Instabilität', pulse: false };
+  if (humanity <= 35) return { color: '#FFD700', label: 'Humanity sinkt', pulse: false };
+  return null;
+}
+
 function updateResDisplay() {
   const hp    = char.current_hp    || 0;
   const maxHp = char.max_hp        || 0;
@@ -465,6 +474,14 @@ function updateResDisplay() {
   hpFill.style.width = maxHp ? (hp / maxHp * 100) + '%' : '0%';
   hpFill.classList.toggle('critical', hp > 0 && hp < 2);
   document.getElementById('humFill').style.width = maxHum ? (hum / maxHum * 100) + '%' : '0%';
+
+  const st  = getPsychosisStatus(hum);
+  const lbl = document.getElementById('psychosisLabel');
+  if (lbl) {
+    lbl.textContent = st ? st.label : '';
+    lbl.style.color = st ? st.color : '';
+    lbl.style.animation = st?.pulse ? 'psychosis-pulse 1s ease-in-out infinite' : '';
+  }
 }
 
 function renderLuck() {
@@ -790,11 +807,40 @@ function renderArmor() {
 }
 
 // ── Cyberware tab ─────────────────────────────────────────────
+const CW_SLOT_LABELS = {
+  rightCybereye:'Rechtes Auge', leftCybereye:'Linkes Auge',
+  rightCyberarm:'Rechter Arm',  leftCyberarm:'Linker Arm',
+  rightCyberleg:'Rechtes Bein', leftCyberleg:'Linkes Bein',
+  neuralLink:'Neural Link', cyberaudio:'Cyberaudio',
+  internal:'Intern', external:'Extern',
+  fashionware:'Fashionware', borgware:'Borgware',
+};
+
 function renderCyberware() {
-  const cw = Array.isArray(char.cyberware) ? char.cyberware : [];
+  const cw = char.cyberware;
   const el = document.getElementById('tab-cyberware');
-  if (!cw.length) { el.innerHTML = '<p class="empty-state">Kein Cyberware installiert.</p>'; return; }
-  el.innerHTML = cw.map((item, i) => `
+
+  // New object-per-slot format (from shop)
+  if (cw && typeof cw === 'object' && !Array.isArray(cw)) {
+    const entries = Object.entries(cw).filter(([, items]) => Array.isArray(items) && items.length);
+    if (!entries.length) { el.innerHTML = '<p class="empty-state">Kein Cyberware installiert.</p>'; return; }
+    el.innerHTML = entries.map(([slot, items]) => `
+      <div class="cyber-slot">
+        <div class="cyber-slot-label">${CW_SLOT_LABELS[slot] || slot}</div>
+        <div class="cyber-items">
+          ${items.map((item, i) => `
+            <span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
+            <button class="remove-btn" data-inv="cyberware" data-slot="${slot}" data-idx="${i}">✕</button>
+          `).join('')}
+        </div>
+      </div>`).join('');
+    return;
+  }
+
+  // Legacy flat-array format
+  const arr = Array.isArray(cw) ? cw : [];
+  if (!arr.length) { el.innerHTML = '<p class="empty-state">Kein Cyberware installiert.</p>'; return; }
+  el.innerHTML = arr.map((item, i) => `
     <div class="cyber-slot">
       <div class="cyber-slot-label">${item.subcategory || 'Cyberware'}</div>
       <div class="cyber-items">
@@ -2064,15 +2110,21 @@ function setupRemove() {
     const btn = e.target.closest('.remove-btn');
     if (!btn) return;
     if (btn.dataset.action === 'removeInjury') removeInjury(parseInt(btn.dataset.idx));
-    else removeItem(btn.dataset.inv, btn.dataset.idx);
+    else removeItem(btn.dataset.inv, btn.dataset.idx, btn.dataset.slot);
   });
 }
 
-async function removeItem(inv, idx) {
+async function removeItem(inv, idx, slot) {
   if (inv === 'armor') {
     char.armor = { ...(char.armor || {}), [idx]: { name: '', sp: 0, penalty: 0 } };
     renderArmor();
     await patchCharacter(char.id, { armor: char.armor });
+  } else if (inv === 'cyberware' && slot && typeof char.cyberware === 'object' && !Array.isArray(char.cyberware)) {
+    const updated = [...(char.cyberware[slot] || [])];
+    updated.splice(parseInt(idx), 1);
+    char.cyberware = { ...char.cyberware, [slot]: updated };
+    renderCyberware();
+    await patchCharacter(char.id, { cyberware: char.cyberware });
   } else {
     char[inv] = (char[inv] || []).filter((_, i) => i !== parseInt(idx));
     if (inv === 'weapons')   renderWeapons();

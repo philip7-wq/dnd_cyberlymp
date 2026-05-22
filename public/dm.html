@@ -573,6 +573,7 @@ function renderGrid() {
           <div class="dm-card-stat-label">Humanity</div>
           <div class="bar-wrap"><div class="bar-fill" style="width:${humPct}%;background:var(--cyan)"></div></div>
           <div>${c.current_humanity ?? 0} / ${c.max_humanity ?? 0}</div>
+          ${(() => { const h = c.current_humanity ?? 0; if (h <= 0) return '<div style="font-size:.58rem;color:#FF0000;letter-spacing:.06em;font-weight:700">CYBERPSYCHOSIS</div>'; if (h <= 5) return '<div style="font-size:.58rem;color:#FF2D2D">Psychosis-Risiko</div>'; if (h <= 20) return '<div style="font-size:.58rem;color:#FF8C00">Instabilität</div>'; if (h <= 35) return '<div style="font-size:.58rem;color:#FFD700">Hum. sinkt</div>'; return ''; })()}
         </div>
         <div class="dm-card-stat">
           <div class="dm-card-stat-label">Luck</div>
@@ -1206,6 +1207,16 @@ function buildLeftPanelHtml() {
     </div>
 
     <div class="dm-left-section">
+      <div class="ctrl-section-head">Cash <span id="dmLeftCashVal" style="float:right;color:var(--cyan);font-family:var(--font-display)">${(c.cash ?? 0).toLocaleString('de-DE')} eb</span></div>
+      <div class="ctrl-row">
+        <input type="number" class="ctrl-input" id="dmLeftCashAmt" placeholder="500" min="1" style="max-width:90px">
+        <button class="dm-left-ip-btn" id="dmLeftCashAdd">+ eb</button>
+        <button class="dm-left-ip-btn" id="dmLeftCashSub" style="color:var(--red)">− eb</button>
+      </div>
+      <div class="ctrl-msg" id="dmLeftCashMsg"></div>
+    </div>
+
+    <div class="dm-left-section">
       <div class="ctrl-section-head">Conditions</div>
       <div class="condition-toggle-grid" id="dmLeftConditions">${condButtons}</div>
       <div class="ctrl-msg" id="dmLeftCondMsg"></div>
@@ -1243,6 +1254,24 @@ function setupLeftPanel() {
     await ctrlPatch({ improvement_points: newIp }, 'dmLeftIpMsg', `+${amt} IP → ${newIp}`);
     const ipValEl = document.getElementById('dmLeftIpVal');
     if (ipValEl) ipValEl.textContent = newIp;
+  });
+
+  document.getElementById('dmLeftCashAdd').addEventListener('click', async () => {
+    const amt = parseInt(document.getElementById('dmLeftCashAmt').value);
+    if (isNaN(amt) || amt <= 0) return;
+    const newCash = (openChar.cash ?? 0) + amt;
+    await ctrlPatch({ cash: newCash }, 'dmLeftCashMsg', `+${amt} eb`);
+    const el = document.getElementById('dmLeftCashVal');
+    if (el) el.textContent = newCash.toLocaleString('de-DE') + ' eb';
+  });
+
+  document.getElementById('dmLeftCashSub').addEventListener('click', async () => {
+    const amt = parseInt(document.getElementById('dmLeftCashAmt').value);
+    if (isNaN(amt) || amt <= 0) return;
+    const newCash = Math.max(0, (openChar.cash ?? 0) - amt);
+    await ctrlPatch({ cash: newCash }, 'dmLeftCashMsg', `−${amt} eb`);
+    const el = document.getElementById('dmLeftCashVal');
+    if (el) el.textContent = newCash.toLocaleString('de-DE') + ' eb';
   });
 
   document.getElementById('dmLeftConditions').addEventListener('click', async e => {

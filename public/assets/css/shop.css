@@ -176,8 +176,6 @@
 .shop-card.role-highlight { background: #1c1a10; border-color: #8a7800; }
 .shop-card.role-highlight:hover { border-color: #FFD700; }
 .role-badge { position: absolute; top: .3rem; right: .3rem; font-size: .75rem; cursor: help; line-height: 1; }
-.rec-toggle { border-top: 1px solid var(--border); margin-top: .5rem; padding-top: .6rem; color: var(--text-muted); }
-.rec-toggle.active { background: #2a2500; border-left-color: #FFD700; color: #FFD700; }
 
 /* ── Install Badges ── */
 .install-badge { font-size: .62rem; padding: .1rem .4rem; border-radius: 3px; display: inline-block; margin-top: .2rem; line-height: 1.4; }
