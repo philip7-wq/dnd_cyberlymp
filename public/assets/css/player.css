@@ -1279,11 +1279,13 @@ body.timer-active { padding-top: 50px; }
   z-index: 1;
 }
 .bm-door-img {
-  height: 400px;
-  max-width: 220px;
+  height: 85vh;
+  max-height: 780px;
+  max-width: min(480px, 90vw);
+  width: auto;
   object-fit: contain;
   border-radius: 4px;
-  box-shadow: 0 0 50px rgba(0,0,0,.9), 0 0 100px rgba(0,0,0,.7);
+  box-shadow: 0 0 60px rgba(0,0,0,.95), 0 0 120px rgba(0,0,0,.8);
   transition: opacity .4s ease;
 }
 

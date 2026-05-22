@@ -4074,7 +4074,7 @@ function bmShowPopup() {
   if (state.door_open) {
     setTimeout(() => bmCrossfade(state.door, true), 1500);
   }
-  bmUpdate(state);
+  bmUpdate(state, true); // skipDoor: intro animation already handled above
 }
 
 function bmHidePopup() {
@@ -4083,13 +4083,14 @@ function bmHidePopup() {
   modal.style.display = '';
 }
 
-function bmUpdate(state) {
+function bmUpdate(state, skipDoor = false) {
   if (!state) return;
-  // Sync door image
-  const img = document.getElementById('bmDoorImg');
-  const want = bmDoorSrc(state.door, state.door_open);
-  // Only crossfade if image is loaded and src actually changed
-  if (img.src && !img.src.endsWith(want)) bmCrossfade(state.door, state.door_open);
+  // Sync door image (skip when bmShowPopup handles the intro animation itself)
+  if (!skipDoor) {
+    const img = document.getElementById('bmDoorImg');
+    const want = bmDoorSrc(state.door, state.door_open);
+    if (img.src && !img.src.endsWith(want)) bmCrossfade(state.door, state.door_open);
+  }
 
   // Offer card
   const card = document.getElementById('bmOfferCard');
