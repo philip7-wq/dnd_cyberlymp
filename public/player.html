@@ -3990,6 +3990,12 @@ function _timerExpired() {
 document.getElementById('timerExpiredOk').addEventListener('click', () => {
   document.getElementById('timerExpiredModal').style.display = 'none';
 });
+
+// Expose module-scoped vars for the BM plain script below
+window._bmGetChar      = () => char;
+window._bmPatchChar    = (id, p) => patchCharacter(id, p);
+window._bmPatchCash    = (...a) => patchCash(...a);
+window._bmUpdateCash   = () => updateNavCash();
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
@@ -4025,6 +4031,13 @@ document.getElementById('timerExpiredOk').addEventListener('click', () => {
 
 <script>
 // ── Black Market Player Logic ─────────────────────────────────
+// char, patchCharacter, patchCash, updateNavCash live in the module above.
+// Access them via window bridges set at the end of that module.
+const _bmChar       = () => window._bmGetChar?.()    ?? null;
+const _bmPatch      = (id, p) => window._bmPatchChar?.(id, p) ?? Promise.resolve();
+const _bmPatchCash  = (...a) => window._bmPatchCash?.(...a)   ?? Promise.resolve();
+const _bmCashUpdate = () => window._bmUpdateCash?.();
+
 function bmDoorSrc(door, open) {
   return `assets/images/blackmarket/door${door}_${open ? 'open' : 'close'}.jpg`;
 }
@@ -4049,7 +4062,7 @@ function checkBlackmarket(state) {
 }
 
 function bmShowPopup() {
-  const state = char.blackmarket_state;
+  const state = _bmChar()?.blackmarket_state;
   if (!state) return;
   const modal = document.getElementById('bmModal');
   modal.hidden = false;
@@ -4087,7 +4100,7 @@ function bmUpdate(state) {
     notesEl.textContent    = state.offer.notes || '';
     notesEl.style.display  = state.offer.notes ? '' : 'none';
     document.getElementById('bmCardPrice').textContent = (state.offer.price ?? 0).toLocaleString('de-DE');
-    document.getElementById('bmCardCash').textContent  = (char.cash ?? 0).toLocaleString('de-DE');
+    document.getElementById('bmCardCash').textContent  = (_bmChar()?.cash ?? 0).toLocaleString('de-DE');
   } else {
     card.style.display = 'none';
   }
@@ -4124,28 +4137,30 @@ function bmCrossfade(door, open) {
 }
 
 async function bmAccept() {
-  const state = char.blackmarket_state;
+  const c = _bmChar(); if (!c) return;
+  const state = c.blackmarket_state;
   if (!state?.offer) return;
   const price = state.offer.price;
-  if ((char.cash ?? 0) < price) {
-    if (!confirm(`Nicht genug eb!\nGuthaben: ${char.cash ?? 0} eb | Preis: ${price} eb\n\nTrotzdem kaufen (geht ins Minus)?`)) return;
+  if ((c.cash ?? 0) < price) {
+    if (!confirm(`Nicht genug eb!\nGuthaben: ${c.cash ?? 0} eb | Preis: ${price} eb\n\nTrotzdem kaufen (geht ins Minus)?`)) return;
   }
-  const newCash = (char.cash ?? 0) - price;
-  char.cash_log = await patchCash(char.id, newCash, -price, `Schwarzmarkt: ${state.offer.item_name}`, char.cash_log);
-  char.cash = newCash;
-  updateNavCash();
+  const newCash = (c.cash ?? 0) - price;
+  c.cash_log = await _bmPatchCash(c.id, newCash, -price, `Schwarzmarkt: ${state.offer.item_name}`, c.cash_log);
+  c.cash = newCash;
+  _bmCashUpdate();
   const next = { ...state, status: 'accepted', paid: true };
-  char.blackmarket_state = next;
-  await patchCharacter(char.id, { blackmarket_state: next });
+  c.blackmarket_state = next;
+  await _bmPatch(c.id, { blackmarket_state: next });
   bmUpdate(next);
 }
 
 async function bmDecline() {
-  const state = char.blackmarket_state;
+  const c = _bmChar(); if (!c) return;
+  const state = c.blackmarket_state;
   if (!state) return;
   const next = { ...state, status: 'declined' };
-  char.blackmarket_state = next;
-  await patchCharacter(char.id, { blackmarket_state: next });
+  c.blackmarket_state = next;
+  await _bmPatch(c.id, { blackmarket_state: next });
   bmUpdate(next);
 }
 
@@ -4156,30 +4171,32 @@ function bmNegStart() {
 }
 
 async function bmNegSend() {
-  const state = char.blackmarket_state;
+  const c = _bmChar(); if (!c) return;
+  const state = c.blackmarket_state;
   const playerPrice = parseInt(document.getElementById('bmNegPrice').value);
   if (!playerPrice || playerPrice <= 0) return;
   const next = { ...state, status: 'negotiating', negotiation: { player_price: playerPrice } };
-  char.blackmarket_state = next;
-  await patchCharacter(char.id, { blackmarket_state: next });
+  c.blackmarket_state = next;
+  await _bmPatch(c.id, { blackmarket_state: next });
   bmUpdate(next);
 }
 
 async function bmAutoDeduct(state) {
   if (!state?.negotiation?.player_price) return;
-  const price    = state.negotiation.player_price;
-  const newCash  = (char.cash ?? 0) - price;
-  char.cash_log  = await patchCash(char.id, newCash, -price, `Schwarzmarkt (Verh.): ${state.offer?.item_name || '?'}`, char.cash_log);
-  char.cash      = newCash;
-  updateNavCash();
+  const c = _bmChar(); if (!c) return;
+  const price   = state.negotiation.player_price;
+  const newCash = (c.cash ?? 0) - price;
+  c.cash_log    = await _bmPatchCash(c.id, newCash, -price, `Schwarzmarkt (Verh.): ${state.offer?.item_name || '?'}`, c.cash_log);
+  c.cash        = newCash;
+  _bmCashUpdate();
   const next = { ...state, paid: true };
-  char.blackmarket_state = next;
-  await patchCharacter(char.id, { blackmarket_state: next });
+  c.blackmarket_state = next;
+  await _bmPatch(c.id, { blackmarket_state: next });
   bmUpdate(next);
 }
 
 function bmHandleClose() {
-  const state = char.blackmarket_state;
+  const state = _bmChar()?.blackmarket_state;
   bmCrossfade(state?.door ?? 1, false);
   setTimeout(() => {
     bmHidePopup();
