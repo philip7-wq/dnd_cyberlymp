@@ -27,6 +27,35 @@
       font-size:1rem; padding:0; margin:-.1rem -.1rem 0 .5rem; line-height:1; }
     .info-tip-overlay { display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.55); }
     .info-tip-overlay.open { display:block; }
+
+    /* Specialty cards */
+    .spec-budget { font-family: var(--font-display); font-size: .7rem; color: var(--cyan); }
+    .spec-budget.over { color: var(--red); }
+    .spec-budget-wrap { margin: .2rem 0 .55rem; }
+    .spec-budget-bar-outer { height: 5px; background: var(--bg-input); border-radius: 3px; overflow: hidden; margin-bottom: .3rem; }
+    .spec-budget-bar-inner { height: 100%; width: 0%; background: var(--cyan); border-radius: 3px; transition: width .2s; }
+    .spec-budget-bar-inner.over { background: var(--red); }
+    .spec-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: .5rem; margin-bottom: .5rem; }
+    .spec-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: .7rem .45rem .6rem; display: flex; flex-direction: column; align-items: center;
+      gap: .22rem; text-align: center; transition: border-color .15s; }
+    .spec-card:not(.maxed):hover { border-color: var(--cyan); }
+    .spec-card.maxed { opacity: .45; }
+    .spec-card-icon { font-size: 1.4rem; line-height: 1; }
+    .spec-card-name { font-family: var(--font-display); font-size: .6rem; letter-spacing: .08em; color: var(--text-head); }
+    .spec-card-desc { font-size: .57rem; color: var(--text-muted); line-height: 1.3; min-height: 2.5em; }
+    .spec-card-controls { display: flex; align-items: center; gap: .45rem; margin-top: .15rem; }
+    .spec-card-value { font-family: var(--font-display); font-size: 1.5rem; color: var(--cyan); min-width: 2ch; text-align: center; }
+    .spec-card-btn { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--border);
+      background: var(--bg-input); color: var(--text); font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; line-height: 1;
+      transition: border-color .12s, color .12s; flex-shrink: 0; padding: 0; }
+    .spec-card-btn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+    .spec-card-btn:disabled { opacity: .22; cursor: not-allowed; }
+    .spec-toggle-btn { margin-top: .12rem; padding: .28rem .5rem; border: 1.5px solid var(--border);
+      border-radius: var(--radius); background: var(--bg-input); color: var(--text-muted);
+      font-size: .67rem; cursor: pointer; transition: all .15s; }
+    .spec-toggle-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,.1); }
   </style>
 </head>
 <body>
@@ -96,24 +125,7 @@
     </div>
   </div>
 
-  <div class="field-group" id="medtechSpecSection" style="display:none">
-    <label>Medtech Specialties <span class="text-muted" style="font-size:.8rem">(Punkte gesamt ≤ Rank)</span></label>
-    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.3rem;align-items:center">
-      <span>Chirurgie: <button class="info-icon" data-tip="med-surgery" aria-label="Info">ℹ</button> <input type="number" id="uploadSurgery" min="0" value="0" style="width:55px"></span>
-      <span>Pharma (max 5): <button class="info-icon" data-tip="med-pharma" aria-label="Info">ℹ</button> <input type="number" id="uploadPharma" min="0" max="5" value="0" style="width:55px"></span>
-      <span>Cryosystem (max 5): <button class="info-icon" data-tip="med-cryo" aria-label="Info">ℹ</button> <input type="number" id="uploadCryo" min="0" max="5" value="0" style="width:55px"></span>
-    </div>
-  </div>
-
-  <div class="field-group" id="techSpecSection" style="display:none">
-    <label>Tech Specialties <span class="text-muted" style="font-size:.8rem">(Gesamt ≤ Rank × 2)</span></label>
-    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.3rem;align-items:center">
-      <span>Field: <button class="info-icon" data-tip="tech-field" aria-label="Info">ℹ</button> <input type="number" id="uploadField" min="0" value="0" style="width:55px"></span>
-      <span>Upgrade: <button class="info-icon" data-tip="tech-upgrade" aria-label="Info">ℹ</button> <input type="number" id="uploadUpgrade" min="0" value="0" style="width:55px"></span>
-      <span>Fabrication: <button class="info-icon" data-tip="tech-fabrication" aria-label="Info">ℹ</button> <input type="number" id="uploadFab" min="0" value="0" style="width:55px"></span>
-      <span>Invention: <button class="info-icon" data-tip="tech-invention" aria-label="Info">ℹ</button> <input type="number" id="uploadInvent" min="0" value="0" style="width:55px"></span>
-    </div>
-  </div>
+  <div id="uploadSpecSection"></div>
 
   <!-- Portrait fallback (shown when PDF has no embedded image) -->
   <div class="image-fallback card" id="imageFallback">
@@ -281,13 +293,181 @@ const progressFill  = document.getElementById('progressFill');
 const statusMsg   = document.getElementById('statusMsg');
 const submitBtn   = document.getElementById('submitBtn');
 
+// ── Specialty cards ───────────────────────────────────────────
+function _specBarHtml(total) {
+  return `<div class="spec-budget-wrap">
+    <div class="spec-budget-bar-outer"><div class="spec-budget-bar-inner" id="sp-budget-fill"></div></div>
+    <div class="spec-budget" id="sp-budget">Punkte vergeben: 0 / ${total}</div>
+  </div>`;
+}
+function _specCardHtml({ id, icon, name, desc, max }) {
+  return `<div class="spec-card" id="spec-card-${id}">
+    <div class="spec-card-icon">${icon}</div>
+    <div class="spec-card-name">${name}</div>
+    <div class="spec-card-desc">${desc}</div>
+    <div class="spec-card-controls">
+      <button type="button" class="spec-card-btn" id="${id}-btn-m" disabled>−</button>
+      <div class="spec-card-value" id="${id}-val">0</div>
+      <input type="hidden" id="${id}" value="0">
+      <button type="button" class="spec-card-btn" id="${id}-btn-p" ${max <= 0 ? 'disabled' : ''}>+</button>
+    </div>
+  </div>`;
+}
+function _specDiscCardHtml({ id, icon, name, desc }) {
+  return `<div class="spec-card" id="spec-card-${id}">
+    <div class="spec-card-icon">${icon}</div>
+    <div class="spec-card-name">${name}</div>
+    <div class="spec-card-desc">${desc}</div>
+    <div class="spec-card-controls">
+      <button type="button" class="spec-card-btn" id="${id}-btn-m" disabled>−</button>
+      <div class="spec-card-value" id="${id}-val">0</div>
+      <input type="hidden" id="${id}" value="0">
+      <button type="button" class="spec-card-btn" id="${id}-btn-p">+</button>
+    </div>
+  </div>`;
+}
+function _specTogCardHtml({ id, icon, name, desc }) {
+  return `<div class="spec-card" id="spec-card-${id}">
+    <div class="spec-card-icon">${icon}</div>
+    <div class="spec-card-name">${name}</div>
+    <div class="spec-card-desc">${desc}</div>
+    <input type="hidden" id="${id}" value="0">
+    <button type="button" class="spec-toggle-btn" id="${id}-btn">Inaktiv</button>
+  </div>`;
+}
+function _specSyncBar(used, total) {
+  const fill = document.getElementById('sp-budget-fill');
+  if (!fill) return;
+  fill.style.width = (total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0) + '%';
+  fill.classList.toggle('over', used > total);
+}
+function _wireCard(id, min, max, onUpdate) {
+  const input = document.getElementById(id);
+  const valEl = document.getElementById(`${id}-val`);
+  const minBtn = document.getElementById(`${id}-btn-m`);
+  const plsBtn = document.getElementById(`${id}-btn-p`);
+  const card  = document.getElementById(`spec-card-${id}`);
+  function set(v) {
+    input.value = v; valEl.textContent = v;
+    minBtn.disabled = v <= min; plsBtn.disabled = v >= max;
+    card.classList.toggle('maxed', max > 0 && v >= max);
+    onUpdate();
+  }
+  minBtn.addEventListener('click', () => { const c = +input.value||0; if (c > min) set(c - 1); });
+  plsBtn.addEventListener('click', () => { const c = +input.value||0; if (c < max) set(c + 1); });
+}
+function _wireDisc(id, steps, onUpdate) {
+  const input = document.getElementById(id);
+  const valEl = document.getElementById(`${id}-val`);
+  const minBtn = document.getElementById(`${id}-btn-m`);
+  const plsBtn = document.getElementById(`${id}-btn-p`);
+  const card  = document.getElementById(`spec-card-${id}`);
+  function set(v) {
+    const i = steps.indexOf(v);
+    input.value = v; valEl.textContent = v;
+    minBtn.disabled = i <= 0; plsBtn.disabled = i >= steps.length - 1;
+    card.classList.toggle('maxed', i >= steps.length - 1);
+    onUpdate();
+  }
+  minBtn.addEventListener('click', () => { const i = steps.indexOf(+input.value||0); if (i > 0) set(steps[i-1]); });
+  plsBtn.addEventListener('click', () => { const i = steps.indexOf(+input.value||0); if (i < steps.length-1) set(steps[i+1]); });
+}
+function _wireTog(id, onUpdate) {
+  const input = document.getElementById(id);
+  const btn   = document.getElementById(`${id}-btn`);
+  const card  = document.getElementById(`spec-card-${id}`);
+  btn.addEventListener('click', () => {
+    const on = input.value === '1';
+    input.value = on ? '0' : '1';
+    btn.textContent = on ? 'Inaktiv' : 'Aktiv (4 Pkt)';
+    btn.classList.toggle('active', !on);
+    card.classList.toggle('maxed', !on);
+    onUpdate();
+  });
+}
+
+function renderUploadSpecialties() {
+  const role = (document.getElementById('charRole')?.value || '').toLowerCase();
+  const rank = parseInt(document.getElementById('charRank')?.value) || 0;
+  const container = document.getElementById('uploadSpecSection');
+  if (!container) return;
+
+  if (role === 'medtech') {
+    const upd = () => {
+      const used = (parseInt(document.getElementById('sp-surgery')?.value)||0)
+                 + (parseInt(document.getElementById('sp-pharma')?.value)||0)
+                 + (parseInt(document.getElementById('sp-cryo')?.value)||0);
+      const b = document.getElementById('sp-budget');
+      if (b) { b.textContent = `Punkte vergeben: ${used} / ${rank}`; b.className = `spec-budget${used > rank ? ' over' : ''}`; }
+      _specSyncBar(used, rank);
+    };
+    container.innerHTML = `<div class="field-group">${_specBarHtml(rank)}<div class="spec-cards-grid">`
+      + _specCardHtml({ id:'sp-surgery', icon:'🩺', name:'Chirurgie',     desc:'Operative Eingriffe & Stabilisierung', max: rank })
+      + _specCardHtml({ id:'sp-pharma',  icon:'💊', name:'Pharmazeutika', desc:'Medikamente & Chemikalien (max 5)',    max: Math.min(5, rank) })
+      + _specCardHtml({ id:'sp-cryo',    icon:'❄',  name:'Cryosystem',   desc:'Kryogene Konservierung (max 5)',       max: Math.min(5, rank) })
+      + `</div></div>`;
+    _wireCard('sp-surgery', 0, rank, upd);
+    _wireCard('sp-pharma',  0, Math.min(5, rank), upd);
+    _wireCard('sp-cryo',    0, Math.min(5, rank), upd);
+    upd();
+  } else if (role === 'tech') {
+    const upd = () => {
+      const used = ['sp-field','sp-upgrade','sp-fab','sp-inv']
+        .reduce((a, id) => a + (parseInt(document.getElementById(id)?.value)||0), 0);
+      const total = rank * 2;
+      const b = document.getElementById('sp-budget');
+      if (b) { b.textContent = `Punkte vergeben: ${used} / ${total}`; b.className = `spec-budget${used > total ? ' over' : ''}`; }
+      _specSyncBar(used, total);
+    };
+    container.innerHTML = `<div class="field-group">${_specBarHtml(rank * 2)}<div class="spec-cards-grid">`
+      + _specCardHtml({ id:'sp-field',   icon:'🔧', name:'Field Expertise', desc:'Reparaturen & Feldarbeit', max: rank })
+      + _specCardHtml({ id:'sp-upgrade', icon:'⚙',  name:'Upgrade',        desc:'Aufrüstung & Modifikationen', max: rank })
+      + _specCardHtml({ id:'sp-fab',     icon:'🏗',  name:'Fabrication',    desc:'Herstellung & Fertigung',  max: rank })
+      + _specCardHtml({ id:'sp-inv',     icon:'💡', name:'Invention',       desc:'Erfindungen & Prototypen', max: rank })
+      + `</div></div>`;
+    _wireCard('sp-field',   0, rank, upd);
+    _wireCard('sp-upgrade', 0, rank, upd);
+    _wireCard('sp-fab',     0, rank, upd);
+    _wireCard('sp-inv',     0, rank, upd);
+    upd();
+  } else if (role === 'solo') {
+    const upd = () => {
+      const used = (parseInt(document.getElementById('sp-dd')?.value)||0)
+                 + (document.getElementById('sp-fumble')?.value === '1' ? 4 : 0)
+                 + (parseInt(document.getElementById('sp-ir')?.value)||0)
+                 + (parseInt(document.getElementById('sp-pa')?.value)||0)
+                 + (parseInt(document.getElementById('sp-sw')?.value)||0)
+                 + (parseInt(document.getElementById('sp-td')?.value)||0);
+      const b = document.getElementById('sp-budget');
+      if (b) { b.textContent = `Punkte vergeben: ${used} / ${rank}`; b.className = `spec-budget${used > rank ? ' over' : ''}`; }
+      _specSyncBar(used, rank);
+    };
+    container.innerHTML = `<div class="field-group">${_specBarHtml(rank)}<div class="spec-cards-grid">`
+      + _specDiscCardHtml({ id:'sp-dd',     icon:'🛡', name:'Damage Deflection', desc:'Passiver SP-Bonus (Stufen: 2/4/6/8/10)' })
+      + _specTogCardHtml( { id:'sp-fumble', icon:'🎲', name:'Fumble Recovery',   desc:'Patzer abwenden — 4 Punkte' })
+      + _specCardHtml(    { id:'sp-ir',     icon:'⚡', name:'Initiative Reaction',desc:'Bonus auf Initiative',  max: rank })
+      + _specDiscCardHtml({ id:'sp-pa',     icon:'🎯', name:'Precision Attack',  desc:'Zielgenauigkeit (Stufen: 3/6/9)' })
+      + _specCardHtml(    { id:'sp-sw',     icon:'👁', name:'Spot Weakness',     desc:'Schwachstellen erkennen', max: rank })
+      + _specCardHtml(    { id:'sp-td',     icon:'🕵', name:'Threat Detection',  desc:'Bedrohungen erkennen',   max: rank })
+      + `</div></div>`;
+    _wireDisc('sp-dd', [0,2,4,6,8,10], upd);
+    _wireTog('sp-fumble', upd);
+    _wireCard('sp-ir', 0, rank, upd);
+    _wireDisc('sp-pa', [0,3,6,9], upd);
+    _wireCard('sp-sw', 0, rank, upd);
+    _wireCard('sp-td', 0, rank, upd);
+    upd();
+  } else {
+    container.innerHTML = '';
+  }
+}
+
 // ── Role UI ───────────────────────────────────────────────────
 function handleRoleChange() {
-  const role = (document.getElementById('charRole')?.value || '').toLowerCase();
-  document.getElementById('medtechSpecSection').style.display = role === 'medtech' ? '' : 'none';
-  document.getElementById('techSpecSection').style.display    = role === 'tech'    ? '' : 'none';
+  renderUploadSpecialties();
 }
 document.getElementById('charRole')?.addEventListener('change', handleRoleChange);
+document.getElementById('charRank')?.addEventListener('input', renderUploadSpecialties);
 
 // ── File input via label[for="pdfInput"] ─────────────────────
 // label click → browser opens dialog → change fires
@@ -403,22 +583,29 @@ submitBtn.addEventListener('click', async () => {
     const rankVal  = parseInt(document.getElementById('charRank')?.value) || 4;
     const roleKey  = roleVal.toLowerCase();
     let roleAbilityData = {};
+    const _spInt = id => Math.max(0, parseInt(document.getElementById(id)?.value)||0);
     if (roleKey === 'medtech') {
       roleAbilityData = { specialtyPoints: {
-        surgery: Math.max(0, parseInt(document.getElementById('uploadSurgery')?.value)||0),
-        pharmaceuticals: Math.min(5, Math.max(0, parseInt(document.getElementById('uploadPharma')?.value)||0)),
-        cryosystem_operation: Math.min(5, Math.max(0, parseInt(document.getElementById('uploadCryo')?.value)||0)),
+        surgery:              _spInt('sp-surgery'),
+        pharmaceuticals:      Math.min(5, _spInt('sp-pharma')),
+        cryosystem_operation: Math.min(5, _spInt('sp-cryo')),
       }};
     } else if (roleKey === 'tech') {
       roleAbilityData = { specialtyRanks: {
-        field:       Math.max(0, parseInt(document.getElementById('uploadField')?.value)||0),
-        upgrade:     Math.max(0, parseInt(document.getElementById('uploadUpgrade')?.value)||0),
-        fabrication: Math.max(0, parseInt(document.getElementById('uploadFab')?.value)||0),
-        invention:   Math.max(0, parseInt(document.getElementById('uploadInvent')?.value)||0),
+        field:       _spInt('sp-field'),
+        upgrade:     _spInt('sp-upgrade'),
+        fabrication: _spInt('sp-fab'),
+        invention:   _spInt('sp-inv'),
       }};
     } else if (roleKey === 'solo') {
-      roleAbilityData = { combatAwareness: { damage_deflection:0, fumble_recovery:false,
-        initiative_reaction:0, precision_attack:0, spot_weakness:0, threat_detection:0 }};
+      roleAbilityData = { combatAwareness: {
+        damage_deflection:    _spInt('sp-dd'),
+        fumble_recovery:      document.getElementById('sp-fumble')?.value === '1',
+        initiative_reaction:  _spInt('sp-ir'),
+        precision_attack:     _spInt('sp-pa'),
+        spot_weakness:        _spInt('sp-sw'),
+        threat_detection:     _spInt('sp-td'),
+      }};
     } else if (roleKey === 'exec') {
       roleAbilityData = { teamMembers: [] };
     } else if (roleKey === 'nomad') {
