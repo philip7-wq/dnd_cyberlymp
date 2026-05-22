@@ -1081,16 +1081,17 @@ async function reloadWeapon(idx) {
   // Use loaded ammo id for special, or normalized ammo_type for basic
   const reloadKey = (w.loaded_ammo && w.loaded_ammo !== 'basic') ? w.loaded_ammo : (w.ammo || '').toLowerCase();
   const stock = inv[reloadKey] || 0;
-  if (stock < needed) {
-    showToast(`Nur ${stock}/${needed} Schuss — reicht nicht!`, 'red');
+  if (stock <= 0) {
+    showToast(`Keine Munition im Vorrat!`, 'red');
     return;
   }
-  char.weapons[idx].ammo_current = w.magazine_max;
-  const newInv = { ...inv, [reloadKey]: stock - needed };
+  const fill = Math.min(stock, needed);
+  char.weapons[idx].ammo_current = (w.ammo_current || 0) + fill;
+  const newInv = { ...inv, [reloadKey]: stock - fill };
   char.ammo_inventory = newInv;
   await patchCharacter(char.id, { weapons: char.weapons, ammo_inventory: newInv });
   renderWeapons();
-  showToast(`🔄 ${w.name} nachgeladen (${w.magazine_max} Schuss)`, 'cyan');
+  showToast(`🔄 ${w.name} +${fill} Schuss (${char.weapons[idx].ammo_current}/${w.magazine_max})`, 'cyan');
 }
 
 async function changeLoadedAmmo(weaponIdx, ammoId) {
@@ -1143,111 +1144,139 @@ function renderArmor() {
 }
 
 // ── Cyberware tab ─────────────────────────────────────────────
-function buildCyberSVG(cw) {
+function buildSkeletonOverlayHtml(cw) {
   const activeInjuries = getInjuries().map(i => i.name || i);
-  const injuredSlots = new Set();
-  if (['Broken Arm','Dismembered Arm'].some(n => activeInjuries.includes(n))) { injuredSlots.add('rightArm'); injuredSlots.add('leftArm'); }
-  if (['Broken Leg','Dismembered Leg'].some(n => activeInjuries.includes(n))) { injuredSlots.add('rightLeg'); injuredSlots.add('leftLeg'); }
-  if (['Lost Eye','Damaged Eye'].some(n => activeInjuries.includes(n))) injuredSlots.add('head');
+  const injuredZones = new Set();
+  if (['Broken Arm','Dismembered Arm'].some(n => activeInjuries.includes(n))) { injuredZones.add('leftArm'); injuredZones.add('rightArm'); }
+  if (['Broken Leg','Dismembered Leg'].some(n => activeInjuries.includes(n))) { injuredZones.add('leftLeg'); injuredZones.add('rightLeg'); }
+  if (['Lost Eye','Damaged Eye'].some(n => activeInjuries.includes(n))) { injuredZones.add('leftEye'); injuredZones.add('rightEye'); }
 
-  function zoneColor(zone) {
-    if (injuredSlots.has(zone)) return { fill: 'rgba(255,45,45,.25)', stroke: '#FF2D2D' };
-    const slots = SVG_ZONE_SLOTS[zone] || [];
-    const hasItems = slots.some(s => Array.isArray(cw?.[s]) && cw[s].length);
-    return hasItems
-      ? { fill: 'rgba(0,229,255,.22)', stroke: '#00E5FF' }
-      : { fill: '#1a1a1a', stroke: '#333' };
-  }
+  // Each named SVG zone → which slot keys it represents
+  const ZONE_SLOT_MAP = {
+    head:     ['neuralLink','rightCybereye','leftCybereye','cyberaudio'],
+    leftEye:  ['leftCybereye'],
+    rightEye: ['rightCybereye'],
+    neck:     ['neuralLink','cyberaudio'],
+    leftArm:  ['leftCyberarm'],
+    rightArm: ['rightCyberarm'],
+    torso:    ['internal','external','fashionware','borgware'],
+    leftLeg:  ['leftCyberleg'],
+    rightLeg: ['rightCyberleg'],
+  };
 
-  function zoneTitle(zone) {
-    const slots = SVG_ZONE_SLOTS[zone] || [];
+  function zoneAttrs(zoneName) {
+    const slots = ZONE_SLOT_MAP[zoneName] || [];
+    const count = slots.reduce((n, s) => n + (Array.isArray(cw?.[s]) ? cw[s].length : 0), 0);
+    const injured = injuredZones.has(zoneName);
+    const hasCyber = count > 0;
     const names = slots.flatMap(s => (cw?.[s] || []).map(i => i.name)).filter(Boolean);
-    return names.length ? names.join(', ') : (CW_SLOT_LABELS[slots[0]] || zone);
+    const tip = names.length ? names.join(', ') : (CW_SLOT_LABELS[slots[0]] || zoneName);
+    if (injured) return { fill: 'rgba(255,45,45,.2)', stroke: '#FF2D2D', filter: 'drop-shadow(0 0 5px #FF2D2D)', count, tip };
+    if (hasCyber) return { fill: 'rgba(0,229,255,.18)', stroke: '#00E5FF', filter: 'drop-shadow(0 0 6px #00E5FF)', count, tip };
+    return { fill: 'transparent', stroke: 'rgba(0,229,255,.2)', filter: 'none', count: 0, tip };
   }
 
-  function rect(zone, x, y, w, h, rx = 4) {
-    const c = zoneColor(zone);
-    return `<rect data-zone="${zone}" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" class="cyber-svg-zone"><title>${zoneTitle(zone)}</title></rect>`;
-  }
-  function ellipse(zone, cx, cy, rx, ry) {
-    const c = zoneColor(zone);
-    return `<ellipse data-zone="${zone}" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" class="cyber-svg-zone"><title>${zoneTitle(zone)}</title></ellipse>`;
+  function zone(tag, zoneName, attrs, children = '') {
+    const a = zoneAttrs(zoneName);
+    const filterAttr = a.filter !== 'none' ? ` style="filter:${a.filter}"` : '';
+    const badge = a.count > 0
+      ? `<text class="cyber-zone-badge" x="${attrs.bx ?? 0}" y="${attrs.by ?? 0}" text-anchor="middle">${a.count}</text>`
+      : '';
+    const shape = tag === 'ellipse'
+      ? `<ellipse data-zone="${zoneName}" cx="${attrs.cx}" cy="${attrs.cy}" rx="${attrs.rx}" ry="${attrs.ry}" fill="${a.fill}" stroke="${a.stroke}" stroke-width="1" class="cyber-svg-zone"${filterAttr}><title>${a.tip}</title></ellipse>`
+      : `<rect data-zone="${zoneName}" x="${attrs.x}" y="${attrs.y}" width="${attrs.w}" height="${attrs.h}" rx="${attrs.rx ?? 4}" fill="${a.fill}" stroke="${a.stroke}" stroke-width="1" class="cyber-svg-zone"${filterAttr}><title>${a.tip}</title></rect>`;
+    return shape + badge;
   }
 
-  return `<svg viewBox="0 0 100 220" width="100" height="220" style="display:block">
-    ${ellipse('head', 50, 18, 14, 16)}
-    ${rect('torso', 28, 40, 44, 60)}
-    ${rect('rightArm', 8, 40, 18, 52)}
-    ${rect('leftArm', 74, 40, 18, 52)}
-    ${rect('rightLeg', 28, 108, 20, 70, 3)}
-    ${rect('leftLeg', 52, 108, 20, 70, 3)}
+  // SVG viewBox matches image aspect ratio (portrait ~0.6:1 → 100×160)
+  const svg = `<svg class="cyber-skeleton-svg" viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg">
+    ${zone('ellipse','head',   {cx:50, cy:9,  rx:13, ry:10, bx:62, by:3})}
+    ${zone('ellipse','leftEye',{cx:43, cy:8,  rx:4,  ry:3,  bx:46, by:5})}
+    ${zone('ellipse','rightEye',{cx:57,cy:8,  rx:4,  ry:3,  bx:60, by:5})}
+    ${zone('rect','neck',      {x:44,  y:18,  w:12,  h:7,   bx:55, by:22})}
+    ${zone('rect','leftArm',   {x:5,   y:25,  w:16,  h:52,  bx:20, by:28})}
+    ${zone('rect','rightArm',  {x:79,  y:25,  w:16,  h:52,  bx:94, by:28})}
+    ${zone('rect','torso',     {x:28,  y:23,  w:44,  h:46,  bx:71, by:27})}
+    ${zone('rect','leftLeg',   {x:26,  y:74,  w:20,  h:78,  bx:45, by:78})}
+    ${zone('rect','rightLeg',  {x:54,  y:74,  w:20,  h:78,  bx:73, by:78})}
   </svg>`;
+
+  return `<div class="cyber-skeleton-wrap">
+    <img src="./assets/img/cyberware-skeleton.png" class="cyber-skeleton-img" alt="Skeleton" draggable="false">
+    ${svg}
+  </div>`;
+}
+
+function buildCyberSlotHtml(slotKey, cw) {
+  const items = Array.isArray(cw?.[slotKey]) ? cw[slotKey] : [];
+  const label = CW_SLOT_LABELS[slotKey] || slotKey;
+  const itemsHtml = items.length
+    ? items.map((item, i) => `
+        <div class="cyber-item-card">
+          <span class="cyber-item-name has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
+          <div class="cyber-item-actions">
+            <button class="cyber-uninstall-btn gear-action-btn" data-slot="${slotKey}" data-idx="${i}" title="Ausoperieren → Gear">🩺</button>
+            <button class="remove-btn gear-action-btn gear-del-btn" data-inv="cyberware" data-slot="${slotKey}" data-idx="${i}">✕</button>
+          </div>
+        </div>`).join('')
+    : '<div class="cyber-slot-empty">— leer —</div>';
+  return `<div class="cyber-slot${items.length ? ' has-items' : ''}" id="cyber-slot-${slotKey}">
+    <div class="cyber-slot-label">${label}</div>
+    <div class="cyber-items">${itemsHtml}</div>
+  </div>`;
 }
 
 function renderCyberware() {
   const cw = char.cyberware;
   const el = document.getElementById('tab-cyberware');
 
-  // SVG Body Map oben
-  const svgHtml = `
-    <div class="cyber-body-wrap">
-      <div class="cyber-svg-col">
-        <div id="cyberSvgContainer">${buildCyberSVG(cw)}</div>
-        <div class="cyber-hum-bar-wrap">
-          <div class="cyber-hum-bar" id="cyberHumBar"></div>
-          <div id="cyberHumLabel" style="font-size:.6rem;text-align:center;color:var(--text-muted);margin-top:.15rem">${char.current_humanity ?? 0} / ${char.max_humanity ?? 0}</div>
-        </div>
-      </div>
-      <div class="cyber-slots-col" id="cyberSlotsCol"></div>
-    </div>`;
+  const leftSlots  = ['leftCybereye','leftCyberarm','leftCyberleg','neuralLink','cyberaudio'];
+  const rightSlots = ['rightCybereye','rightCyberarm','rightCyberleg','internal','external','fashionware','borgware'];
 
-  // Slot-Listen
-  function buildSlotList() {
-    if (cw && typeof cw === 'object' && !Array.isArray(cw)) {
-      const entries = Object.entries(cw).filter(([, items]) => Array.isArray(items) && items.length);
-      if (!entries.length) return '<p class="empty-state">Kein Cyberware installiert.</p>';
-      return entries.map(([slot, items]) => `
-        <div class="cyber-slot" id="cyber-slot-${slot}">
-          <div class="cyber-slot-label">${CW_SLOT_LABELS[slot] || slot}</div>
-          <div class="cyber-items">
-            ${items.map((item, i) => `
-              <span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
-              <button class="cyber-uninstall-btn" data-slot="${slot}" data-idx="${i}" title="Ausoperieren → Gear" style="background:none;border:none;cursor:pointer;font-size:.65rem;opacity:.5;padding:0 .15rem">🩺</button>
-              <button class="remove-btn" data-inv="cyberware" data-slot="${slot}" data-idx="${i}">✕</button>
-            `).join('')}
-          </div>
-        </div>`).join('');
-    }
-    const arr = Array.isArray(cw) ? cw : [];
-    if (!arr.length) return '<p class="empty-state">Kein Cyberware installiert.</p>';
-    return arr.map((item, i) => `
-      <div class="cyber-slot">
-        <div class="cyber-slot-label">${item.subcategory || 'Cyberware'}</div>
-        <div class="cyber-items">
-          <span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
-          <button class="remove-btn" data-inv="cyberware" data-idx="${i}">✕</button>
-        </div>
-      </div>`).join('');
+  // Legacy array fallback
+  if (Array.isArray(cw)) {
+    el.innerHTML = cw.length
+      ? cw.map((item, i) => `<div class="cyber-slot"><div class="cyber-slot-label">${item.subcategory || 'Cyberware'}</div><div class="cyber-items"><span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span><button class="remove-btn" data-inv="cyberware" data-idx="${i}">✕</button></div></div>`).join('')
+      : '<p class="empty-state">Kein Cyberware installiert.</p>';
+    return;
   }
 
-  el.innerHTML = svgHtml;
-  document.getElementById('cyberSlotsCol').innerHTML = buildSlotList();
-
-  // Humanity-Gradient-Bar
   const maxH = char.max_humanity ?? 0;
   const curH = char.current_humanity ?? 0;
   const hPct = maxH ? (curH / maxH * 100) : 0;
-  const bar  = document.getElementById('cyberHumBar');
-  if (bar) {
-    bar.style.width = hPct + '%';
-    bar.style.background = hPct > 60 ? '#00E5FF' : hPct > 40 ? '#FFD700' : hPct > 20 ? '#FF8C00' : '#FF2D2D';
-  }
+  const barColor = hPct > 60 ? '#00E5FF' : hPct > 40 ? '#FFD700' : hPct > 20 ? '#FF8C00' : '#FF2D2D';
 
-  // SVG-Klick: zum Slot scrollen
+  el.innerHTML = `<div class="cyber-layout">
+    <div class="cyber-col cyber-col-left">
+      ${leftSlots.map(s => buildCyberSlotHtml(s, cw)).join('')}
+    </div>
+    <div class="cyber-center-col">
+      ${buildSkeletonOverlayHtml(cw)}
+      <div class="cyber-hum-section">
+        <div class="cyber-hum-label">Humanity</div>
+        <div class="cyber-hum-bar-wrap">
+          <div class="cyber-hum-bar" id="cyberHumBar" style="width:${hPct}%;background:${barColor}"></div>
+        </div>
+        <div id="cyberHumLabel">${curH} / ${maxH}</div>
+      </div>
+    </div>
+    <div class="cyber-col cyber-col-right">
+      ${rightSlots.map(s => buildCyberSlotHtml(s, cw)).join('')}
+    </div>
+  </div>`;
+
+  // SVG zone click → scroll to slot
+  const ZONE_SCROLL_TARGET = {
+    head: ['neuralLink','rightCybereye','leftCybereye','cyberaudio'],
+    leftEye: ['leftCybereye'], rightEye: ['rightCybereye'],
+    neck: ['neuralLink','cyberaudio'],
+    leftArm: ['leftCyberarm'], rightArm: ['rightCyberarm'],
+    torso: ['internal','external','fashionware','borgware'],
+    leftLeg: ['leftCyberleg'], rightLeg: ['rightCyberleg'],
+  };
   el.querySelectorAll('.cyber-svg-zone').forEach(zone => {
     zone.addEventListener('click', () => {
-      const z     = zone.dataset.zone;
-      const slots = SVG_ZONE_SLOTS[z] || [];
+      const slots = ZONE_SCROLL_TARGET[zone.dataset.zone] || [];
       for (const s of slots) {
         const slotEl = document.getElementById(`cyber-slot-${s}`);
         if (slotEl) { slotEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); break; }

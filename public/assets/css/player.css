@@ -994,14 +994,59 @@ body.near-death::before {
 @keyframes psychosis-pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
 @keyframes psychosis-blink { 0%,49%{ opacity:1 } 50%,100%{ opacity:0 } }
 
-/* ── Cyberware Body Map ── */
-.cyber-body-wrap { display:flex; gap:1rem; align-items:flex-start; }
-.cyber-svg-col   { flex-shrink:0; }
-.cyber-slots-col { flex:1; min-width:0; }
-.cyber-svg-zone  { cursor:pointer; transition:opacity .15s; }
-.cyber-svg-zone:hover { opacity:.75; }
-.cyber-hum-bar-wrap { margin-top:.5rem; background:#111; border-radius:3px; height:6px; width:100px; overflow:hidden; }
-.cyber-hum-bar { height:100%; border-radius:3px; transition:width .4s, background .4s; }
+/* ── Cyberware Layout ── */
+.cyber-layout {
+  display: grid;
+  grid-template-columns: 1fr 220px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+.cyber-col { display: flex; flex-direction: column; gap: .5rem; }
+.cyber-center-col { display: flex; flex-direction: column; gap: .75rem; }
+
+.cyber-skeleton-wrap { position: relative; width: 100%; user-select: none; }
+.cyber-skeleton-img  { width: 100%; display: block; border-radius: var(--radius); }
+.cyber-skeleton-svg  {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none;
+}
+.cyber-svg-zone {
+  cursor: pointer; pointer-events: all;
+  transition: fill .2s, filter .2s, stroke .2s;
+}
+.cyber-svg-zone:hover { filter: brightness(1.5) drop-shadow(0 0 4px #00E5FF); }
+
+.cyber-hum-section { text-align: center; }
+.cyber-hum-label { font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .3rem; }
+.cyber-hum-bar-wrap { background: #111; border-radius: 3px; height: 8px; overflow: hidden; }
+.cyber-hum-bar { height: 100%; border-radius: 3px; transition: width .4s, background .4s; }
+#cyberHumLabel { font-size: .65rem; color: var(--text-muted); margin-top: .2rem; }
+
+.cyber-slot {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: .6rem .75rem;
+}
+.cyber-slot.has-items { border-color: rgba(0,229,255,.3); }
+.cyber-slot-label { font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); margin-bottom: .3rem; }
+.cyber-slot-empty { font-size: .72rem; color: var(--text-muted); font-style: italic; }
+.cyber-items { display: flex; flex-direction: column; gap: .35rem; }
+.cyber-item-card { display: flex; align-items: center; gap: .35rem; }
+.cyber-item-name { font-size: .78rem; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cyber-item-actions { display: flex; gap: .25rem; flex-shrink: 0; }
+.cyber-tag {
+  font-size: .75rem; padding: .15rem .55rem;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 2px; color: var(--text);
+}
+.cyber-zone-badge {
+  font-family: Audiowide, sans-serif; font-size: 5px;
+  fill: #00E5FF; pointer-events: none;
+}
+
+@media (max-width: 700px) {
+  .cyber-layout { grid-template-columns: 1fr; }
+  .cyber-center-col { max-width: 240px; margin: 0 auto; }
+}
 
 /* ── Ammunition System ── */
 .weapon-mag-row {
