@@ -608,6 +608,15 @@ function setupStatEditing() {
 }
 
 // ── Skills tab ────────────────────────────────────────────────
+function getArmorRefPenalty() {
+  const a = char?.armor || {};
+  return (a.head?.penalty ?? 0) + (a.body?.penalty ?? 0) + (a.shield?.penalty ?? 0);
+}
+function getSWPenalty() {
+  const sw = char?.seriously_wounded_threshold ?? 0;
+  return sw > 0 && (char?.current_hp ?? 0) < sw ? 2 : 0;
+}
+
 function renderSkills() {
   const skills = char.skills || {};
   const stats  = char.stats  || {};
@@ -628,9 +637,13 @@ function renderSkills() {
   }
 
   function skillRowHtml(sk) {
-    const statVal  = stats[sk.stat] ?? 0;
-    const base     = statVal + (sk.lvl || 0);
-    const expr     = `1d10+${base}`;
+    const armorPen = sk.stat === 'REF' ? getArmorRefPenalty() : 0;
+    const swPen    = getSWPenalty();
+    const statVal  = Math.max(0, (stats[sk.stat] ?? 0) - armorPen);
+    const base     = statVal + (sk.lvl || 0) - swPen;
+    const expr     = base >= 0 ? `1d10+${base}` : `1d10${base}`;
+    const penBadge = (armorPen > 0 || swPen > 0)
+      ? `<span class="skill-pen-badge" title="${armorPen > 0 ? `−${armorPen} Rüstung` : ''}${armorPen > 0 && swPen > 0 ? ', ' : ''}${swPen > 0 ? '−2 SW' : ''}">⚠</span>` : '';
     const upData   = skillUpgradeMap[sk.name] || {};
     const nextLvl  = (sk.lvl ?? 0) + 1;
     const cost     = upData.ip_cost_by_next_level?.[String(nextLvl)]
@@ -670,13 +683,21 @@ function renderSkills() {
       <span class="skill-name">${sk.name}</span>
       <span class="skill-stat">${sk.stat}</span>
       <span class="skill-lvl">${sk.lvl ?? 0}</span>
-      <span class="skill-base">${base}${motoNote}${surgNote}${medTechNote}${techFieldNote}</span>
+      <span class="skill-base">${base}${penBadge}${motoNote}${surgNote}${medTechNote}${techFieldNote}</span>
       <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1" title="1d10+${base}">⚄</button>
       ${upgradeBtn}
     </div>`;
   }
 
-  let html = `<div class="skill-ip-banner">Verfügbare IP: <strong id="skillIpDisplay">${char.improvement_points ?? 0}</strong></div>`;
+  const swPenActive    = getSWPenalty() > 0;
+  const armorPenActive = getArmorRefPenalty() > 0;
+  const warnings = [];
+  if (swPenActive)    warnings.push(`⚠ Seriously Wounded: −2 auf alle Rolls`);
+  if (armorPenActive) warnings.push(`⚠ Rüstung: −${getArmorRefPenalty()} auf REF-Skills`);
+  const warnHtml = warnings.length
+    ? `<div class="skill-penalty-banner">${warnings.join(' &nbsp;·&nbsp; ')}</div>` : '';
+
+  let html = warnHtml + `<div class="skill-ip-banner">Verfügbare IP: <strong id="skillIpDisplay">${char.improvement_points ?? 0}</strong></div>`;
 
   // Favorites section
   const favSkills = [...favs].map(name => {
@@ -2477,10 +2498,13 @@ async function showDeathSaveResult(d10, target, success) {
 function showSkillCheckModal(expr, ctx) {
   const skillName = ctx.replace(' skill check', '');
   const skData    = char.skills?.[skillName];
-  const statVal   = skData ? (char.stats?.[skData.stat] ?? 0) : 0;
-  const lvl       = skData?.lvl ?? 0;
-  const base      = statVal + lvl;
-  const statStr   = skData?.stat ?? '?';
+  const rawStatVal = skData ? (char.stats?.[skData.stat] ?? 0) : 0;
+  const lvl        = skData?.lvl ?? 0;
+  const statStr    = skData?.stat ?? '?';
+  const armorPen   = skData?.stat === 'REF' ? getArmorRefPenalty() : 0;
+  const swPen      = getSWPenalty();
+  const statVal    = Math.max(0, rawStatVal - armorPen);
+  const base       = statVal + lvl - swPen;
 
   // Solo Combat Awareness — Initiative Reaction bonus
   let soloBonus = 0;
@@ -2489,14 +2513,19 @@ function showSkillCheckModal(expr, ctx) {
     soloBonus = char.role_ability_data?.combatAwareness?.initiative_reaction || 0;
     if (soloBonus > 0) soloBonusLabel = ` + ${soloBonus} (Initiative Reaction)`;
   }
-  const adjustedExpr = soloBonus > 0 ? `${expr}+${soloBonus}` : expr;
+  const totalBase    = base + soloBonus;
+  const adjustedExpr = totalBase >= 0 ? `1d10+${totalBase}` : `1d10${totalBase}`;
+  const penParts     = [];
+  if (armorPen > 0) penParts.push(`−${armorPen} Rüstung`);
+  if (swPen > 0)    penParts.push(`−${swPen} SW`);
+  const penLabel     = penParts.length ? ` <span style="color:var(--red);font-size:.8em">(${penParts.join(', ')})</span>` : '';
 
   const overlay = document.createElement('div');
   overlay.className = 'skill-modal-overlay';
   overlay.innerHTML = `
     <div class="skill-modal-box">
       <div class="skill-modal-title">${skillName} CHECK</div>
-      <div class="skill-modal-formula">1d10 + ${statStr} (${statVal}) + Lvl ${lvl}${soloBonusLabel} = <strong>1d10 + ${base + soloBonus}</strong></div>
+      <div class="skill-modal-formula">1d10 + ${statStr} (${statVal}) + Lvl ${lvl}${soloBonusLabel}${penLabel} = <strong>1d10 + ${totalBase}</strong></div>
       <div class="skill-modal-dv">
         <label>DV (optional):</label>
         <input type="number" id="skillDvInput" class="ctrl-input" placeholder="—" min="0" style="width:70px;margin-left:.5rem">
