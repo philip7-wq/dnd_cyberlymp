@@ -1101,6 +1101,68 @@ function renderWeapons() {
   el.querySelectorAll('.ammo-type-select').forEach(sel => {
     sel.addEventListener('change', () => changeLoadedAmmo(parseInt(sel.dataset.weaponIdx), sel.value));
   });
+
+  // ── Nahkampf section ──────────────────────────────────────
+  const body = char.stats?.BODY ?? 5;
+  const brawlDmg = body <= 4 ? '1d6' : body <= 6 ? '2d6' : body <= 10 ? '3d6' : '4d6';
+  const brawlSkill = char.skills?.Brawling ?? 0;
+  const martialSkill = char.skills?.['Martial Arts'] ?? 0;
+
+  // Check for cyberware melee
+  const cyberMeleeItems = [];
+  ['leftCyberarm','rightCyberarm'].forEach(slot => {
+    (char.cyberware?.[slot] || []).forEach(item => {
+      const n = (item.name || '').toLowerCase();
+      if (n.includes('wolver') || n.includes('wolvers')) cyberMeleeItems.push({ name: item.name, dmg: '3d6', note: 'Cyberware · Greift als schwere Melee' });
+      if (n.includes('grapple')) cyberMeleeItems.push({ name: item.name, dmg: '0', note: 'Grab-Angriff · 2m Reichweite' });
+    });
+  });
+
+  const meleeHtml = `
+    <div class="weapons-section-head" style="margin-top:1rem">NAHKAMPF</div>
+    <div class="weapon-card">
+      <div class="weapon-header-row">
+        <span class="weapon-name">Brawling</span>
+        <span class="weapon-meta">Melee · 2m · ½ Armor SP</span>
+      </div>
+      <div class="weapon-action-row">
+        <button class="roll-btn" data-expr="${brawlDmg}" data-context="Brawling Schaden">${brawlDmg} 🎲</button>
+        <span class="weapon-ammo-info-req" style="margin-left:.5rem">BODY ${body} → ${brawlDmg} | ignoriert ½ Rüstungs-SP</span>
+      </div>
+      ${brawlSkill > 0 ? `<div class="weapon-meta" style="margin-top:.2rem">Brawling Skill: +${brawlSkill}</div>` : ''}
+    </div>
+    ${martialSkill > 0 ? `<div class="weapon-card">
+      <div class="weapon-header-row">
+        <span class="weapon-name">Martial Arts</span>
+        <span class="weapon-meta">Melee · 2m · ½ Armor SP</span>
+      </div>
+      <div class="weapon-action-row">
+        <button class="roll-btn" data-expr="${brawlDmg}" data-context="Martial Arts Schaden">${brawlDmg} 🎲</button>
+        <span class="weapon-ammo-info-req" style="margin-left:.5rem">Skill: +${martialSkill} | ignoriert ½ Rüstungs-SP</span>
+      </div>
+    </div>` : ''}
+    ${cyberMeleeItems.map(c => `<div class="weapon-card">
+      <div class="weapon-header-row">
+        <span class="weapon-name">${c.name}</span>
+        <span class="weapon-meta">Cyberware · 2m</span>
+      </div>
+      <div class="weapon-action-row">
+        ${c.dmg !== '0' ? `<button class="roll-btn" data-expr="${c.dmg}" data-context="${c.name} Schaden">${c.dmg} 🎲</button>` : ''}
+        <span class="weapon-ammo-info-req" style="margin-left:.5rem">${c.note}</span>
+      </div>
+    </div>`).join('')}
+  `;
+  el.insertAdjacentHTML('beforeend', meleeHtml);
+
+  // Wire melee roll buttons
+  el.querySelectorAll('.weapon-card .roll-btn').forEach(btn => {
+    const expr = btn.dataset.expr;
+    const ctx  = btn.dataset.context;
+    if (!expr || expr === '0') return;
+    btn.addEventListener('click', () => {
+      if (typeof rollDice === 'function') rollDice(expr, { context: ctx, isSkillCheck: false });
+    });
+  });
 }
 
 async function reloadWeapon(idx) {
