@@ -754,7 +754,22 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 }
 .dm-ammo-chip.warn { color: var(--red); border-color: var(--red); }
 
-/* ── DM Timer Section ── */
+/* ── DM Timer Bar (top of page when active) ── */
+.dm-timer-bar {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .4rem 1rem; background: #0a0a14;
+  border-bottom: 1px solid rgba(0,229,255,.25);
+}
+.dm-timer-bar-label {
+  font-family: Audiowide, sans-serif; font-size: .72rem;
+  color: var(--cyan); white-space: nowrap; min-width: 70px;
+}
+.dm-timer-bar-countdown {
+  font-family: Audiowide, sans-serif; font-size: 1.1rem;
+  color: var(--cyan); min-width: 58px;
+}
+
+/* ── DM Timer Section (legacy sidebar — kept for modal CSS reuse) ── */
 .dm-timer-section {
   border-bottom: 1px solid var(--border);
   padding-bottom: .6rem; margin-bottom: .25rem;

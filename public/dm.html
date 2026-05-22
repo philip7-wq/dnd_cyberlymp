@@ -25,6 +25,7 @@
   <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
   <span style="font-family:var(--font-display);font-size:.72rem;color:var(--red);margin-left:.75rem;letter-spacing:.12em">DM DASHBOARD</span>
   <button id="dmItemsBtn" class="btn btn-ghost" style="font-size:.75rem;margin-left:.75rem">🛍 Items</button>
+  <button id="dmTimerBtn" class="btn btn-ghost" style="font-size:.75rem;margin-left:.5rem">⏱ Timer</button>
   <button class="btn btn-ghost" id="newCombatBtn" style="font-size:.75rem;margin-left:auto">⚔ Neuer Kampf</button>
   <a href="index.html" class="btn btn-ghost" style="font-size:.75rem">← Übersicht</a>
 </nav>
@@ -72,6 +73,60 @@
   </div>
 </div>
 
+<!-- DM Timer Bar (below nav, visible when timer active) -->
+<div id="dmTimerBar" class="dm-timer-bar" style="display:none">
+  <span class="dm-timer-bar-label" id="dmBarLabel">Timer</span>
+  <span class="dm-timer-bar-countdown" id="dmBarCountdown">0:00</span>
+  <div class="timer-progress-wrap" style="flex:1;height:5px">
+    <div class="timer-progress-fill" id="dmBarFill" style="width:100%"></div>
+  </div>
+  <button type="button" class="ctrl-btn" id="dmBarOpenBtn" style="font-size:.65rem;flex-shrink:0">⚙</button>
+  <button type="button" class="ctrl-btn ctrl-btn-red" id="dmBarStopBtn" style="font-size:.65rem;flex-shrink:0">⏹ Stop</button>
+</div>
+
+<!-- DM Timer Modal -->
+<div id="dmTimerModal" class="dm-modal-overlay" hidden>
+  <div class="dm-modal-box" style="max-width:340px;width:96vw">
+    <div class="dm-modal-header">
+      <span>⏱ TIMER</span>
+      <button class="dm-modal-close" id="dmTimerModalClose">✕</button>
+    </div>
+    <div style="padding:1rem;display:flex;flex-direction:column;gap:.6rem">
+      <input id="dmTimerLabel" class="ctrl-input" placeholder="Label (z.B. Bomben-Timer)" value="Timer" maxlength="40">
+      <div class="timer-time-row">
+        <input type="number" id="dmTimerMin" class="ctrl-input" min="0" max="99" value="1" style="width:60px;text-align:center"> min
+        <input type="number" id="dmTimerSec" class="ctrl-input" min="0" max="59" value="0" style="width:60px;text-align:center"> sek
+      </div>
+      <div class="timer-quick-btns">
+        <button type="button" class="timer-quick-btn" data-sec="10">10s</button>
+        <button type="button" class="timer-quick-btn" data-sec="30">30s</button>
+        <button type="button" class="timer-quick-btn" data-sec="60">1min</button>
+        <button type="button" class="timer-quick-btn" data-sec="120">2min</button>
+        <button type="button" class="timer-quick-btn" data-sec="300">5min</button>
+      </div>
+      <div class="timer-warning-row">
+        Warnung bei
+        <input type="number" id="dmTimerWarn" class="ctrl-input" min="3" max="300" value="10" style="width:60px;text-align:center"> sek
+      </div>
+      <div style="display:flex;gap:.4rem;margin-top:.25rem">
+        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerStartBtn" style="flex:1">▶ Starten</button>
+        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerPauseBtn" disabled style="flex:1">⏸ Pause</button>
+      </div>
+      <div style="display:flex;gap:.4rem">
+        <button type="button" class="ctrl-btn ctrl-btn-red timer-ctrl-btn" id="timerStopBtn" disabled style="flex:1">⏹ Stoppen</button>
+        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerRestartBtn" disabled style="flex:1">🔄 Neu starten</button>
+      </div>
+      <div id="dmTimerPreview" class="dm-timer-preview" style="display:none">
+        <span class="timer-preview-label" id="dmPreviewLabel">Timer</span>
+        <span class="timer-preview-countdown" id="dmPreviewCountdown">0:00</span>
+        <div class="timer-progress-wrap" style="flex:1;height:5px">
+          <div class="timer-progress-fill" id="dmPreviewFill" style="width:100%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="dm-page">
 <div class="dm-layout">
   <!-- Main col: Characters + NPCs with tabs -->
@@ -99,41 +154,6 @@
 
   <!-- Sidebar: Roll Log + DM Notes -->
   <div class="dm-sidebar">
-    <!-- ── DM Timer ── -->
-    <div class="dm-timer-section">
-      <div class="roll-log-head">⏱ TIMER</div>
-      <div class="dm-timer-config">
-        <input id="dmTimerLabel" class="ctrl-input" placeholder="Label (z.B. Bomben-Timer)" value="Timer" maxlength="40" style="font-size:.75rem">
-        <div class="timer-time-row">
-          <input type="number" id="dmTimerMin" class="ctrl-input" min="0" max="99" value="1" style="width:52px;text-align:center"> min
-          <input type="number" id="dmTimerSec" class="ctrl-input" min="0" max="59" value="0" style="width:52px;text-align:center"> sek
-        </div>
-        <div class="timer-quick-btns">
-          <button type="button" class="timer-quick-btn" data-sec="10">10s</button>
-          <button type="button" class="timer-quick-btn" data-sec="30">30s</button>
-          <button type="button" class="timer-quick-btn" data-sec="60">1min</button>
-          <button type="button" class="timer-quick-btn" data-sec="120">2min</button>
-          <button type="button" class="timer-quick-btn" data-sec="300">5min</button>
-        </div>
-        <div class="timer-warning-row">
-          Warnung bei
-          <input type="number" id="dmTimerWarn" class="ctrl-input" min="3" max="300" value="10" style="width:52px;text-align:center"> sek
-        </div>
-      </div>
-      <div class="timer-ctrl-row">
-        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerStartBtn">▶ Start</button>
-        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerPauseBtn" disabled>⏸ Pause</button>
-        <button type="button" class="ctrl-btn ctrl-btn-red timer-ctrl-btn" id="timerStopBtn" disabled>⏹ Stop</button>
-        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerRestartBtn" disabled>🔄 Neu</button>
-      </div>
-      <div id="dmTimerPreview" class="dm-timer-preview" style="display:none">
-        <span class="timer-preview-label" id="dmPreviewLabel">Timer</span>
-        <span class="timer-preview-countdown" id="dmPreviewCountdown">0:00</span>
-        <div class="timer-progress-wrap" style="flex:1;height:5px">
-          <div class="timer-progress-fill" id="dmPreviewFill" style="width:100%"></div>
-        </div>
-      </div>
-    </div>
     <div class="roll-log" id="rollLog">
       <div class="roll-log-head">ROLL LOG <button class="roll-log-clear" id="clearRollLog" title="Alle Würfelwürfe löschen">🗑</button></div>
       <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
@@ -3036,50 +3056,83 @@ async function dmRestartTimer() {
 function updateDmTimer(timerData) {
   _dmTimerState = timerData;
   clearInterval(_dmTimerInterval);
+
+  // Update modal button states
   const preview    = document.getElementById('dmTimerPreview');
   const startBtn   = document.getElementById('timerStartBtn');
   const pauseBtn   = document.getElementById('timerPauseBtn');
   const stopBtn    = document.getElementById('timerStopBtn');
   const restartBtn = document.getElementById('timerRestartBtn');
-  if (!startBtn) return;
+
+  // Update top timer bar
+  const topBar  = document.getElementById('dmTimerBar');
+  const barStop = document.getElementById('dmBarStopBtn');
 
   if (!timerData) {
-    preview.style.display = 'none';
-    startBtn.disabled   = false;
-    pauseBtn.disabled   = true;
-    stopBtn.disabled    = true;
-    restartBtn.disabled = true;
+    if (preview) preview.style.display = 'none';
+    if (startBtn)   startBtn.disabled   = false;
+    if (pauseBtn)   pauseBtn.disabled   = true;
+    if (stopBtn)    stopBtn.disabled    = true;
+    if (restartBtn) restartBtn.disabled = true;
+    topBar.style.display = 'none';
     return;
   }
 
-  preview.style.display = 'flex';
-  startBtn.disabled   = true;
-  pauseBtn.disabled   = false;
-  stopBtn.disabled    = false;
-  restartBtn.disabled = false;
-  document.getElementById('dmPreviewLabel').textContent = timerData.label || 'Timer';
-  pauseBtn.textContent = timerData.active ? '⏸ Pause' : '▶ Fortsetzen';
+  // Top bar
+  topBar.style.display = 'flex';
+  document.getElementById('dmBarLabel').textContent = timerData.label || 'Timer';
+
+  if (preview) preview.style.display = 'flex';
+  if (startBtn)   startBtn.disabled   = true;
+  if (pauseBtn) { pauseBtn.disabled   = false; pauseBtn.textContent = timerData.active ? '⏸ Pause' : '▶ Fortsetzen'; }
+  if (stopBtn)    stopBtn.disabled    = false;
+  if (restartBtn) restartBtn.disabled = false;
+  if (preview) document.getElementById('dmPreviewLabel').textContent = timerData.label || 'Timer';
+
+  function tick() {
+    if (!_dmTimerState) return;
+    const remaining = _dmTimerState.active
+      ? Math.max(0, _dmTimerState.duration_seconds - (Date.now() - new Date(_dmTimerState.started_at).getTime()) / 1000)
+      : (_dmTimerState.pause_remaining_seconds ?? 0);
+    const total = _dmTimerState.duration_seconds;
+    const mins  = Math.floor(remaining / 60);
+    const secs  = Math.floor(remaining % 60);
+    const fmt   = `${mins}:${String(secs).padStart(2, '0')}`;
+    const pct   = total > 0 ? (remaining / total) * 100 : 0;
+    // Top bar
+    document.getElementById('dmBarCountdown').textContent = fmt;
+    document.getElementById('dmBarFill').style.width = `${pct}%`;
+    // Modal preview
+    const pc = document.getElementById('dmPreviewCountdown');
+    const pf = document.getElementById('dmPreviewFill');
+    if (pc) pc.textContent = fmt;
+    if (pf) pf.style.width = `${pct}%`;
+    if (!_dmTimerState.active || remaining <= 0) clearInterval(_dmTimerInterval);
+  }
 
   if (timerData.active) {
-    _dmTimerInterval = setInterval(() => {
-      if (!_dmTimerState?.active) return;
-      const elapsed   = (Date.now() - new Date(_dmTimerState.started_at).getTime()) / 1000;
-      const remaining = Math.max(0, _dmTimerState.duration_seconds - elapsed);
-      renderDmTimerPreview(remaining, _dmTimerState.duration_seconds);
-      if (remaining <= 0) clearInterval(_dmTimerInterval);
-    }, 250);
+    _dmTimerInterval = setInterval(tick, 250);
+    tick();
   } else {
-    renderDmTimerPreview(timerData.pause_remaining_seconds ?? 0, timerData.duration_seconds);
+    tick();
   }
 }
 
-function renderDmTimerPreview(remaining, total) {
-  const mins = Math.floor(remaining / 60);
-  const secs = Math.floor(remaining % 60);
-  document.getElementById('dmPreviewCountdown').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
-  const pct = total > 0 ? (remaining / total) * 100 : 0;
-  document.getElementById('dmPreviewFill').style.width = `${pct}%`;
-}
+// Timer modal open/close
+document.getElementById('dmTimerBtn').addEventListener('click', () => {
+  document.getElementById('dmTimerModal').hidden = false;
+});
+document.getElementById('dmTimerModalClose').addEventListener('click', () => {
+  document.getElementById('dmTimerModal').hidden = true;
+});
+document.getElementById('dmTimerModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('dmTimerModal'))
+    document.getElementById('dmTimerModal').hidden = true;
+});
+document.getElementById('dmBarOpenBtn').addEventListener('click', () => {
+  document.getElementById('dmTimerModal').hidden = false;
+});
+document.getElementById('dmBarStopBtn').addEventListener('click', dmStopTimer);
 
 document.getElementById('timerStartBtn').addEventListener('click',   dmStartTimer);
 document.getElementById('timerPauseBtn').addEventListener('click',   dmPauseTimer);
