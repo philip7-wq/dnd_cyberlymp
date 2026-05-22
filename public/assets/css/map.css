@@ -448,3 +448,52 @@ canvas#mapCanvas {
 .ctrl-btn.red   { color: var(--red); }
 .ctrl-btn.red:hover { border-color: var(--red); }
 .ctrl-btn:disabled { opacity: .4; cursor: default; }
+
+/* ── Phase 2: On Fire animation ── */
+@keyframes fire-flicker {
+  0%,100% { box-shadow: 0 0 8px #FF6B35; }
+  50%      { box-shadow: 0 0 18px #FF4500, 0 0 4px #FFD700; }
+}
+
+/* ── Phase 2: Next Turn button ── */
+.next-turn-btn {
+  border-color: rgba(0,229,255,.3) !important;
+  color: var(--cyan) !important;
+}
+.next-turn-btn:hover {
+  background: rgba(0,229,255,.1) !important;
+  border-color: var(--cyan) !important;
+}
+
+/* ── Phase 2: AoE Blast modal ── */
+.aoe-blast-modal { max-width: 440px; }
+.blast-target-row {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .3rem .2rem; border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.blast-target-name { flex: 1; font-size: .78rem; }
+.blast-cover-badge { font-size: .63rem; color: #FFA000; white-space: nowrap; }
+.blast-dmg-val {
+  font-family: Audiowide, sans-serif; font-size: .85rem;
+  color: var(--red); min-width: 32px; text-align: right;
+}
+.blast-dodge-btn { flex-shrink: 0; }
+
+/* ── Phase 2: Grapple / Fire modal list buttons ── */
+.fire-tier-btn, .grapple-action-btn {
+  text-align: left; font-size: .72rem;
+}
+
+/* ── Phase 2: Context menu second instance ── */
+#ctxAoeMenu { z-index: 9010; }
+
+/* ── Phase 2: Vehicle tab token pick ── */
+.token-pick-card [style*="background"] { border-radius: 50%; }
+
+/* ── Phase 2: map toast ── */
+#mapToast {
+  transition: opacity .4s ease;
+  white-space: pre-line;
+  text-align: center;
+  max-width: 340px;
+}

@@ -1205,3 +1205,52 @@ body.timer-active { padding-top: 50px; }
 .screen-flash-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
 @keyframes screen-flash { 0%{opacity:1} 100%{opacity:0} }
 .screen-flash-overlay { animation: screen-flash .5s ease-out forwards; }
+
+/* ── Phase 2: Armor ablation ── */
+.armor-sp-row { display: flex; align-items: center; gap: .4rem; }
+.armor-sp--destroyed { color: var(--red) !important; }
+.armor-destroyed-badge {
+  font-size: .58rem; background: rgba(255,45,45,.15);
+  border: 1px solid var(--red); color: var(--red);
+  border-radius: 3px; padding: .08rem .3rem;
+  font-family: Audiowide, sans-serif; letter-spacing: .06em;
+}
+.armor-slot--destroyed { border-color: rgba(255,45,45,.3) !important; }
+
+.sp-bar-wrap {
+  width: 100%; height: 5px; background: #111;
+  border-radius: 2px; overflow: hidden; margin: .2rem 0;
+}
+.sp-bar-fill {
+  height: 100%; border-radius: 2px;
+  background: var(--cyan); transition: width .3s;
+}
+.sp-bar-fill.warn { background: #FFA000; }
+.sp-bar-fill.crit { background: var(--red); }
+
+/* ── Phase 2: Autofire panel ── */
+.autofire-panel {
+  background: rgba(255,107,53,.06);
+  border: 1px solid rgba(255,107,53,.22);
+  border-radius: var(--radius);
+  padding: .55rem .65rem; margin-top: .5rem;
+}
+.af-label {
+  font-size: .55rem; letter-spacing: .12em; text-transform: uppercase;
+  color: #FF8C00; font-family: Audiowide, sans-serif; margin-bottom: .3rem;
+}
+.af-row { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.af-row-label { font-size: .65rem; color: var(--text-muted); white-space: nowrap; }
+.af-roll-btn { font-size: .68rem; padding: .18rem .45rem; }
+.af-roll-result {
+  font-family: Audiowide, sans-serif; font-size: .95rem;
+  color: #FF8C00; min-width: 24px; text-align: center;
+}
+.af-dv-input {
+  width: 60px; padding: .2rem .35rem; font-size: .78rem;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text);
+}
+.af-dv-input:focus { outline: none; border-color: #FF8C00; }
+.af-result { font-size: .75rem; margin-top: .35rem; line-height: 1.5; }
+.screen-flash-overlay { animation: screen-flash .5s ease-out forwards; }

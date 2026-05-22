@@ -12,14 +12,23 @@
 </head>
 <body class="map-page">
 
-<!-- Context Menu -->
+<!-- Context Menu (Token) -->
 <div id="ctxMenu" class="map-ctx-menu" style="display:none">
   <div class="map-ctx-item" id="ctxHp">❤ HP setzen</div>
   <div class="map-ctx-item" id="ctxCond">⚡ Condition</div>
+  <div class="map-ctx-item" id="ctxFire">🔥 On Fire…</div>
+  <div class="map-ctx-item" id="ctxGrapple">⛓ Grapple</div>
   <div class="map-ctx-sep"></div>
   <div class="map-ctx-item" id="ctxFocus">🎯 Fokussieren</div>
   <div class="map-ctx-sep"></div>
   <div class="map-ctx-item danger" id="ctxRemove">✕ Entfernen</div>
+</div>
+
+<!-- Context Menu (AoE) -->
+<div id="ctxAoeMenu" class="map-ctx-menu" style="display:none">
+  <div class="map-ctx-item" id="ctxAoeBlast">💥 Schaden anwenden</div>
+  <div class="map-ctx-sep"></div>
+  <div class="map-ctx-item danger" id="ctxAoeRemove">✕ Entfernen</div>
 </div>
 
 <!-- Hover Tooltip -->
@@ -42,6 +51,7 @@
         <button class="token-picker-tab active" data-tab="chars">Charaktere</button>
         <button class="token-picker-tab" data-tab="npcs">NPCs</button>
         <button class="token-picker-tab" data-tab="custom">Custom</button>
+        <button class="token-picker-tab" data-tab="vehicle">Fahrzeug</button>
       </div>
       <div id="tokenPickerChars" class="token-picker-grid"></div>
       <div id="tokenPickerNpcs"  class="token-picker-grid" style="display:none"></div>
@@ -54,6 +64,74 @@
         <input id="customHp"    class="ctrl-input" placeholder="Max HP (optional)" type="number" min="0">
         <button id="customAddBtn" class="ctrl-btn">+ Hinzufügen</button>
       </div>
+      <div id="tokenPickerVehicle" class="token-picker-grid" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AoE Blast Modal -->
+<div id="aoeBlastModal" class="token-modal-overlay" style="display:none">
+  <div class="token-modal-box aoe-blast-modal">
+    <div class="token-modal-head">
+      <span id="aoeBlastTitle">💥 EXPLOSION — SCHADEN ANWENDEN</span>
+      <button class="token-modal-close" id="aoeBlastClose">✕</button>
+    </div>
+    <div class="token-modal-body" style="padding:.75rem">
+      <div class="ts-row" style="margin-bottom:.5rem">
+        <span class="ts-label" style="min-width:70px">Schaden</span>
+        <input type="text" id="aoeBlastExpr" class="ts-input" value="8d6" style="max-width:90px">
+        <button id="aoeBlastRollBtn" class="ctrl-btn" style="font-size:.72rem">🎲 Würfeln</button>
+        <span id="aoeBlastResult" style="font-family:Audiowide,sans-serif;color:#FF4500;font-size:.9rem;margin-left:.5rem"></span>
+      </div>
+      <div id="aoeBlastTargets" style="max-height:260px;overflow-y:auto;margin:.35rem 0"></div>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem">
+        <button id="aoeBlastApply" class="ctrl-btn" style="flex:1;background:rgba(255,45,0,.15);border-color:#FF4500;color:#FF4500" disabled>✅ Anwenden</button>
+        <button id="aoeBlastCancel" class="ctrl-btn" style="flex:0 0 auto">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- On Fire Modal -->
+<div id="fireModal" class="token-modal-overlay" style="display:none">
+  <div class="token-modal-box" style="max-width:280px">
+    <div class="token-modal-head">🔥 FEUER STUFE<button class="token-modal-close" id="fireModalClose">✕</button></div>
+    <div class="token-modal-body" style="padding:.75rem;display:flex;flex-direction:column;gap:.4rem">
+      <button class="ctrl-btn fire-tier-btn" data-tier="On Fire (Mild)" style="border-color:#FF8C00;color:#FF8C00">🔥 Mild — 2d6/Runde, DV10 löschen</button>
+      <button class="ctrl-btn fire-tier-btn" data-tier="On Fire (Severe)" style="border-color:#FF6B35;color:#FF6B35">🔥🔥 Severe — 4d6/Runde, DV15 löschen</button>
+      <button class="ctrl-btn fire-tier-btn" data-tier="On Fire (Deadly)" style="border-color:#FF2D2D;color:#FF2D2D">🔥🔥🔥 Deadly — 8d6/Runde, braucht Hilfe</button>
+      <button class="ctrl-btn" id="fireExtinguishBtn" style="border-color:#00E5FF;color:#00E5FF;margin-top:.25rem">❄ Löschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grapple Modal (DM/Player) -->
+<div id="grappleModal" class="token-modal-overlay" style="display:none">
+  <div class="token-modal-box" style="max-width:300px">
+    <div class="token-modal-head">⛓ GRAPPLE<button class="token-modal-close" id="grappleModalClose">✕</button></div>
+    <div class="token-modal-body" style="padding:.75rem;display:flex;flex-direction:column;gap:.5rem">
+      <select id="grappleTarget" class="ctrl-input"><option value="">— Ziel wählen —</option></select>
+      <div id="grappleResult" style="font-size:.78rem;color:var(--text-muted)"></div>
+      <button id="grappleRollBtn" class="ctrl-btn">🎲 Grapple würfeln</button>
+      <div id="grappleActions" style="display:none;flex-direction:column;gap:.35rem">
+        <div style="font-size:.7rem;color:var(--cyan);font-family:Audiowide,sans-serif;letter-spacing:.08em;margin:.1rem 0">IM GRAPPLE:</div>
+        <button class="ctrl-btn grapple-action-btn" data-action="choke" style="border-color:#FF8C00;color:#FF8C00">👊 Choke — BODY direkt auf HP</button>
+        <button class="ctrl-btn grapple-action-btn" data-action="throw" style="border-color:#FF6B35;color:#FF6B35">🤸 Throw — BODY + Prone</button>
+        <button class="ctrl-btn grapple-action-btn" data-action="shield" style="border-color:#9B59B6;color:#9B59B6">🛡 Human Shield</button>
+        <button class="ctrl-btn grapple-action-btn" data-action="release" style="border-color:var(--text-muted);color:var(--text-muted)">⛓ Loslassen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Vehicle Ram Dialog -->
+<div id="vehicleRamModal" class="token-modal-overlay" style="display:none">
+  <div class="token-modal-box" style="max-width:280px">
+    <div class="token-modal-head">🚗 RAMMEN?<button class="token-modal-close" id="vehicleRamClose">✕</button></div>
+    <div class="token-modal-body" style="padding:.75rem;display:flex;flex-direction:column;gap:.5rem">
+      <div id="vehicleRamDesc" style="font-size:.8rem;color:var(--text-muted)"></div>
+      <button id="vehicleRamConfirm" class="ctrl-btn" style="border-color:#FF4500;color:#FF4500">💥 Rammen — 6d6 auf beide</button>
+      <button id="vehicleRamCancel" class="ctrl-btn">Abbrechen</button>
     </div>
   </div>
 </div>
@@ -77,6 +155,8 @@
     <span id="zoomLabel" style="font-size:.65rem;color:var(--text-muted);min-width:36px;text-align:center">100%</span>
     <button class="map-topbar-btn" id="zoomOutBtn">−</button>
     <button class="map-topbar-btn" id="zoomResetBtn">⌂</button>
+    <span class="map-topbar-sep"></span>
+    <button id="nextTurnBtn" class="map-topbar-btn next-turn-btn" style="display:none">▶▶ Nächste Runde</button>
     <span class="map-topbar-sep"></span>
     <a id="mapBackBtn" href="index.html" class="map-topbar-btn">← Zurück</a>
   </div>
@@ -164,6 +244,7 @@ import {
   getCharacters, getCharacter, getNpcs, getActiveCombat,
   getLatestMap, getMap, saveMap, subscribeMaps,
   uploadMapBackground, subscribeCombat, subscribeCharacters,
+  saveCombat as saveCombatDb,
 } from './assets/js/supabase.js';
 
 // ── Auth ──────────────────────────────────────────────────────
@@ -281,12 +362,25 @@ const S = {
 
   coverConfig:{ material:'Steel Thin', hp:25, label:'' },
 
+  shotgunConeActive: false,
+  shotgunFacing:     0,
+  aoeBlastTarget:    null,
+
   combatSession:null,
   char:null, chars:[], npcs:[],
 
   localDragging:false,
   dirty:false, saveTimer:null, animFrame:null,
 };
+
+const VEHICLES = [
+  { name:'Compact Car',   sdp:25, maxSdp:25, move:20, label:'🚗', color:'#6B7280' },
+  { name:'Midsize Car',   sdp:30, maxSdp:30, move:18, label:'🚙', color:'#6B7280' },
+  { name:'Motorcycle',    sdp:15, maxSdp:15, move:30, label:'🏍', color:'#9CA3AF' },
+  { name:'SUV / Truck',   sdp:40, maxSdp:40, move:15, label:'🚛', color:'#78716C' },
+  { name:'AV (Aerodyne)', sdp:50, maxSdp:50, move:60, label:'✈', color:'#7DD3FC' },
+  { name:'Custom',        sdp:30, maxSdp:30, move:20, label:'🚘', color:'#FF8C00' },
+];
 
 // ── Coordinate helpers ────────────────────────────────────────
 function sw(sx, sy) { return { x:(sx-S.ox)/S.scale, y:(sy-S.oy)/S.scale }; }
@@ -444,9 +538,12 @@ function redraw() {
   drawActiveSuppressive();
   drawMoveRange();
   drawRangeRings();
+  drawShotgunCone();
   drawTokens();
+  drawGrappleLines();
   drawMeasureLine();
   ctx.restore();
+  drawInitiativeOverlay();
   updateStatusBar();
   renderTokenListSidebar();
 }
@@ -671,22 +768,42 @@ function drawRangeRings() {
   ctx.restore();
 }
 
+function isOnFire(token) {
+  return (token.conditions||[]).some(c => typeof c === 'string' && c.startsWith('On Fire'));
+}
+function getFireExpr(token) {
+  const c = (token.conditions||[]).find(c => typeof c === 'string' && c.startsWith('On Fire'));
+  if (!c) return null;
+  if (c.includes('Deadly')) return '8d6';
+  if (c.includes('Severe')) return '4d6';
+  return '2d6';
+}
+
 function drawTokens() {
   const now = Date.now();
   const activeCombatant = S.combatSession?.is_active
     ? S.combatSession.combatants?.[S.combatSession.current_turn_index] : null;
+  const combatants = S.combatSession?.combatants || [];
+  const idx = S.combatSession?.current_turn_index ?? 0;
+  const nextIdx = combatants.length > 1 ? (idx+1) % combatants.length : -1;
+  const nextCombatant = nextIdx >= 0 ? combatants[nextIdx] : null;
 
   for (const token of S.tokens) {
+    const isVehicle = token.type === 'vehicle';
     const r  = S.gridSize * 0.44;
     const cx = token.x, cy = token.y;
     const isChar = token.type==='char', isNpc=token.type==='npc';
     const borderColor = isChar ? '#00E5FF' : isNpc ? '#FF2D2D' : (token.color||'#FF8C00');
     const isSelected = S.selectedToken?.id === token.id;
 
-    // Active combatant glow
+    // Active combatant glow + DRAN label
     const isActive = activeCombatant && (
       (isChar && token.charId===activeCombatant.id) ||
       (isNpc  && token.npcId===activeCombatant.npcDbId)
+    );
+    const isNextUp = nextCombatant && (
+      (isChar && token.charId===nextCombatant.id) ||
+      (isNpc  && token.npcId===nextCombatant.npcDbId)
     );
     if (isActive) {
       const pulse = 0.5 + 0.5*Math.sin(now/280);
@@ -697,6 +814,71 @@ function drawTokens() {
       ctx.strokeStyle = activeCombatant.isNpc ? '#FF2D2D' : '#00FF88';
       ctx.lineWidth=2/S.scale; ctx.stroke();
       ctx.restore();
+      // DRAN label above token
+      ctx.save();
+      ctx.font=`bold ${10/S.scale}px Audiowide`;
+      ctx.fillStyle='#00FF88'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText('DRAN', cx, cy-r-5/S.scale);
+      ctx.restore();
+    }
+    if (isNextUp && !isActive) {
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,255,255,.3)'; ctx.shadowBlur = 10/S.scale;
+      ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1.5/S.scale;
+      ctx.setLineDash([3/S.scale,3/S.scale]);
+      ctx.beginPath(); ctx.arc(cx,cy,r+4/S.scale,0,Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // On Fire glow
+    if (isOnFire(token)) {
+      const t2 = Date.now()/300;
+      const glowR = 20/S.scale + (Math.sin(t2)*6/S.scale);
+      ctx.save();
+      ctx.shadowColor = '#FF6B35'; ctx.shadowBlur = glowR;
+      ctx.strokeStyle = hexToRgba('#FF6B35', 0.6+0.4*Math.sin(t2));
+      ctx.lineWidth = 2.5/S.scale;
+      ctx.beginPath(); ctx.arc(cx,cy,r+2/S.scale,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+
+    // Vehicle: render as rounded rectangle
+    if (isVehicle) {
+      const vw = r*2.2, vh = r*1.4;
+      ctx.save();
+      ctx.fillStyle = hexToRgba(token.color||'#6B7280', .15);
+      ctx.strokeStyle = token.color||'#6B7280'; ctx.lineWidth=2/S.scale;
+      roundRectPath(ctx, cx-vw/2, cy-vh/2, vw, vh, 5/S.scale);
+      ctx.fill(); ctx.stroke();
+      // Icon/label
+      ctx.fillStyle='#fff'; ctx.font=`${r*.8}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(token.label||'🚗', cx, cy);
+      // Name
+      ctx.fillStyle='#e0e0e8'; ctx.font=`${10/S.scale}px Inter`;
+      ctx.textBaseline='top';
+      ctx.fillText(token.name||'', cx, cy+vh/2+2/S.scale);
+      // SDP bar
+      if (token.maxSdp > 0) {
+        const bw=vw, bh=3.5/S.scale;
+        const bx=cx-vw/2, by=cy+vh/2+13/S.scale;
+        const pct=Math.max(0,Math.min(1,(token.sdp??token.maxSdp)/token.maxSdp));
+        ctx.fillStyle='#222'; ctx.fillRect(bx,by,bw,bh);
+        ctx.fillStyle=pct>.5?'#00E5FF':pct>.25?'#FFD700':'#FF2D2D';
+        ctx.fillRect(bx,by,bw*pct,bh);
+        ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font=`${7/S.scale}px Inter`;
+        ctx.textBaseline='top'; ctx.textAlign='center';
+        ctx.fillText(`SDP ${token.sdp??token.maxSdp}/${token.maxSdp}`,cx,by+bh+1/S.scale);
+      }
+      if (isSelected) {
+        ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=1.5/S.scale;
+        ctx.setLineDash([3/S.scale,3/S.scale]);
+        roundRectPath(ctx, cx-vw/2-4/S.scale, cy-vh/2-4/S.scale, vw+8/S.scale, vh+8/S.scale, 7/S.scale);
+        ctx.stroke(); ctx.setLineDash([]);
+      }
+      ctx.restore();
+      continue; // Skip regular circle rendering for vehicles
     }
 
     // Selection ring
@@ -734,7 +916,12 @@ function drawTokens() {
       ctx.save();
       ctx.fillStyle='rgba(0,0,0,.6)'; ctx.font=`${7/S.scale}px Inter`;
       ctx.textAlign='left'; ctx.textBaseline='top';
-      ctx.fillText(`H:${token.headSP||0} B:${token.bodySP||0}`, cx-r, cy-r-1/S.scale);
+      const hLabel = token.headMaxSP ? `H:${token.headSP||0}/${token.headMaxSP}` : `H:${token.headSP||0}`;
+      const bLabel = token.bodyMaxSP ? `B:${token.bodySP||0}/${token.bodyMaxSP}` : `B:${token.bodySP||0}`;
+      ctx.fillStyle='rgba(0,0,0,.6)';
+      ctx.fillRect(cx-r, cy-r-10/S.scale, 70/S.scale, 9/S.scale);
+      ctx.fillStyle='rgba(0,229,255,.7)';
+      ctx.fillText(`${hLabel} ${bLabel}`, cx-r+1/S.scale, cy-r-9/S.scale);
       ctx.restore();
     }
 
@@ -756,7 +943,7 @@ function drawTokens() {
 
     // Condition dots (up to 3)
     const conds = token.conditions||[];
-    const COND_COLORS_MAP = { 'Seriously Wounded':'#FF8C00','Mortally Wounded':'#FF2D2D','Stunned':'#FFD700','Suppressed':'#A78BFA','Prone':'#6B7280','Bleeding Out':'#DC2626' };
+    const COND_COLORS_MAP = { 'Seriously Wounded':'#FF8C00','Mortally Wounded':'#FF2D2D','Stunned':'#FFD700','Suppressed':'#A78BFA','Prone':'#6B7280','Bleeding Out':'#DC2626','On Fire (Mild)':'#FF8C00','On Fire (Severe)':'#FF6B35','On Fire (Deadly)':'#FF2D2D','Grappled':'#94A3B8' };
     if (conds.length) {
       const dotR=3/S.scale, dotY=cy+r+(20/S.scale);
       const shown=conds.slice(0,3);
@@ -800,6 +987,140 @@ function drawMeasureLine() {
   ctx.restore();
   // Update DM measure display
   updateMeasureDisplay(distM);
+}
+
+// ── Grapple lines ─────────────────────────────────────────────
+function drawGrappleLines() {
+  const done = new Set();
+  S.tokens.forEach(t => {
+    if (!t.grapplePartner || done.has(t.id)) return;
+    const partner = S.tokens.find(p => p.id === t.grapplePartner);
+    if (!partner) return;
+    done.add(t.id); done.add(partner.id);
+    ctx.save();
+    ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 2/S.scale;
+    ctx.setLineDash([4/S.scale,3/S.scale]);
+    ctx.beginPath(); ctx.moveTo(t.x,t.y); ctx.lineTo(partner.x,partner.y); ctx.stroke();
+    ctx.setLineDash([]);
+    const mx=(t.x+partner.x)/2, my=(t.y+partner.y)/2;
+    ctx.font=`${16/S.scale}px sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('⛓',mx,my);
+    ctx.restore();
+  });
+}
+
+// ── Shotgun cone ──────────────────────────────────────────────
+function isInCone(px,py,cx,cy,facing,coneAngle,coneLen) {
+  const dx=px-cx, dy=py-cy;
+  const dist=Math.hypot(dx,dy);
+  if (dist>coneLen) return false;
+  const angle=Math.atan2(dy,dx);
+  let diff=angle-facing;
+  while(diff>Math.PI) diff-=Math.PI*2;
+  while(diff<-Math.PI) diff+=Math.PI*2;
+  return Math.abs(diff) <= coneAngle/2;
+}
+
+function drawShotgunCone() {
+  if (!S.shotgunConeActive || !S.activeWeapon) return;
+  const ownToken = S.tokens.find(t => t.charId === CHAR_ID) || S.selectedToken;
+  if (!ownToken) return;
+  const {x:cx, y:cy} = ownToken;
+  const coneAngle = Math.PI/3;
+  const coneLen   = 6 * S.gridSize;
+  const facing    = S.shotgunFacing;
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(cx,cy);
+  ctx.arc(cx,cy,coneLen,facing-coneAngle/2,facing+coneAngle/2);
+  ctx.closePath();
+  ctx.fillStyle='rgba(255,160,0,.15)'; ctx.fill();
+  ctx.strokeStyle='#FFA000'; ctx.lineWidth=1.5/S.scale; ctx.stroke();
+  // TREFFER badges
+  S.tokens.forEach(t => {
+    if (t.id===ownToken.id) return;
+    if (isInCone(t.x,t.y,cx,cy,facing,coneAngle,coneLen)) {
+      const r=S.gridSize*0.44;
+      ctx.fillStyle='#FF4500'; ctx.font=`bold ${8/S.scale}px Audiowide`;
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText('TREFFER', t.x, t.y-r-2/S.scale);
+    }
+  });
+  ctx.restore();
+}
+
+// ── Initiative overlay ────────────────────────────────────────
+function drawInitiativeOverlay() {
+  if (!S.combatSession?.is_active) return;
+  const combatants = S.combatSession.combatants || [];
+  if (!combatants.length) return;
+  const idx = S.combatSession.current_turn_index ?? 0;
+  const rowH = 22, pad = 6, w = 170;
+  const totalH = combatants.length * rowH + pad*2;
+  const x0 = canvas.width - w - 8, y0 = 8;
+  ctx.save();
+  ctx.setTransform(1,0,0,1,0,0);
+  // Panel bg
+  ctx.fillStyle='rgba(0,0,0,.78)';
+  roundRectPath(ctx, x0, y0, w, totalH, 4); ctx.fill();
+  ctx.strokeStyle='rgba(0,229,255,.2)'; ctx.lineWidth=1;
+  roundRectPath(ctx, x0, y0, w, totalH, 4); ctx.stroke();
+  combatants.forEach((c, i) => {
+    const y = y0 + pad + i*rowH;
+    const isActive = i === idx;
+    const isNext   = i === (idx+1) % combatants.length;
+    // Left border
+    if (isActive) { ctx.fillStyle='#00E5FF'; ctx.fillRect(x0,y,3,rowH-2); }
+    else if (isNext) { ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(x0,y,2,rowH-2); }
+    // Name
+    if (isActive) { ctx.font='bold 9px Audiowide,sans-serif'; ctx.fillStyle='#00E5FF'; }
+    else if (isNext) { ctx.font='9px Audiowide,sans-serif'; ctx.fillStyle='#ccc'; }
+    else { ctx.font='9px Audiowide,sans-serif'; ctx.fillStyle='rgba(255,255,255,.35)'; }
+    const prefix = isActive ? '▶ ' : '  ';
+    const name = (c.name||'—').slice(0,16);
+    ctx.fillText(prefix+name, x0+8, y+14);
+    // Initiative
+    ctx.font='9px Audiowide,sans-serif';
+    ctx.textAlign='right';
+    ctx.fillText(c.initiative??'—', x0+w-8, y+14);
+    ctx.textAlign='left';
+  });
+  ctx.restore();
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+}
+
+// ── Cover raycast helper ──────────────────────────────────────
+function lineIntersectsRect(x1,y1,x2,y2,c) {
+  // Check if line segment (x1,y1)-(x2,y2) intersects axis-aligned rect c
+  const rects = [
+    [c.x, c.y, c.x+c.w, c.y],
+    [c.x+c.w, c.y, c.x+c.w, c.y+c.h],
+    [c.x+c.w, c.y+c.h, c.x, c.y+c.h],
+    [c.x, c.y+c.h, c.x, c.y],
+  ];
+  for (const [rx1,ry1,rx2,ry2] of rects) {
+    if (segmentsIntersect(x1,y1,x2,y2,rx1,ry1,rx2,ry2)) return true;
+  }
+  return false;
+}
+function segmentsIntersect(ax,ay,bx,by,cx,cy,dx,dy) {
+  const dxAB=bx-ax,dyAB=by-ay,dxCD=dx-cx,dyCD=dy-cy;
+  const denom=dxAB*dyCD-dyAB*dxCD;
+  if (Math.abs(denom)<1e-9) return false;
+  const t=((cx-ax)*dyCD-(cy-ay)*dxCD)/denom;
+  const u=((cx-ax)*dyAB-(cy-ay)*dxAB)/denom;
+  return t>=0&&t<=1&&u>=0&&u<=1;
+}
+
+function hasCoverBetween(tx,ty,aoeCx,aoeCy) {
+  return S.coverObjects.some(c => !c.destroyed && lineIntersectsRect(aoeCx,aoeCy,tx,ty,c));
 }
 
 function updateMeasureDisplay(distM) {
@@ -903,7 +1224,39 @@ document.getElementById('ctxRemove').addEventListener('click', e => {
   if (S.selectedToken===t) S.selectedToken=null;
   saveTokens(); markDirty(); hideCtxMenu();
 });
-document.addEventListener('click', hideCtxMenu);
+document.getElementById('ctxFire').addEventListener('click', e => {
+  e.stopPropagation();
+  const t=S.ctxTarget; if (!t) return;
+  hideCtxMenu();
+  openFireModal(t);
+});
+document.getElementById('ctxGrapple').addEventListener('click', e => {
+  e.stopPropagation();
+  const t=S.ctxTarget; if (!t) return;
+  hideCtxMenu();
+  openGrappleModal(t);
+});
+// AoE context menu
+let _ctxAoeIdx = -1;
+document.getElementById('ctxAoeBlast').addEventListener('click', e => {
+  e.stopPropagation();
+  if (_ctxAoeIdx < 0) return;
+  const aoe = S.aoeMarkers[_ctxAoeIdx];
+  hideAoeCtxMenu();
+  openAoeBlastModal(aoe);
+});
+document.getElementById('ctxAoeRemove').addEventListener('click', e => {
+  e.stopPropagation();
+  if (_ctxAoeIdx >= 0) { S.aoeMarkers.splice(_ctxAoeIdx,1); saveAoe(); markDirty(); }
+  hideAoeCtxMenu();
+});
+function showAoeCtxMenu(cx, cy, idx) {
+  _ctxAoeIdx = idx;
+  const m = document.getElementById('ctxAoeMenu');
+  m.style.display='block'; m.style.left=cx+'px'; m.style.top=cy+'px';
+}
+function hideAoeCtxMenu() { document.getElementById('ctxAoeMenu').style.display='none'; _ctxAoeIdx=-1; }
+document.addEventListener('click', () => { hideCtxMenu(); hideAoeCtxMenu(); });
 
 // ── Mouse events ──────────────────────────────────────────────
 function getPos(e) {
@@ -987,6 +1340,11 @@ canvas.addEventListener('mousemove', e => {
     markDirty(); return;
   }
   if (S.tool==='suppressive'&&S.suppressStart) { S.suppressCurrent=wp; markDirty(); return; }
+  // Shotgun cone direction follows mouse
+  if (S.shotgunConeActive) {
+    const ownToken = S.tokens.find(t=>t.charId===CHAR_ID) || S.selectedToken;
+    if (ownToken) { S.shotgunFacing=Math.atan2(wp.y-ownToken.y,wp.x-ownToken.x); markDirty(); }
+  }
 
   const h=hitToken(wp.x,wp.y);
   if (h!==S.hoverToken) { S.hoverToken=h; markDirty(); }
@@ -1004,7 +1362,17 @@ canvas.addEventListener('mouseup', e => {
       const mv=getEffectiveMove(t);
       const maxPx=mv*2*S.gridSize;
       const dist=Math.hypot(t.x-S.dragOrigin.x, t.y-S.dragOrigin.y);
-      if (dist>maxPx) { t.x=S.dragOrigin.x; t.y=S.dragOrigin.y; }
+      if (dist>maxPx && !IS_DM) { t.x=S.dragOrigin.x; t.y=S.dragOrigin.y; }
+    }
+    // Vehicle ram check
+    if (t.type==='vehicle' && IS_DM) {
+      const r=S.gridSize*0.44;
+      const overlapping=S.tokens.filter(o=>o.id!==t.id && Math.hypot(o.x-t.x,o.y-t.y)<r*2.5);
+      if (overlapping.length>0) {
+        S.dragging=null; S.dragOrigin=null;
+        showVehicleRamDialog(t, overlapping[0]);
+        return;
+      }
     }
     S.dragging=null; S.dragOrigin=null;
     saveTokens(); markDirty(); return;
@@ -1087,8 +1455,10 @@ canvas.addEventListener('contextmenu', e=>{
   const {sx,sy}=getPos(e);
   const wp=sw(sx,sy);
   const hit=hitToken(wp.x,wp.y);
-  if (hit) showCtxMenu(e.clientX,e.clientY,hit);
-  else hideCtxMenu();
+  if (hit) { showCtxMenu(e.clientX,e.clientY,hit); return; }
+  const ha=hitAoe(wp.x,wp.y);
+  if (ha>=0) { showAoeCtxMenu(e.clientX,e.clientY,ha); return; }
+  hideCtxMenu(); hideAoeCtxMenu();
 });
 
 // Keyboard shortcuts
@@ -1338,10 +1708,13 @@ function renderTokenPicker() {
       const c=S.chars.find(x=>x.id===el.dataset.cid); if(!c)return;
       addToken({type:'char',charId:c.id,name:c.handle||c.name,imageUrl:c.image_url||null,
         hp:c.current_hp,maxHp:c.max_hp,conditions:c.conditions||[],
-        stats:{MOVE:c.stats?.MOVE??4,BODY:c.stats?.BODY??5},
+        stats:{MOVE:c.stats?.MOVE??4,BODY:c.stats?.BODY??5,REF:c.stats?.REF??6},
         armorPenalty:computeArmorPenalty(c.armor),
         critInjuries:parseInjuries(c.critical_injuries),
-        headSP:c.armor?.head?.sp??0,bodySP:c.armor?.body?.sp??0,
+        headSP:c.armor?.head?.sp??0, bodySP:c.armor?.body?.sp??0,
+        headMaxSP:c.armor?.head?.max_sp??c.armor?.head?.sp??0,
+        bodyMaxSP:c.armor?.body?.max_sp??c.armor?.body?.sp??0,
+        grapplePartner:null, humanShield:null,
       });
       closeTokenModal();
     });
@@ -1358,8 +1731,29 @@ function renderTokenPicker() {
       const n=S.npcs.find(x=>x.id===el.dataset.nid); if(!n)return;
       addToken({type:'npc',npcId:n.id,name:n.name,imageUrl:n.image_url||null,
         hp:n.hp_current,maxHp:n.hp_max,conditions:[],
-        stats:{MOVE:n.stats?.MOVE??4,BODY:n.stats?.BODY??5},
-        armorPenalty:0,critInjuries:[],headSP:0,bodySP:0,
+        stats:{MOVE:n.stats?.MOVE??4,BODY:n.stats?.BODY??5,REF:n.stats?.REF??6},
+        armorPenalty:0,critInjuries:[],headSP:0,bodySP:0,headMaxSP:0,bodyMaxSP:0,
+        grapplePartner:null,humanShield:null,
+      });
+      closeTokenModal();
+    });
+  });
+
+  // Vehicle tab
+  const vg = document.getElementById('tokenPickerVehicle');
+  vg.innerHTML = VEHICLES.map(v=>`
+    <div class="token-pick-card" data-vname="${v.name}">
+      <div class="token-pick-avatar" style="background:rgba(107,114,128,.2);font-size:1.4rem">${v.label}</div>
+      <div class="token-pick-name">${v.name}</div>
+      <div style="font-size:.62rem;color:var(--text-muted)">SDP ${v.sdp} · MOVE ${v.move}</div>
+    </div>`).join('');
+  vg.querySelectorAll('[data-vname]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const v=VEHICLES.find(x=>x.name===el.dataset.vname); if(!v)return;
+      addToken({type:'vehicle',name:v.name,label:v.label,imageUrl:null,color:v.color,
+        sdp:v.sdp,maxSdp:v.maxSdp,hp:v.sdp,maxHp:v.maxSdp,
+        move:v.move,stats:{MOVE:v.move},conditions:[],
+        grapplePartner:null,humanShield:null,
       });
       closeTokenModal();
     });
@@ -1383,6 +1777,7 @@ document.querySelectorAll('.token-picker-tab').forEach(btn=>{
     document.getElementById('tokenPickerChars').style.display=tab==='chars'?'':'none';
     document.getElementById('tokenPickerNpcs').style.display=tab==='npcs'?'':'none';
     document.getElementById('tokenPickerCustom').style.display=tab==='custom'?'':'none';
+    document.getElementById('tokenPickerVehicle').style.display=tab==='vehicle'?'':'none';
   });
 });
 
@@ -1396,6 +1791,290 @@ document.getElementById('customAddBtn').addEventListener('click',()=>{
 });
 document.getElementById('tokenModalClose').addEventListener('click',closeTokenModal);
 document.getElementById('tokenModal').addEventListener('click',e=>{ if(e.target===document.getElementById('tokenModal'))closeTokenModal(); });
+
+// ── On Fire Modal ─────────────────────────────────────────────
+function openFireModal(token) {
+  const modal = document.getElementById('fireModal');
+  modal.style.display='flex';
+  document.getElementById('fireExtinguishBtn').onclick = () => {
+    token.conditions = (token.conditions||[]).filter(c=>!c.startsWith('On Fire'));
+    saveTokens(); markDirty(); modal.style.display='none';
+  };
+  document.querySelectorAll('.fire-tier-btn').forEach(btn => {
+    btn.onclick = () => {
+      const tier = btn.dataset.tier;
+      token.conditions = (token.conditions||[]).filter(c=>!c.startsWith('On Fire'));
+      token.conditions.push(tier);
+      saveTokens(); markDirty(); modal.style.display='none';
+    };
+  });
+  document.getElementById('fireModalClose').onclick = () => modal.style.display='none';
+}
+
+// ── Grapple Modal ─────────────────────────────────────────────
+let _grappleInitiator = null;
+function openGrappleModal(initiatorToken) {
+  _grappleInitiator = initiatorToken;
+  const modal = document.getElementById('grappleModal');
+  const sel = document.getElementById('grappleTarget');
+  const resultEl = document.getElementById('grappleResult');
+  const actionsEl = document.getElementById('grappleActions');
+  modal.style.display = 'flex';
+  resultEl.textContent = '';
+
+  // Show grapple sub-actions if already grappled
+  if (initiatorToken.grapplePartner) {
+    sel.style.display = 'none';
+    document.getElementById('grappleRollBtn').style.display = 'none';
+    actionsEl.style.display = 'flex';
+  } else {
+    sel.style.display = '';
+    document.getElementById('grappleRollBtn').style.display = '';
+    actionsEl.style.display = 'none';
+    sel.innerHTML = `<option value="">— Ziel wählen —</option>` +
+      S.tokens.filter(t=>t.id!==initiatorToken.id)
+        .map(t=>`<option value="${t.id}">${t.name||t.label||'?'}</option>`).join('');
+  }
+
+  document.getElementById('grappleRollBtn').onclick = () => {
+    const targetId = sel.value; if (!targetId) return;
+    const target = S.tokens.find(t=>t.id===targetId); if (!target) return;
+    // Roll: DEX + Brawling + 1d10 vs DEX + Brawling + 1d10
+    const myRoll = Math.floor(Math.random()*10)+1 + (initiatorToken.stats?.DEX??5);
+    const theirRoll = Math.floor(Math.random()*10)+1 + (target.stats?.DEX??5);
+    if (myRoll > theirRoll) {
+      initiatorToken.grapplePartner = target.id;
+      target.grapplePartner = initiatorToken.id;
+      if (!target.conditions) target.conditions=[];
+      if (!initiatorToken.conditions) initiatorToken.conditions=[];
+      target.conditions.push('Grappled');
+      initiatorToken.conditions.push('Grappled');
+      saveTokens(); markDirty();
+      resultEl.style.color='#00FF88';
+      resultEl.textContent=`✓ Grapple erfolgreich! (${myRoll} vs ${theirRoll})`;
+      sel.style.display='none'; document.getElementById('grappleRollBtn').style.display='none';
+      actionsEl.style.display='flex';
+    } else {
+      resultEl.style.color='#FF2D2D';
+      resultEl.textContent=`✗ Fehlgeschlagen (${myRoll} vs ${theirRoll})`;
+    }
+  };
+
+  document.querySelectorAll('.grapple-action-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const action = btn.dataset.action;
+      const partner = S.tokens.find(t=>t.id===initiatorToken.grapplePartner);
+      if (action === 'release') {
+        if (partner) {
+          partner.grapplePartner = null;
+          partner.conditions = (partner.conditions||[]).filter(c=>c!=='Grappled');
+        }
+        initiatorToken.grapplePartner = null;
+        initiatorToken.conditions = (initiatorToken.conditions||[]).filter(c=>c!=='Grappled');
+        saveTokens(); markDirty(); modal.style.display='none'; return;
+      }
+      if (action === 'shield') {
+        initiatorToken.humanShield = initiatorToken.grapplePartner;
+        saveTokens(); markDirty(); modal.style.display='none';
+        showMapToast(`${initiatorToken.name} benutzt ${partner?.name} als Schutzschild`,'cyan'); return;
+      }
+      if (!partner) return;
+      const body = initiatorToken.stats?.BODY ?? 5;
+      const dmg  = Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1;
+      const realDmg = Math.min(body*2, dmg);
+      const newHp = Math.max(0,(partner.hp??partner.maxHp??0)-realDmg);
+      partner.hp = newHp;
+      if (action==='throw') {
+        partner.conditions = [...(partner.conditions||[]).filter(c=>c!=='Prone'),'Prone'];
+        partner.grapplePartner = null;
+        initiatorToken.grapplePartner = null;
+        partner.conditions = (partner.conditions||[]).filter(c=>c!=='Grappled');
+        initiatorToken.conditions = (initiatorToken.conditions||[]).filter(c=>c!=='Grappled');
+      }
+      saveTokens(); markDirty();
+      if (partner.type==='npc') {
+        import('./assets/js/supabase.js').then(({patchNpc})=>{
+          patchNpc(partner.npcId,{hp_current:newHp}).catch(()=>{});
+        });
+      } else if (partner.type==='char') {
+        import('./assets/js/supabase.js').then(({patchCharacter})=>{
+          patchCharacter(partner.charId,{current_hp:newHp}).catch(()=>{});
+        });
+      }
+      showMapToast(`${action==='choke'?'Choke':'Throw'}: ${realDmg} Schaden auf ${partner.name} → HP ${newHp}`,'red');
+      modal.style.display='none';
+    };
+  });
+
+  document.getElementById('grappleModalClose').onclick = () => modal.style.display='none';
+}
+
+// ── AoE Blast Modal ───────────────────────────────────────────
+function openAoeBlastModal(aoe) {
+  const modal = document.getElementById('aoeBlastModal');
+  const eff = AOE_EFFECTS[aoe.effect] || {};
+  const defaultExpr = aoe.effect==='explosion'?'8d6':aoe.effect==='fire'?'2d6':aoe.effect==='poison'?'1d6':'4d6';
+  document.getElementById('aoeBlastTitle').textContent = `💥 ${aoe.label||eff.label||'AoE'} — SCHADEN ANWENDEN`;
+  document.getElementById('aoeBlastExpr').value = defaultExpr;
+  document.getElementById('aoeBlastResult').textContent = '';
+  document.getElementById('aoeBlastApply').disabled = true;
+  modal.style.display='flex';
+
+  // Find affected tokens
+  const affected = S.tokens.filter(t=>Math.hypot(t.x-aoe.cx,t.y-aoe.cy)<=aoe.r);
+  let rollResult = 0;
+  let perTokenDmg = {};
+
+  function renderTargets() {
+    const wrap = document.getElementById('aoeBlastTargets');
+    wrap.innerHTML = affected.map(t => {
+      const covered = hasCoverBetween(t.x,t.y,aoe.cx,aoe.cy);
+      const canDodge = (t.stats?.REF??0) >= 8;
+      const dmg = perTokenDmg[t.id] ?? rollResult;
+      return `<div class="blast-target-row">
+        <div class="token-list-icon" style="width:28px;height:28px">${t.label||t.name?.[0]||'?'}</div>
+        <div class="blast-target-name">${t.name||''}</div>
+        ${covered?'<span class="blast-cover-badge">🧱 DECKUNG</span>':''}
+        ${canDodge&&rollResult>0?`<button class="blast-dodge-btn ctrl-btn" data-tid="${t.id}" style="font-size:.6rem;padding:.1rem .3rem;border-color:#00E5FF;color:#00E5FF">🤸 Dodge</button>`:''}
+        <div class="blast-dmg-val">${covered?'—':(perTokenDmg[t.id]??rollResult)}</div>
+      </div>`;
+    }).join('') || '<div style="color:var(--text-muted);font-size:.78rem;padding:.5rem">Keine Tokens im Radius.</div>';
+    wrap.querySelectorAll('.blast-dodge-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const tid=btn.dataset.tid;
+        perTokenDmg[tid] = Math.floor((perTokenDmg[tid]??rollResult)/2);
+        renderTargets();
+      });
+    });
+  }
+  renderTargets();
+
+  document.getElementById('aoeBlastRollBtn').onclick = () => {
+    const expr = document.getElementById('aoeBlastExpr').value.trim() || defaultExpr;
+    // Simple dice roll
+    const match = expr.match(/^(\d+)d(\d+)$/i);
+    if (match) {
+      const [,n,d]=[,parseInt(match[1]),parseInt(match[2])];
+      rollResult=0;
+      for(let i=0;i<n;i++) rollResult+=Math.floor(Math.random()*d)+1;
+    } else rollResult=parseInt(expr)||0;
+    perTokenDmg={};
+    document.getElementById('aoeBlastResult').textContent=rollResult;
+    document.getElementById('aoeBlastApply').disabled = affected.length===0;
+    renderTargets();
+  };
+
+  document.getElementById('aoeBlastApply').onclick = async () => {
+    const {patchCharacter,patchNpc} = await import('./assets/js/supabase.js');
+    for (const t of affected) {
+      const covered = hasCoverBetween(t.x,t.y,aoe.cx,aoe.cy);
+      if (covered) {
+        // Damage the cover instead
+        const coversBetween = S.coverObjects.filter(c=>!c.destroyed && lineIntersectsRect(aoe.cx,aoe.cy,t.x,t.y,c));
+        for (const c of coversBetween) {
+          c.hp = Math.max(0, c.hp - rollResult);
+          if (c.hp<=0) c.destroyed=true;
+        }
+        saveCover();
+        continue;
+      }
+      const dmg = perTokenDmg[t.id] ?? rollResult;
+      if (!dmg) continue;
+      const newHp = Math.max(0,(t.hp??t.maxHp??0)-dmg);
+      t.hp = newHp;
+      if (t.type==='char') await patchCharacter(t.charId,{current_hp:newHp}).catch(()=>{});
+      else if (t.type==='npc') await patchNpc(t.npcId,{hp_current:newHp}).catch(()=>{});
+    }
+    saveTokens(); markDirty();
+    modal.style.display='none';
+    showMapToast(`Explosion: ${rollResult} Schaden auf ${affected.length} Token`,'red');
+  };
+
+  document.getElementById('aoeBlastClose').onclick = () => modal.style.display='none';
+  document.getElementById('aoeBlastCancel').onclick = () => modal.style.display='none';
+}
+
+// ── Vehicle Ram Dialog ────────────────────────────────────────
+function showVehicleRamDialog(vToken, target) {
+  const modal = document.getElementById('vehicleRamModal');
+  modal.style.display='flex';
+  document.getElementById('vehicleRamDesc').textContent =
+    `${vToken.name} rammt ${target.name}. Beide erhalten 6d6 Schaden + Whiplash Critical Injury.`;
+  document.getElementById('vehicleRamConfirm').onclick = async () => {
+    const {patchCharacter,patchNpc} = await import('./assets/js/supabase.js');
+    const roll = () => [1,2,3,4,5,6].reduce(s=>s+Math.floor(Math.random()*6)+1, 0);
+    for (const t of [vToken, target]) {
+      const dmg = roll();
+      const isVeh = t.type==='vehicle';
+      const field = isVeh ? 'sdp' : 'hp';
+      const newVal = Math.max(0,(t[field]??t.maxSdp??t.maxHp??0)-dmg);
+      t[field]=newVal; if (!isVeh) t.hp=newVal;
+      if (t.type==='char') await patchCharacter(t.charId,{current_hp:newVal}).catch(()=>{});
+      else if (t.type==='npc') await patchNpc(t.npcId,{hp_current:newVal}).catch(()=>{});
+    }
+    saveTokens(); markDirty(); modal.style.display='none';
+    showMapToast(`CRASH! ${vToken.name} → ${target.name} (6d6)`,'red');
+  };
+  document.getElementById('vehicleRamCancel').onclick = () => {
+    // Snap vehicle back
+    vToken.x = S.dragOrigin?.x ?? vToken.x;
+    vToken.y = S.dragOrigin?.y ?? vToken.y;
+    saveTokens(); markDirty(); modal.style.display='none';
+  };
+  document.getElementById('vehicleRamClose').onclick = () => modal.style.display='none';
+}
+
+// ── Next Turn handler ─────────────────────────────────────────
+async function doNextTurn() {
+  if (!S.combatSession?.is_active) return;
+  const {patchCharacter, patchNpc} = await import('./assets/js/supabase.js');
+  const combatants = S.combatSession.combatants || [];
+  if (!combatants.length) return;
+  const oldIdx = S.combatSession.current_turn_index ?? 0;
+  const newIdx = (oldIdx + 1) % combatants.length;
+  let newRound = S.combatSession.round ?? 1;
+  if (newIdx === 0) newRound++;
+
+  // Apply On Fire damage for all On Fire tokens
+  const fireToasts = [];
+  for (const token of S.tokens) {
+    const expr = getFireExpr(token);
+    if (!expr) continue;
+    const [n,d] = expr.split('d').map(Number);
+    let dmg = 0; for(let i=0;i<n;i++) dmg+=Math.floor(Math.random()*d)+1;
+    const newHp = Math.max(0,(token.hp??token.maxHp??0)-dmg);
+    token.hp=newHp;
+    if (token.type==='char') await patchCharacter(token.charId,{current_hp:newHp}).catch(()=>{});
+    else if (token.type==='npc') await patchNpc(token.npcId,{hp_current:newHp}).catch(()=>{});
+    fireToasts.push(`🔥 ${token.name} −${dmg} HP (Feuer)`);
+  }
+  if (fireToasts.length) saveTokens();
+
+  await saveCombatDb({...S.combatSession, current_turn_index:newIdx, round:newRound});
+
+  const nextName = combatants[newIdx]?.name || '?';
+  const msg = fireToasts.length
+    ? `Runde ${newRound} — ${nextName} ist dran\n${fireToasts.join(' · ')}`
+    : `Runde ${newRound} — ${nextName} ist dran`;
+  showMapToast(msg, 'cyan');
+  markDirty();
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+function showMapToast(msg, type='cyan') {
+  let t=document.getElementById('mapToast');
+  if (!t) {
+    t=document.createElement('div'); t.id='mapToast';
+    t.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);padding:.45rem 1.2rem;border-radius:4px;font-family:Audiowide,sans-serif;font-size:.72rem;z-index:9999;pointer-events:none;transition:opacity .4s';
+    document.body.appendChild(t);
+  }
+  t.style.background = type==='red'?'rgba(255,45,45,.9)':'rgba(0,229,255,.12)';
+  t.style.border = `1px solid ${type==='red'?'#FF4500':'rgba(0,229,255,.5)'}`;
+  t.style.color = type==='red'?'#fff':'var(--cyan)';
+  t.textContent = msg; t.style.opacity='1';
+  clearTimeout(t._tid);
+  t._tid=setTimeout(()=>{ t.style.opacity='0'; },3500);
+}
 
 // ── Player panel ──────────────────────────────────────────────
 function buildPlayerPanel() {
@@ -1466,6 +2145,7 @@ function buildPlayerPanel() {
       <div class="range-info-box" id="rangeInfoBox" style="display:none">
         <span id="rangeInfoRange">—</span>
         <span class="range-info-dv" id="rangeInfoDv"></span>
+        <button id="shotgunConeBtn" class="ts-btn" style="display:none;margin-top:.3rem;width:100%;font-size:.65rem">🎯 Kegel anzeigen</button>
       </div>
     </div>`;
 
@@ -1474,15 +2154,50 @@ function buildPlayerPanel() {
   document.getElementById('weaponSelector')?.addEventListener('change', e=>{
     const v=e.target.value;
     const box=document.getElementById('rangeInfoBox');
+    S.shotgunConeActive=false;
     if (!v) { S.activeWeapon=null; box.style.display='none'; markDirty(); return; }
     const [type,idx]=v.split(':');
     let w;
-    if (type==='w') { const raw=weapons[+idx]; w={name:raw.name,rangeM:WEAPON_RANGES[raw.ammo?.toLowerCase()]||WEAPON_RANGES[guessWeaponDvType(raw.ammo,raw.name)]||50,dvType:guessWeaponDvType(raw.ammo,raw.name)}; }
-    else { w=cyberWeapons[+idx]; }
+    if (type==='w') {
+      const raw=weapons[+idx];
+      const dvType=guessWeaponDvType(raw.ammo,raw.name);
+      const isShotgun=dvType==='shotgun';
+      w={name:raw.name,rangeM:WEAPON_RANGES[raw.ammo?.toLowerCase()]||WEAPON_RANGES[dvType]||50,dvType,isShotgun,rawIdx:+idx};
+    } else { w=cyberWeapons[+idx]; w.isShotgun=false; }
     S.activeWeapon=w;
     document.getElementById('rangeInfoRange').textContent=`Range: ${w.rangeM}m`;
     document.getElementById('rangeInfoDv').textContent=`DV bei 10m: ${getDV(w.dvType||'pistol',10)}`;
     box.style.display='block';
+    const coneBtn=document.getElementById('shotgunConeBtn');
+    if (coneBtn) coneBtn.style.display=w.isShotgun?'':'none';
+    markDirty();
+  });
+  document.getElementById('shotgunConeBtn')?.addEventListener('click',()=>{
+    S.shotgunConeActive=!S.shotgunConeActive;
+    const btn=document.getElementById('shotgunConeBtn');
+    if (btn) btn.textContent=S.shotgunConeActive?'🎯 Kegel AUS':'🎯 Kegel anzeigen';
+    if (!S.shotgunConeActive) { markDirty(); return; }
+    // "Schaden anwenden" on cone targets
+    const ownToken=S.tokens.find(t=>t.charId===CHAR_ID);
+    if (!ownToken || !S.activeWeapon) return;
+    const coneLen=6*S.gridSize, coneAngle=Math.PI/3;
+    const inCone=S.tokens.filter(t=>t.id!==ownToken.id&&isInCone(t.x,t.y,ownToken.x,ownToken.y,S.shotgunFacing,coneAngle,coneLen));
+    if (inCone.length&&confirm(`3d6 Schaden auf ${inCone.length} Token im Kegel anwenden?`)) {
+      (async()=>{
+        const {patchCharacter,patchNpc}=await import('./assets/js/supabase.js');
+        for(const t of inCone){
+          const dmg=[1,2,3].reduce(s=>s+Math.floor(Math.random()*6)+1,0);
+          const newHp=Math.max(0,(t.hp??t.maxHp??0)-dmg);
+          t.hp=newHp;
+          if(t.type==='char') await patchCharacter(t.charId,{current_hp:newHp}).catch(()=>{});
+          else if(t.type==='npc') await patchNpc(t.npcId,{hp_current:newHp}).catch(()=>{});
+        }
+        saveTokens(); markDirty();
+        showMapToast(`Shotgun: 3d6 auf ${inCone.length} Ziele`,'red');
+      })();
+    }
+    S.shotgunConeActive=false;
+    if(btn) btn.textContent='🎯 Kegel anzeigen';
     markDirty();
   });
 }
@@ -1537,6 +2252,7 @@ function setupDmControls() {
     S.mapName=name; document.getElementById('mapNameDisplay').textContent=name;
     await saveMap({id:S.mapId,name});
   });
+  document.getElementById('nextTurnBtn')?.addEventListener('click', doNextTurn);
   renderToolSettings('select');
 }
 
@@ -1626,6 +2342,10 @@ async function boot() {
     });
     subscribeCombat(payload=>{
       S.combatSession=payload.new?.is_active?payload.new:null;
+      if (IS_DM) {
+        const btn=document.getElementById('nextTurnBtn');
+        if (btn) btn.style.display=S.combatSession?.is_active?'':'none';
+      }
       markDirty();
     });
     if (!IS_DM && CHAR_ID) {

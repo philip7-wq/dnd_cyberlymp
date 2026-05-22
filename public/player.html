@@ -90,6 +90,9 @@
     <span class="combat-panel-label">KAMPF — RUNDE <strong id="initRound">1</strong></span>
   </div>
   <div class="combat-combatants" id="combatCombatants"></div>
+  <div id="combatGrappleRow" style="display:none;padding:.35rem .75rem;border-top:1px solid rgba(255,255,255,.06)">
+    <button id="combatGrappleBtn" class="gear-action-btn" style="border-color:#94A3B8;color:#94A3B8;width:100%;text-align:center">⛓ Grapple initiieren</button>
+  </div>
 </div>
 
 <!-- ── Character header ── -->
@@ -1058,6 +1061,23 @@ function renderWeapons() {
       </div>`;
     })();
 
+    const isAutofireOn = _autofireActive.has(i);
+    const wType = (w.ammo||'').toLowerCase().includes('rifle') ? 'assault rifle' :
+                  (w.ammo||'').toLowerCase().includes('smg') || (w.name||'').toLowerCase().includes('smg') ? 'smg' : 'smg';
+    const autofirePanelHtml = (w.is_autofire && isAutofireOn) ? `
+      <div class="autofire-panel" id="afpanel_${i}">
+        <div class="af-label">AUTOFIRE RECHNER</div>
+        <div class="af-row">
+          <span class="af-row-label">Schaden-Ausdruck:</span>
+          <button class="roll-btn af-roll-btn" data-af-idx="${i}" data-expr="${w.damage||'2d6'}">${w.damage||'2d6'} würfeln</button>
+          <span class="af-roll-result" id="afroll_${i}"></span>
+        </div>
+        <div class="af-row" style="margin-top:.3rem">
+          <span class="af-row-label">DV des Ziels:</span>
+          <input type="number" class="af-dv-input" id="afdv_${i}" data-af-idx="${i}" data-wtype="${wType}" min="1" max="30" value="15">
+        </div>
+        <div class="af-result" id="afresult_${i}"></div>
+      </div>` : '';
     return `<div class="weapon-card${specialAmmoInfo ? ' weapon-card--ammo' : ''}">
       <div class="weapon-card-main">
         <div class="weapon-header">
@@ -1078,6 +1098,7 @@ function renderWeapons() {
         </div>
       </div>
       ${specialAmmoInfo}
+      ${autofirePanelHtml}
     </div>`;
   }).join('');
 
@@ -1097,6 +1118,52 @@ function renderWeapons() {
       renderWeapons();
     });
   });
+
+  // Autofire panel roll + DV calc
+  el.querySelectorAll('.af-roll-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.afIdx);
+      const expr = btn.dataset.expr || '2d6';
+      const match = expr.match(/^(\d+)d(\d+)/i);
+      let total = 0;
+      if (match) { const [,n,d]=[,parseInt(match[1]),parseInt(match[2])]; for(let i=0;i<n;i++) total+=Math.floor(Math.random()*d)+1; }
+      else total = parseInt(expr)||0;
+      const rollEl = document.getElementById(`afroll_${idx}`);
+      if (rollEl) { rollEl.textContent = total; rollEl.dataset.total = total; }
+      calcAutofire(idx, total);
+    });
+  });
+
+  el.querySelectorAll('.af-dv-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const idx = parseInt(inp.dataset.afIdx);
+      const rollEl = document.getElementById(`afroll_${idx}`);
+      const total = parseInt(rollEl?.dataset?.total||'0') || 0;
+      if (total > 0) calcAutofire(idx, total);
+    });
+  });
+
+  function calcAutofire(wIdx, rollTotal) {
+    const dvInp = document.getElementById(`afdv_${wIdx}`);
+    const resEl = document.getElementById(`afresult_${wIdx}`);
+    if (!dvInp || !resEl) return;
+    const dv = parseInt(dvInp.value) || 15;
+    const wtype = dvInp.dataset.wtype || 'smg';
+    const maxHits = wtype.includes('rifle') ? 4 : 3;
+    const beatenBy = Math.max(0, rollTotal - dv);
+    const hits = Math.min(beatenBy, maxHits);
+    const w = char.weapons?.[wIdx];
+    const dmgExpr = w?.damage || '2d6';
+    const dmgMatch = dmgExpr.match(/^(\d+)d(\d+)/i);
+    let dmgPerHit = 0;
+    if (dmgMatch) { const [,n,d]=[,parseInt(dmgMatch[1]),parseInt(dmgMatch[2])]; for(let i=0;i<n;i++) dmgPerHit+=Math.floor(Math.random()*d)+1; }
+    const total = hits * dmgPerHit;
+    if (hits === 0) {
+      resEl.innerHTML = `<span style="color:var(--text-muted)">${rollTotal} − DV ${dv} = +${beatenBy} → <strong>0 Treffer</strong> (kein Schaden)</span>`;
+    } else {
+      resEl.innerHTML = `<span style="color:#FF8C00">${rollTotal} − DV ${dv} = +${beatenBy} → <strong>${hits} Treffer</strong> × ${dmgPerHit} = <span style="color:var(--red)">${total} Schaden</span></span>`;
+    }
+  }
 
   el.querySelectorAll('.ammo-type-select').forEach(sel => {
     sel.addEventListener('change', () => changeLoadedAmmo(parseInt(sel.dataset.weaponIdx), sel.value));
@@ -1221,13 +1288,23 @@ function renderArmor() {
   const totalSp = slots.reduce((sum, [, s]) => sum + (s.sp ?? 0), 0);
   const totalPenalty = slots.reduce((sum, [, s]) => sum + (s.penalty ?? 0), 0);
   document.getElementById('tab-armor').innerHTML =
-    `<div class="armor-grid">${slots.map(([label, s, slotKey]) => `
-      <div class="armor-slot">
+    `<div class="armor-grid">${slots.map(([label, s, slotKey]) => {
+      const maxSp = s.max_sp ?? s.sp ?? 0;
+      const curSp = s.sp ?? 0;
+      const spPct = maxSp > 0 ? (curSp / maxSp * 100) : 0;
+      const spCls = spPct > 50 ? '' : spPct > 20 ? ' warn' : ' crit';
+      const destroyed = s.name && curSp <= 0;
+      return `<div class="armor-slot${destroyed?' armor-slot--destroyed':''}">
         <div class="armor-slot-label">${label}${s.name ? `<span style="float:right;display:flex;gap:.2rem"><button class="unequip-btn" data-inv="armor" data-idx="${slotKey}" title="Ablegen → Gear" style="background:none;border:none;cursor:pointer;font-size:.7rem;opacity:.6">📦</button><button class="remove-btn" data-inv="armor" data-idx="${slotKey}">✕</button></span>` : ''}</div>
         <div class="armor-name">${s.name || '—'}</div>
-        <div class="armor-sp">${s.sp ?? 0}</div>
+        <div class="armor-sp-row">
+          <span class="armor-sp${destroyed?' armor-sp--destroyed':''}">${curSp}${maxSp && maxSp !== curSp ? ` / ${maxSp}` : ''}</span>
+          ${destroyed ? '<span class="armor-destroyed-badge">DESTROYED</span>' : ''}
+        </div>
+        ${s.name && maxSp > 0 ? `<div class="sp-bar-wrap"><div class="sp-bar-fill${spCls}" style="width:${Math.max(0,spPct)}%"></div></div>` : ''}
         <div class="armor-pen">${s.penalty ? `−${s.penalty} REF` : 'kein Malus'}</div>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
     </div>
     <div class="armor-total-row">
       <span class="armor-total-label">Gesamt SP</span>
@@ -3319,6 +3396,15 @@ function renderCombatPanel() {
   document.getElementById('initRound').textContent = combatSession.round ?? 1;
   const combatants = combatSession.combatants || [];
   const idx = combatSession.current_turn_index ?? 0;
+
+  // Grapple button (if player has Brawling or Martial Arts)
+  const brawl = char.skills?.Brawling ?? 0;
+  const martial = char.skills?.['Martial Arts'] ?? 0;
+  const grappleDiv = document.getElementById('combatGrappleRow');
+  if (grappleDiv) {
+    grappleDiv.style.display = (brawl > 0 || martial > 0) ? '' : 'none';
+  }
+
   document.getElementById('combatCombatants').innerHTML = combatants.map((c, i) => {
     const isActive = i === idx;
     const isMe     = !c.isNpc && c.id === char.id;
@@ -3415,6 +3501,21 @@ function checkDeathSave() {
   }
   document.body.classList.toggle('near-death', show && !deathSaveStabilized);
 }
+
+document.getElementById('combatGrappleBtn')?.addEventListener('click', () => {
+  // Open grapple initiator - finds own map token via map page
+  // For now, shows a simple inline prompt (full grapple UI is on map.html)
+  const targets = (_allCharsFull || []).filter(c => c.id !== char.id);
+  const names = targets.map((c,i)=>`${i+1}. ${c.name}`).join('\n');
+  const v = prompt(`Grapple gegen welches Ziel?\n${names}\n(Nummer eingeben):`, '1');
+  if (!v) return;
+  const targetChar = targets[parseInt(v)-1];
+  if (!targetChar) return;
+  const myRoll = Math.floor(Math.random()*10)+1 + (char.stats?.DEX??5) + (char.skills?.Brawling ?? 0);
+  const theirRoll = Math.floor(Math.random()*10)+1 + (targetChar.stats?.DEX??5);
+  const result = myRoll > theirRoll ? `✓ ERFOLG! ${myRoll} vs ${theirRoll}` : `✗ FEHLGESCHLAGEN ${myRoll} vs ${theirRoll}`;
+  alert(`Grapple gegen ${targetChar.name}: ${result}`);
+});
 
 document.getElementById('deathSaveBtn').addEventListener('click', async () => {
   // If stabilized, clicking again means next-round re-roll
