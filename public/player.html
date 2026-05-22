@@ -287,6 +287,15 @@ function getInjuries() {
   try { return JSON.parse(char.critical_injuries || '[]'); } catch { return []; }
 }
 
+const CW_SLOT_LABELS = {
+  rightCybereye:'Rechtes Auge', leftCybereye:'Linkes Auge',
+  rightCyberarm:'Rechter Arm',  leftCyberarm:'Linker Arm',
+  rightCyberleg:'Rechtes Bein', leftCyberleg:'Linkes Bein',
+  neuralLink:'Neural Link', cyberaudio:'Cyberaudio',
+  internal:'Intern', external:'Extern',
+  fashionware:'Fashionware', borgware:'Borgware',
+};
+
 // ── Boot ──────────────────────────────────────────────────────
 const id = new URLSearchParams(location.search).get('id');
 if (!id) { location.replace('index.html'); }
@@ -403,16 +412,6 @@ function show() {
   document.getElementById('tabBar').style.display  = '';
   document.getElementById('diceFab').style.display = '';
 }
-
-// ── Cyberware slot labels (used by renderCyberware) ───────────
-const CW_SLOT_LABELS = {
-  rightCybereye:'Rechtes Auge', leftCybereye:'Linkes Auge',
-  rightCyberarm:'Rechter Arm',  leftCyberarm:'Linker Arm',
-  rightCyberleg:'Rechtes Bein', leftCyberleg:'Linkes Bein',
-  neuralLink:'Neural Link', cyberaudio:'Cyberaudio',
-  internal:'Intern', external:'Extern',
-  fashionware:'Fashionware', borgware:'Borgware',
-};
 
 // ── Master render ─────────────────────────────────────────────
 function renderAll() {
