@@ -308,6 +308,7 @@ function getInjuries() {
 
 let _lastEffEMP     = null;
 let _psychosisShown = false;
+let _roomItems      = [];
 
 const SVG_ZONE_SLOTS = {
   head:     ['neuralLink','rightCybereye','leftCybereye','cyberaudio'],
@@ -364,7 +365,8 @@ if (id) {
     clearTimeout(bootTimeout);
     renderAll();
     show();
-    requestNotifPermission();
+    // Notification nur nach User-Gesture anfragen
+    document.addEventListener('click', () => requestNotifPermission(), { once: true });
     initRoomItems();
 
     const chatHistory = await getMessages(50);
@@ -1036,7 +1038,6 @@ function renderGear() {
 }
 
 // ── Raum-Inventar ─────────────────────────────────────────────
-let _roomItems = [];
 
 async function initRoomItems() {
   try {
