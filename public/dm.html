@@ -99,6 +99,22 @@
       <div class="roll-log-head">ROLL LOG <button class="roll-log-clear" id="clearRollLog" title="Alle Würfelwürfe löschen">🗑</button></div>
       <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
     </div>
+    <!-- Raum-Inventar -->
+    <div style="border-top:1px solid var(--border);padding:.75rem 1rem .5rem">
+      <div class="roll-log-head">📦 RAUM / UMGEBUNG</div>
+      <div style="display:flex;gap:.3rem;margin-bottom:.4rem">
+        <input id="dmRoomDesc" class="ctrl-input" placeholder="Raum-Beschreibung" style="flex:1;font-size:.7rem" maxlength="60">
+        <button class="ctrl-btn" id="dmRoomDescSet" style="font-size:.65rem">↵</button>
+      </div>
+      <div style="display:flex;gap:.3rem;margin-bottom:.4rem">
+        <input id="dmRoomItemSearch" class="ctrl-input" placeholder="Item suchen oder Name" style="flex:1;font-size:.72rem">
+        <button class="ctrl-btn" id="dmRoomItemAdd" style="font-size:.65rem">+ Legen</button>
+      </div>
+      <div id="dmRoomItemResults" style="max-height:80px;overflow-y:auto;margin-bottom:.3rem;font-size:.7rem"></div>
+      <div id="dmRoomItemList" style="max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:.2rem"></div>
+      <button class="ctrl-btn ctrl-btn-red" id="dmRoomClear" style="width:100%;font-size:.65rem;margin-top:.3rem">🗑 Raum leeren</button>
+    </div>
+
     <div class="dm-own-notes-wrap">
       <div class="roll-log-head">DM NOTIZEN <span style="font-size:.58rem;color:var(--text-muted)">(nur lokal)</span></div>
       <textarea id="dmOwnNotes" class="player-notes-area dm-own-notes-area" placeholder="Session-Notizen, NPC-Ideen…"></textarea>
@@ -257,6 +273,10 @@
           </div>
           <div id="npcWeaponsList"></div>
         </div>
+        <div style="display:flex;gap:.5rem;align-items:center;margin-top:.3rem">
+          <input id="npcGroupName" class="npc-field" placeholder="Gruppe (z.B. Valentinos)" maxlength="40" style="flex:1">
+          <input id="npcGroupColor" type="color" value="#FF2D2D" title="Gruppenfarbe" style="width:36px;height:32px;padding:2px;border:1px solid var(--border);border-radius:4px;background:#111;cursor:pointer">
+        </div>
         <textarea id="npcNotes" class="npc-field npc-field--notes" placeholder="Notizen…" rows="3" maxlength="500"></textarea>
       </div>
     </div>
@@ -274,6 +294,7 @@ import {
   getActiveCombat, saveCombat, endCombat, subscribeCombat,
   sendMessage, getMessages, subscribeMessages, uploadChatImage, patchMessage,
   getNpcs, saveNpc, patchNpc, deleteNpc, uploadNpcImage, subscribeNpcs,
+  patchCash, getRoomItems, addRoomItem, removeRoomItem, clearRoomItems, setRoomDescription, subscribeRoomItems,
 } from './assets/js/supabase.js';
 import { animateRollNumber } from './assets/js/dice.js';
 
@@ -505,6 +526,7 @@ async function boot() {
   try { _npcs = await getNpcs(); } catch(e) { console.warn('getNpcs failed:', e); }
   renderNpcGrid();
   setupNpcModal();
+  initDmRoomItems();
   setupMainTabs();
   subscribeNpcs(payload => {
     if (payload.eventType === 'DELETE') {
@@ -555,7 +577,7 @@ function renderGrid() {
     const weapons   = cardWeapons(c);
 
     return `
-    <div class="dm-card${(c.current_hp <= 0 || (c.conditions||[]).includes('Mortally Wounded')) ? ' dm-card--dying' : ''}" data-id="${c.id}">
+    <div class="dm-card${(c.current_hp <= 0 || (c.conditions||[]).includes('Mortally Wounded')) ? ' dm-card--dying' : ''}${(c.current_humanity ?? 1) <= 0 ? ' dm-card--psycho' : ''}" data-id="${c.id}">
       <div class="dm-card-header">
         ${portrait}
         <div class="dm-card-meta">
@@ -571,7 +593,7 @@ function renderGrid() {
         </div>
         <div class="dm-card-stat">
           <div class="dm-card-stat-label">Humanity</div>
-          <div class="bar-wrap"><div class="bar-fill" style="width:${humPct}%;background:var(--cyan)"></div></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${humPct}%;background:${humPct>60?'var(--cyan)':humPct>40?'#FFD700':humPct>20?'#FF8C00':'#FF2D2D'}"></div></div>
           <div>${c.current_humanity ?? 0} / ${c.max_humanity ?? 0}</div>
           ${(() => { const h = c.current_humanity ?? 0; if (h <= 0) return '<div style="font-size:.58rem;color:#FF0000;letter-spacing:.06em;font-weight:700">CYBERPSYCHOSIS</div>'; if (h <= 5) return '<div style="font-size:.58rem;color:#FF2D2D">Psychosis-Risiko</div>'; if (h <= 20) return '<div style="font-size:.58rem;color:#FF8C00">Instabilität</div>'; if (h <= 35) return '<div style="font-size:.58rem;color:#FFD700">Hum. sinkt</div>'; return ''; })()}
         </div>
@@ -741,6 +763,34 @@ function setupDmChat() {
 
 // ── NPCs ─────────────────────────────────────────────────────
 
+function buildNpcCard(n) {
+  const hpPct = n.hp_max > 0 ? Math.round((n.hp_current / n.hp_max) * 100) : 0;
+  const hpCol = hpPct > 50 ? '#2ecc71' : hpPct > 25 ? '#f39c12' : '#e74c3c';
+  const isElim  = n.hp_max > 0 && n.hp_current <= 0;
+  const portrait = n.image_url
+    ? `<img src="${n.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">`
+    : '<span style="font-size:2rem">👤</span>';
+  return `<div class="npc-card${isElim ? ' eliminated' : ''}" data-npc-id="${n.id}">
+    <div class="npc-card-portrait">${portrait}</div>
+    <div class="npc-card-name">${escapeHtml(n.name)}</div>
+    ${n.role ? `<div class="npc-card-role">${escapeHtml(n.role)}</div>` : ''}
+    <div class="npc-hp-bar-wrap"><div class="npc-hp-bar" style="width:${hpPct}%;background:${hpCol}"></div></div>
+    <div class="npc-card-hp-controls">
+      <button class="npc-hp-btn" data-npc-id="${n.id}" data-delta="-1">−</button>
+      <input class="npc-hp-input" data-npc-id="${n.id}" type="number" value="${n.hp_current}" min="0" max="${n.hp_max}">
+      <span style="color:var(--text-muted);font-size:.72rem">/ ${n.hp_max}</span>
+      <button class="npc-hp-btn" data-npc-id="${n.id}" data-delta="1">+</button>
+    </div>
+    <div class="npc-card-actions">
+      <button class="npc-visibility-btn${n.is_visible_to_players ? ' active' : ''}" data-npc-id="${n.id}">
+        ${n.is_visible_to_players ? '👁 Sichtbar' : '🙈 Versteckt'}
+      </button>
+      <button class="npc-edit-btn" data-npc-id="${n.id}">✎</button>
+      <button class="npc-dice-btn" data-npc-id="${n.id}">🎲</button>
+    </div>
+  </div>`;
+}
+
 function renderNpcGrid() {
   const grid = document.getElementById('npcGrid');
   if (!grid) return;
@@ -748,33 +798,32 @@ function renderNpcGrid() {
     grid.innerHTML = '<div style="color:var(--text-muted);font-size:.78rem">Noch keine NPCs.</div>';
     return;
   }
-  grid.innerHTML = _npcs.map(n => {
-    const hpPct = n.hp_max > 0 ? Math.round((n.hp_current / n.hp_max) * 100) : 0;
-    const hpCol = hpPct > 50 ? '#2ecc71' : hpPct > 25 ? '#f39c12' : '#e74c3c';
-    const isElim = n.hp_max > 0 && n.hp_current <= 0;
-    const portrait = n.image_url
-      ? `<img src="${n.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">`
-      : '<span style="font-size:2rem">👤</span>';
-    return `<div class="npc-card${isElim ? ' eliminated' : ''}" data-npc-id="${n.id}">
-      <div class="npc-card-portrait">${portrait}</div>
-      <div class="npc-card-name">${escapeHtml(n.name)}</div>
-      ${n.role ? `<div class="npc-card-role">${escapeHtml(n.role)}</div>` : ''}
-      <div class="npc-hp-bar-wrap"><div class="npc-hp-bar" style="width:${hpPct}%;background:${hpCol}"></div></div>
-      <div class="npc-card-hp-controls">
-        <button class="npc-hp-btn" data-npc-id="${n.id}" data-delta="-1">−</button>
-        <input class="npc-hp-input" data-npc-id="${n.id}" type="number" value="${n.hp_current}" min="0" max="${n.hp_max}">
-        <span style="color:var(--text-muted);font-size:.72rem">/ ${n.hp_max}</span>
-        <button class="npc-hp-btn" data-npc-id="${n.id}" data-delta="1">+</button>
-      </div>
-      <div class="npc-card-actions">
-        <button class="npc-visibility-btn${n.is_visible_to_players ? ' active' : ''}" data-npc-id="${n.id}">
-          ${n.is_visible_to_players ? '👁 Sichtbar' : '🙈 Versteckt'}
-        </button>
-        <button class="npc-edit-btn" data-npc-id="${n.id}">✎</button>
-        <button class="npc-dice-btn" data-npc-id="${n.id}">🎲</button>
-      </div>
-    </div>`;
-  }).join('');
+
+  // Gruppen ermitteln
+  const groups = {};
+  for (const n of _npcs) {
+    const g = n.group_name || '';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(n);
+  }
+
+  let html = '';
+  for (const [groupName, members] of Object.entries(groups)) {
+    const color   = members[0]?.group_color || '#FF2D2D';
+    const bgColor = color + '22';
+    if (groupName) {
+      html += `<div class="npc-group-header" style="border-color:${color};background:${bgColor}">
+        <span style="color:${color};font-family:Audiowide,sans-serif;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase">${escapeHtml(groupName)}</span>
+        <span style="color:var(--text-muted);font-size:.65rem;margin-left:.5rem">${members.length} NPCs</span>
+        <div style="margin-left:auto;display:flex;gap:.35rem">
+          <button class="ctrl-btn group-combat-btn" data-group="${groupName}" style="font-size:.65rem;padding:.2rem .5rem">▶ Alle in Kampf</button>
+          <button class="ctrl-btn group-toggle-btn" data-group="${groupName}" data-visible="${members.every(m => m.is_visible_to_players) ? '1' : '0'}" style="font-size:.65rem;padding:.2rem .5rem">👁 Toggle</button>
+        </div>
+      </div>`;
+    }
+    html += `<div class="npc-group-cards">${members.map(buildNpcCard).join('')}</div>`;
+  }
+  grid.innerHTML = html;
 
   grid.querySelectorAll('.npc-hp-input').forEach(inp => {
     inp.addEventListener('change', async () => {
@@ -807,6 +856,37 @@ function renderNpcGrid() {
       if (npc) rollForNpc(npc);
     });
   });
+
+  // Gruppen-Buttons
+  grid.querySelectorAll('.group-combat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const groupName = btn.dataset.group;
+      const members   = _npcs.filter(n => n.group_name === groupName);
+      for (const npc of members) {
+        if (!setupCombatants.find(c => c.isNpc && c.npcDbId === npc.id)) {
+          setupCombatants.push({
+            id: npc.id, name: npc.name,
+            hp: npc.hp_current, maxHp: npc.hp_max,
+            isNpc: true, ref: npc.stats?.REF || 0, initiative: 0,
+            imageUrl: npc.image_url || null,
+            isVisibleToPlayers: npc.is_visible_to_players,
+            npcDbId: npc.id,
+          });
+        }
+      }
+      renderCombatSetupList();
+      btn.textContent = '✓ Hinzugefügt';
+      setTimeout(() => { btn.textContent = '▶ Alle in Kampf'; }, 1500);
+    });
+  });
+  grid.querySelectorAll('.group-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const groupName  = btn.dataset.group;
+      const members    = _npcs.filter(n => n.group_name === groupName);
+      const allVisible = members.every(m => m.is_visible_to_players);
+      await Promise.all(members.map(n => patchNpc(n.id, { is_visible_to_players: !allVisible })));
+    });
+  });
 }
 
 function renderCombatSetupNpcList() {
@@ -816,14 +896,25 @@ function renderCombatSetupNpcList() {
     wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.72rem;margin-bottom:.3rem">Keine gespeicherten NPCs.</div>';
     return;
   }
-  wrap.innerHTML = _npcs.map(n => `
-    <label class="combat-setup-check">
+  // Nach Gruppe sortiert
+  const sorted = [..._npcs].sort((a, b) => (a.group_name || '').localeCompare(b.group_name || ''));
+  let lastGroup = null;
+  wrap.innerHTML = sorted.map(n => {
+    let groupHeader = '';
+    if (n.group_name !== lastGroup) {
+      lastGroup = n.group_name;
+      groupHeader = n.group_name
+        ? `<div style="font-size:.6rem;color:${n.group_color||'#FF2D2D'};letter-spacing:.1em;text-transform:uppercase;padding:.25rem 0 .1rem;font-family:Audiowide,sans-serif">${escapeHtml(n.group_name)}</div>`
+        : '';
+    }
+    return groupHeader + `<label class="combat-setup-check">
       <input type="checkbox" class="cbt-npc-check" value="${n.id}"
              data-name="${escapeHtml(n.name)}" data-hp="${n.hp_current}" data-maxhp="${n.hp_max}"
              data-ref="${n.stats?.REF || 0}" data-img="${n.image_url || ''}"
              data-visible="${n.is_visible_to_players}">
       ${escapeHtml(n.name)} <span class="combat-init-small">(HP ${n.hp_current}/${n.hp_max})</span>
-    </label>`).join('');
+    </label>`;
+  }).join('');
   wrap.querySelectorAll('.cbt-npc-check').forEach(cb => {
     cb.addEventListener('change', () => {
       const npc = _npcs.find(n => n.id === cb.value);
@@ -853,7 +944,9 @@ function openNpcModal(npc = null) {
   document.getElementById('npcRole').value       = npc?.role || '';
   document.getElementById('npcHpCurrent').value  = npc?.hp_current ?? '';
   document.getElementById('npcHpMax').value      = npc?.hp_max ?? '';
-  document.getElementById('npcNotes').value      = npc?.notes || '';
+  document.getElementById('npcNotes').value       = npc?.notes || '';
+  document.getElementById('npcGroupName').value   = npc?.group_name || '';
+  document.getElementById('npcGroupColor').value  = npc?.group_color || '#FF2D2D';
   const imgPreview = document.getElementById('npcImgPreview');
   imgPreview.innerHTML = npc?.image_url
     ? `<img src="${npc.image_url}" alt="" style="width:100%;height:100%;object-fit:cover">`
@@ -906,9 +999,11 @@ async function saveNpcFromModal() {
     role:       document.getElementById('npcRole').value.trim() || null,
     hp_current: parseInt(document.getElementById('npcHpCurrent').value) || 0,
     hp_max:     parseInt(document.getElementById('npcHpMax').value) || 0,
-    notes:      document.getElementById('npcNotes').value.trim() || null,
-    stats:      collectNpcStats(),
-    weapons:    collectNpcWeapons(),
+    notes:       document.getElementById('npcNotes').value.trim() || null,
+    group_name:  document.getElementById('npcGroupName').value.trim() || null,
+    group_color: document.getElementById('npcGroupColor').value || '#FF2D2D',
+    stats:       collectNpcStats(),
+    weapons:     collectNpcWeapons(),
   };
   if (_editingNpcId) data.id = _editingNpcId;
   try {
@@ -956,6 +1051,90 @@ function rollForNpc(npc) {
   _npcRollContext = `NPC: ${npc.name}`;
   document.getElementById('dmDicePopup').classList.add('open');
   expr.focus();
+}
+
+// ── Raum-Inventar (DM) ───────────────────────────────────────
+let _roomItems = [];
+let _roomItemsCache = [];
+
+async function initDmRoomItems() {
+  try {
+    _roomItems = await getRoomItems();
+    renderDmRoomList();
+    subscribeRoomItems(payload => {
+      if (payload.eventType === 'INSERT') _roomItems.push(payload.new);
+      else if (payload.eventType === 'DELETE') _roomItems = _roomItems.filter(r => r.id !== payload.old.id);
+      else if (payload.eventType === 'UPDATE') {
+        const idx = _roomItems.findIndex(r => r.id === payload.new.id);
+        if (idx >= 0) _roomItems[idx] = payload.new;
+      }
+      renderDmRoomList();
+    });
+  } catch(e) { console.warn('room_items DM init:', e.message); }
+
+  // Item-Suche
+  const searchEl = document.getElementById('dmRoomItemSearch');
+  const resultsEl = document.getElementById('dmRoomItemResults');
+  searchEl?.addEventListener('input', () => {
+    const q = searchEl.value.trim().toLowerCase();
+    if (!q) { resultsEl.innerHTML = ''; return; }
+    if (!_roomItemsCache.length) {
+      getItems([]).then(items => { _roomItemsCache = items; filterRoomItems(q, resultsEl); }).catch(() => {});
+    } else {
+      filterRoomItems(q, resultsEl);
+    }
+  });
+
+  document.getElementById('dmRoomItemAdd')?.addEventListener('click', async () => {
+    const name = searchEl?.value.trim();
+    if (!name) return;
+    const desc = document.getElementById('dmRoomDesc')?.value.trim() || 'Aktueller Raum';
+    const matchedItem = _roomItemsCache.find(i => i.name.toLowerCase() === name.toLowerCase());
+    try {
+      await addRoomItem({ item_name: matchedItem?.name || name, item_data: matchedItem || {}, placed_by: 'DM', room_description: desc });
+      if (searchEl) searchEl.value = '';
+      if (resultsEl) resultsEl.innerHTML = '';
+    } catch(e) { console.warn(e); }
+  });
+
+  document.getElementById('dmRoomDescSet')?.addEventListener('click', async () => {
+    const desc = document.getElementById('dmRoomDesc')?.value.trim();
+    if (!desc) return;
+    try { await setRoomDescription(desc); } catch(e) { console.warn(e); }
+  });
+
+  document.getElementById('dmRoomClear')?.addEventListener('click', async () => {
+    if (!_roomItems.length) return;
+    if (!confirm('Raum wirklich leeren?')) return;
+    try { await clearRoomItems(); } catch(e) { console.warn(e); }
+  });
+}
+
+function filterRoomItems(q, resultsEl) {
+  const matches = _roomItemsCache.filter(i => i.name.toLowerCase().includes(q)).slice(0, 6);
+  resultsEl.innerHTML = matches.map(i =>
+    `<div class="room-item-suggestion" data-name="${escapeHtml(i.name)}" style="cursor:pointer;padding:.15rem .3rem;border-radius:3px;color:var(--text-muted)">${escapeHtml(i.name)}</div>`
+  ).join('');
+  resultsEl.querySelectorAll('.room-item-suggestion').forEach(el => {
+    el.addEventListener('click', () => {
+      document.getElementById('dmRoomItemSearch').value = el.dataset.name;
+      resultsEl.innerHTML = '';
+    });
+  });
+}
+
+function renderDmRoomList() {
+  const el = document.getElementById('dmRoomItemList');
+  if (!el) return;
+  if (!_roomItems.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:.7rem">Leer.</div>'; return; }
+  el.innerHTML = _roomItems.map(r => `
+    <div style="display:flex;align-items:center;gap:.3rem;padding:.2rem .3rem;background:var(--bg-card);border-radius:3px;font-size:.72rem">
+      <span style="flex:1;color:var(--text)">${r.item_name}${r.placed_by && r.placed_by !== 'DM' ? ` <span style="color:var(--text-muted)">(${r.placed_by})</span>` : ''}</span>
+      <button class="ctrl-btn" data-del-room="${r.id}" style="font-size:.6rem;padding:.1rem .3rem">✕</button>
+    </div>`).join('');
+  el.querySelectorAll('[data-del-room]').forEach(btn => {
+    btn.addEventListener('click', async () => { try { await removeRoomItem(btn.dataset.delRoom); } catch(e) { console.warn(e); } });
+  });
 }
 
 function setupNpcModal() {
@@ -1207,13 +1386,15 @@ function buildLeftPanelHtml() {
     </div>
 
     <div class="dm-left-section">
-      <div class="ctrl-section-head">Cash <span id="dmLeftCashVal" style="float:right;color:var(--cyan);font-family:var(--font-display)">${(c.cash ?? 0).toLocaleString('de-DE')} eb</span></div>
+      <div class="ctrl-section-head">Cash <span id="dmLeftCashVal" style="float:right;color:${(c.cash??0)<0?'var(--red)':'var(--cyan)'};font-family:var(--font-display)">${(c.cash ?? 0) < 0 ? '💸 ' : ''}${(c.cash ?? 0).toLocaleString('de-DE')} eb</span></div>
       <div class="ctrl-row">
-        <input type="number" class="ctrl-input" id="dmLeftCashAmt" placeholder="500" min="1" style="max-width:90px">
+        <input type="number" class="ctrl-input" id="dmLeftCashAmt" placeholder="500" style="max-width:80px">
+        <input type="text"   class="ctrl-input" id="dmLeftCashReason" placeholder="Grund (opt.)" style="max-width:110px;font-size:.7rem">
         <button class="dm-left-ip-btn" id="dmLeftCashAdd">+ eb</button>
         <button class="dm-left-ip-btn" id="dmLeftCashSub" style="color:var(--red)">− eb</button>
       </div>
       <div class="ctrl-msg" id="dmLeftCashMsg"></div>
+      <div id="dmLeftCashLog" style="font-size:.65rem;color:var(--text-muted);margin-top:.3rem;max-height:80px;overflow-y:auto"></div>
     </div>
 
     <div class="dm-left-section">
@@ -1256,23 +1437,33 @@ function setupLeftPanel() {
     if (ipValEl) ipValEl.textContent = newIp;
   });
 
-  document.getElementById('dmLeftCashAdd').addEventListener('click', async () => {
-    const amt = parseInt(document.getElementById('dmLeftCashAmt').value);
-    if (isNaN(amt) || amt <= 0) return;
-    const newCash = (openChar.cash ?? 0) + amt;
-    await ctrlPatch({ cash: newCash }, 'dmLeftCashMsg', `+${amt} eb`);
-    const el = document.getElementById('dmLeftCashVal');
-    if (el) el.textContent = newCash.toLocaleString('de-DE') + ' eb';
-  });
-
-  document.getElementById('dmLeftCashSub').addEventListener('click', async () => {
-    const amt = parseInt(document.getElementById('dmLeftCashAmt').value);
-    if (isNaN(amt) || amt <= 0) return;
-    const newCash = Math.max(0, (openChar.cash ?? 0) - amt);
-    await ctrlPatch({ cash: newCash }, 'dmLeftCashMsg', `−${amt} eb`);
-    const el = document.getElementById('dmLeftCashVal');
-    if (el) el.textContent = newCash.toLocaleString('de-DE') + ' eb';
-  });
+  async function applyLeftCash(delta) {
+    const amt    = parseInt(document.getElementById('dmLeftCashAmt').value);
+    if (isNaN(amt) || amt === 0) return;
+    const reason = document.getElementById('dmLeftCashReason').value.trim() || null;
+    const newCash = (openChar.cash ?? 0) + delta * Math.abs(amt);
+    try {
+      const newLog = await patchCash(openChar.id, newCash, delta * Math.abs(amt), reason, openChar.cash_log);
+      openChar.cash = newCash;
+      openChar.cash_log = newLog;
+      const el = document.getElementById('dmLeftCashVal');
+      if (el) {
+        el.textContent = (newCash < 0 ? '💸 ' : '') + newCash.toLocaleString('de-DE') + ' eb';
+        el.style.color = newCash < 0 ? 'var(--red)' : 'var(--cyan)';
+      }
+      renderLeftCashLog();
+      const msg = document.getElementById('dmLeftCashMsg');
+      if (msg) { msg.textContent = `${delta > 0 ? '+' : '−'}${Math.abs(amt)} eb`; msg.className = 'ctrl-msg'; }
+      document.getElementById('dmLeftCashAmt').value = '';
+      document.getElementById('dmLeftCashReason').value = '';
+    } catch(e) {
+      const msg = document.getElementById('dmLeftCashMsg');
+      if (msg) { msg.textContent = 'Fehler: ' + e.message; msg.className = 'ctrl-msg'; }
+    }
+  }
+  document.getElementById('dmLeftCashAdd').addEventListener('click', () => applyLeftCash(+1));
+  document.getElementById('dmLeftCashSub').addEventListener('click', () => applyLeftCash(-1));
+  renderLeftCashLog();
 
   document.getElementById('dmLeftConditions').addEventListener('click', async e => {
     const btn = e.target.closest('.cond-toggle-btn');
@@ -1293,6 +1484,19 @@ function setupLeftPanel() {
     renderLeftActiveBuffs();
     renderCtrlActiveBuffs();
   });
+}
+
+function renderLeftCashLog() {
+  const el = document.getElementById('dmLeftCashLog');
+  if (!el) return;
+  const log = openChar.cash_log || [];
+  if (!log.length) { el.innerHTML = ''; return; }
+  el.innerHTML = log.slice(0, 8).map(e => {
+    const sign    = e.delta >= 0 ? '+' : '';
+    const color   = e.delta >= 0 ? '#2ecc71' : 'var(--red)';
+    const timeStr = new Date(e.ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    return `<div style="color:${color}">${sign}${e.delta} eb${e.reason ? ` — ${e.reason}` : ''} <span style="color:#555">${timeStr}</span></div>`;
+  }).join('');
 }
 
 function renderLeftActiveBuffs() {
@@ -1431,15 +1635,15 @@ function buildControlsHtml() {
 
   return `
     <div class="ctrl-section">
-      <div class="ctrl-section-head">Cash</div>
+      <div class="ctrl-section-head">Cash <span style="float:right;color:${(c.cash??0)<0?'var(--red)':'var(--cyan)'};">${(c.cash??0).toLocaleString('de-DE')} eb</span></div>
       <div class="ctrl-row">
-        <span class="ctrl-label">Betrag (eb)</span>
-        <input type="number" class="ctrl-input" id="ctrlCashAmt" placeholder="500" min="0">
+        <input type="number" class="ctrl-input" id="ctrlCashAmt" placeholder="500" style="max-width:80px">
+        <input type="text"   class="ctrl-input" id="ctrlCashReason" placeholder="Grund (opt.)" style="flex:1;font-size:.7rem">
         <button class="ctrl-btn" id="ctrlCashAdd">+ eb</button>
         <button class="ctrl-btn ctrl-btn-red" id="ctrlCashSub">− eb</button>
       </div>
-      <div style="font-size:.72rem;color:var(--text-muted)">Aktuell: ${c.cash ?? 0} eb</div>
       <div class="ctrl-msg" id="ctrlCashMsg"></div>
+      <div id="ctrlCashLog" style="font-size:.65rem;color:var(--text-muted);margin-top:.3rem;max-height:80px;overflow-y:auto"></div>
     </div>
 
     <div class="ctrl-section">
@@ -1705,18 +1909,38 @@ function setupControls() {
   const c = openChar;
 
   // Cash
-  document.getElementById('ctrlCashAdd').addEventListener('click', async () => {
-    const amt = parseInt(document.getElementById('ctrlCashAmt').value);
-    if (isNaN(amt) || amt <= 0) return;
-    await ctrlPatch({ cash: (openChar.cash ?? 0) + amt }, 'ctrlCashMsg', `+${amt} eb`);
-    document.querySelector('[style*="Aktuell: "]').textContent; // will be stale; fine
-  });
-  document.getElementById('ctrlCashSub').addEventListener('click', async () => {
-    const amt = parseInt(document.getElementById('ctrlCashAmt').value);
-    if (isNaN(amt) || amt <= 0) return;
-    const newCash = Math.max(0, (openChar.cash ?? 0) - amt);
-    await ctrlPatch({ cash: newCash }, 'ctrlCashMsg', `−${amt} eb`);
-  });
+  async function applyCtrlCash(delta) {
+    const amt    = parseInt(document.getElementById('ctrlCashAmt').value);
+    if (isNaN(amt) || amt === 0) return;
+    const reason = document.getElementById('ctrlCashReason').value.trim() || null;
+    const newCash = (openChar.cash ?? 0) + delta * Math.abs(amt);
+    try {
+      const newLog = await patchCash(openChar.id, newCash, delta * Math.abs(amt), reason, openChar.cash_log);
+      openChar.cash = newCash; openChar.cash_log = newLog;
+      const msg = document.getElementById('ctrlCashMsg');
+      if (msg) { msg.textContent = `${delta > 0 ? '+' : '−'}${Math.abs(amt)} eb → ${newCash.toLocaleString('de-DE')} eb`; msg.className = 'ctrl-msg'; }
+      const logEl = document.getElementById('ctrlCashLog');
+      if (logEl) logEl.innerHTML = renderCashLogHtml(newLog);
+      document.getElementById('ctrlCashAmt').value = '';
+      document.getElementById('ctrlCashReason').value = '';
+    } catch(e) {
+      const msg = document.getElementById('ctrlCashMsg');
+      if (msg) { msg.textContent = 'Fehler: ' + e.message; msg.className = 'ctrl-msg'; }
+    }
+  }
+  document.getElementById('ctrlCashAdd').addEventListener('click', () => applyCtrlCash(+1));
+  document.getElementById('ctrlCashSub').addEventListener('click', () => applyCtrlCash(-1));
+  const ctrlLogEl = document.getElementById('ctrlCashLog');
+  if (ctrlLogEl) ctrlLogEl.innerHTML = renderCashLogHtml(openChar.cash_log);
+
+  function renderCashLogHtml(log) {
+    return (log || []).slice(0, 8).map(e => {
+      const sign  = e.delta >= 0 ? '+' : '';
+      const color = e.delta >= 0 ? '#2ecc71' : 'var(--red)';
+      const t     = new Date(e.ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      return `<div style="color:${color}">${sign}${e.delta} eb${e.reason ? ` — ${e.reason}` : ''} <span style="color:#555">${t}</span></div>`;
+    }).join('');
+  }
 
   // Role Rank
   document.getElementById('ctrlRankSave').addEventListener('click', async () => {

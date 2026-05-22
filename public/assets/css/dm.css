@@ -678,3 +678,23 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   background: rgba(0,0,0,.55); padding: .1rem .4rem; border-radius: 2px;
 }
+
+/* ── NPC-Gruppen ── */
+.npc-group-header {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .4rem .75rem; border-radius: 5px 5px 0 0;
+  border: 1px solid; border-bottom: none; margin-top: .75rem;
+}
+.npc-group-header:first-child { margin-top: 0; }
+.npc-group-cards {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  padding: .5rem .75rem .75rem; border: 1px solid #333;
+  border-top: none; border-radius: 0 0 5px 5px; margin-bottom: .25rem;
+}
+
+/* ── Psychosis card ── */
+.dm-card--psycho { border-color: #7B2FBE !important; }
+.dm-card--psycho .dm-card-name::after {
+  content: ' 🔴PSYCHO'; font-size:.58rem; color:#7B2FBE;
+  font-family:Audiowide,sans-serif; letter-spacing:.06em;
+}

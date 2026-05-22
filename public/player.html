@@ -12,6 +12,17 @@
 </head>
 <body>
 
+<!-- Cyberpsychosis Modal (Player) -->
+<div id="playerPsychosisModal" hidden style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center">
+  <div style="background:#0d0000;border:2px solid #FF0000;border-radius:8px;padding:2rem;max-width:400px;width:92%;text-align:center">
+    <div style="font-family:Audiowide,sans-serif;font-size:1.1rem;letter-spacing:.12em;text-transform:uppercase;color:#FF0000;margin-bottom:.6rem;animation:psychosis-pulse .8s ease-in-out infinite">⚠ CYBERPSYCHOSIS ⚠</div>
+    <div style="color:#FF2D2D;font-size:.95rem;margin-bottom:1rem;line-height:1.6">Deine Humanity ist auf <strong>0</strong> gesunken.<br>Der GM übernimmt die Kontrolle.</div>
+    <div style="color:#aaa;font-size:.75rem;margin-bottom:1.25rem">CP RED Core Rulebook S. 229</div>
+    <button onclick="document.getElementById('playerPsychosisModal').hidden=true;document.getElementById('playerPsychosisModal').style.display=''" style="background:#FF0000;border:none;color:#fff;border-radius:4px;padding:.5rem 2rem;cursor:pointer;font-family:Audiowide,sans-serif;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase">Verstanden</button>
+  </div>
+</div>
+
+
 <!-- Loading screen -->
 <div class="page-loader" id="loader">
   <span>LADE CHARAKTER</span>
@@ -104,6 +115,7 @@
   <button class="tab-btn" data-tab="lifepath">Lifepath</button>
   <button class="tab-btn" data-tab="injuries">Injuries<span id="injuryBadge" class="injury-badge" hidden></span></button>
   <button class="tab-btn" data-tab="notes">Notes</button>
+  <button class="tab-btn" data-tab="raum">📦 Raum<span id="raumBadge" class="injury-badge" hidden></span></button>
 </div>
 
 <!-- ── Tab panels ── -->
@@ -116,6 +128,13 @@
 <div class="tab-panel" id="tab-gear"></div>
 <div class="tab-panel" id="tab-lifepath"></div>
 <div class="tab-panel" id="tab-injuries"></div>
+<div class="tab-panel" id="tab-raum">
+  <div style="padding:.5rem 0 .25rem">
+    <div id="raumBeschreibung" style="font-family:Audiowide,sans-serif;font-size:.7rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem"></div>
+    <div id="raumListe" style="display:flex;flex-direction:column;gap:.4rem"></div>
+    <p class="empty-state" id="raumEmpty">Keine Items im Raum.</p>
+  </div>
+</div>
 <div class="tab-panel" id="tab-notes">
   <div class="notes-wrap">
     <div class="notes-header">Meine Notizen</div>
@@ -209,7 +228,7 @@
 
 <script type="module">
 console.log('[player] module loaded');
-import { getCharacter, getCharacters, patchCharacter, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc } from './assets/js/supabase.js';
+import { getCharacter, getCharacters, patchCharacter, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc, getRoomItems, addRoomItem, removeRoomItem, subscribeRoomItems } from './assets/js/supabase.js';
 import { roll, initDiceBox, animateRollNumber } from './assets/js/dice.js';
 
 // ── Constants ─────────────────────────────────────────────────
@@ -334,6 +353,7 @@ if (id) {
     renderAll();
     show();
     requestNotifPermission();
+    initRoomItems();
 
     const chatHistory = await getMessages(50);
     renderChatMessages(chatHistory);
@@ -464,10 +484,11 @@ function renderHeader() {
 }
 
 function getPsychosisStatus(humanity) {
-  if (humanity <= 0)  return { color: '#FF0000', label: 'CYBERPSYCHOSIS', pulse: true };
-  if (humanity <= 5)  return { color: '#FF2D2D', label: 'Cyberpsychosis-Risiko', pulse: true };
-  if (humanity <= 20) return { color: '#FF8C00', label: 'Gefährliche Instabilität', pulse: false };
-  if (humanity <= 35) return { color: '#FFD700', label: 'Humanity sinkt', pulse: false };
+  if (humanity <= 0)  return { color: '#FF0000', label: 'CYBERPSYCHOSIS',          pulse: true,  blink: false };
+  if (humanity <= 9)  return { color: '#FF0000', label: '💀 KRITISCH',               pulse: false, blink: true  };
+  if (humanity <= 19) return { color: '#FF2D2D', label: 'Cyberpsychosis-Risiko',    pulse: true,  blink: false };
+  if (humanity <= 39) return { color: '#FF8C00', label: 'Gefährliche Instabilität', pulse: false, blink: false };
+  if (humanity <= 59) return { color: '#FFD700', label: 'Humanity sinkt',           pulse: false, blink: false };
   return null;
 }
 
@@ -484,16 +505,63 @@ function updateResDisplay() {
   const hpFill = document.getElementById('hpFill');
   hpFill.style.width = maxHp ? (hp / maxHp * 100) + '%' : '0%';
   hpFill.classList.toggle('critical', hp > 0 && hp < 2);
-  document.getElementById('humFill').style.width = maxHum ? (hum / maxHum * 100) + '%' : '0%';
+  const humFill = document.getElementById('humFill');
+  if (humFill) {
+    humFill.style.width = maxHum ? (hum / maxHum * 100) + '%' : '0%';
+    // Gradient je nach Schwelle
+    const hpct = maxHum ? hum / maxHum * 100 : 0;
+    humFill.style.background = hpct > 60 ? '#00E5FF' : hpct > 40 ? '#FFD700' : hpct > 20 ? '#FF8C00' : '#FF2D2D';
+  }
 
   const st  = getPsychosisStatus(hum);
   const lbl = document.getElementById('psychosisLabel');
   if (lbl) {
     lbl.textContent = st ? st.label : '';
     lbl.style.color = st ? st.color : '';
-    lbl.style.animation = st?.pulse ? 'psychosis-pulse 1s ease-in-out infinite' : '';
+    lbl.style.animation = st?.blink ? 'psychosis-blink .5s step-end infinite'
+                        : st?.pulse ? 'psychosis-pulse 1s ease-in-out infinite' : '';
   }
+
+  // EMP-Effektivwert (floor(humanity/10), max stats.EMP)
+  updateEffectiveEMP(hum);
+
+  // Cyberpsychosis-Event bei 0
+  if (hum <= 0) showPsychosisModal();
 }
+
+let _lastEffEMP = null;
+function updateEffectiveEMP(humanity) {
+  const rawEMP = char.stats?.EMP ?? 0;
+  const effEMP = Math.min(rawEMP, Math.floor((humanity ?? 0) / 10));
+  const card   = document.getElementById('stat-card-EMP');
+  if (card) {
+    const noteEl = card.querySelector('div[style]');
+    if (effEMP < rawEMP) {
+      if (noteEl) noteEl.textContent = `eff. ${effEMP}`;
+      else {
+        const d = document.createElement('div');
+        d.style.cssText = 'font-size:.55rem;color:#FF8C00;margin-top:.1rem';
+        d.textContent = `eff. ${effEMP}`;
+        card.appendChild(d);
+      }
+    } else if (noteEl) noteEl.remove();
+  }
+  if (_lastEffEMP !== null && effEMP < _lastEffEMP) {
+    showToast(`⚠ EMP sinkt auf ${effEMP}`, '#FF8C00');
+  }
+  _lastEffEMP = effEMP;
+}
+
+let _psychosisShown = false;
+function showPsychosisModal() {
+  if (_psychosisShown) return;
+  _psychosisShown = true;
+  const modal = document.getElementById('playerPsychosisModal');
+  if (modal) { modal.hidden = false; modal.style.display = 'flex'; }
+  sendMessage({ sender: char.name || 'Spieler', sender_role: char.role || '', content: `⚠ ${char.name} hat Cyberpsychosis! (Humanity 0)` }).catch(() => {});
+}
+
+function resetPsychosisModal() { _psychosisShown = false; }
 
 function renderLuck() {
   const cur = char.current_luck || 0;
@@ -528,9 +596,20 @@ function renderStats() {
   html += '<div class="stat-grid">';
   for (const s of STATS_ORDER) {
     const editAttr = statsEditing ? ' contenteditable="true"' : '';
-    html += `<div class="stat-card">
+    const rawVal   = stats[s] ?? 0;
+    let displayVal = rawVal;
+    let empNote    = '';
+    if (s === 'EMP') {
+      const effEMP = Math.min(rawVal, Math.floor((char.current_humanity ?? 0) / 10));
+      if (effEMP < rawVal) {
+        displayVal = rawVal;
+        empNote = `<div style="font-size:.55rem;color:#FF8C00;margin-top:.1rem">eff. ${effEMP}</div>`;
+      }
+    }
+    html += `<div class="stat-card" id="stat-card-${s}">
       <div class="stat-key">${s}</div>
-      <div class="stat-val"${editAttr} data-stat="${s}" spellcheck="false">${stats[s] ?? 0}</div>
+      <div class="stat-val"${editAttr} data-stat="${s}" spellcheck="false">${displayVal}</div>
+      ${empNote}
       ${allStatsZero ? `<button class="stat-roll-btn" data-roll-stat="${s}" title="1d10 würfeln">⚄</button>` : ''}
     </div>`;
   }
@@ -818,38 +897,125 @@ function renderArmor() {
 }
 
 // ── Cyberware tab ─────────────────────────────────────────────
+const SVG_ZONE_SLOTS = {
+  head:     ['neuralLink','rightCybereye','leftCybereye','cyberaudio'],
+  rightArm: ['rightCyberarm'],
+  leftArm:  ['leftCyberarm'],
+  torso:    ['internal','external','fashionware','borgware'],
+  rightLeg: ['rightCyberleg'],
+  leftLeg:  ['leftCyberleg'],
+};
+
+function buildCyberSVG(cw) {
+  const activeInjuries = getInjuries().map(i => i.name || i);
+  const injuredSlots = new Set();
+  if (['Broken Arm','Dismembered Arm'].some(n => activeInjuries.includes(n))) { injuredSlots.add('rightArm'); injuredSlots.add('leftArm'); }
+  if (['Broken Leg','Dismembered Leg'].some(n => activeInjuries.includes(n))) { injuredSlots.add('rightLeg'); injuredSlots.add('leftLeg'); }
+  if (['Lost Eye','Damaged Eye'].some(n => activeInjuries.includes(n))) injuredSlots.add('head');
+
+  function zoneColor(zone) {
+    if (injuredSlots.has(zone)) return { fill: 'rgba(255,45,45,.25)', stroke: '#FF2D2D' };
+    const slots = SVG_ZONE_SLOTS[zone] || [];
+    const hasItems = slots.some(s => Array.isArray(cw?.[s]) && cw[s].length);
+    return hasItems
+      ? { fill: 'rgba(0,229,255,.22)', stroke: '#00E5FF' }
+      : { fill: '#1a1a1a', stroke: '#333' };
+  }
+
+  function zoneTitle(zone) {
+    const slots = SVG_ZONE_SLOTS[zone] || [];
+    const names = slots.flatMap(s => (cw?.[s] || []).map(i => i.name)).filter(Boolean);
+    return names.length ? names.join(', ') : (CW_SLOT_LABELS[slots[0]] || zone);
+  }
+
+  function rect(zone, x, y, w, h, rx = 4) {
+    const c = zoneColor(zone);
+    return `<rect data-zone="${zone}" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" class="cyber-svg-zone"><title>${zoneTitle(zone)}</title></rect>`;
+  }
+  function ellipse(zone, cx, cy, rx, ry) {
+    const c = zoneColor(zone);
+    return `<ellipse data-zone="${zone}" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" class="cyber-svg-zone"><title>${zoneTitle(zone)}</title></ellipse>`;
+  }
+
+  return `<svg viewBox="0 0 100 220" width="100" height="220" style="display:block">
+    ${ellipse('head', 50, 18, 14, 16)}
+    ${rect('torso', 28, 40, 44, 60)}
+    ${rect('rightArm', 8, 40, 18, 52)}
+    ${rect('leftArm', 74, 40, 18, 52)}
+    ${rect('rightLeg', 28, 108, 20, 70, 3)}
+    ${rect('leftLeg', 52, 108, 20, 70, 3)}
+  </svg>`;
+}
+
 function renderCyberware() {
   const cw = char.cyberware;
   const el = document.getElementById('tab-cyberware');
 
-  // New object-per-slot format (from shop)
-  if (cw && typeof cw === 'object' && !Array.isArray(cw)) {
-    const entries = Object.entries(cw).filter(([, items]) => Array.isArray(items) && items.length);
-    if (!entries.length) { el.innerHTML = '<p class="empty-state">Kein Cyberware installiert.</p>'; return; }
-    el.innerHTML = entries.map(([slot, items]) => `
+  // SVG Body Map oben
+  const svgHtml = `
+    <div class="cyber-body-wrap">
+      <div class="cyber-svg-col">
+        <div id="cyberSvgContainer">${buildCyberSVG(cw)}</div>
+        <div class="cyber-hum-bar-wrap">
+          <div class="cyber-hum-bar" id="cyberHumBar"></div>
+          <div id="cyberHumLabel" style="font-size:.6rem;text-align:center;color:var(--text-muted);margin-top:.15rem">${char.current_humanity ?? 0} / ${char.max_humanity ?? 0}</div>
+        </div>
+      </div>
+      <div class="cyber-slots-col" id="cyberSlotsCol"></div>
+    </div>`;
+
+  // Slot-Listen
+  function buildSlotList() {
+    if (cw && typeof cw === 'object' && !Array.isArray(cw)) {
+      const entries = Object.entries(cw).filter(([, items]) => Array.isArray(items) && items.length);
+      if (!entries.length) return '<p class="empty-state">Kein Cyberware installiert.</p>';
+      return entries.map(([slot, items]) => `
+        <div class="cyber-slot" id="cyber-slot-${slot}">
+          <div class="cyber-slot-label">${CW_SLOT_LABELS[slot] || slot}</div>
+          <div class="cyber-items">
+            ${items.map((item, i) => `
+              <span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
+              <button class="remove-btn" data-inv="cyberware" data-slot="${slot}" data-idx="${i}">✕</button>
+            `).join('')}
+          </div>
+        </div>`).join('');
+    }
+    const arr = Array.isArray(cw) ? cw : [];
+    if (!arr.length) return '<p class="empty-state">Kein Cyberware installiert.</p>';
+    return arr.map((item, i) => `
       <div class="cyber-slot">
-        <div class="cyber-slot-label">${CW_SLOT_LABELS[slot] || slot}</div>
+        <div class="cyber-slot-label">${item.subcategory || 'Cyberware'}</div>
         <div class="cyber-items">
-          ${items.map((item, i) => `
-            <span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
-            <button class="remove-btn" data-inv="cyberware" data-slot="${slot}" data-idx="${i}">✕</button>
-          `).join('')}
+          <span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
+          <button class="remove-btn" data-inv="cyberware" data-idx="${i}">✕</button>
         </div>
       </div>`).join('');
-    return;
   }
 
-  // Legacy flat-array format
-  const arr = Array.isArray(cw) ? cw : [];
-  if (!arr.length) { el.innerHTML = '<p class="empty-state">Kein Cyberware installiert.</p>'; return; }
-  el.innerHTML = arr.map((item, i) => `
-    <div class="cyber-slot">
-      <div class="cyber-slot-label">${item.subcategory || 'Cyberware'}</div>
-      <div class="cyber-items">
-        <span class="cyber-tag has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
-        <button class="remove-btn" data-inv="cyberware" data-idx="${i}">✕</button>
-      </div>
-    </div>`).join('');
+  el.innerHTML = svgHtml;
+  document.getElementById('cyberSlotsCol').innerHTML = buildSlotList();
+
+  // Humanity-Gradient-Bar
+  const maxH = char.max_humanity ?? 0;
+  const curH = char.current_humanity ?? 0;
+  const hPct = maxH ? (curH / maxH * 100) : 0;
+  const bar  = document.getElementById('cyberHumBar');
+  if (bar) {
+    bar.style.width = hPct + '%';
+    bar.style.background = hPct > 60 ? '#00E5FF' : hPct > 40 ? '#FFD700' : hPct > 20 ? '#FF8C00' : '#FF2D2D';
+  }
+
+  // SVG-Klick: zum Slot scrollen
+  el.querySelectorAll('.cyber-svg-zone').forEach(zone => {
+    zone.addEventListener('click', () => {
+      const z     = zone.dataset.zone;
+      const slots = SVG_ZONE_SLOTS[z] || [];
+      for (const s of slots) {
+        const slotEl = document.getElementById(`cyber-slot-${s}`);
+        if (slotEl) { slotEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); break; }
+      }
+    });
+  });
 }
 
 // ── Gear tab ──────────────────────────────────────────────────
@@ -862,9 +1028,69 @@ function renderGear() {
       <div class="gear-item-name">
         ${g.name}
         <button class="remove-btn" data-inv="gear" data-idx="${i}">✕</button>
+        <button class="drop-btn" data-inv="gear" data-idx="${i}" title="In Raum legen" style="background:none;border:none;cursor:pointer;font-size:.75rem;opacity:.6;padding:0 .2rem">📦</button>
       </div>
       ${g.notes ? `<div class="gear-item-notes">${g.notes}</div>` : ''}
     </div>`).join('')}</div>`;
+}
+
+// ── Raum-Inventar ─────────────────────────────────────────────
+let _roomItems = [];
+
+async function initRoomItems() {
+  try {
+    _roomItems = await getRoomItems();
+    renderRaumTab();
+    subscribeRoomItems(payload => {
+      if (payload.eventType === 'INSERT') _roomItems.push(payload.new);
+      else if (payload.eventType === 'DELETE') _roomItems = _roomItems.filter(r => r.id !== payload.old.id);
+      else if (payload.eventType === 'UPDATE') {
+        const idx = _roomItems.findIndex(r => r.id === payload.new.id);
+        if (idx >= 0) _roomItems[idx] = payload.new;
+      }
+      renderRaumTab();
+    });
+  } catch (e) { console.warn('room_items init:', e); }
+}
+
+function renderRaumTab() {
+  const lista    = document.getElementById('raumListe');
+  const emptyEl  = document.getElementById('raumEmpty');
+  const descEl   = document.getElementById('raumBeschreibung');
+  const badge    = document.getElementById('raumBadge');
+  if (!lista) return;
+  const desc = _roomItems[0]?.room_description || '';
+  if (descEl) descEl.textContent = desc;
+  if (badge)  { badge.hidden = !_roomItems.length; badge.textContent = _roomItems.length || ''; }
+  if (!_roomItems.length) {
+    lista.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = '';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+  lista.innerHTML = _roomItems.map(r => `
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border)">
+      <span style="flex:1;font-size:.82rem;color:var(--text)">${r.item_name}${r.placed_by ? `<span style="color:var(--text-muted);font-size:.7rem"> (von ${r.placed_by})</span>` : ''}</span>
+      <button class="ctrl-btn" data-pickup="${r.id}" data-name="${r.item_name}" style="font-size:.7rem;padding:.2rem .5rem">Aufheben</button>
+    </div>`).join('');
+
+  lista.querySelectorAll('[data-pickup]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const roomId   = btn.dataset.pickup;
+      const itemName = btn.dataset.name;
+      const roomItem = _roomItems.find(r => r.id === roomId);
+      if (!roomItem) return;
+      try {
+        await removeRoomItem(roomId);
+        const snapshot = { name: itemName, notes: roomItem.item_data?.notes || null, price: roomItem.item_data?.price || null, raw_cost: roomItem.item_data?.raw_cost || null };
+        const newGear  = [...(char.gear || []), snapshot];
+        await patchCharacter(char.id, { gear: newGear });
+        char.gear = newGear;
+        renderGear();
+        logRoll({ characterId: char.id, characterName: char.name, expression: '-', individualRolls: [], modifier: 0, total: 0, context: `${char.name} hebt auf: ${itemName}`, isCritSuccess: false, isCritFailure: false }).catch(() => {});
+      } catch(e) { showToast('Fehler: ' + e.message); }
+    });
+  });
 }
 
 // ── Lifepath tab ──────────────────────────────────────────────
@@ -2108,7 +2334,21 @@ function setupTooltip() {
 
 // ── Item removal ──────────────────────────────────────────────
 function setupRemove() {
-  document.body.addEventListener('click', e => {
+  document.body.addEventListener('click', async e => {
+    // Drop to room
+    const dropBtn = e.target.closest('.drop-btn');
+    if (dropBtn) {
+      const inv = dropBtn.dataset.inv;
+      const idx = parseInt(dropBtn.dataset.idx);
+      const item = (char[inv] || [])[idx];
+      if (!item) return;
+      try {
+        await addRoomItem({ item_name: item.name, item_data: item, placed_by: char.name });
+        await removeItem(inv, idx, dropBtn.dataset.slot);
+        showToast(`📦 ${item.name} in Raum gelegt`);
+      } catch(err) { showToast('Fehler: ' + err.message); }
+      return;
+    }
     const btn = e.target.closest('.remove-btn');
     if (!btn) return;
     if (btn.dataset.action === 'removeInjury') removeInjury(parseInt(btn.dataset.idx));

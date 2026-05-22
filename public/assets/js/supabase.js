@@ -285,3 +285,66 @@ export function subscribeNpcs(callback) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'npcs' }, callback)
     .subscribe();
 }
+
+// ── Cash Log ──────────────────────────────────────────────────
+
+/** Append a cash transaction to char.cash_log and update cash in one patch. */
+export async function patchCash(id, newCash, delta, reason, existingLog) {
+  const entry = { delta, reason: reason || null, ts: Date.now(), balance: newCash };
+  const log   = [entry, ...(existingLog || [])].slice(0, 20);
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/characters?id=eq.${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ cash: newCash, cash_log: log }),
+    }
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(body.message || `HTTP ${res.status}`), body);
+  }
+  return log;
+}
+
+// ── Room Items ────────────────────────────────────────────────
+
+export async function getRoomItems() {
+  const { data, error } = await supabase.from('room_items').select('*').order('created_at');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addRoomItem({ item_name, item_data = {}, placed_by = null, room_description = 'Aktueller Raum' }) {
+  const { data, error } = await supabase.from('room_items')
+    .insert({ item_name, item_data, placed_by, room_description })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function removeRoomItem(id) {
+  const { error } = await supabase.from('room_items').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function clearRoomItems() {
+  const { error } = await supabase.from('room_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  if (error) throw error;
+}
+
+export async function setRoomDescription(desc) {
+  const { error } = await supabase.from('room_items').update({ room_description: desc }).neq('id', '00000000-0000-0000-0000-000000000000');
+  if (error) throw error;
+}
+
+export function subscribeRoomItems(callback) {
+  return supabase.channel('room-items-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'room_items' }, callback)
+    .subscribe();
+}

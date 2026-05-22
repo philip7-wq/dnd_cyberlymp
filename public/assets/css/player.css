@@ -973,3 +973,13 @@ body.near-death::before {
 .crit-group-npc,    select optgroup[label*="NPCs"]    { color: var(--red);  }
 
 @keyframes psychosis-pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+@keyframes psychosis-blink { 0%,49%{ opacity:1 } 50%,100%{ opacity:0 } }
+
+/* ── Cyberware Body Map ── */
+.cyber-body-wrap { display:flex; gap:1rem; align-items:flex-start; }
+.cyber-svg-col   { flex-shrink:0; }
+.cyber-slots-col { flex:1; min-width:0; }
+.cyber-svg-zone  { cursor:pointer; transition:opacity .15s; }
+.cyber-svg-zone:hover { opacity:.75; }
+.cyber-hum-bar-wrap { margin-top:.5rem; background:#111; border-radius:3px; height:6px; width:100px; overflow:hidden; }
+.cyber-hum-bar { height:100%; border-radius:3px; transition:width .4s, background .4s; }

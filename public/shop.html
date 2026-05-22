@@ -236,10 +236,11 @@ function calcEMP(humanity) { return Math.floor((humanity ?? 0) / 10); }
 
 // ── Cyberpsychosis-Status ─────────────────────────────────────
 function getCyberpsychosisStatus(humanity) {
-  if (humanity <= 0)  return { level: 4, color: '#FF0000', label: 'CYBERPSYCHOSIS', pulse: false };
-  if (humanity <= 5)  return { level: 3, color: '#FF2D2D', label: 'Cyberpsychosis-Risiko', pulse: true };
-  if (humanity <= 20) return { level: 2, color: '#FF8C00', label: 'Gefährliche Instabilität', pulse: false };
-  if (humanity <= 35) return { level: 1, color: '#FFD700', label: 'Humanity sinkt', pulse: false };
+  if (humanity <= 0)  return { level: 5, color: '#FF0000', label: 'CYBERPSYCHOSIS',          pulse: true,  blink: false };
+  if (humanity <= 9)  return { level: 4, color: '#FF0000', label: '💀 KRITISCH',               pulse: false, blink: true  };
+  if (humanity <= 19) return { level: 3, color: '#FF2D2D', label: 'Cyberpsychosis-Risiko',    pulse: true,  blink: false };
+  if (humanity <= 39) return { level: 2, color: '#FF8C00', label: 'Gefährliche Instabilität', pulse: false, blink: false };
+  if (humanity <= 59) return { level: 1, color: '#FFD700', label: 'Humanity sinkt',           pulse: false, blink: false };
   return null;
 }
 
@@ -279,33 +280,51 @@ function getFoundationalBlock(item) {
   return req.slots.some(s => (cw[s] || []).some(c => c.name === req.name)) ? null : req.name;
 }
 
-// ── Critical Injury Block ─────────────────────────────────────
-// Matching via Substring auf .toLowerCase() — robust gegen Leerzeichen-/Slash-Varianten
-const INJURY_PART_RULES = [
-  // Nur reine Cyberarm-Subcategories (nicht kombiniert mit Cyberleg)
-  { injuries: ['Broken Arm','Dismembered Arm','Dismembered Hand','Crushed Fingers'],
-    test: s => s.includes('cyberarm') && !s.includes('cyberleg') },
-  // Nur reine Cyberleg-Subcategories (nicht kombiniert mit Cyberarm)
-  { injuries: ['Broken Leg','Dismembered Leg'],
-    test: s => (s.includes('cyberleg') || s.includes('cyberlimb')) && !s.includes('cyberarm') },
-  { injuries: ['Lost Eye','Damaged Eye'],
-    test: s => s.includes('cybereye') },
-  { injuries: ['Lost Ear','Damaged Ear'],
-    test: s => s.includes('cyberaudio') },
-  { injuries: ['Brain Injury','Cracked Skull'],
-    test: s => s.includes('neuralware') || s.includes('chipware') },
-];
+// ── Slot-Bestimmung (korrekte Slots je nach Item-Name + Notes) ─
+function getItemSlots(item) {
+  const sub = item.subcategory || '';
+  const base = CYBERWARE_SLOT_MAP[sub] || ['internal'];
+  if (sub !== 'Cyberarm/Cyberleg/Cyberlimb Option') return base;
 
+  // Kombinierte Subcategory: anhand von Name und Notes spezifizieren
+  const notes = item.notes || '';
+  if (item.name === 'Cyberleg' || notes.startsWith('Cyberleg Option') || notes.toLowerCase().startsWith('replacement leg'))
+    return ['rightCyberleg','leftCyberleg'];
+  if (notes.startsWith('Cyberarm Option'))
+    return ['rightCyberarm','leftCyberarm'];
+  return base; // genuines Cyberlimb-Option (Wolvers etc.) → alle Gliedmaßen
+}
+
+// ── Critical Injury Block ─────────────────────────────────────
 function getInjuryBlock(item) {
   if (item.category !== 'Cyberware') return null;
-  const sub = (item.subcategory || '').toLowerCase();
-  const activeNames = parseInjuries().map(i => i.name || i);
-  for (const rule of INJURY_PART_RULES) {
-    if (rule.test(sub)) {
-      const blocking = rule.injuries.find(inj => activeNames.includes(inj));
-      if (blocking) return blocking;
-    }
+  const sub  = (item.subcategory || '').toLowerCase();
+  const notes = item.notes || '';
+  const active = parseInjuries().map(i => i.name || i);
+
+  const ARM    = ['Broken Arm','Dismembered Arm','Dismembered Hand','Crushed Fingers'];
+  const LEG    = ['Broken Leg','Dismembered Leg'];
+  const EYE    = ['Lost Eye','Damaged Eye'];
+  const EAR    = ['Lost Ear','Damaged Ear'];
+  const BRAIN  = ['Brain Injury','Cracked Skull'];
+
+  const block = injuries => injuries.find(inj => active.includes(inj)) || null;
+
+  // Kombinierte Subcategory: nach Item-Name und Notes differenzieren
+  if (sub === 'cyberarm/cyberleg/cyberlimb option') {
+    if (item.name === 'Cyberleg' || notes.startsWith('Cyberleg Option') || notes.toLowerCase().startsWith('replacement leg'))
+      return block(LEG);
+    if (notes.startsWith('Cyberarm Option'))
+      return block(ARM);
+    return null; // echtes Cyberlimb-Option (Wolvers, Jump Booster etc.) — kein Preemptiv-Block
   }
+
+  // Alle anderen Subcategories per Substring
+  if (sub.includes('cyberarm')) return block(ARM);
+  if (sub.includes('cyberleg') || sub.includes('cyberlimb')) return block(LEG);
+  if (sub.includes('cybereye'))   return block(EYE);
+  if (sub.includes('cyberaudio')) return block(EAR);
+  if (sub.includes('neuralware') || sub.includes('chipware')) return block(BRAIN);
   return null;
 }
 
@@ -326,9 +345,12 @@ function getSlotStatus(slot, newItemCost = 0) {
 
 function getGates(item) {
   const x   = item.extra || {};
-  const out = { cash: true, rank: true, humanity: true, foundational: null, injuryBlock: null, slotFull: false };
+  const out = { cash: true, cashDebt: false, rank: true, humanity: true, foundational: null, injuryBlock: null, slotFull: false };
 
-  out.cash = (char.cash ?? 0) >= (item.price ?? 0);
+  const currentCash = char.cash ?? 0;
+  const price       = item.price ?? 0;
+  out.cash     = currentCash >= price;
+  out.cashDebt = currentCash < 0; // Charakter hat bereits Schulden
 
   if (x.required_moto_rank != null) {
     out.rankRequired = x.required_moto_rank;
@@ -350,8 +372,7 @@ function getGates(item) {
     out.injuryBlock  = getInjuryBlock(item);
 
     // Slot-Auslastung: bei Single-Slot-Items vorab prüfen
-    const sub   = item.subcategory || '';
-    const slots = CYBERWARE_SLOT_MAP[sub];
+    const slots = getItemSlots(item);
     if (slots?.length === 1) {
       const st = getSlotStatus(slots[0], getSlotCost(item));
       if (st.full) { out.slotFull = true; out.slotStatus = st; }
@@ -374,7 +395,8 @@ function updateNavDisplay() {
   const el  = document.getElementById('psychosisStatus');
   if (st) {
     el.textContent = st.label;
-    el.style.cssText = `color:${st.color};font-size:.72rem;margin-left:.75rem;font-family:Audiowide,sans-serif;letter-spacing:.06em${st.pulse ? ';animation:psychosis-pulse 1s ease-in-out infinite' : ''}`;
+    const anim = st.blink ? ';animation:psychosis-blink .5s step-end infinite' : st.pulse ? ';animation:psychosis-pulse 1s ease-in-out infinite' : '';
+    el.style.cssText = `color:${st.color};font-size:.72rem;margin-left:.75rem;font-family:Audiowide,sans-serif;letter-spacing:.06em${anim}`;
   } else {
     el.textContent = '';
     el.style.cssText = '';
@@ -521,6 +543,10 @@ function openDetail(item) {
   const priceLabel = item.price != null ? item.price + ' eb' : 'Kostenlos';
 
   let btnClass = 'buy-btn', btnLabel = 'Kaufen', btnDisabled = false;
+  let debtWarningHtml = '';
+  if (g.cashDebt) {
+    debtWarningHtml = `<div style="font-size:.75rem;color:#FF8C00;margin-bottom:.35rem">⚠ Schulden: ${(char.cash ?? 0).toLocaleString('de-DE')} eb</div>`;
+  }
   if (!g.cash) {
     btnClass += ' no-cash';     btnLabel = 'Nicht genug eb';                             btnDisabled = true;
   } else if (!g.rank) {
@@ -548,8 +574,7 @@ function openDetail(item) {
   // Slot-Info im Detail
   const slotInfoHtml = (() => {
     if (item.category !== 'Cyberware') return '';
-    const sub = item.subcategory || '';
-    const slots = CYBERWARE_SLOT_MAP[sub];
+    const slots = getItemSlots(item);
     if (!slots?.length) return '';
     return slots.map(s => {
       const max = SLOT_MAXES[s];
@@ -571,7 +596,7 @@ function openDetail(item) {
     ${armorSlotHtml}
     ${item.notes ? `<div class="detail-notes">${item.notes}</div>` : ''}
     <div style="margin-top:auto">
-      ${humanityPreviewHtml}
+      ${debtWarningHtml}${humanityPreviewHtml}
       <button class="${btnClass}" id="buyBtn" ${btnDisabled ? 'disabled' : ''}>${btnLabel}</button>
       ${showOverride ? `<button class="override-btn" id="overrideBtn">DM Override: Trotzdem kaufen</button>` : ''}
       <div class="buy-msg" id="buyMsg"></div>
@@ -732,8 +757,7 @@ async function buyItem(item, override = false) {
   // ── Cyberware: slot picker + humanity roll ──
   if (dest === 'cyberware') {
     const x = item.extra || {};
-    const sub = item.subcategory || x.subcategory || '';
-    const slots = CYBERWARE_SLOT_MAP[sub] || ['internal'];
+    const slots = getItemSlots(item);
 
     // Slot picker when multiple options
     let chosenSlot = slots[0];

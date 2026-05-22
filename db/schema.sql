@@ -180,3 +180,29 @@ drop policy if exists "anon all character images" on storage.objects;
 create policy "anon all character images" on storage.objects
   for all using (bucket_id = 'character-images')
   with check (bucket_id = 'character-images');
+
+-- ============================================================
+-- MIGRATIONS — Priorität 2 (manuell in Supabase ausführen)
+-- ============================================================
+
+-- 2.A: NPC-Gruppen
+ALTER TABLE npcs ADD COLUMN IF NOT EXISTS group_name  text;
+ALTER TABLE npcs ADD COLUMN IF NOT EXISTS group_color text DEFAULT '#FF2D2D';
+
+-- 2.B: Cash-Log
+ALTER TABLE characters ADD COLUMN IF NOT EXISTS cash_log jsonb DEFAULT '[]';
+
+-- 2.C: Raum-Inventar
+CREATE TABLE IF NOT EXISTS room_items (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  item_id          text REFERENCES items(id) ON DELETE SET NULL,
+  item_name        text NOT NULL,
+  item_data        jsonb DEFAULT '{}',
+  placed_by        text,
+  room_description text DEFAULT 'Aktueller Raum',
+  created_at       timestamptz DEFAULT now()
+);
+ALTER TABLE room_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon all room_items" ON room_items;
+CREATE POLICY "anon all room_items" ON room_items FOR ALL USING (true) WITH CHECK (true);
+ALTER PUBLICATION supabase_realtime ADD TABLE room_items;
