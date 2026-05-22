@@ -78,6 +78,7 @@
   <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
   <span id="navName" style="font-family:var(--font-display);font-size:.85rem;color:var(--red);margin-left:.75rem"></span>
   <a id="shopLink" href="#" class="btn btn-ghost" style="font-size:.75rem">Shop</a>
+  <a id="mapLink" href="map.html" class="btn btn-ghost" style="font-size:.75rem">🗺 Karte</a>
   <span id="navCash" class="nav-cash" style="margin-left:auto">—</span>
   <button id="cashLogBtn" title="Transaktionsverlauf" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.85rem;padding:0 .3rem;margin-left:.2rem;opacity:.7">📜</button>
   <a href="index.html" class="btn btn-ghost" style="font-size:.75rem">← Übersicht</a>
@@ -497,8 +498,11 @@ if (id) {
   }
 }
 
-// Wire up shop link
-if (id) document.getElementById('shopLink').href = `shop.html?id=${id}`;
+// Wire up shop + map links
+if (id) {
+  document.getElementById('shopLink').href = `shop.html?id=${id}`;
+  document.getElementById('mapLink').href  = `map.html?id=${id}`;
+}
 
 // Try dice-box (optional, fires in background)
 initDiceBox('#dice-canvas-placeholder');
@@ -3810,7 +3814,9 @@ function _timerExpired() {
   _flashScreen('rgba(255,45,45,.4)');
   _soundAlarm();
   document.getElementById('timerExpiredLabel').textContent = _timerState?.label || '';
-  document.getElementById('timerExpiredModal').style.display = 'flex';
+  const modal = document.getElementById('timerExpiredModal');
+  modal.style.display = 'flex';
+  setTimeout(() => { modal.style.display = 'none'; }, 10000);
 }
 
 document.getElementById('timerExpiredOk').addEventListener('click', () => {

@@ -193,6 +193,50 @@ export async function saveTimer(timerData) {
   }
 }
 
+// ── Maps ─────────────────────────────────────────────────────
+
+export async function getLatestMap() {
+  const { data, error } = await supabase.from('maps')
+    .select('*').order('updated_at', { ascending: false }).limit(1).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function getMap(id) {
+  const { data, error } = await supabase.from('maps').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function saveMap(patch) {
+  if (patch.id) {
+    const { id, ...rest } = patch;
+    const { error } = await supabase.from('maps')
+      .update({ ...rest, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+  } else {
+    const { data, error } = await supabase.from('maps').insert(patch).select().single();
+    if (error) throw error;
+    return data;
+  }
+}
+
+export function subscribeMaps(callback) {
+  return supabase.channel('maps-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'maps' }, callback)
+    .subscribe();
+}
+
+export async function uploadMapBackground(blob) {
+  const ext  = blob.type === 'image/png' ? 'png' : 'jpg';
+  const path = `bg_${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('map-backgrounds').upload(path, blob, { upsert: false, contentType: blob.type });
+  if (error) throw error;
+  const { data } = supabase.storage.from('map-backgrounds').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 /** Subscribe to live combat session changes. */
 export function subscribeCombat(callback) {
   return supabase.channel('combat-live')
