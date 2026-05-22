@@ -83,7 +83,7 @@
 </div>
 
 <script type="module">
-import { getCharacter, getItems, patchCharacter } from './assets/js/supabase.js';
+import { getCharacter, getItems, patchCharacter, subscribeCharacters } from './assets/js/supabase.js';
 
 // ── Cyberware slot mapping ────────────────────────────────────
 const CYBERWARE_SLOT_MAP = {
@@ -144,19 +144,6 @@ const FOUNDATIONAL_REQ = {
   'Cyberaudio Option':         { name: 'Cyberaudio Suite',slots: ['cyberaudio'] },
 };
 
-// ── Critical Injury → gesperrte Cyberware-Subcategories ───────
-const INJURY_BLOCKS = [
-  { injuries: ['Broken Arm','Dismembered Arm','Dismembered Hand','Crushed Fingers'],
-    subcategories: ['Cyberarm Option','Cyberarm / Cyberarm Option'] },
-  { injuries: ['Broken Leg','Dismembered Leg'],
-    subcategories: ['Cyberleg/Cyberlimb Option'] },
-  { injuries: ['Lost Eye','Damaged Eye'],
-    subcategories: ['Cybereye / Cybereye Option','Cybereye Option'] },
-  { injuries: ['Lost Ear','Damaged Ear'],
-    subcategories: ['Cyberaudio Suite / Option','Cyberaudio Option'] },
-  { injuries: ['Brain Injury','Cracked Skull'],
-    subcategories: ['Neuralware / Chipware','Chipware'] },
-];
 
 // ── Maximale Option-Slots pro Slot-Typ ────────────────────────
 const SLOT_MAXES = {
@@ -206,6 +193,16 @@ if (!id) {
     renderNav();
     renderCatButtons();
     renderGrid();
+
+    // Live-Update: Cash + Injuries vom DM
+    subscribeCharacters(payload => {
+      if (payload.new?.id !== char.id) return;
+      const prev = char.cash;
+      Object.assign(char, payload.new);
+      if (char.cash !== prev) updateNavDisplay();
+      renderGrid();
+      if (selectedItem) openDetail(selectedItem);
+    });
   } catch (e) {
     const msg = (e.code === 'NOT_FOUND' || e.code === 'PGRST116')
       ? `Charakter nicht gefunden. <a href="index.html" style="color:var(--cyan)">← Zurück zur Übersicht</a>`
@@ -283,11 +280,28 @@ function getFoundationalBlock(item) {
 }
 
 // ── Critical Injury Block ─────────────────────────────────────
+// Matching via Substring auf .toLowerCase() — robust gegen Leerzeichen-/Slash-Varianten
+const INJURY_PART_RULES = [
+  // Nur reine Cyberarm-Subcategories (nicht kombiniert mit Cyberleg)
+  { injuries: ['Broken Arm','Dismembered Arm','Dismembered Hand','Crushed Fingers'],
+    test: s => s.includes('cyberarm') && !s.includes('cyberleg') },
+  // Nur reine Cyberleg-Subcategories (nicht kombiniert mit Cyberarm)
+  { injuries: ['Broken Leg','Dismembered Leg'],
+    test: s => (s.includes('cyberleg') || s.includes('cyberlimb')) && !s.includes('cyberarm') },
+  { injuries: ['Lost Eye','Damaged Eye'],
+    test: s => s.includes('cybereye') },
+  { injuries: ['Lost Ear','Damaged Ear'],
+    test: s => s.includes('cyberaudio') },
+  { injuries: ['Brain Injury','Cracked Skull'],
+    test: s => s.includes('neuralware') || s.includes('chipware') },
+];
+
 function getInjuryBlock(item) {
   if (item.category !== 'Cyberware') return null;
+  const sub = (item.subcategory || '').toLowerCase();
   const activeNames = parseInjuries().map(i => i.name || i);
-  for (const rule of INJURY_BLOCKS) {
-    if (rule.subcategories.includes(item.subcategory)) {
+  for (const rule of INJURY_PART_RULES) {
+    if (rule.test(sub)) {
       const blocking = rule.injuries.find(inj => activeNames.includes(inj));
       if (blocking) return blocking;
     }
