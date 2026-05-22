@@ -366,6 +366,8 @@ if (id) {
       updateResDisplay();
       renderLuck();
       renderBuffs();
+      renderCritInjuries();
+      renderCyberware();
       if ((char.current_hp ?? 0) > 0) deathSavePenalty = 0;
       renderCombatPanel();
       document.getElementById('navCash').textContent = `${(char.cash ?? 0).toLocaleString('de-DE')} eb`;
@@ -401,6 +403,16 @@ function show() {
   document.getElementById('tabBar').style.display  = '';
   document.getElementById('diceFab').style.display = '';
 }
+
+// ── Cyberware slot labels (used by renderCyberware) ───────────
+const CW_SLOT_LABELS = {
+  rightCybereye:'Rechtes Auge', leftCybereye:'Linkes Auge',
+  rightCyberarm:'Rechter Arm',  leftCyberarm:'Linker Arm',
+  rightCyberleg:'Rechtes Bein', leftCyberleg:'Linkes Bein',
+  neuralLink:'Neural Link', cyberaudio:'Cyberaudio',
+  internal:'Intern', external:'Extern',
+  fashionware:'Fashionware', borgware:'Borgware',
+};
 
 // ── Master render ─────────────────────────────────────────────
 function renderAll() {
@@ -807,15 +819,6 @@ function renderArmor() {
 }
 
 // ── Cyberware tab ─────────────────────────────────────────────
-const CW_SLOT_LABELS = {
-  rightCybereye:'Rechtes Auge', leftCybereye:'Linkes Auge',
-  rightCyberarm:'Rechter Arm',  leftCyberarm:'Linker Arm',
-  rightCyberleg:'Rechtes Bein', leftCyberleg:'Linkes Bein',
-  neuralLink:'Neural Link', cyberaudio:'Cyberaudio',
-  internal:'Intern', external:'Extern',
-  fashionware:'Fashionware', borgware:'Borgware',
-};
-
 function renderCyberware() {
   const cw = char.cyberware;
   const el = document.getElementById('tab-cyberware');
