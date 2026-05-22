@@ -40,6 +40,18 @@
   <div class="map-ctx-item danger" id="ctxCoverRemove">✕ Entfernen</div>
 </div>
 
+<!-- Custom Input Modal (replaces browser prompt()) -->
+<div id="mapInputModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);align-items:center;justify-content:center">
+  <div style="background:#111;border:1px solid rgba(0,229,255,.35);border-radius:6px;padding:1.25rem 1.5rem;min-width:260px;max-width:340px;width:90%;box-shadow:0 0 40px rgba(0,0,0,.8)">
+    <div id="mapInputModalTitle" style="font-family:Audiowide,sans-serif;font-size:.72rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem"></div>
+    <input id="mapInputModalField" style="width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid rgba(0,229,255,.3);border-radius:4px;color:#e0e0e8;font-size:.9rem;padding:.45rem .6rem;outline:none;font-family:inherit" autocomplete="off">
+    <div style="display:flex;gap:.5rem;margin-top:.85rem;justify-content:flex-end">
+      <button id="mapInputModalCancel" style="background:none;border:1px solid #444;color:#888;border-radius:4px;padding:.35rem .85rem;cursor:pointer;font-size:.75rem">Abbrechen</button>
+      <button id="mapInputModalOk" style="background:rgba(0,229,255,.12);border:1px solid var(--cyan);color:var(--cyan);border-radius:4px;padding:.35rem .85rem;cursor:pointer;font-size:.75rem;font-family:Audiowide,sans-serif">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- Hover Tooltip -->
 <div id="mapTooltip" class="map-tooltip" style="display:none">
   <div class="map-tooltip-name" id="ttName"></div>
@@ -375,6 +387,7 @@ const S = {
   aoeCustomColor:'#00E5FF',
 
   coverConfig:{ material:'Steel Thin', hp:25, label:'' },
+  coverDragStart:null, coverDragCurrent:null,
 
   shotgunConeActive: false,
   shotgunFacing:     0,
@@ -558,6 +571,7 @@ function redraw() {
   drawActiveShape();
   drawActivePen();
   drawActiveSuppressive();
+  drawActiveCover();
   drawMoveRange();
   drawRangeRings();
   drawShotgunCone();
@@ -600,52 +614,86 @@ function drawCoverObjects() {
     const mat = COVER_MATERIALS[c.material] || { color:'#888', hp:10 };
     const destroyed = c.hp <= 0;
     ctx.save();
-    ctx.fillStyle = destroyed ? 'rgba(255,45,45,.15)' : hexToRgba(mat.color, .35);
+    ctx.fillStyle = destroyed ? 'rgba(255,45,45,.18)' : hexToRgba(mat.color, .38);
     ctx.strokeStyle = destroyed ? '#FF2D2D' : mat.color;
-    ctx.lineWidth = 1.5 / S.scale;
+    ctx.lineWidth = 2 / S.scale;
     ctx.fillRect(c.x, c.y, c.w, c.h);
     ctx.strokeRect(c.x, c.y, c.w, c.h);
     if (destroyed) {
-      ctx.fillStyle='rgba(255,45,45,.6)';
-      ctx.font=`bold ${9/S.scale}px Audiowide`;
+      ctx.fillStyle='rgba(255,45,45,.7)';
+      ctx.font=`bold ${13/S.scale}px Audiowide`;
       ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
       ctx.fillText('DESTROYED', c.x+c.w/2, c.y+c.h/2);
+      ctx.shadowBlur=0;
     } else {
-      // Label
+      // Label — dark bg pill for readability
       if (c.label) {
-        ctx.fillStyle = mat.color;
-        ctx.font = `${8/S.scale}px Inter`;
+        ctx.font = `bold ${12/S.scale}px Inter`;
         ctx.textAlign='left'; ctx.textBaseline='top';
-        ctx.fillText(c.label, c.x+3/S.scale, c.y+2/S.scale);
+        const tw = ctx.measureText(c.label).width;
+        const lx=c.x+4/S.scale, ly=c.y+4/S.scale;
+        ctx.fillStyle='rgba(0,0,0,.55)';
+        ctx.fillRect(lx-2/S.scale, ly-1/S.scale, tw+4/S.scale, 13/S.scale);
+        ctx.fillStyle = mat.color;
+        ctx.shadowColor='rgba(0,0,0,.8)'; ctx.shadowBlur=3/S.scale;
+        ctx.fillText(c.label, lx, ly);
+        ctx.shadowBlur=0;
       }
-      // HP bar at bottom
+      // HP bar at bottom — taller + HP text
       if (c.maxHp > 0) {
-        const bw=c.w-4/S.scale, bh=4/S.scale;
+        const bw=c.w-4/S.scale, bh=7/S.scale;
         const bx=c.x+2/S.scale, by=c.y+c.h-bh-2/S.scale;
         const pct=Math.max(0,c.hp/c.maxHp);
-        ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(bx,by,bw,bh);
+        ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(bx,by,bw,bh);
         ctx.fillStyle = pct>0.5?'#4ade80':pct>0.25?'#FFD700':'#FF2D2D';
         ctx.fillRect(bx, by, bw*pct, bh);
+        // HP text inside bar
+        ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font=`bold ${6/S.scale}px Inter`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(`${c.hp}/${c.maxHp}`, bx+bw/2, by+bh/2);
       }
     }
     ctx.restore();
   }
 }
 
+function drawActiveCover() {
+  if (!S.coverDragStart || !S.coverDragCurrent) return;
+  const mat = COVER_MATERIALS[S.coverConfig.material] || { color:'#9CA3AF' };
+  const {x:x1,y:y1}=S.coverDragStart, {x:x2,y:y2}=S.coverDragCurrent;
+  const x=Math.min(x1,x2), y=Math.min(y1,y2), w=Math.abs(x2-x1), h=Math.abs(y2-y1);
+  ctx.save();
+  ctx.fillStyle=hexToRgba(mat.color,.25); ctx.strokeStyle=mat.color;
+  ctx.lineWidth=2/S.scale; ctx.setLineDash([5/S.scale,4/S.scale]);
+  ctx.fillRect(x,y,w,h); ctx.strokeRect(x,y,w,h);
+  ctx.setLineDash([]);
+  if (w>20/S.scale && h>10/S.scale) {
+    ctx.fillStyle=mat.color; ctx.font=`bold ${11/S.scale}px Inter`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,0,0,.8)'; ctx.shadowBlur=3/S.scale;
+    ctx.fillText(`${S.coverConfig.material}`, x+w/2, y+h/2);
+    ctx.shadowBlur=0;
+  }
+  ctx.restore();
+}
+
 function drawSuppressiveZones() {
   for (const z of S.suppressiveZones) {
     ctx.save();
     ctx.fillStyle='rgba(255,160,0,.1)';
-    ctx.strokeStyle='#FFA000'; ctx.lineWidth=1.5/S.scale;
+    ctx.strokeStyle='#FFA000'; ctx.lineWidth=2/S.scale;
     ctx.setLineDash([6/S.scale,4/S.scale]);
     ctx.fillRect(z.x,z.y,z.w,z.h);
     ctx.strokeRect(z.x,z.y,z.w,z.h);
     ctx.setLineDash([]);
-    ctx.fillStyle='#FFA000'; ctx.font=`bold ${9/S.scale}px Audiowide`;
+    ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
+    ctx.fillStyle='#FFA000'; ctx.font=`bold ${13/S.scale}px Audiowide`;
     ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.fillText(z.label||'SUPPRESSIVE ZONE', z.x+z.w/2, z.y+4/S.scale);
-    ctx.font=`${7/S.scale}px Inter`; ctx.fillStyle='rgba(255,160,0,.7)';
-    ctx.fillText('WILL+Conc. vs REF+Autofire', z.x+z.w/2, z.y+14/S.scale);
+    ctx.fillText(z.label||'SUPPRESSIVE ZONE', z.x+z.w/2, z.y+5/S.scale);
+    ctx.font=`${10/S.scale}px Inter`; ctx.fillStyle='rgba(255,160,0,.85)';
+    ctx.fillText('WILL+Conc. vs REF+Autofire', z.x+z.w/2, z.y+19/S.scale);
+    ctx.shadowBlur=0;
     ctx.restore();
   }
 }
@@ -660,17 +708,19 @@ function drawAoeMarkers() {
     ctx.lineWidth   = 2 / S.scale;
     ctx.beginPath(); ctx.arc(a.cx,a.cy,a.r,0,Math.PI*2);
     ctx.fill(); ctx.stroke();
+    ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
     if (a.label) {
-      ctx.fillStyle=a.color; ctx.font=`bold ${10/S.scale}px Audiowide`;
+      ctx.fillStyle=a.color; ctx.font=`bold ${13/S.scale}px Audiowide`;
       ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(a.label, a.cx, a.cy);
     }
     const rM = (a.r/S.gridSize).toFixed(1);
     const eff = AOE_EFFECTS[a.effect];
     const radiusLbl = `${rM}m${eff ? ' — '+eff.desc : ''}`;
-    ctx.fillStyle=a.color; ctx.font=`${8/S.scale}px Inter`;
+    ctx.fillStyle=a.color; ctx.font=`bold ${11/S.scale}px Inter`;
     ctx.textAlign='center'; ctx.textBaseline='bottom';
-    ctx.fillText(radiusLbl, a.cx, a.cy-a.r-3/S.scale);
+    ctx.fillText(radiusLbl, a.cx, a.cy-a.r-4/S.scale);
+    ctx.shadowBlur=0;
     ctx.restore();
   }
 }
@@ -687,9 +737,11 @@ function drawActiveAoeDrag() {
   ctx.fill(); ctx.stroke();
   ctx.setLineDash([]);
   const rM = (S.aoeDragRadius/S.gridSize).toFixed(1);
-  ctx.fillStyle=color; ctx.font=`${9/S.scale}px Audiowide`;
+  ctx.fillStyle=color; ctx.font=`bold ${12/S.scale}px Audiowide`;
+  ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=3/S.scale;
   ctx.textAlign='center'; ctx.textBaseline='bottom';
-  ctx.fillText(`${rM}m`, S.aoeDragStart.x, S.aoeDragStart.y-S.aoeDragRadius-3/S.scale);
+  ctx.fillText(`${rM}m`, S.aoeDragStart.x, S.aoeDragStart.y-S.aoeDragRadius-4/S.scale);
+  ctx.shadowBlur=0;
   ctx.restore();
 }
 
@@ -766,10 +818,12 @@ function drawMoveRange() {
     ctx.fill(); ctx.stroke();
     ctx.setLineDash([]);
   });
-  ctx.fillStyle=hexToRgba(color,.8); ctx.font=`${9/S.scale}px Audiowide`;
+  ctx.fillStyle=hexToRgba(color,.9); ctx.font=`bold ${12/S.scale}px Audiowide`;
+  ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
   ctx.textAlign='center'; ctx.textBaseline='top';
-  ctx.fillText(`MOVE ${move}m`, t.x, t.y+r1+3/S.scale);
-  ctx.fillText(`RUN ${move*2}m`, t.x, t.y+r2+3/S.scale);
+  ctx.fillText(`MOVE ${move}m`, t.x, t.y+r1+4/S.scale);
+  ctx.fillText(`RUN ${move*2}m`, t.x, t.y+r2+4/S.scale);
+  ctx.shadowBlur=0;
   ctx.restore();
 }
 
@@ -838,9 +892,11 @@ function drawTokens() {
       ctx.restore();
       // DRAN label above token
       ctx.save();
-      ctx.font=`bold ${10/S.scale}px Audiowide`;
+      ctx.font=`bold ${14/S.scale}px Audiowide`;
+      ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=5/S.scale;
       ctx.fillStyle='#00FF88'; ctx.textAlign='center'; ctx.textBaseline='bottom';
-      ctx.fillText('DRAN', cx, cy-r-5/S.scale);
+      ctx.fillText('▶ DRAN', cx, cy-r-5/S.scale);
+      ctx.shadowBlur=0;
       ctx.restore();
     }
     if (isNextUp && !isActive) {
@@ -949,51 +1005,70 @@ function drawTokens() {
     ctx.strokeStyle=borderColor; ctx.lineWidth=2/S.scale; ctx.stroke();
     ctx.restore();
 
-    // SP badge (top-left of token circle)
+    // SP badge (top-left of token circle) — bigger + dark bg
     if (token.headSP || token.bodySP) {
       ctx.save();
-      ctx.fillStyle='rgba(0,0,0,.6)'; ctx.font=`${7/S.scale}px Inter`;
-      ctx.textAlign='left'; ctx.textBaseline='top';
       const hLabel = token.headMaxSP ? `H:${token.headSP||0}/${token.headMaxSP}` : `H:${token.headSP||0}`;
       const bLabel = token.bodyMaxSP ? `B:${token.bodySP||0}/${token.bodyMaxSP}` : `B:${token.bodySP||0}`;
-      ctx.fillStyle='rgba(0,0,0,.6)';
-      ctx.fillRect(cx-r, cy-r-10/S.scale, 70/S.scale, 9/S.scale);
-      ctx.fillStyle='rgba(0,229,255,.7)';
-      ctx.fillText(`${hLabel} ${bLabel}`, cx-r+1/S.scale, cy-r-9/S.scale);
+      const spText = `${hLabel}  ${bLabel}`;
+      ctx.font=`bold ${9/S.scale}px Inter`;
+      const tw=ctx.measureText(spText).width;
+      const lx=cx-r, ly=cy-r-13/S.scale;
+      ctx.fillStyle='rgba(0,0,0,.7)';
+      ctx.fillRect(lx-1/S.scale, ly-1/S.scale, tw+4/S.scale, 12/S.scale);
+      ctx.fillStyle='rgba(0,229,255,.9)';
+      ctx.textAlign='left'; ctx.textBaseline='top';
+      ctx.fillText(spText, lx+1/S.scale, ly);
       ctx.restore();
     }
 
-    // Name label below
+    // Name label below — with dark bg for readability
     ctx.save();
-    ctx.fillStyle='#e0e0e8'; ctx.font=`${10/S.scale}px Inter`;
+    ctx.font=`bold ${13/S.scale}px Inter`;
     ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.fillText(token.name||'',cx,cy+r+2/S.scale);
+    const nameW=ctx.measureText(token.name||'').width;
+    const nameX=cx, nameY=cy+r+3/S.scale;
+    ctx.fillStyle='rgba(0,0,0,.7)';
+    ctx.fillRect(nameX-nameW/2-3/S.scale, nameY-1/S.scale, nameW+6/S.scale, 14/S.scale);
+    ctx.fillStyle='#f0f0f8';
+    ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=3/S.scale;
+    ctx.fillText(token.name||'', nameX, nameY);
+    ctx.shadowBlur=0;
 
-    // HP bar
+    // HP bar — taller + HP text inside
     if (token.maxHp != null && (isChar || IS_DM)) {
-      const bw=r*1.8, bh=3.5/S.scale;
-      const bx=cx-bw/2, by=cy+r+(13/S.scale);
+      const bw=r*2.2, bh=6/S.scale;
+      const bx=cx-bw/2, by=cy+r+(18/S.scale);
       const pct=Math.max(0,Math.min(1,(token.hp??token.maxHp)/token.maxHp));
-      ctx.fillStyle='#222'; ctx.fillRect(bx,by,bw,bh);
+      ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(bx,by,bw,bh);
       ctx.fillStyle=pct>.5?'#00E5FF':pct>.25?'#FFD700':'#FF2D2D';
       ctx.fillRect(bx,by,bw*pct,bh);
+      // HP text
+      ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font=`bold ${5.5/S.scale}px Inter`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(`${token.hp??'?'}/${token.maxHp}`, cx, by+bh/2);
     }
 
-    // Condition dots (up to 3)
+    // Condition dots — bigger (4px) + label on hover
     const conds = token.conditions||[];
     const COND_COLORS_MAP = { 'Seriously Wounded':'#FF8C00','Mortally Wounded':'#FF2D2D','Stunned':'#FFD700','Suppressed':'#A78BFA','Prone':'#6B7280','Bleeding Out':'#DC2626','On Fire (Mild)':'#FF8C00','On Fire (Severe)':'#FF6B35','On Fire (Deadly)':'#FF2D2D','Grappled':'#94A3B8' };
     if (conds.length) {
-      const dotR=3/S.scale, dotY=cy+r+(20/S.scale);
+      const dotR=4.5/S.scale, dotY=cy+r+(27/S.scale);
       const shown=conds.slice(0,3);
-      const startX=cx-((shown.length-1)*(dotR*2+2/S.scale))/2;
+      const gap=dotR*2+3/S.scale;
+      const startX=cx-((shown.length-1)*gap)/2;
       shown.forEach((c,i)=>{
-        ctx.beginPath(); ctx.arc(startX+i*(dotR*2+2/S.scale),dotY,dotR,0,Math.PI*2);
-        ctx.fillStyle=COND_COLORS_MAP[c]||'#888'; ctx.fill();
+        const dx=startX+i*gap;
+        ctx.beginPath(); ctx.arc(dx,dotY,dotR,0,Math.PI*2);
+        ctx.fillStyle=COND_COLORS_MAP[c]||'#888';
+        ctx.shadowColor='rgba(0,0,0,.7)'; ctx.shadowBlur=3/S.scale;
+        ctx.fill(); ctx.shadowBlur=0;
       });
       if (conds.length>3) {
-        ctx.fillStyle='#888'; ctx.font=`${7/S.scale}px Inter`;
-        ctx.textAlign='left';
-        ctx.fillText(`+${conds.length-3}`, startX+shown.length*(dotR*2+2/S.scale)+2/S.scale, dotY);
+        ctx.fillStyle='#aaa'; ctx.font=`bold ${8/S.scale}px Inter`;
+        ctx.textAlign='left'; ctx.shadowColor='rgba(0,0,0,.8)'; ctx.shadowBlur=2/S.scale;
+        ctx.fillText(`+${conds.length-3}`, startX+shown.length*gap+1/S.scale, dotY+dotR/2);
+        ctx.shadowBlur=0;
       }
     }
 
@@ -1013,9 +1088,11 @@ function drawTokens() {
       ctx.beginPath(); ctx.moveTo(cx-pad, cy-pad); ctx.lineTo(cx+pad, cy+pad); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx+pad, cy-pad); ctx.lineTo(cx-pad, cy+pad); ctx.stroke();
       // "TOT" label
-      ctx.fillStyle = '#FF2D2D'; ctx.font = `bold ${9/S.scale}px Audiowide`;
+      ctx.fillStyle = '#FF2D2D'; ctx.font = `bold ${14/S.scale}px Audiowide`;
+      ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('TOT', cx, cy);
+      ctx.shadowBlur=0;
       ctx.restore();
     }
 
@@ -1257,21 +1334,23 @@ function showCtxMenu(cx, cy, target) {
 }
 function hideCtxMenu() { document.getElementById('ctxMenu').style.display='none'; S.ctxTarget=null; }
 
-document.getElementById('ctxHp').addEventListener('click', e => {
+document.getElementById('ctxHp').addEventListener('click', async e => {
   e.stopPropagation();
   const t=S.ctxTarget; if (!t) return;
-  const v=prompt(`HP für ${t.name} (max ${t.maxHp??'?'}):`, t.hp??'');
+  hideCtxMenu();
+  const v = await mapPrompt(`HP für ${t.name}`, t.hp??'', { type:'number', min:0, max: t.maxHp??999 });
   if (v===null) return;
   t.hp=parseInt(v)||0;
-  saveTokens(); markDirty(); hideCtxMenu();
+  saveTokens(); markDirty();
 });
-document.getElementById('ctxCond').addEventListener('click', e => {
+document.getElementById('ctxCond').addEventListener('click', async e => {
   e.stopPropagation();
   const t=S.ctxTarget; if (!t) return;
-  const v=prompt('Conditions (kommasepariert):',(t.conditions||[]).join(', '));
+  hideCtxMenu();
+  const v = await mapPrompt('Conditions (kommasepariert)', (t.conditions||[]).join(', '), { placeholder:'z.B. Stunned, Prone' });
   if (v===null) return;
   t.conditions=v.split(',').map(s=>s.trim()).filter(Boolean);
-  saveTokens(); markDirty(); hideCtxMenu();
+  saveTokens(); markDirty();
 });
 document.getElementById('ctxFocus').addEventListener('click', e => {
   e.stopPropagation();
@@ -1320,26 +1399,28 @@ function hideAoeCtxMenu() { document.getElementById('ctxAoeMenu').style.display=
 
 // Cover context menu
 let _ctxCoverIdx = -1;
-document.getElementById('ctxCoverDmg').addEventListener('click', e => {
+document.getElementById('ctxCoverDmg').addEventListener('click', async e => {
   e.stopPropagation();
   if (_ctxCoverIdx < 0) return;
   const c = S.coverObjects[_ctxCoverIdx]; if (!c) return;
-  const v = prompt(`Schaden für "${c.label||c.material}" (aktuell HP ${c.hp}/${c.maxHp}):`);
+  hideCoverCtxMenu();
+  const v = await mapPrompt(`Schaden für „${c.label||c.material}"  (HP ${c.hp}/${c.maxHp})`, '', { type:'number', min:0, placeholder:'Schadenswert' });
   if (v === null) return;
   const dmg = parseInt(v) || 0;
   c.hp = Math.max(0, c.hp - dmg);
   if (c.hp <= 0) c.destroyed = true;
-  saveCover(); markDirty(); hideCoverCtxMenu();
+  saveCover(); markDirty();
 });
-document.getElementById('ctxCoverHp').addEventListener('click', e => {
+document.getElementById('ctxCoverHp').addEventListener('click', async e => {
   e.stopPropagation();
   if (_ctxCoverIdx < 0) return;
   const c = S.coverObjects[_ctxCoverIdx]; if (!c) return;
-  const v = prompt(`HP setzen für "${c.label||c.material}" (max ${c.maxHp}):`, c.hp);
+  hideCoverCtxMenu();
+  const v = await mapPrompt(`HP setzen für „${c.label||c.material}"  (max ${c.maxHp})`, String(c.hp), { type:'number', min:0, max:c.maxHp });
   if (v === null) return;
   c.hp = Math.max(0, Math.min(c.maxHp, parseInt(v)||0));
   c.destroyed = c.hp <= 0;
-  saveCover(); markDirty(); hideCoverCtxMenu();
+  saveCover(); markDirty();
 });
 document.getElementById('ctxCoverRepair').addEventListener('click', e => {
   e.stopPropagation();
@@ -1404,7 +1485,7 @@ canvas.addEventListener('mousedown', e => {
   } else if (S.tool==='aoe') {
     S.aoeDragStart=wp; S.aoeDragRadius=0;
   } else if (S.tool==='cover') {
-    placeCover(wp);
+    S.coverDragStart=wp; S.coverDragCurrent=wp;
   } else if (S.tool==='suppressive') {
     S.suppressStart=wp; S.suppressCurrent=wp;
   } else if (S.tool==='delete') {
@@ -1446,6 +1527,7 @@ canvas.addEventListener('mousemove', e => {
     markDirty(); return;
   }
   if (S.tool==='suppressive'&&S.suppressStart) { S.suppressCurrent=wp; markDirty(); return; }
+  if (S.tool==='cover'&&S.coverDragStart) { S.coverDragCurrent=wp; markDirty(); return; }
   // Shotgun cone direction follows mouse
   if (S.shotgunConeActive) {
     const ownToken = S.tokens.find(t=>t.charId===CHAR_ID) || S.selectedToken;
@@ -1537,6 +1619,24 @@ canvas.addEventListener('mouseup', e => {
     }
     S.suppressStart=null; S.suppressCurrent=null; markDirty();
   }
+  if (S.tool==='cover'&&S.coverDragStart) {
+    const {x:x1,y:y1}=S.coverDragStart;
+    const x=Math.min(x1,wp.x), y=Math.min(y1,wp.y);
+    const w=Math.abs(wp.x-x1), h=Math.abs(wp.y-y1);
+    if (w>4&&h>4) {
+      const mat=COVER_MATERIALS[S.coverConfig.material]||{hp:10};
+      S.coverObjects.push({
+        id:uid(), x, y, w, h,
+        material:S.coverConfig.material,
+        label:S.coverConfig.label||S.coverConfig.material,
+        hp:S.coverConfig.hp||mat.hp,
+        maxHp:S.coverConfig.hp||mat.hp,
+        destroyed:false,
+      });
+      saveCover();
+    }
+    S.coverDragStart=null; S.coverDragCurrent=null; markDirty();
+  }
 });
 
 canvas.addEventListener('mouseleave', ()=>{
@@ -1588,27 +1688,13 @@ document.addEventListener('keyup', e=>{
 });
 
 // ── Cover placement ───────────────────────────────────────────
-function placeCover(wp) {
-  const mat = COVER_MATERIALS[S.coverConfig.material] || {hp:10,color:'#888'};
-  const gs = S.gridSize;
-  S.coverObjects.push({
-    id:uid(),
-    x:snapGrid(wp.x)-gs, y:snapGrid(wp.y)-gs/2,
-    w:gs*2, h:gs,
-    material:S.coverConfig.material,
-    label:S.coverConfig.label||S.coverConfig.material,
-    hp:S.coverConfig.hp||mat.hp,
-    maxHp:S.coverConfig.hp||mat.hp,
-    destroyed:false,
-  });
-  saveCover(); markDirty();
-}
 
 // ── Tool switching ────────────────────────────────────────────
 function setTool(tool) {
   S.tool=tool;
   S.drawPath=null; S.shapeStart=null; S.shapeCurrent=null;
   S.aoeDragStart=null; S.suppressStart=null;
+  S.coverDragStart=null; S.coverDragCurrent=null;
   document.querySelectorAll('.tool-btn-row[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
   setCursor(cursorForTool(tool));
   document.getElementById('statusTool').textContent=tool;
@@ -1675,7 +1761,7 @@ function renderToolSettings(tool) {
 
     cover: ()=>`
       <div class="tool-settings-head">Deckung / Objekt</div>
-      <div class="tool-settings-hint">Klick auf Map = Objekt platzieren</div>
+      <div class="tool-settings-hint">Klick + Ziehen → Größe festlegen</div>
       <div class="tool-settings-head" style="margin-top:.35rem">Schnellauswahl</div>
       <div class="cover-quick">
         ${[['Auto','Steel Thin'],['Wand','Concrete Thin'],['Tisch','Wood Thin'],['Baum','Wood Thick'],['Container','Steel Thick']].map(([l,m])=>
@@ -1791,9 +1877,9 @@ function updateSelectedTokenInfo() {
     ${(t.conditions||[]).length?`<div class="sti-row"><span>Conditions</span><span>${t.conditions.join(', ')}</span></div>`:''}
     ${IS_DM&&t.type!=='char'?`<button class="ts-btn primary" style="margin-top:.35rem" id="stEditHpBtn">HP bearbeiten</button>`:''}
   </div>`;
-  document.getElementById('stEditHpBtn')?.addEventListener('click',()=>{
-    const v=prompt(`HP für ${t.name}:`,t.hp??'');
-    if(v!==null){t.hp=parseInt(v)||0;saveTokens();markDirty();}
+  document.getElementById('stEditHpBtn')?.addEventListener('click', async ()=>{
+    const v = await mapPrompt(`HP für ${t.name}`, String(t.hp??''), { type:'number', min:0, max: t.maxHp??999 });
+    if (v !== null) { t.hp=parseInt(v)||0; saveTokens(); markDirty(); }
   });
 }
 
@@ -2196,6 +2282,45 @@ function showMapToast(msg, type='cyan') {
   t.textContent = msg; t.style.opacity='1';
   clearTimeout(t._tid);
   t._tid=setTimeout(()=>{ t.style.opacity='0'; },3500);
+}
+
+// ── Custom prompt (replaces browser prompt()) ─────────────────
+function mapPrompt(title, defaultValue = '', opts = {}) {
+  return new Promise(resolve => {
+    const modal  = document.getElementById('mapInputModal');
+    const titleEl = document.getElementById('mapInputModalTitle');
+    const field  = document.getElementById('mapInputModalField');
+    const okBtn  = document.getElementById('mapInputModalOk');
+    const cancelBtn = document.getElementById('mapInputModalCancel');
+
+    titleEl.textContent = title;
+    field.value = defaultValue ?? '';
+    field.type  = opts.type || 'text';
+    if (opts.min != null) field.min = opts.min;
+    if (opts.max != null) field.max = opts.max;
+    if (opts.placeholder) field.placeholder = opts.placeholder;
+    else field.removeAttribute('placeholder');
+    modal.style.display = 'flex';
+    field.focus();
+    field.select();
+
+    function finish(val) {
+      modal.style.display = 'none';
+      field.removeEventListener('keydown', onKey);
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      resolve(val);
+    }
+    function onOk()     { finish(field.value); }
+    function onCancel() { finish(null); }
+    function onKey(e) {
+      if (e.key === 'Enter')  { e.preventDefault(); finish(field.value); }
+      if (e.key === 'Escape') { e.preventDefault(); finish(null); }
+    }
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    field.addEventListener('keydown', onKey);
+  });
 }
 
 // ── Player panel ──────────────────────────────────────────────
