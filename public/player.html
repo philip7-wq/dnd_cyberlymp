@@ -309,6 +309,15 @@ function getInjuries() {
 let _lastEffEMP     = null;
 let _psychosisShown = false;
 
+const SVG_ZONE_SLOTS = {
+  head:     ['neuralLink','rightCybereye','leftCybereye','cyberaudio'],
+  rightArm: ['rightCyberarm'],
+  leftArm:  ['leftCyberarm'],
+  torso:    ['internal','external','fashionware','borgware'],
+  rightLeg: ['rightCyberleg'],
+  leftLeg:  ['leftCyberleg'],
+};
+
 const CW_SLOT_LABELS = {
   rightCybereye:'Rechtes Auge', leftCybereye:'Linkes Auge',
   rightCyberarm:'Rechter Arm',  leftCyberarm:'Linker Arm',
@@ -898,15 +907,6 @@ function renderArmor() {
 }
 
 // ── Cyberware tab ─────────────────────────────────────────────
-const SVG_ZONE_SLOTS = {
-  head:     ['neuralLink','rightCybereye','leftCybereye','cyberaudio'],
-  rightArm: ['rightCyberarm'],
-  leftArm:  ['leftCyberarm'],
-  torso:    ['internal','external','fashionware','borgware'],
-  rightLeg: ['rightCyberleg'],
-  leftLeg:  ['leftCyberleg'],
-};
-
 function buildCyberSVG(cw) {
   const activeInjuries = getInjuries().map(i => i.name || i);
   const injuredSlots = new Set();
