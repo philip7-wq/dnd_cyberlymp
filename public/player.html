@@ -253,7 +253,7 @@
 
 <script type="module">
 console.log('[player] module loaded');
-import { getCharacter, getCharacters, patchCharacter, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc, getRoomItems, addRoomItem, removeRoomItem, subscribeRoomItems } from './assets/js/supabase.js';
+import { getCharacter, getCharacters, patchCharacter, patchCash, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc, getRoomItems, addRoomItem, removeRoomItem, subscribeRoomItems } from './assets/js/supabase.js';
 import { roll, initDiceBox, animateRollNumber } from './assets/js/dice.js';
 
 // ── Constants ─────────────────────────────────────────────────
@@ -902,21 +902,28 @@ function renderWeapons() {
 
   if (!weapons.length) { el.innerHTML = '<p class="empty-state">Keine Waffen eingetragen.</p>'; return; }
 
-  el.innerHTML = weapons.map((w, i) => `
-    <div class="weapon-card">
+  el.innerHTML = weapons.map((w, i) => {
+    const sellPrice = Math.round((w.price || 0) * 0.65);
+    const meta = [w.ammo ? `Ammo: ${w.ammo}` : '', w.rof ? `ROF: ${w.rof}` : '', w.hands ? `Hands: ${w.hands}` : ''].filter(Boolean).join(' · ');
+    return `<div class="weapon-card">
       <div class="weapon-header">
         <span class="weapon-name">${w.name}</span>
-        <span style="display:flex;gap:.25rem;align-items:center;margin-left:auto">
-          ${w.damage ? `<button class="roll-btn dmg-btn" data-expr="${w.damage}" data-ctx="${w.name} damage" style="font-size:.75rem;padding:.2rem .5rem">${w.damage}</button>` : ''}
-          <button class="unequip-btn" data-inv="weapons" data-idx="${i}" title="Abrüsten → Gear" style="background:none;border:none;cursor:pointer;font-size:.75rem;opacity:.6;padding:0 .2rem">📦</button>
-          <button class="remove-btn" data-inv="weapons" data-idx="${i}">✕</button>
-        </span>
+        ${w.price ? `<span class="gear-item-price">${w.price.toLocaleString('de-DE')} eb</span>` : ''}
+        ${w.damage ? `<button class="roll-btn dmg-btn" data-expr="${w.damage}" data-ctx="${w.name} damage">${w.damage}</button>` : ''}
       </div>
-      <div class="weapon-meta">
-        ${[w.ammo ? `Ammo: ${w.ammo}` : '', w.rof ? `ROF: ${w.rof}` : '', w.hands ? `Hands: ${w.hands}` : ''].filter(Boolean).join(' · ')}
-      </div>
+      ${meta ? `<div class="weapon-meta">${meta}</div>` : ''}
       ${w.notes ? `<div class="weapon-notes">${w.notes}</div>` : ''}
-    </div>`).join('');
+      <div class="gear-item-actions" style="margin-top:.4rem">
+        <button class="gear-action-btn unequip-btn" data-inv="weapons" data-idx="${i}">📦 Abrüsten</button>
+        ${sellPrice > 0 ? `<button class="gear-action-btn gear-sell-btn" data-sell-inv="weapons" data-sell-idx="${i}">💰 ${sellPrice.toLocaleString('de-DE')} eb</button>` : ''}
+        <button class="gear-action-btn gear-del-btn remove-btn" data-inv="weapons" data-idx="${i}">✕ Löschen</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.gear-sell-btn').forEach(btn => {
+    btn.addEventListener('click', () => sellItem(btn.dataset.sellInv, parseInt(btn.dataset.sellIdx)));
+  });
 }
 
 // ── Armor tab ─────────────────────────────────────────────────
@@ -1073,11 +1080,11 @@ function getEquipButton(g, i) {
   const cat = detectItemCategory(g);
   if (!cat) return '';
   if (['Ranged Weapon','Melee Weapon','Exotic Weapon'].includes(cat))
-    return `<button class="equip-btn" data-equip-idx="${i}" data-equip-type="weapon" title="Ausrüsten" style="background:none;border:none;cursor:pointer;font-size:.72rem;color:var(--cyan);padding:0 .2rem">⚔</button>`;
+    return `<button class="gear-action-btn gear-equip-btn" data-equip-idx="${i}" data-equip-type="weapon">⚔ Ausrüsten</button>`;
   if (cat === 'Armor')
-    return `<button class="equip-btn" data-equip-idx="${i}" data-equip-type="armor" title="Anziehen" style="background:none;border:none;cursor:pointer;font-size:.72rem;color:var(--cyan);padding:0 .2rem">🛡</button>`;
+    return `<button class="gear-action-btn gear-equip-btn" data-equip-idx="${i}" data-equip-type="armor">🛡 Anziehen</button>`;
   if (cat === 'Cyberware')
-    return `<button class="equip-btn" data-equip-idx="${i}" data-equip-type="cyberware" title="Einbauen" style="background:none;border:none;cursor:pointer;font-size:.72rem;color:var(--cyan);padding:0 .2rem">🔧</button>`;
+    return `<button class="gear-action-btn gear-equip-btn" data-equip-idx="${i}" data-equip-type="cyberware">🔧 Einbauen</button>`;
   return '';
 }
 
@@ -1085,25 +1092,54 @@ function renderGear() {
   const gear = char.gear || [];
   const el   = document.getElementById('tab-gear');
   if (!gear.length) { el.innerHTML = '<p class="empty-state">Kein Gear eingetragen.</p>'; return; }
-  el.innerHTML = `<div class="gear-list">${gear.map((g, i) =>
-    `<div class="gear-item" data-tooltip='${safeJson(g)}'>
-      <div class="gear-item-name">
-        ${g.name}
-        <span style="display:flex;gap:.1rem;margin-left:auto;align-items:center">
-          ${getEquipButton(g, i)}
-          <button class="remove-btn" data-inv="gear" data-idx="${i}">✕</button>
-          <button class="drop-btn" data-inv="gear" data-idx="${i}" title="In Raum legen" style="background:none;border:none;cursor:pointer;font-size:.75rem;opacity:.6;padding:0 .2rem">📦</button>
-        </span>
+  el.innerHTML = `<div class="gear-list">${gear.map((g, i) => {
+    const sellPrice = Math.round((g.price || 0) * 0.65);
+    const metaParts = [
+      g.damage ? `DMG: ${g.damage}${g.rof ? ` · ROF: ${g.rof}` : ''}` : '',
+      g.sp != null && g.sp > 0 ? `SP: ${g.sp}${g.penalty ? ` · Penalty: ${g.penalty}` : ''}` : '',
+      g.ammo ? `Ammo: ${g.ammo}` : '',
+    ].filter(Boolean);
+    return `<div class="gear-item">
+      <div class="gear-item-top">
+        <span class="gear-item-name">${g.name}</span>
+        ${g.price ? `<span class="gear-item-price">${g.price.toLocaleString('de-DE')} eb</span>` : ''}
       </div>
-      ${g.notes ? `<div class="gear-item-notes">${g.notes}</div>` : ''}
-      ${g.damage ? `<div class="gear-item-notes">DMG: ${g.damage}${g.rof ? ` · ROF: ${g.rof}` : ''}</div>` : ''}
-      ${g.sp != null && g.sp > 0 ? `<div class="gear-item-notes">SP: ${g.sp}${g.penalty ? ` · Penalty: ${g.penalty}` : ''}</div>` : ''}
-    </div>`).join('')}</div>`;
+      ${metaParts.length ? `<div class="gear-item-meta">${metaParts.join(' · ')}</div>` : ''}
+      ${g.notes ? `<div class="gear-item-meta">${g.notes}</div>` : ''}
+      <div class="gear-item-actions">
+        ${getEquipButton(g, i)}
+        ${sellPrice > 0 ? `<button class="gear-action-btn gear-sell-btn" data-sell-inv="gear" data-sell-idx="${i}">💰 ${sellPrice.toLocaleString('de-DE')} eb</button>` : ''}
+        <button class="gear-action-btn drop-btn" data-inv="gear" data-idx="${i}">📦 Raum</button>
+        <button class="gear-action-btn gear-del-btn remove-btn" data-inv="gear" data-idx="${i}">✕ Löschen</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
 
-  // Equip-Button Handler
-  el.querySelectorAll('.equip-btn').forEach(btn => {
+  el.querySelectorAll('.gear-equip-btn').forEach(btn => {
     btn.addEventListener('click', () => equipFromGear(parseInt(btn.dataset.equipIdx), btn.dataset.equipType));
   });
+  el.querySelectorAll('.gear-sell-btn').forEach(btn => {
+    btn.addEventListener('click', () => sellItem(btn.dataset.sellInv, parseInt(btn.dataset.sellIdx)));
+  });
+}
+
+async function sellItem(inv, idx) {
+  const item = (char[inv] || [])[idx];
+  if (!item) return;
+  const price    = item.price || 0;
+  const sellPrice = Math.round(price * 0.65);
+  if (!sellPrice) return;
+  if (!confirm(`${item.name} für ${sellPrice.toLocaleString('de-DE')} eb verkaufen?\n(35% Abzug von ${price.toLocaleString('de-DE')} eb)`)) return;
+  char[inv] = char[inv].filter((_, i) => i !== idx);
+  const newCash = (char.cash || 0) + sellPrice;
+  char.cash = newCash;
+  try {
+    char.cash_log = await patchCash(char.id, newCash, +sellPrice, `Verkauf: ${item.name}`, char.cash_log);
+    await patchCharacter(char.id, { [inv]: char[inv] });
+    if (inv === 'weapons') renderWeapons(); else renderGear();
+    updateNavCash();
+    showToast(`💰 +${sellPrice.toLocaleString('de-DE')} eb`, 'cyan');
+  } catch(e) { showToast('Fehler: ' + e.message, 'red'); }
 }
 
 function showArmorSlotModal() {
@@ -3362,14 +3398,19 @@ function setupChat() {
 }
 
 let _toastTimer = null;
-function showToast(result) {
+function showToast(msgOrResult, color) {
   const toast = document.getElementById('rollToast');
   clearTimeout(_toastTimer);
-  toast.className = 'roll-toast show'
-    + (result.isCritSuccess ? ' crit-s' : '')
-    + (result.isCritFailure ? ' crit-f' : '');
-  const label = result.isCritSuccess ? '★ CRIT! ' : result.isCritFailure ? '✗ BOTCH! ' : '';
-  toast.textContent = `${label}${result.total}`;
+  if (typeof msgOrResult === 'string') {
+    toast.className = 'roll-toast show'
+      + (color === 'red' ? ' crit-f' : color === 'cyan' ? ' crit-s' : '');
+    toast.textContent = msgOrResult;
+  } else {
+    const r = msgOrResult;
+    toast.className = 'roll-toast show'
+      + (r.isCritSuccess ? ' crit-s' : r.isCritFailure ? ' crit-f' : '');
+    toast.textContent = `${r.isCritSuccess ? '★ CRIT! ' : r.isCritFailure ? '✗ BOTCH! ' : ''}${r.total}`;
+  }
   _toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
 }
 </script>

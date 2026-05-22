@@ -188,15 +188,16 @@ body.combat-active .char-sub {
 /* ── Weapons ── */
 .weapon-card {
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .85rem 1rem; margin-bottom: .6rem;
+  border-radius: var(--radius); padding: .7rem .9rem; margin-bottom: .5rem;
 }
-.weapon-name { font-family: var(--font-display); font-size: 1rem; color: var(--text-head); margin-bottom: .5rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-.gear-item-name { color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.weapon-header { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .25rem; }
+.weapon-name { font-family: var(--font-display); font-size: .95rem; color: var(--text-head); }
 .weapon-stats { display: flex; flex-wrap: wrap; gap: .4rem .8rem; font-size: .8rem; }
 .ws-pair { display: flex; flex-direction: column; }
 .ws-label { font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); }
 .ws-val   { color: var(--text); }
-.weapon-notes { margin-top: .5rem; font-size: .78rem; color: var(--text-muted); }
+.weapon-meta  { font-size: .72rem; color: var(--text-muted); margin-bottom: .2rem; }
+.weapon-notes { font-size: .75rem; color: var(--text-muted); margin-bottom: .2rem; }
 
 /* ── Armor ── */
 .armor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
@@ -227,12 +228,30 @@ body.combat-active .char-sub {
 }
 
 /* ── Gear ── */
-.gear-list { display: flex; flex-direction: column; gap: .3rem; }
+.gear-list { display: flex; flex-direction: column; gap: .45rem; }
 .gear-item {
-  padding: .4rem .75rem; background: var(--bg-card);
-  border: 1px solid var(--border); border-radius: var(--radius); font-size: .88rem;
+  padding: .6rem .8rem; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  display: flex; flex-direction: column; gap: .25rem;
 }
-.gear-item-notes { color: var(--text-muted); font-size: .75rem; }
+.gear-item-top { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+.gear-item-name { font-size: .88rem; color: var(--text-head); }
+.gear-item-price { font-size: .68rem; color: var(--cyan); white-space: nowrap; }
+.gear-item-meta { font-size: .72rem; color: var(--text-muted); line-height: 1.4; }
+.gear-item-actions { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .1rem; }
+.gear-action-btn {
+  padding: .25rem .6rem; font-size: .72rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-muted); cursor: pointer; transition: var(--transition);
+  font-family: var(--font-body);
+}
+.gear-action-btn:hover { background: var(--bg-input); color: var(--text); }
+.gear-equip-btn { border-color: var(--cyan); color: var(--cyan); }
+.gear-equip-btn:hover { background: rgba(0,229,255,.08); }
+.gear-sell-btn  { border-color: #4a9a4a; color: #4a9a4a; }
+.gear-sell-btn:hover { background: rgba(74,154,74,.08); }
+.gear-del-btn   { border-color: #5a2222; color: #aa4444; }
+.gear-del-btn:hover { background: rgba(255,45,45,.06); border-color: var(--red); color: var(--red); }
 
 /* ── Lifepath ── */
 .lp-grid { display: flex; flex-direction: column; gap: .7rem; }

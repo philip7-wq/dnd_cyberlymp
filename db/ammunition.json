@@ -1,0 +1,217 @@
+{
+  "source": "Cyberpunk RED Core Rulebook, pg. 340-344",
+  "ammo_types": [
+    {
+      "id": "ammo-basic-pistol",
+      "name": "Basic Pistol Ammo",
+      "ammo_type": "pistol",
+      "quantity_per_purchase": 10,
+      "price": 10,
+      "price_category": "Cheap",
+      "effect": "Standard damage, no special effects.",
+      "availability": "Everywhere"
+    },
+    {
+      "id": "ammo-basic-rifle",
+      "name": "Basic Rifle Ammo",
+      "ammo_type": "rifle",
+      "quantity_per_purchase": 10,
+      "price": 10,
+      "price_category": "Cheap",
+      "effect": "Standard damage, no special effects.",
+      "availability": "Everywhere"
+    },
+    {
+      "id": "ammo-basic-shotgun",
+      "name": "Basic Shotgun Shell",
+      "ammo_type": "shotgun",
+      "quantity_per_purchase": 10,
+      "price": 10,
+      "price_category": "Cheap",
+      "effect": "Standard damage, no special effects.",
+      "availability": "Everywhere"
+    },
+    {
+      "id": "ammo-basic-arrow",
+      "name": "Basic Arrow",
+      "ammo_type": "arrow",
+      "quantity_per_purchase": 10,
+      "price": 10,
+      "price_category": "Cheap",
+      "effect": "Standard damage, no special effects.",
+      "availability": "Everywhere"
+    },
+    {
+      "id": "ammo-ap-pistol",
+      "name": "Armor Piercing Pistol Ammo",
+      "ammo_type": "pistol",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "Halves the SP of the target's armor (round down) before damage is applied.",
+      "special": "armor_piercing"
+    },
+    {
+      "id": "ammo-ap-rifle",
+      "name": "Armor Piercing Rifle Ammo",
+      "ammo_type": "rifle",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "Halves the SP of the target's armor (round down) before damage is applied.",
+      "special": "armor_piercing"
+    },
+    {
+      "id": "ammo-ap-shotgun",
+      "name": "Armor Piercing Shotgun Shell",
+      "ammo_type": "shotgun",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "Halves the SP of the target's armor (round down) before damage is applied.",
+      "special": "armor_piercing"
+    },
+    {
+      "id": "ammo-hp-pistol",
+      "name": "Hollow Point Pistol Ammo",
+      "ammo_type": "pistol",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "Does not penetrate armor with SP > 0. If target's SP is 0 (or reduced to 0), add +2 to damage.",
+      "special": "hollow_point"
+    },
+    {
+      "id": "ammo-hp-rifle",
+      "name": "Hollow Point Rifle Ammo",
+      "ammo_type": "rifle",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "Does not penetrate armor with SP > 0. If target's SP is 0 (or reduced to 0), add +2 to damage.",
+      "special": "hollow_point"
+    },
+    {
+      "id": "ammo-hp-shotgun",
+      "name": "Hollow Point Shotgun Shell",
+      "ammo_type": "shotgun",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "Does not penetrate armor with SP > 0. If target's SP is 0 (or reduced to 0), add +2 to damage.",
+      "special": "hollow_point"
+    },
+    {
+      "id": "ammo-incendiary-pistol",
+      "name": "Incendiary Pistol Ammo",
+      "ammo_type": "pistol",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "On hit, target must make a DV13 Resist Torture/Drugs Check or catch fire (2d6 damage per turn until extinguished).",
+      "special": "incendiary"
+    },
+    {
+      "id": "ammo-incendiary-rifle",
+      "name": "Incendiary Rifle Ammo",
+      "ammo_type": "rifle",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "On hit, target must make a DV13 Resist Torture/Drugs Check or catch fire (2d6 damage per turn until extinguished).",
+      "special": "incendiary"
+    },
+    {
+      "id": "ammo-incendiary-shotgun",
+      "name": "Incendiary Shotgun Shell",
+      "ammo_type": "shotgun",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "On hit, target must make a DV13 Resist Torture/Drugs Check or catch fire (2d6 damage per turn until extinguished).",
+      "special": "incendiary"
+    },
+    {
+      "id": "ammo-smart-pistol",
+      "name": "Smart Pistol Ammo",
+      "ammo_type": "pistol",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "+1 to Attack Rolls when used with a Smartgun Link cyberware.",
+      "special": "smart",
+      "requires": "Smartgun Link (cyberware)"
+    },
+    {
+      "id": "ammo-smart-rifle",
+      "name": "Smart Rifle Ammo",
+      "ammo_type": "rifle",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "+1 to Attack Rolls when used with a Smartgun Link cyberware.",
+      "special": "smart",
+      "requires": "Smartgun Link (cyberware)"
+    },
+    {
+      "id": "ammo-biotoxin1-pistol",
+      "name": "Biotoxin I Pistol Ammo",
+      "ammo_type": "pistol",
+      "quantity_per_purchase": 10,
+      "price": 500,
+      "price_category": "Premium",
+      "effect": "On hit, target must make a DV15 Resist Torture/Drugs Check or lose 4 BODY for 1 hour. If BODY reaches 0, target falls unconscious.",
+      "special": "biotoxin_1"
+    },
+    {
+      "id": "ammo-biotoxin2-pistol",
+      "name": "Biotoxin II Pistol Ammo",
+      "ammo_type": "pistol",
+      "quantity_per_purchase": 10,
+      "price": 500,
+      "price_category": "Premium",
+      "effect": "On hit, target must make a DV17 Resist Torture/Drugs Check or die in 1 hour. A Medtech can treat this with a DV17 Medical Tech Check.",
+      "special": "biotoxin_2"
+    },
+    {
+      "id": "ammo-poison-arrow",
+      "name": "Poison Arrow",
+      "ammo_type": "arrow",
+      "quantity_per_purchase": 10,
+      "price": 100,
+      "price_category": "Costly",
+      "effect": "On hit, target must make a DV15 Resist Torture/Drugs Check or take 2d6 additional damage.",
+      "special": "poison"
+    }
+  ],
+
+  "weapon_ammo_mapping": {
+    "Light Pistol":        { "ammo_type": "pistol",  "magazine": 10, "autofire": false },
+    "Medium Pistol":       { "ammo_type": "pistol",  "magazine": 12, "autofire": false },
+    "Heavy Pistol":        { "ammo_type": "pistol",  "magazine": 8,  "autofire": false },
+    "Very Heavy Pistol":   { "ammo_type": "pistol",  "magazine": 8,  "autofire": false },
+    "SMG":                 { "ammo_type": "rifle",   "magazine": 30, "autofire": true  },
+    "Heavy SMG":           { "ammo_type": "rifle",   "magazine": 40, "autofire": true  },
+    "Shotgun":             { "ammo_type": "shotgun", "magazine": 4,  "autofire": false },
+    "Combat Shotgun":      { "ammo_type": "shotgun", "magazine": 15, "autofire": false },
+    "Assault Rifle":       { "ammo_type": "rifle",   "magazine": 25, "autofire": true  },
+    "Sniper Rifle":        { "ammo_type": "rifle",   "magazine": 4,  "autofire": false },
+    "Bolt Action Sniper Rifle": { "ammo_type": "rifle", "magazine": 4, "autofire": false },
+    "Grenade Launcher":    { "ammo_type": "grenade", "magazine": 2,  "autofire": false },
+    "Rocket Launcher":     { "ammo_type": "rocket",  "magazine": 1,  "autofire": false },
+    "Compound Bow":        { "ammo_type": "arrow",   "magazine": 1,  "autofire": false },
+    "Crossbow":            { "ammo_type": "arrow",   "magazine": 1,  "autofire": false }
+  },
+
+  "consumption_rules": {
+    "single_shot": 1,
+    "autofire": 10,
+    "suppressive_fire": 10,
+    "aimed_shot": 1
+  },
+
+  "reload_rules": {
+    "description": "Reloading takes 1 Action (your full Action for the turn).",
+    "fills_magazine_to_max": true
+  }
+}

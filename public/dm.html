@@ -78,6 +78,7 @@
     <div class="dm-content-tabs">
       <button class="dm-content-tab active" data-panel="chars">CHARAKTERE</button>
       <button class="dm-content-tab" data-panel="npcs">NPCs</button>
+      <button id="dmItemsBtn" class="ctrl-btn" style="margin-left:auto;font-size:.68rem;background:rgba(0,229,255,.08);border-color:var(--cyan);color:var(--cyan);padding:.25rem .65rem">🛍 Items</button>
     </div>
     <div class="dm-grid-wrap" id="dmGrid">
       <div style="color:var(--text-muted);font-size:.82rem;padding:.5rem">Lade Charaktere…</div>
@@ -87,7 +88,6 @@
         <div style="display:flex;align-items:center;gap:.5rem">
           <span class="npc-section-title">NPCs</span>
           <button id="npcAddBtn" class="npc-add-btn">+ NPC</button>
-          <button id="dmItemsBtn" class="npc-add-btn" style="margin-left:.25rem;background:rgba(0,229,255,.08);border-color:var(--cyan);color:var(--cyan)">🛍 Items</button>
         </div>
         <div id="npcOverview" style="font-size:.65rem;color:var(--text-muted);letter-spacing:.06em"></div>
       </div>
@@ -104,19 +104,26 @@
       <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
     </div>
     <!-- Raum-Inventar -->
-    <div style="border-top:1px solid var(--border);padding:.75rem 1rem .5rem">
-      <div class="roll-log-head">📦 RAUM / UMGEBUNG</div>
-      <div style="display:flex;gap:.3rem;margin-bottom:.4rem">
-        <input id="dmRoomDesc" class="ctrl-input" placeholder="Raum-Beschreibung" style="flex:1;font-size:.7rem" maxlength="60">
-        <button class="ctrl-btn" id="dmRoomDescSet" style="font-size:.65rem">↵</button>
+    <div class="dm-room-panel">
+      <div class="dm-room-header" id="dmRoomToggle">
+        <span>📦 RAUM / UMGEBUNG</span>
+        <span id="dmRoomCount" class="dm-room-count"></span>
+        <button class="ctrl-btn" id="dmRoomExpandBtn" style="margin-left:auto;font-size:.6rem;padding:.15rem .45rem" title="Vollansicht">⛶</button>
+        <span class="dm-room-chevron" id="dmRoomChevron">▲</span>
       </div>
-      <div style="display:flex;gap:.3rem;margin-bottom:.4rem">
-        <input id="dmRoomItemSearch" class="ctrl-input" placeholder="Item suchen oder Name" style="flex:1;font-size:.72rem">
-        <button class="ctrl-btn" id="dmRoomItemAdd" style="font-size:.65rem">+ Legen</button>
+      <div id="dmRoomBody" class="dm-room-body">
+        <div class="dm-room-inputs">
+          <input id="dmRoomDesc" class="ctrl-input" placeholder="Raum-Beschreibung" style="flex:1;font-size:.7rem" maxlength="60">
+          <button class="ctrl-btn" id="dmRoomDescSet" style="font-size:.65rem">↵</button>
+        </div>
+        <div class="dm-room-inputs">
+          <input id="dmRoomItemSearch" class="ctrl-input" placeholder="Item suchen oder Name eingeben" style="flex:1;font-size:.72rem">
+          <button class="ctrl-btn" id="dmRoomItemAdd" style="font-size:.65rem">+ Legen</button>
+        </div>
+        <div id="dmRoomItemResults" class="dm-room-results"></div>
+        <div id="dmRoomItemList" class="dm-room-list"></div>
+        <button class="ctrl-btn ctrl-btn-red" id="dmRoomClear" style="width:100%;font-size:.65rem;margin-top:.25rem">🗑 Raum leeren</button>
       </div>
-      <div id="dmRoomItemResults" style="max-height:80px;overflow-y:auto;margin-bottom:.3rem;font-size:.7rem"></div>
-      <div id="dmRoomItemList" style="max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:.2rem"></div>
-      <button class="ctrl-btn ctrl-btn-red" id="dmRoomClear" style="width:100%;font-size:.65rem;margin-top:.3rem">🗑 Raum leeren</button>
     </div>
 
     <div class="dm-own-notes-wrap">
@@ -142,6 +149,20 @@
     <div class="dm-chat-input-row">
       <textarea id="dmChatInput" class="dm-chat-input" rows="2" placeholder="Nachricht an alle…" maxlength="500"></textarea>
       <button id="dmChatSend" class="dm-chat-send-btn">→</button>
+    </div>
+  </div>
+</div>
+<!-- Room Expand Overlay -->
+<div id="dmRoomOverlay" hidden style="position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center">
+  <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:8px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--border);gap:.5rem">
+      <span style="font-family:Audiowide,sans-serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)">📦 RAUM / UMGEBUNG</span>
+      <span id="dmRoomOverlayDesc" style="font-size:.7rem;color:var(--text-muted);flex:1"></span>
+      <button id="dmRoomOverlayClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;margin-left:auto">✕</button>
+    </div>
+    <div id="dmRoomOverlayList" style="overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.4rem;flex:1"></div>
+    <div style="padding:.5rem 1rem;border-top:1px solid var(--border)">
+      <button class="ctrl-btn ctrl-btn-red" id="dmRoomOverlayClear" style="width:100%;font-size:.72rem">🗑 Raum leeren</button>
     </div>
   </div>
 </div>
@@ -547,6 +568,7 @@ async function boot() {
   renderNpcGrid();
   setupNpcModal();
   initDmRoomItems();
+  setupRoomPanel();
   setupDmItemsModal();
   setupMainTabs();
   subscribeNpcs(payload => {
@@ -818,21 +840,22 @@ function buildCompactNpcCard(n) {
   const hpCol  = hpPct > 50 ? '#2ecc71' : hpPct > 25 ? '#f39c12' : '#e74c3c';
   const isElim = n.hp_max > 0 && n.hp_current <= 0;
   const portrait = n.image_url
-    ? `<img src="${n.image_url}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:3px;flex-shrink:0">`
-    : `<div style="width:36px;height:36px;border-radius:3px;background:#222;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">👤</div>`;
-  return `<div class="npc-card-compact${isElim ? ' eliminated' : ''}" data-npc-id="${n.id}" style="display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:.25rem">
+    ? `<img src="${n.image_url}" alt="" class="npc-card-portrait-med">`
+    : `<div class="npc-card-portrait-med" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem">👤</div>`;
+  return `<div class="npc-card-med${isElim ? ' eliminated' : ''}" data-npc-id="${n.id}">
     ${portrait}
-    <div style="flex:1;min-width:0">
-      <div style="font-size:.78rem;color:var(--text-head);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(n.name)}</div>
-      <div style="display:flex;align-items:center;gap:.25rem;margin-top:.15rem">
-        <div style="flex:1;height:4px;background:#222;border-radius:2px"><div style="height:100%;width:${hpPct}%;background:${hpCol};border-radius:2px"></div></div>
-        <span style="font-size:.6rem;color:var(--text-muted)">${n.hp_current}/${n.hp_max}</span>
+    <div class="npc-card-body-med">
+      <div class="npc-card-name-med">${escapeHtml(n.name)}</div>
+      ${n.role ? `<div class="npc-card-role-med">${escapeHtml(n.role)}</div>` : ''}
+      <div style="display:flex;align-items:center;gap:.3rem;margin-top:.15rem">
+        <div style="flex:1;height:5px;background:#222;border-radius:3px"><div style="height:100%;width:${hpPct}%;background:${hpCol};border-radius:3px;transition:width .3s"></div></div>
       </div>
+      <div class="npc-card-hp-text-med">${n.hp_current} / ${n.hp_max} HP</div>
     </div>
-    <div style="display:flex;gap:.2rem;flex-shrink:0">
-      <button class="npc-visibility-btn${n.is_visible_to_players ? ' active' : ''}" data-npc-id="${n.id}" style="font-size:.7rem;padding:.2rem .35rem" title="Sichtbarkeit">${n.is_visible_to_players ? '👁' : '🙈'}</button>
-      <button class="npc-edit-btn" data-npc-id="${n.id}" style="font-size:.7rem;padding:.2rem .35rem">✎</button>
-      <button class="npc-dice-btn" data-npc-id="${n.id}" style="font-size:.7rem;padding:.2rem .35rem">🎲</button>
+    <div class="npc-card-actions-med">
+      <button class="npc-edit-btn" data-npc-id="${n.id}" title="Bearbeiten">✏</button>
+      <button class="npc-visibility-btn${n.is_visible_to_players ? ' active' : ''}" data-npc-id="${n.id}" title="Sichtbar für Spieler">${n.is_visible_to_players ? '👁' : '🙈'}</button>
+      <button class="npc-dice-btn" data-npc-id="${n.id}" title="Würfeln">🎲</button>
     </div>
   </div>`;
 }
@@ -864,34 +887,24 @@ function renderNpcGrid() {
 
   let html = '';
   for (const [groupName, members] of Object.entries(groups)) {
-    const color    = members[0]?.group_color || '#FF2D2D';
-    const bgColor  = color + '18';
-    const isOpen   = _npcGroupOpen.has(groupName) ? _npcGroupOpen.get(groupName) : true;
-    const chevron  = isOpen ? '▾' : '▸';
-    if (groupName) {
-      html += `<div class="npc-group-header" data-group-toggle="${groupName}" style="border-color:${color};background:${bgColor};cursor:pointer">
-        <span style="color:${color};font-size:.65rem">${chevron}</span>
-        <span style="color:${color};font-family:Audiowide,sans-serif;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;margin-left:.3rem">${escapeHtml(groupName)}</span>
-        <span style="color:var(--text-muted);font-size:.6rem;margin-left:.4rem">${members.length}</span>
-        <div style="margin-left:auto;display:flex;gap:.3rem" onclick="event.stopPropagation()">
-          <button class="ctrl-btn group-combat-btn" data-group="${groupName}" style="font-size:.6rem;padding:.15rem .4rem">▶ Kampf</button>
-          <button class="ctrl-btn group-toggle-btn" data-group="${groupName}" data-visible="${members.every(m => m.is_visible_to_players) ? '1' : '0'}" style="font-size:.6rem;padding:.15rem .4rem">👁</button>
-          <button class="ctrl-btn" onclick="openNpcModal({group_name:'${groupName}',group_color:'${color}'})" style="font-size:.6rem;padding:.15rem .4rem">+ NPC</button>
-        </div>
+    const color   = members[0]?.group_color || '#888';
+    const isOpen  = _npcGroupOpen.has(groupName) ? _npcGroupOpen.get(groupName) : true;
+    const chevron = isOpen ? '▲' : '▼';
+    const label   = groupName || 'Ohne Gruppe';
+    const groupKey = groupName;
+    html += `<div class="npc-section-header" data-group-toggle="${escapeHtml(groupKey)}" style="border-left-color:${color}">
+      <span class="npc-section-name" style="color:${color}">${escapeHtml(label)}</span>
+      <span class="npc-section-count">${members.length}</span>
+      <div class="npc-section-actions" onclick="event.stopPropagation()">
+        ${groupName ? `<button class="ctrl-btn group-combat-btn" data-group="${escapeHtml(groupName)}" style="font-size:.6rem;padding:.15rem .4rem">▶ Kampf</button>
+        <button class="ctrl-btn group-toggle-btn" data-group="${escapeHtml(groupName)}" data-visible="${members.every(m => m.is_visible_to_players) ? '1' : '0'}" style="font-size:.6rem;padding:.15rem .4rem" title="Alle sichtbar schalten">👁</button>
+        <button class="ctrl-btn" onclick="openNpcModal({group_name:'${groupName}',group_color:'${color}'})" style="font-size:.6rem;padding:.15rem .4rem">+ NPC</button>` : ''}
       </div>
-      <div class="npc-group-cards" data-group-content="${groupName}" style="${isOpen ? '' : 'display:none'}">
-        ${members.map(buildCompactNpcCard).join('')}
-      </div>`;
-    } else {
-      html += `<div class="npc-group-header" data-group-toggle="" style="border-color:#444;background:#111;cursor:pointer">
-        <span style="color:#aaa;font-size:.65rem">${chevron}</span>
-        <span style="color:#aaa;font-family:Audiowide,sans-serif;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;margin-left:.3rem">Ohne Gruppe</span>
-        <span style="color:var(--text-muted);font-size:.6rem;margin-left:.4rem">${members.length}</span>
-      </div>
-      <div class="npc-group-cards" data-group-content="" style="${isOpen ? '' : 'display:none'}">
-        ${members.map(buildCompactNpcCard).join('')}
-      </div>`;
-    }
+      <span class="dm-room-chevron" style="margin-left:${groupName ? '' : 'auto'}">${chevron}</span>
+    </div>
+    <div class="npc-card-grid" data-group-content="${escapeHtml(groupKey)}" style="${isOpen ? '' : 'display:none'}">
+      ${members.map(buildCompactNpcCard).join('')}
+    </div>`;
   }
   grid.innerHTML = html;
 
@@ -904,7 +917,8 @@ function renderNpcGrid() {
       const nowOpen = content.style.display === 'none';
       content.style.display = nowOpen ? '' : 'none';
       _npcGroupOpen.set(gName, nowOpen);
-      header.querySelector('span')?.textContent && (header.querySelector('span').textContent = nowOpen ? '▾' : '▸');
+      const chev = header.querySelector('.dm-room-chevron');
+      if (chev) chev.textContent = nowOpen ? '▲' : '▼';
     });
   });
 
@@ -1210,17 +1224,78 @@ function filterRoomItems(q, resultsEl) {
   });
 }
 
+function buildRoomItemHtml(r) {
+  return `<div class="dm-room-item-row" data-room-id="${r.id}">
+    <span class="dm-room-item-name">${escapeHtml(r.item_name)}</span>
+    ${r.placed_by && r.placed_by !== 'DM' ? `<span class="dm-room-item-by">(${escapeHtml(r.placed_by)})</span>` : ''}
+    <button class="dm-room-item-del" data-del-room="${r.id}" title="Entfernen">✕</button>
+  </div>`;
+}
+
 function renderDmRoomList() {
-  const el = document.getElementById('dmRoomItemList');
+  const el  = document.getElementById('dmRoomItemList');
+  const cnt = document.getElementById('dmRoomCount');
+  if (cnt) cnt.textContent = _roomItems.length ? `${_roomItems.length} Item${_roomItems.length !== 1 ? 's' : ''}` : '';
   if (!el) return;
-  if (!_roomItems.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:.7rem">Leer.</div>'; return; }
-  el.innerHTML = _roomItems.map(r => `
-    <div style="display:flex;align-items:center;gap:.3rem;padding:.2rem .3rem;background:var(--bg-card);border-radius:3px;font-size:.72rem">
-      <span style="flex:1;color:var(--text)">${r.item_name}${r.placed_by && r.placed_by !== 'DM' ? ` <span style="color:var(--text-muted)">(${r.placed_by})</span>` : ''}</span>
-      <button class="ctrl-btn" data-del-room="${r.id}" style="font-size:.6rem;padding:.1rem .3rem">✕</button>
-    </div>`).join('');
+  if (!_roomItems.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:.72rem;padding:.2rem 0">Leer.</div>'; return; }
+  el.innerHTML = _roomItems.map(buildRoomItemHtml).join('');
   el.querySelectorAll('[data-del-room]').forEach(btn => {
     btn.addEventListener('click', async () => { try { await removeRoomItem(btn.dataset.delRoom); } catch(e) { console.warn(e); } });
+  });
+  // Keep overlay in sync if open
+  const overlay = document.getElementById('dmRoomOverlay');
+  if (overlay && overlay.style.display !== 'none') renderRoomOverlay();
+}
+
+function renderRoomOverlay() {
+  const ol  = document.getElementById('dmRoomOverlayList');
+  const del = document.getElementById('dmRoomOverlayDesc');
+  if (!ol) return;
+  const desc = _roomItems[0]?.room_description || '';
+  if (del) del.textContent = desc;
+  if (!_roomItems.length) { ol.innerHTML = '<div style="color:var(--text-muted);font-size:.8rem;padding:.5rem">Raum ist leer.</div>'; return; }
+  ol.innerHTML = _roomItems.map(r => `
+    <div class="dm-room-item-row" style="padding:.45rem .6rem;font-size:.82rem">
+      <span class="dm-room-item-name" style="font-size:.82rem">${escapeHtml(r.item_name)}</span>
+      ${r.placed_by && r.placed_by !== 'DM' ? `<span class="dm-room-item-by">von ${escapeHtml(r.placed_by)}</span>` : ''}
+      <button class="dm-room-item-del" data-del-room="${r.id}" title="Entfernen">✕</button>
+    </div>`).join('');
+  ol.querySelectorAll('[data-del-room]').forEach(btn => {
+    btn.addEventListener('click', async () => { try { await removeRoomItem(btn.dataset.delRoom); } catch(e) { console.warn(e); } });
+  });
+}
+
+function setupRoomPanel() {
+  // Collapse toggle
+  const toggle  = document.getElementById('dmRoomToggle');
+  const body    = document.getElementById('dmRoomBody');
+  const chevron = document.getElementById('dmRoomChevron');
+  let   open    = true;
+  toggle?.addEventListener('click', e => {
+    if (e.target.closest('button')) return;
+    open = !open;
+    body.style.display    = open ? '' : 'none';
+    chevron.textContent   = open ? '▲' : '▼';
+  });
+
+  // Expand overlay
+  const expandBtn = document.getElementById('dmRoomExpandBtn');
+  const overlay   = document.getElementById('dmRoomOverlay');
+  expandBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    overlay.hidden = false; overlay.style.display = 'flex';
+    renderRoomOverlay();
+  });
+  document.getElementById('dmRoomOverlayClose')?.addEventListener('click', () => {
+    overlay.hidden = true; overlay.style.display = 'none';
+  });
+  overlay?.addEventListener('click', e => {
+    if (e.target === overlay) { overlay.hidden = true; overlay.style.display = 'none'; }
+  });
+  document.getElementById('dmRoomOverlayClear')?.addEventListener('click', async () => {
+    if (!_roomItems.length) return;
+    if (!confirm('Raum wirklich leeren?')) return;
+    try { await clearRoomItems(); overlay.hidden = true; overlay.style.display = 'none'; } catch(e) { console.warn(e); }
   });
 }
 

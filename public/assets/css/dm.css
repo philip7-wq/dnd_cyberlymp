@@ -60,7 +60,7 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 /* ── Sidebar (Roll Log + DM Notes stacked) ── */
 .dm-sidebar {
   display: flex; flex-direction: column;
-  border-left: 1px solid var(--border); overflow: hidden;
+  border-left: 1px solid var(--border); overflow-y: auto; overflow-x: hidden;
   height: 100%;
 }
 
@@ -679,18 +679,62 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   background: rgba(0,0,0,.55); padding: .1rem .4rem; border-radius: 2px;
 }
 
-/* ── NPC-Gruppen ── */
-.npc-group-header {
+/* ── NPC-Gruppen (Karten-Grid) ── */
+.npc-section-header {
   display: flex; align-items: center; gap: .5rem;
-  padding: .4rem .75rem; border-radius: 5px 5px 0 0;
-  border: 1px solid; border-bottom: none; margin-top: .75rem;
+  padding: .45rem .75rem; background: rgba(255,255,255,.03);
+  border-left: 3px solid var(--border); border-bottom: 1px solid var(--border);
+  margin-top: .6rem; cursor: pointer;
 }
-.npc-group-header:first-child { margin-top: 0; }
-.npc-group-cards {
-  display: flex; flex-wrap: wrap; gap: .5rem;
-  padding: .5rem .75rem .75rem; border: 1px solid #333;
-  border-top: none; border-radius: 0 0 5px 5px; margin-bottom: .25rem;
+.npc-section-header:first-child { margin-top: 0; }
+.npc-section-header:hover { background: rgba(255,255,255,.05); }
+.npc-section-name { font-family: Audiowide,sans-serif; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+.npc-section-count { font-size: .6rem; color: var(--text-muted); padding: .1rem .35rem; background: var(--bg-input); border-radius: 3px; }
+.npc-section-actions { margin-left: auto; display: flex; gap: .3rem; }
+.npc-card-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr));
+  gap: .45rem; padding: .5rem .75rem .6rem;
 }
+.npc-card-med {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: .5rem; display: flex; gap: .45rem; align-items: flex-start;
+  transition: var(--transition);
+}
+.npc-card-med:hover { border-color: #444; }
+.npc-card-portrait-med {
+  width: 48px; height: 48px; object-fit: cover; border-radius: 3px;
+  background: #1a1a1a; flex-shrink: 0;
+}
+.npc-card-body-med { flex: 1; min-width: 0; }
+.npc-card-name-med { font-size: .82rem; color: var(--text-head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: .1rem; }
+.npc-card-role-med { font-size: .62rem; color: var(--text-muted); margin-bottom: .25rem; }
+.npc-card-hp-text-med { font-size: .62rem; color: var(--text-muted); margin-top: .15rem; }
+.npc-card-actions-med { display: flex; flex-direction: column; gap: .2rem; flex-shrink: 0; }
+.npc-card-actions-med button { background: none; border: none; cursor: pointer; font-size: .78rem; opacity: .55; padding: .15rem; transition: opacity .15s; }
+.npc-card-actions-med button:hover { opacity: 1; }
+
+/* ── DM Raum-Sektion ── */
+.dm-room-panel { border-top: 1px solid var(--border); }
+.dm-room-header {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .5rem .75rem; cursor: pointer;
+  font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted);
+}
+.dm-room-header:hover { color: var(--text); }
+.dm-room-count { font-size: .6rem; color: var(--cyan); }
+.dm-room-chevron { font-size: .65rem; transition: transform .2s; }
+.dm-room-body { padding: .4rem .75rem .6rem; display: flex; flex-direction: column; gap: .35rem; }
+.dm-room-inputs { display: flex; gap: .3rem; }
+.dm-room-results { max-height: 100px; overflow-y: auto; font-size: .72rem; }
+.dm-room-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: .25rem; }
+.dm-room-item-row {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .3rem .5rem; background: var(--bg-input); border-radius: 3px; font-size: .75rem;
+}
+.dm-room-item-name { flex: 1; color: var(--text); }
+.dm-room-item-by { font-size: .62rem; color: var(--text-muted); }
+.dm-room-item-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: .75rem; opacity: .5; padding: 0 .2rem; }
+.dm-room-item-del:hover { opacity: 1; color: var(--red); }
 
 /* ── Psychosis card ── */
 .dm-card--psycho { border-color: #7B2FBE !important; }
