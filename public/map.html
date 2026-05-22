@@ -167,7 +167,7 @@ import {
 const urlParams = new URLSearchParams(location.search);
 const CHAR_ID   = urlParams.get('id');
 const MAP_ID    = urlParams.get('map');
-const IS_DM     = sessionStorage.getItem('dm_auth') === '1';
+const IS_DM     = sessionStorage.getItem('dm_auth') === '1' || localStorage.getItem('dm_auth') === '1';
 
 if (!IS_DM && !CHAR_ID) location.replace('index.html');
 

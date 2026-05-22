@@ -452,7 +452,7 @@ let _dmTimerInterval = null;
 
 // ── PIN Auth ──────────────────────────────────────────────────
 function checkPin() {
-  if (sessionStorage.getItem('dm_auth') === '1') {
+  if (sessionStorage.getItem('dm_auth') === '1' || localStorage.getItem('dm_auth') === '1') {
     document.getElementById('pinOverlay').hidden = true;
     boot();
   }
@@ -462,6 +462,7 @@ document.getElementById('pinInput').addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   if (e.target.value === DM_PIN) {
     sessionStorage.setItem('dm_auth', '1');
+    localStorage.setItem('dm_auth', '1');
     document.getElementById('pinOverlay').hidden = true;
     boot();
   } else {
