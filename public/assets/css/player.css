@@ -176,13 +176,13 @@ body.combat-active .char-sub {
 .skill-lvl   { text-align: center; color: var(--cyan); font-family: var(--font-display); font-size: .8rem; }
 .skill-base  { text-align: center; color: var(--text-head); font-family: var(--font-display); font-size: .8rem; }
 .roll-btn {
-  background: none; border: 1px solid var(--border); border-radius: 2px;
-  color: var(--text-muted); font-size: .82rem; padding: .1rem 0;
+  background: none; border: 1px solid var(--border); border-radius: 3px;
+  color: var(--text-muted); font-size: .9rem; padding: .25rem 0;
   cursor: pointer; text-align: center; width: 100%;
   transition: border-color .12s, color .12s;
 }
 .roll-btn:hover        { border-color: var(--cyan); color: var(--cyan); }
-.roll-btn.dmg-btn      { border-color: #3a1515; color: #ff6666; font-size: .7rem; font-family: var(--font-display); padding: .15rem .4rem; width: auto; }
+.roll-btn.dmg-btn      { border-color: #5a1818; color: #ff6666; font-size: .92rem; font-family: var(--font-display); padding: .4rem .9rem; width: auto; letter-spacing: .04em; }
 .roll-btn.dmg-btn:hover{ background: #1a0808; border-color: var(--red); color: var(--red); }
 
 /* ── Weapons ── */
@@ -738,9 +738,9 @@ body.near-death::before {
 
 /* ── Stat roll button (per stat) ── */
 .stat-roll-btn {
-  display: block; margin: .25rem auto 0; width: 22px; height: 16px;
-  background: none; border: 1px solid var(--red); border-radius: 2px;
-  color: var(--red); font-size: .6rem; cursor: pointer; line-height: 1;
+  display: block; margin: .3rem auto 0; width: 32px; height: 22px;
+  background: none; border: 1px solid var(--red); border-radius: 3px;
+  color: var(--red); font-size: .72rem; cursor: pointer; line-height: 1;
   transition: background .12s;
 }
 .stat-roll-btn:hover { background: rgba(255,45,45,.18); }
@@ -863,8 +863,8 @@ body.near-death::before {
 .role-roll-group { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .5rem; }
 .role-roll-btn {
   background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
-  border-radius: var(--radius); padding: .35rem .75rem; font-family: var(--font-display);
-  font-size: .72rem; cursor: pointer; transition: var(--transition);
+  border-radius: var(--radius); padding: .45rem 1rem; font-family: var(--font-display);
+  font-size: .82rem; cursor: pointer; transition: var(--transition);
 }
 .role-roll-btn:hover { border-color: var(--red); color: var(--red); }
 .role-roll-result { font-size: .85rem; min-height: 1.4rem; }

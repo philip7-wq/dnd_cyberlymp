@@ -2673,6 +2673,20 @@ function setupRemove() {
 }
 
 async function removeItem(inv, idx, slot) {
+  // Get item name for confirmation message
+  let itemName = '';
+  if (inv === 'armor') {
+    itemName = char.armor?.[idx]?.name || '';
+  } else if (inv === 'cyberware' && slot) {
+    itemName = char.cyberware?.[slot]?.[parseInt(idx)]?.name || '';
+  } else if (inv === 'cyberware') {
+    itemName = (char.cyberware || [])[parseInt(idx)]?.name || '';
+  } else {
+    itemName = (char[inv] || [])[parseInt(idx)]?.name || '';
+  }
+  const label = itemName ? `„${itemName}"` : 'dieses Item';
+  if (!confirm(`${label} wirklich löschen?`)) return;
+
   if (inv === 'armor') {
     char.armor = { ...(char.armor || {}), [idx]: { name: '', sp: 0, penalty: 0 } };
     renderArmor();
