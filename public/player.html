@@ -306,6 +306,9 @@ function getInjuries() {
   try { return JSON.parse(char.critical_injuries || '[]'); } catch { return []; }
 }
 
+let _lastEffEMP     = null;
+let _psychosisShown = false;
+
 const CW_SLOT_LABELS = {
   rightCybereye:'Rechtes Auge', leftCybereye:'Linkes Auge',
   rightCyberarm:'Rechter Arm',  leftCyberarm:'Linker Arm',
@@ -529,7 +532,6 @@ function updateResDisplay() {
   if (hum <= 0) showPsychosisModal();
 }
 
-let _lastEffEMP = null;
 function updateEffectiveEMP(humanity) {
   const rawEMP = char.stats?.EMP ?? 0;
   const effEMP = Math.min(rawEMP, Math.floor((humanity ?? 0) / 10));
@@ -552,7 +554,6 @@ function updateEffectiveEMP(humanity) {
   _lastEffEMP = effEMP;
 }
 
-let _psychosisShown = false;
 function showPsychosisModal() {
   if (_psychosisShown) return;
   _psychosisShown = true;
