@@ -1188,17 +1188,17 @@ function buildSkeletonOverlayHtml(cw) {
     return shape + badge;
   }
 
-  // SVG viewBox matches image aspect ratio (portrait ~0.6:1 → 100×160)
-  const svg = `<svg class="cyber-skeleton-svg" viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg">
-    ${zone('ellipse','head',   {cx:50, cy:9,  rx:13, ry:10, bx:62, by:3})}
-    ${zone('ellipse','leftEye',{cx:43, cy:8,  rx:4,  ry:3,  bx:46, by:5})}
-    ${zone('ellipse','rightEye',{cx:57,cy:8,  rx:4,  ry:3,  bx:60, by:5})}
-    ${zone('rect','neck',      {x:44,  y:18,  w:12,  h:7,   bx:55, by:22})}
-    ${zone('rect','leftArm',   {x:5,   y:25,  w:16,  h:52,  bx:20, by:28})}
-    ${zone('rect','rightArm',  {x:79,  y:25,  w:16,  h:52,  bx:94, by:28})}
-    ${zone('rect','torso',     {x:28,  y:23,  w:44,  h:46,  bx:71, by:27})}
-    ${zone('rect','leftLeg',   {x:26,  y:74,  w:20,  h:78,  bx:45, by:78})}
-    ${zone('rect','rightLeg',  {x:54,  y:74,  w:20,  h:78,  bx:73, by:78})}
+  // SVG viewBox matches image aspect ratio 1024×1536 → 2:3 → 100×150
+  const svg = `<svg class="cyber-skeleton-svg" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+    ${zone('ellipse','head',    {cx:50, cy:14, rx:13, ry:9,  bx:62, by:6})}
+    ${zone('ellipse','leftEye', {cx:44, cy:12, rx:4,  ry:3,  bx:48, by:9.5})}
+    ${zone('ellipse','rightEye',{cx:56, cy:12, rx:4,  ry:3,  bx:60, by:9.5})}
+    ${zone('rect','neck',       {x:45,  y:22,  w:10,  h:7,   rx:3, bx:55, by:25})}
+    ${zone('rect','torso',      {x:30,  y:24,  w:40,  h:53,  rx:4, bx:69, by:27})}
+    ${zone('rect','leftArm',    {x:5,   y:25,  w:24,  h:55,  rx:5, bx:28, by:28})}
+    ${zone('rect','rightArm',   {x:71,  y:25,  w:24,  h:55,  rx:5, bx:94, by:28})}
+    ${zone('rect','leftLeg',    {x:27,  y:78,  w:22,  h:66,  rx:4, bx:48, by:81})}
+    ${zone('rect','rightLeg',   {x:51,  y:78,  w:22,  h:66,  rx:4, bx:72, by:81})}
   </svg>`;
 
   return `<div class="cyber-skeleton-wrap">

@@ -997,7 +997,7 @@ body.near-death::before {
 /* ── Cyberware Layout ── */
 .cyber-layout {
   display: grid;
-  grid-template-columns: 1fr 220px 1fr;
+  grid-template-columns: 1fr 260px 1fr;
   gap: 1rem;
   align-items: start;
 }
