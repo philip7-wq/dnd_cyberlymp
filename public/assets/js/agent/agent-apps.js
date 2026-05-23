@@ -192,7 +192,7 @@ async function renderThreadList() {
   const { data: threads } = await supabase
     .from('agent_threads')
     .select('*')
-    .or(`and(a_type.eq.${me.type},a_id.eq.${me.id}),and(b_type.eq.${me.type},b_id.eq.${me.id})`)
+    .or(`a_id.eq.${me.id},b_id.eq.${me.id}`)
     .order('last_message_at', { ascending: false });
 
   if (!threads || !threads.length) {
@@ -360,7 +360,7 @@ async function refreshCallHistory() {
   const me = getActiveIdentity();
   const { data: calls } = await supabase.from('agent_calls')
     .select('*')
-    .or(`and(caller_type.eq.${me.type},caller_id.eq.${me.id}),and(callee_type.eq.${me.type},callee_id.eq.${me.id})`)
+    .or(`caller_id.eq.${me.id},callee_id.eq.${me.id}`)
     .order('started_at', { ascending: false }).limit(50);
 
   if (!calls || !calls.length) {
@@ -642,7 +642,7 @@ async function refreshTransfers() {
   const me = getActiveIdentity();
   const { data: trs } = await supabase.from('agent_transfers')
     .select('*')
-    .or(`and(sender_type.eq.${me.type},sender_id.eq.${me.id}),and(recipient_type.eq.${me.type},recipient_id.eq.${me.id})`)
+    .or(`sender_id.eq.${me.id},recipient_id.eq.${me.id}`)
     .order('created_at', { ascending: false }).limit(50);
 
   if (!trs || !trs.length) {

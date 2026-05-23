@@ -24,14 +24,15 @@
 .agent-bar {
   position: fixed;
   left: 50%;
-  bottom: 12px;
+  bottom: 0;
   transform: translateX(-50%);
   width: var(--agent-phone-w);
   max-width: 96vw;
   height: var(--agent-bar-h);
   background: var(--agent-bg);
   border: 1px solid var(--agent-hologram);
-  border-radius: 14px;
+  border-bottom: none;
+  border-radius: 14px 14px 0 0;
   z-index: 8500;
   cursor: pointer;
   box-shadow:
@@ -41,11 +42,10 @@
   display: flex;
   align-items: center;
   padding: 0 18px;
-  transition: transform 220ms cubic-bezier(.22,1,.36,1), opacity 220ms;
+  transition: opacity 220ms;
   font-family: 'Inter', sans-serif;
 }
-.agent-bar:hover { transform: translateX(-50%) translateY(-2px); }
-.agent-bar.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(20px); }
+.agent-bar.hidden { opacity: 0; pointer-events: none; }
 
 .agent-bar-logo {
   font-family: 'Audiowide', sans-serif;
@@ -79,14 +79,14 @@
 .agent-phone {
   position: fixed;
   left: 50%;
-  bottom: -10px;
-  transform: translateX(-50%) translateY(105%);
+  bottom: var(--agent-bar-h);
+  transform: translateX(-50%) translateY(100%);
   width: var(--agent-phone-w);
   max-width: 96vw;
   height: var(--agent-phone-h);
   z-index: 8501;
   pointer-events: none;
-  transition: transform 380ms cubic-bezier(.16,1,.3,1);
+  transition: transform 400ms cubic-bezier(.16,1,.3,1);
 }
 .agent-phone.open { transform: translateX(-50%) translateY(0); pointer-events: auto; }
 
@@ -730,14 +730,15 @@
 .agent-dm-bar {
   position: fixed;
   left: 50%;
-  bottom: 12px;
+  bottom: 0;
   transform: translateX(-50%);
   width: var(--agent-dm-w);
   max-width: 96vw;
   height: var(--agent-bar-h);
   background: var(--agent-bg);
   border: 1px solid var(--agent-accent-warm);
-  border-radius: 14px;
+  border-bottom: none;
+  border-radius: 14px 14px 0 0;
   z-index: 8500;
   cursor: pointer;
   box-shadow: 0 0 24px rgba(255, 184, 77, 0.3);
@@ -745,10 +746,10 @@
   display: flex;
   align-items: center;
   padding: 0 18px;
-  transition: transform 220ms cubic-bezier(.22,1,.36,1);
+  transition: opacity 220ms;
   font-family: 'Inter', sans-serif;
 }
-.agent-dm-bar:hover { transform: translateX(-50%) translateY(-2px); }
+.agent-dm-bar:hover { opacity: .85; }
 .agent-dm-bar-logo {
   font-family: 'Audiowide', sans-serif;
   color: var(--agent-accent-warm);
@@ -760,8 +761,8 @@
 .agent-dm-phone {
   position: fixed;
   left: 50%;
-  bottom: -10px;
-  transform: translateX(-50%) translateY(105%);
+  bottom: var(--agent-bar-h);
+  transform: translateX(-50%) translateY(100%);
   width: var(--agent-dm-w);
   max-width: 96vw;
   height: var(--agent-dm-h);
