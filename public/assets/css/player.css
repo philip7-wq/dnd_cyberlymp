@@ -745,6 +745,16 @@ body.near-death::before {
 }
 .stat-roll-btn:hover { background: rgba(255,45,45,.18); }
 
+.stat-dice-btn {
+  display: block; margin: .3rem auto 0; width: 32px; height: 22px;
+  background: none; border: 1px solid rgba(0,229,255,.35); border-radius: 3px;
+  color: var(--cyan); font-size: .75rem; cursor: pointer; line-height: 1;
+  transition: background .12s, border-color .12s;
+  opacity: .7;
+}
+.stat-dice-btn:hover { background: rgba(0,229,255,.12); border-color: var(--cyan); opacity: 1; }
+.stat-card:hover .stat-dice-btn { opacity: 1; }
+
 /* ── Stats toolbar (roll-all + edit toggle) ── */
 .stats-toolbar { display: flex; justify-content: flex-end; align-items: center; gap: .5rem; padding: .3rem 0 .4rem; }
 .roll-all-btn {

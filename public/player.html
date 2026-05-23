@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Caveat&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/player.css">
+  <link rel="stylesheet" href="assets/css/agent.css">
 </head>
 <body>
 
@@ -281,6 +282,8 @@
 console.log('[player] module loaded');
 import { getCharacter, getCharacters, patchCharacter, patchCash, logRoll, getActiveCombat, getActiveCombats, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc, getRoomItems, addRoomItem, removeRoomItem, subscribeRoomItems } from './assets/js/supabase.js';
 import { roll, initDiceBox, animateRollNumber } from './assets/js/dice.js';
+import { initAgent } from './assets/js/agent/agent-core.js';
+import './assets/js/agent/agent-apps.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const STATS_ORDER = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP'];
@@ -345,14 +348,37 @@ let _allCharsFull       = [];
 let deathSavePenalty    = 0;
 let deathSaveStabilized = false;
 let skillUpgradeMap     = {};   // skillName → { ip_cost_multiplier, ip_cost_by_next_level }
+// Explicit aliases: PDF-parsed name → items.json canonical name
+const SKILL_NAME_ALIASES = {
+  'Photography':   'Photography/Film',
+  'Pickpocket':    'Pick Pocket',
+};
+// Standard IP cost table (20 × level) for skills absent from items.json
+const _STD_COSTS = {"1":20,"2":40,"3":60,"4":80,"5":100,"6":120,"7":140,"8":160,"9":180,"10":200};
+const SKILL_DEFAULT_IP = {
+  'Pharmacology': { ip_cost_multiplier: 1, ip_cost_by_next_level: _STD_COSTS },
+  'Zoology':      { ip_cost_multiplier: 1, ip_cost_by_next_level: _STD_COSTS },
+};
+
 function skillUpgradeLookup(name) {
+  // 1. Exact match
   if (skillUpgradeMap[name]) return skillUpgradeMap[name];
+  // 2. Explicit alias
+  const aliased = SKILL_NAME_ALIASES[name];
+  if (aliased && skillUpgradeMap[aliased]) return skillUpgradeMap[aliased];
+  // 3. Normalized match (lowercase, trim, strip (x2))
   const norm = name.toLowerCase().replace(/\s+/g, ' ').trim().replace(/\s*\(x2\)$/i, '');
   const canonical = (window._skillUpgradeNorm || {})[norm];
   if (canonical) return skillUpgradeMap[canonical];
-  // Strip parenthetical suffix: "Language (2nd)" → "Language", "Science (Biology)" → "Science"
+  // 4. Space-collapsed match: "Pickpocket" → "pickpocket" matches "Pick Pocket" → "pickpocket"
+  const noSpace = norm.replace(/\s/g, '');
+  const spaceMatch = Object.keys(window._skillUpgradeNorm || {}).find(k => k.replace(/\s/g, '') === noSpace);
+  if (spaceMatch && (window._skillUpgradeNorm || {})[spaceMatch]) return skillUpgradeMap[(window._skillUpgradeNorm || {})[spaceMatch]];
+  // 5. Strip parenthetical suffix: "Science (Biology)" → "Science"
   const base = name.replace(/\s*\([^)]*\)\s*$/, '').trim();
   if (base && base !== name) return skillUpgradeLookup(base);
+  // 6. Default cost entry for known skills missing from items.json
+  if (SKILL_DEFAULT_IP[name]) return SKILL_DEFAULT_IP[name];
   return null;
 }
 let buffTimerHandle     = null;
@@ -455,6 +481,7 @@ if (id) {
     clearTimeout(bootTimeout);
     renderAll();
     show();
+    initAgent({ characterId: id, characterName: char.handle || char.name || '?' }).catch(e => console.error('[agent]', e));
     // Notification nur nach User-Gesture anfragen
     document.addEventListener('click', () => requestNotifPermission(), { once: true });
     initRoomItems();
@@ -738,11 +765,27 @@ function renderStats() {
         empNote = `<div style="font-size:.55rem;color:#FF8C00;margin-top:.1rem">eff. ${effEMP}</div>`;
       }
     }
+    if (s === 'MOVE') {
+      const movePen = getInjuryPenalties().move;
+      if (movePen < 0) {
+        const effMove = Math.max(1, rawVal + movePen);
+        empNote += `<div style="font-size:.55rem;color:#FF8C00;margin-top:.1rem">eff. ${effMove} (Injury)</div>`;
+      }
+    }
+    const effVal   = getEffectiveStat(s);
+    const buffBon  = getBuffStatBonus(s);
+    const rollPen  = getStatRollPenalty(s);
+    const rollMod  = effVal + buffBon + rollPen;
+    const rollExpr = rollMod >= 0 ? `1d10+${rollMod}` : `1d10${rollMod}`;
+    const buffNote = buffBon !== 0
+      ? `<div style="font-size:.52rem;color:var(--cyan);margin-top:.1rem">${buffBon >= 0 ? '+' : ''}${buffBon} Buff</div>` : '';
     html += `<div class="stat-card" id="stat-card-${s}">
       <div class="stat-key">${s}</div>
       <div class="stat-val"${editAttr} data-stat="${s}" spellcheck="false">${displayVal}</div>
-      ${empNote}
-      ${allStatsZero ? `<button class="stat-roll-btn" data-roll-stat="${s}" title="1d10 würfeln">⚄</button>` : ''}
+      ${empNote}${buffNote}
+      ${allStatsZero
+        ? `<button class="stat-roll-btn" data-roll-stat="${s}" title="1d10 würfeln">⚄</button>`
+        : `<button class="stat-dice-btn" data-stat="${s}" data-expr="${rollExpr}" title="${rollExpr}">🎲</button>`}
     </div>`;
   }
   html += `<div class="stat-card"><div class="stat-key">LUCK</div><div class="stat-val">${luck}</div></div>`;
@@ -813,7 +856,7 @@ function setupStatEditing() {
     if (e.key === 'Escape') { el.textContent = char.stats?.[el.dataset.stat] ?? 0; el.blur(); }
   });
 
-  // Single stat dice roll
+  // Single stat dice roll (setup/initial — rolls for stat value)
   tabEl.addEventListener('click', async e => {
     const btn = e.target.closest('.stat-roll-btn');
     if (!btn) return;
@@ -823,6 +866,23 @@ function setupStatEditing() {
     if (statEl) await animateRollNumber(statEl, value, { duration: 800, minVal: 1, maxVal: 10 });
     await setStatValue(stat, value);
     renderStats();
+  });
+
+  // Gameplay stat roll — 1d10 + effective stat (with penalties/buffs)
+  tabEl.addEventListener('click', e => {
+    const btn = e.target.closest('.stat-dice-btn');
+    if (!btn) return;
+    const stat = btn.dataset.stat;
+    const expr = btn.dataset.expr;
+    // Open the dice popup pre-filled with the stat expression
+    const diceInput = document.getElementById('diceExpr');
+    if (diceInput) {
+      diceInput.value = expr;
+      const dicePanel = document.getElementById('dicePanel');
+      if (dicePanel && dicePanel.hidden) document.getElementById('diceBtn')?.click();
+    }
+    // Also auto-roll immediately with stat as context
+    rollStat(stat, expr);
   });
 
   // Roll all stats
@@ -870,6 +930,58 @@ function getSWPenalty() {
   return sw > 0 && (char?.current_hp ?? 0) < sw ? 2 : 0;
 }
 
+function getEffectiveStat(statName) {
+  const raw = char.stats?.[statName] ?? 0;
+  if (statName === 'EMP')  return Math.min(raw, Math.floor((char.current_humanity ?? 0) / 10));
+  if (statName === 'MOVE') return Math.max(1, raw + getInjuryPenalties().move);
+  return raw;
+}
+
+function getStatRollPenalty(statName) {
+  const injP = getInjuryPenalties();
+  // allActions injuries (Brain Injury, Concussion) apply to all stat rolls
+  let pen = injP.allActions;
+  // SW penalty applies to all checks
+  pen += getSWPenalty() * -1;
+  return pen; // ≤ 0
+}
+
+function getBuffStatBonus(statName) {
+  return (char.buffs || [])
+    .filter(b => b.stat === statName && b.stat_bonus != null &&
+                 (!b.expires_at || new Date(b.expires_at).getTime() > Date.now()))
+    .reduce((sum, b) => sum + (b.stat_bonus || 0), 0);
+}
+
+function getInjuryPenalties() {
+  const r = { move: 0, allActions: 0, ranged: 0, melee: 0, perception: 0, social: 0 };
+  for (const inj of getInjuries()) {
+    const name = inj.name || inj;
+    if (name === 'Collapsed Lung')   r.move -= 2;
+    if (name === 'Broken Leg')       r.move -= 4;
+    if (name === 'Dismembered Leg')  r.move -= 6;
+    if (name === 'Brain Injury')     r.allActions -= 2;
+    if (name === 'Concussion')       r.allActions -= 2;
+    if (name === 'Torn Muscle')      r.melee -= 2;
+    if (name === 'Damaged Eye')    { r.ranged -= 2; r.perception -= 2; }
+    if (name === 'Lost Eye')       { r.ranged -= 4; r.perception -= 4; }
+    if (name === 'Damaged Ear')      r.perception -= 2;
+    if (name === 'Lost Ear')         r.perception -= 4;
+    if (name === 'Broken Jaw')       r.social -= 4;
+  }
+  return r;
+}
+
+function getInjurySkillPenalty(skillName) {
+  const p = getInjuryPenalties();
+  let pen = p.allActions;
+  if (['Handgun','Shoulder Arms','Heavy Weapons','Archery','Autofire'].includes(skillName)) pen += p.ranged;
+  if (['Brawling','Martial Arts','Melee Weapon'].includes(skillName)) pen += p.melee;
+  if (skillName === 'Perception') pen += p.perception;
+  if (['Conversation','Persuasion','Bribery','Performance','Human Perception','Trading'].includes(skillName)) pen += p.social;
+  return pen;
+}
+
 function renderSkills() {
   const skills = char.skills || {};
   const stats  = char.stats  || {};
@@ -892,11 +1004,20 @@ function renderSkills() {
   function skillRowHtml(sk) {
     const armorPen = sk.stat === 'REF' ? getArmorRefPenalty() : 0;
     const swPen    = getSWPenalty();
-    const statVal  = Math.max(0, (stats[sk.stat] ?? 0) - armorPen);
-    const base     = statVal + (sk.lvl || 0) - swPen;
+    const injPen   = getInjurySkillPenalty(sk.name); // ≤ 0
+    const rawStat  = stats[sk.stat] ?? 0;
+    const effStat  = sk.stat === 'EMP'
+      ? Math.min(rawStat, Math.floor((char.current_humanity ?? 0) / 10))
+      : rawStat;
+    const statVal  = Math.max(0, effStat - armorPen);
+    const base     = statVal + (sk.lvl || 0) - swPen + injPen;
     const expr     = base >= 0 ? `1d10+${base}` : `1d10${base}`;
-    const penBadge = (armorPen > 0 || swPen > 0)
-      ? `<span class="skill-pen-badge" title="${armorPen > 0 ? `−${armorPen} Rüstung` : ''}${armorPen > 0 && swPen > 0 ? ', ' : ''}${swPen > 0 ? '−2 SW' : ''}">⚠</span>` : '';
+    const penParts = [];
+    if (armorPen > 0)  penParts.push(`−${armorPen} Rüstung`);
+    if (swPen > 0)     penParts.push('−2 SW');
+    if (injPen < 0)    penParts.push(`${injPen} Injury`);
+    const penBadge = penParts.length
+      ? `<span class="skill-pen-badge" title="${penParts.join(', ')}">⚠</span>` : '';
     const upData   = skillUpgradeLookup(sk.name);
     const nextLvl  = (sk.lvl ?? 0) + 1;
     const cost     = upData
@@ -948,6 +1069,16 @@ function renderSkills() {
   const warnings = [];
   if (swPenActive)    warnings.push(`⚠ Seriously Wounded: −2 auf alle Rolls`);
   if (armorPenActive) warnings.push(`⚠ Rüstung: −${getArmorRefPenalty()} auf REF-Skills`);
+  const injP = getInjuryPenalties();
+  if (injP.allActions < 0)  warnings.push(`🩸 Injury: ${injP.allActions} auf alle Rolls`);
+  if (injP.ranged < 0)      warnings.push(`🩸 Injury: ${injP.ranged} Ranged`);
+  if (injP.melee < 0)       warnings.push(`🩸 Injury: ${injP.melee} Melee`);
+  if (injP.perception < 0)  warnings.push(`🩸 Injury: ${injP.perception} Perception`);
+  if (injP.social < 0)      warnings.push(`🩸 Injury: ${injP.social} Social`);
+  if (injP.move < 0) {
+    const effMove = Math.max(1, (char.stats?.MOVE ?? 0) + injP.move);
+    warnings.push(`🩸 Injury: MOVE → ${effMove}`);
+  }
   const warnHtml = warnings.length
     ? `<div class="skill-penalty-banner">${warnings.join(' &nbsp;·&nbsp; ')}</div>` : '';
 
@@ -2909,6 +3040,20 @@ function showDiceRollOverlay(finalValue, opts = {}) {
   }, { once: true });
 }
 
+function rollStat(statName, expr) {
+  const effVal  = getEffectiveStat(statName);
+  const buffBon = getBuffStatBonus(statName);
+  const pen     = getStatRollPenalty(statName);
+  const mod     = effVal + buffBon + pen;
+  const parts   = [];
+  if (pen < 0)     parts.push(`${pen} Injuries/SW`);
+  if (buffBon > 0) parts.push(`+${buffBon} Buff`);
+  if (buffBon < 0) parts.push(`${buffBon} Buff`);
+  const context = `${statName} Check${parts.length ? ` (${parts.join(', ')})` : ''}`;
+  const expression = expr || (mod >= 0 ? `1d10+${mod}` : `1d10${mod}`);
+  doRoll(expression, { context, isSkillCheck: true });
+}
+
 async function doRoll(expression, opts = {}) {
   if (!expression) return;
   document.getElementById('dicePopup').classList.add('open');
@@ -3622,12 +3767,16 @@ function showSkillCheckModal(expr, ctx) {
   const skillName = ctx.replace(' skill check', '');
   const skData    = char.skills?.[skillName];
   const rawStatVal = skData ? (char.stats?.[skData.stat] ?? 0) : 0;
+  const effStatVal = skData?.stat === 'EMP'
+    ? Math.min(rawStatVal, Math.floor((char.current_humanity ?? 0) / 10))
+    : rawStatVal;
   const lvl        = skData?.lvl ?? 0;
   const statStr    = skData?.stat ?? '?';
   const armorPen   = skData?.stat === 'REF' ? getArmorRefPenalty() : 0;
   const swPen      = getSWPenalty();
-  const statVal    = Math.max(0, rawStatVal - armorPen);
-  const base       = statVal + lvl - swPen;
+  const injPen     = getInjurySkillPenalty(skillName);
+  const statVal    = Math.max(0, effStatVal - armorPen);
+  const base       = statVal + lvl - swPen + injPen;
 
   // Solo Combat Awareness — Initiative Reaction bonus
   let soloBonus = 0;
@@ -3641,6 +3790,7 @@ function showSkillCheckModal(expr, ctx) {
   const penParts     = [];
   if (armorPen > 0) penParts.push(`−${armorPen} Rüstung`);
   if (swPen > 0)    penParts.push(`−${swPen} SW`);
+  if (injPen < 0)   penParts.push(`${injPen} Injury`);
   const penLabel     = penParts.length ? ` <span style="color:var(--red);font-size:.8em">(${penParts.join(', ')})</span>` : '';
 
   const overlay = document.createElement('div');
@@ -3802,9 +3952,11 @@ function renderBuffs() {
       }, 0);
     }
 
-    const timeStr = remaining === null ? '∞' : expired ? 'ABGELAUFEN' : formatRemaining(remaining);
+    const timeStr  = remaining === null ? '∞' : expired ? 'ABGELAUFEN' : formatRemaining(remaining);
+    const bonusStr = b.stat && b.stat_bonus != null
+      ? ` <span style="color:var(--cyan);font-size:.62em">${b.stat_bonus >= 0 ? '+' : ''}${b.stat_bonus} ${b.stat}</span>` : '';
     return `<div class="buff-chip${expired ? ' expired' : ''}" title="${b.effect || ''}">
-      <span class="buff-name">${b.name}</span>
+      <span class="buff-name">${b.name}${bonusStr}</span>
       <span class="buff-time">${timeStr} ⏱</span>
     </div>`;
   }).join('');

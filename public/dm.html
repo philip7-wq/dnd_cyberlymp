@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css?v=2">
   <link rel="stylesheet" href="assets/css/dm.css?v=2">
+  <link rel="stylesheet" href="assets/css/agent.css">
 </head>
 <body>
 
@@ -421,6 +422,8 @@ import {
   saveTimer,
 } from './assets/js/supabase.js';
 import { animateRollNumber } from './assets/js/dice.js';
+import { initDmAgent } from './assets/js/agent/agent-dm.js';
+import './assets/js/agent/agent-apps.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const DM_PIN = 'DM2077';
@@ -511,6 +514,7 @@ async function boot() {
   renderRollLog();
   renderAllCombatBars();
   updateDmTimer(combatSession?.timer ?? null);
+  initDmAgent().catch(e => console.error('[agent-dm]', e));
 
   subscribeCombat(payload => {
     const cs = payload.new;
@@ -2034,6 +2038,16 @@ function buildControlsHtml() {
             placeholder="Effekt…"
             style="width:100%;resize:none;font-family:var(--font-body);font-size:.78rem;box-sizing:border-box"></textarea>
         </div>
+        <div class="ctrl-row" style="gap:.4rem;align-items:center">
+          <span class="ctrl-label">Stat-Bonus</span>
+          <select class="ctrl-input" id="ctrlBuffStat" style="max-width:80px;font-size:.75rem">
+            <option value="">—</option>
+            <option>INT</option><option>REF</option><option>DEX</option><option>TECH</option>
+            <option>COOL</option><option>WILL</option><option>MOVE</option><option>BODY</option><option>EMP</option>
+          </select>
+          <input type="number" class="ctrl-input" id="ctrlBuffBonus" placeholder="±0" style="max-width:60px">
+          <span style="font-size:.68rem;color:var(--text-muted)">auf Würfe</span>
+        </div>
         <div class="ctrl-row" style="gap:.4rem">
           <button class="ctrl-btn" id="ctrlBuffStart" style="color:var(--cyan)">▶ Starten</button>
           <button class="ctrl-btn" id="ctrlBuffCancel">Abbrechen</button>
@@ -2350,6 +2364,8 @@ function setupControls() {
   }
   function hideBuffForm() {
     document.getElementById('ctrlBuffForm').style.display = 'none';
+    document.getElementById('ctrlBuffStat').value  = '';
+    document.getElementById('ctrlBuffBonus').value = '';
   }
 
   document.getElementById('ctrlBuffPresets').addEventListener('click', e => {
@@ -2365,11 +2381,15 @@ function setupControls() {
     const durMin  = parseInt(document.getElementById('ctrlBuffDuration').value) || 0;
     const effect  = document.getElementById('ctrlBuffEffect').value.trim();
     if (!name) return;
+    const buffStat  = document.getElementById('ctrlBuffStat').value || null;
+    const buffBonus = buffStat ? (parseInt(document.getElementById('ctrlBuffBonus').value) || 0) : null;
     const durationMs = durMin > 0 ? durMin * 60 * 1000 : null;
     const newBuff = {
       id: crypto.randomUUID(),
       name,
       effect,
+      stat: buffStat,
+      stat_bonus: buffBonus,
       expires_at: durationMs ? new Date(Date.now() + durationMs).toISOString() : null,
       duration_label: durMin > 0 ? `${durMin} Min` : '∞',
     };
@@ -2476,8 +2496,9 @@ function renderCtrlActiveBuffs() {
   wrap.innerHTML = buffs.map(b => {
     const rem = b.expires_at ? new Date(b.expires_at).getTime() - now : null;
     const timeStr = rem === null ? '∞' : rem <= 0 ? 'ABGELAUFEN' : formatMs(rem);
+    const bonusLabel = b.stat && b.stat_bonus != null ? ` <span style="color:var(--cyan);font-size:.65rem">${b.stat_bonus >= 0 ? '+' : ''}${b.stat_bonus} ${b.stat}</span>` : '';
     return `<div class="ctrl-buff-row">
-      <span class="ctrl-buff-name">${b.name}</span>
+      <span class="ctrl-buff-name">${b.name}${bonusLabel}</span>
       <span class="ctrl-buff-time">${timeStr}</span>
       <button class="ctrl-buff-remove" data-bid="${b.id}" title="Entfernen">✕</button>
     </div>`;
