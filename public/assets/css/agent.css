@@ -447,6 +447,13 @@
 .agent-list-tag.npc { color: var(--agent-accent-warm); }
 
 /* ---------- CHROME CHAT VIEW ---------- */
+#cc-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 .agent-chat-stream {
   flex: 1;
   overflow-y: auto;
@@ -752,7 +759,7 @@
    ============================================================ */
 :root {
   --agent-dm-w: 880px;
-  --agent-dm-h: 50vh;
+  --agent-dm-h: 64vh;
 }
 
 .agent-dm-bar {

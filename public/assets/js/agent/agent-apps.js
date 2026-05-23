@@ -30,6 +30,42 @@ function renderContactsApp() {
 
 async function refreshContacts() {
   const me = getActiveIdentity();
+
+  // DM mode (NPC identity): show all players as contacts
+  if (me.type === 'npc') {
+    const { data: chars } = await supabase
+      .from('characters')
+      .select('id, handle, name, image_url')
+      .order('name');
+    agentState.contacts = (chars || []).map(c => ({
+      id: c.id,
+      contact_type: 'player',
+      contact_player_id: c.id,
+      contact_npc_id: null,
+      display_name: c.handle || c.name || '?',
+      avatar_url: c.image_url,
+    }));
+    const list = document.getElementById('contacts-list');
+    if (list) {
+      if (!agentState.contacts.length) {
+        list.innerHTML = `<div class="agent-empty"><div class="agent-empty-glyph">⌬</div>Keine Spieler gefunden.</div>`;
+      } else {
+        list.innerHTML = agentState.contacts.map(c => `
+          <div class="agent-list-item" data-type="${c.contact_type}" data-ref="${c.contact_player_id}">
+            <div class="agent-avatar" ${c.avatar_url ? `style="background-image:url(${c.avatar_url})"` : ''}>${c.avatar_url ? '' : (c.display_name||'?').slice(0,1).toUpperCase()}</div>
+            <div class="agent-list-body">
+              <div class="agent-list-name">${c.display_name}</div>
+              <div class="agent-list-tag">PLAYER</div>
+            </div>
+          </div>`).join('');
+        list.querySelectorAll('.agent-list-item').forEach(el => {
+          el.addEventListener('click', () => openContactDetail(el.dataset.type, el.dataset.ref));
+        });
+      }
+    }
+    return;
+  }
+
   if (me.type !== 'player') return;
 
   // Always fetch all other players directly from characters table
@@ -164,21 +200,7 @@ function openAddContactModal() {
 // ============================================================
 function renderChromeChatApp() {
   const v = document.getElementById('app-chrome-chat');
-  v.innerHTML = `
-    <div class="agent-app-header">
-      <span class="agent-back" data-back>‹</span>
-      <span class="agent-app-title">Chrome Chat</span>
-    </div>
-    <div id="cc-main"></div>
-  `;
-  v.querySelector('[data-back]').addEventListener('click', () => {
-    if (agentState.currentThreadId) {
-      agentState.currentThreadId = null;
-      renderThreadList();
-    } else {
-      showApp('home');
-    }
-  });
+  v.innerHTML = `<div id="cc-main"></div>`;
   renderThreadList();
 }
 
@@ -187,8 +209,16 @@ async function renderThreadList() {
   const main = document.getElementById('cc-main');
   if (!main) return;
 
+  main.innerHTML = `
+    <div class="agent-app-header">
+      <span class="agent-back" id="cc-back-home">‹</span>
+      <span class="agent-app-title">Chrome Chat</span>
+    </div>
+    <div id="cc-list-wrap" style="flex:1;min-height:0;overflow-y:auto;"></div>`;
+  main.querySelector('#cc-back-home').addEventListener('click', () => showApp('home'));
+  const listWrap = main.querySelector('#cc-list-wrap');
+
   const me = getActiveIdentity();
-  // Two separate queries to avoid PostgREST .or() syntax issues
   const [{ data: asA }, { data: asB }] = await Promise.all([
     supabase.from('agent_threads').select('*').eq('a_type', me.type).eq('a_id', me.id),
     supabase.from('agent_threads').select('*').eq('b_type', me.type).eq('b_id', me.id),
@@ -197,7 +227,7 @@ async function renderThreadList() {
     .sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at));
 
   if (!threads.length) {
-    main.innerHTML = `<div class="agent-empty"><div class="agent-empty-glyph">CC</div>Keine Chats.<br>Wähle einen Kontakt.</div>`;
+    listWrap.innerHTML = `<div class="agent-empty"><div class="agent-empty-glyph">CC</div>Keine Chats.<br>Wähle einen Kontakt.</div>`;
     return;
   }
 
@@ -221,7 +251,7 @@ async function renderThreadList() {
     return { thread: t, otherType, otherId, name, avatar, last };
   }));
 
-  main.innerHTML = `<div class="agent-list">${items.map(it => `
+  listWrap.innerHTML = `<div class="agent-list">${items.map(it => `
     <div class="agent-list-item" data-thread="${it.thread.id}" data-other-type="${it.otherType}" data-other-id="${it.otherId}" data-name="${it.name.replace(/"/g,'&quot;')}" data-avatar="${it.avatar || ''}">
       <div class="agent-avatar" ${it.avatar ? `style="background-image:url(${it.avatar})"` : ''}>${it.avatar ? '' : it.name.slice(0,1).toUpperCase()}</div>
       <div class="agent-list-body">
@@ -232,7 +262,7 @@ async function renderThreadList() {
     </div>
   `).join('')}</div>`;
 
-  main.querySelectorAll('.agent-list-item').forEach(el => {
+  listWrap.querySelectorAll('.agent-list-item').forEach(el => {
     el.addEventListener('click', () => openChatThread(
       el.dataset.thread, el.dataset.otherType, el.dataset.otherId,
       el.dataset.name, el.dataset.avatar
@@ -258,15 +288,15 @@ async function openChatThread(threadId, otherType, otherId, name, avatar) {
   agentState.currentThreadId = threadId;
   const main = document.getElementById('cc-main');
   main.innerHTML = `
-    <div class="agent-app-header" style="margin-top:-8px;">
+    <div class="agent-app-header">
       <span class="agent-back" id="cc-back">‹</span>
-      <div class="agent-avatar" style="width:32px;height:32px;font-size:12px;" ${avatar ? `style="background-image:url(${avatar});width:32px;height:32px;font-size:12px;"` : ''}>${avatar ? '' : name.slice(0,1).toUpperCase()}</div>
+      <div class="agent-avatar" style="width:32px;height:32px;font-size:12px;${avatar ? `background-image:url(${avatar})` : ''}">${avatar ? '' : name.slice(0,1).toUpperCase()}</div>
       <span class="agent-app-title" style="font-size:13px;">${name}</span>
     </div>
-    <div class="agent-chat-stream" id="cc-stream"></div>
+    <div class="agent-chat-stream" id="cc-stream" style="flex:1;min-height:0;"></div>
     <div class="agent-chat-composer">
       <input id="cc-input" placeholder="Nachricht…" autocomplete="off">
-      <button id="cc-send">Send</button>
+      <button id="cc-send">↑</button>
     </div>
   `;
   main.querySelector('#cc-back').addEventListener('click', () => renderThreadList());
@@ -776,6 +806,7 @@ function openTransferForm(presetType, presetId, mode = 'send') {
     </div>`;
   document.getElementById('agent-app-container').appendChild(modal);
 
+  let negativeWarned = false;
   modal.addEventListener('click', async (e) => {
     if (e.target.dataset?.act === 'cancel') return modal.remove();
     if (e.target.dataset?.act !== 'confirm') return;
@@ -785,9 +816,23 @@ function openTransferForm(presetType, presetId, mode = 'send') {
     const err = modal.querySelector('#tf-error');
     if (!amount || amount <= 0) { err.textContent = 'Betrag eingeben.'; return; }
 
+    if (mode === 'send' && !negativeWarned) {
+      const me = getActiveIdentity();
+      if (me.type === 'player') {
+        const { data: bal } = await supabase.from('characters').select('cash').eq('id', me.id).maybeSingle();
+        const current = bal?.cash ?? 0;
+        if (amount > current) {
+          negativeWarned = true;
+          err.style.color = 'var(--agent-accent-warm)';
+          err.textContent = `⚠ Guthaben: ${current} €$ — du gehst ${amount - current} €$ ins Minus. Nochmal klicken zum Bestätigen.`;
+          return;
+        }
+      }
+    }
+
     const me = getActiveIdentity();
     const row = {
-      sender_type: mode === 'send' ? me.type : me.type, // sender is "the actor"
+      sender_type: me.type,
       sender_id: me.id,
       recipient_type: to.type, recipient_id: to.id,
       amount, note,
@@ -795,7 +840,7 @@ function openTransferForm(presetType, presetId, mode = 'send') {
       status: mode === 'send' ? 'auto' : 'pending'
     };
     const { error } = await supabase.from('agent_transfers').insert(row);
-    if (error) { err.textContent = error.message; return; }
+    if (error) { err.style.color = 'var(--agent-danger)'; err.textContent = error.message; return; }
     modal.remove();
     refreshBalance(); refreshTransfers();
   });
