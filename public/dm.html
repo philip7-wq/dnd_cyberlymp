@@ -32,22 +32,14 @@
   <a href="index.html" class="btn btn-ghost" style="font-size:.75rem">← Übersicht</a>
 </nav>
 
-<!-- Combat Bar (sichtbar wenn Kampf aktiv) -->
-<div class="combat-bar" id="combatBar" style="display:none">
-  <div class="combat-meta">
-    <span class="combat-label">RUNDE</span>
-    <span class="combat-round-num" id="combatRound">1</span>
-  </div>
-  <div class="combat-order" id="combatOrder"></div>
-  <div class="combat-actions">
-    <button class="ctrl-btn" id="combatNextTurn">Next Turn →</button>
-    <button class="ctrl-btn" id="combatSetupToggle">⚙ Setup</button>
-    <button class="ctrl-btn ctrl-btn-red" id="combatEndBtn">Kampf beenden</button>
-  </div>
-</div>
+<!-- Combat Bars (one block per active session, rendered by renderAllCombatBars) -->
+<div id="combatBarsContainer"></div>
 
 <!-- Combat Setup Panel (collapsible) -->
 <div class="combat-setup-panel" id="combatSetupPanel" style="display:none">
+  <div style="padding:.4rem 1rem .2rem;display:flex;gap:.5rem;align-items:center">
+    <input id="combatNameInput" class="ctrl-input" placeholder="Kampf-Name (optional, z.B. 'Dachverfolgung')" style="flex:1;font-size:.75rem">
+  </div>
   <div class="combat-setup-cols">
     <div>
       <div class="combat-setup-head">Spieler</div>
@@ -156,6 +148,26 @@
 
   <!-- Sidebar: Roll Log + DM Notes -->
   <div class="dm-sidebar">
+
+    <!-- Session Timer -->
+    <div id="sessionTimerBlock" class="dm-session-timer">
+      <div class="sst-header">
+        <span>⏱ Session</span>
+        <span id="sstDisplay">0:00:00</span>
+        <button type="button" id="sstPauseBtn" onclick="sstPause()">⏸</button>
+        <button type="button" onclick="sstReset()">↺</button>
+      </div>
+      <div id="sstTargetRow" style="display:none">
+        <div id="sstProgressWrap"><div id="sstProgressFill"></div></div>
+        <span id="sstWarning"></span>
+      </div>
+      <div class="sst-setup">
+        <input id="sstTargetInput" type="text" placeholder="Ziel z.B. 3:00" class="ctrl-input" style="width:80px;font-size:.72rem">
+        <button type="button" onclick="sstSetTarget()" class="ctrl-btn" style="font-size:.68rem">Setzen</button>
+        <button type="button" onclick="sstClearTarget()" class="ctrl-btn" style="font-size:.68rem" title="Ziel entfernen">✕</button>
+      </div>
+    </div>
+
     <div class="roll-log" id="rollLog">
       <div class="roll-log-head">ROLL LOG <button class="roll-log-clear" id="clearRollLog" title="Alle Würfelwürfe löschen">🗑</button></div>
       <div class="roll-empty" id="rollEmpty">Noch keine Würfe.</div>
@@ -402,7 +414,7 @@
 import {
   getCharacters, getCharacter, patchCharacter, getItems, getRolls,
   subscribeCharacters, subscribeRolls, logRoll, deleteCharacter, deleteAllRolls,
-  getActiveCombat, saveCombat, endCombat, subscribeCombat,
+  getActiveCombat, getActiveCombats, saveCombat, endCombat, subscribeCombat,
   sendMessage, getMessages, subscribeMessages, uploadChatImage, patchMessage,
   getNpcs, saveNpc, patchNpc, deleteNpc, uploadNpcImage, subscribeNpcs,
   patchCash, getRoomItems, addRoomItem, removeRoomItem, clearRoomItems, setRoomDescription, subscribeRoomItems,
@@ -438,7 +450,9 @@ let itemsCache = [];
 let openChar   = null; // full char object currently in modal
 let activeModalTab = 'stats';
 let itemSearchTimer = null;
-let combatSession  = null;
+let combatSession  = null;         // legacy alias — points to latest active session or null
+let combatSessions = {};           // id → session object (all active sessions)
+let _editingCombatId = null;       // which session the setup panel is currently editing
 let _dmChatPendingImageUrl = null;
 let setupCombatants = [];
 let _npcs = [];
@@ -477,13 +491,16 @@ checkPin();
 // ── Boot ──────────────────────────────────────────────────────
 async function boot() {
   try {
-    [chars, rolls, injData, combatSession, roleAbilities] = await Promise.all([
+    let activeCombatsList;
+  [chars, rolls, injData, activeCombatsList, roleAbilities] = await Promise.all([
       getCharacters(),
       getRolls(50),
       fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
-      getActiveCombat(),
+      getActiveCombats(),
       fetch('./assets/data/role-abilities.json').then(r => r.json()).catch(() => ({})),
     ]);
+  for (const cs of activeCombatsList) combatSessions[cs.id] = cs;
+  combatSession = activeCombatsList[activeCombatsList.length - 1] ?? null;
   } catch (e) {
     document.getElementById('dmGrid').innerHTML =
       `<div style="color:var(--red);font-size:.82rem">Fehler: ${e.message}</div>`;
@@ -492,14 +509,19 @@ async function boot() {
 
   renderGrid();
   renderRollLog();
-  renderCombatBar();
+  renderAllCombatBars();
   updateDmTimer(combatSession?.timer ?? null);
 
   subscribeCombat(payload => {
     const cs = payload.new;
     if (!cs) return;
-    combatSession = cs.is_active ? cs : null;
-    renderCombatBar();
+    if (cs.is_active) {
+      combatSessions[cs.id] = cs;
+    } else {
+      delete combatSessions[cs.id];
+    }
+    combatSession = Object.values(combatSessions).at(-1) ?? null;
+    renderAllCombatBars();
     updateDmTimer(cs.timer ?? null);
   });
 
@@ -931,24 +953,29 @@ function buildNpcCard(n) {
   </div>`;
 }
 
+function npcHpColor(hp, maxHp) {
+  const pct = maxHp > 0 ? hp / maxHp : 0;
+  return pct > 0.5 ? '#00cc66' : pct > 0.2 ? '#FFA000' : '#FF2D2D';
+}
+
 function buildCompactNpcCard(n) {
-  const hpPct  = n.hp_max > 0 ? Math.round((n.hp_current / n.hp_max) * 100) : 0;
-  const hpCol  = hpPct > 50 ? '#2ecc71' : hpPct > 25 ? '#f39c12' : '#e74c3c';
+  const hpPct  = n.hp_max > 0 ? Math.min(100, Math.round((n.hp_current / n.hp_max) * 100)) : 0;
+  const hpCol  = npcHpColor(n.hp_current, n.hp_max);
   const isElim = n.hp_max > 0 && n.hp_current <= 0;
   const portrait = n.image_url
-    ? `<img src="${n.image_url}" alt="" class="npc-card-portrait-med">`
-    : `<div class="npc-card-portrait-med" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem">👤</div>`;
-  return `<div class="npc-card-med${isElim ? ' eliminated' : ''}" data-npc-id="${n.id}">
+    ? `<img src="${n.image_url}" alt="" class="npc-row-img">`
+    : `<div class="npc-row-img" style="display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text-muted)">👤</div>`;
+  return `<div class="npc-row${isElim ? ' eliminated' : ''}" data-npc-id="${n.id}">
     ${portrait}
-    <div class="npc-card-body-med">
-      <div class="npc-card-name-med">${escapeHtml(n.name)}</div>
-      ${n.role ? `<div class="npc-card-role-med">${escapeHtml(n.role)}</div>` : ''}
-      <div style="display:flex;align-items:center;gap:.3rem;margin-top:.15rem">
-        <div style="flex:1;height:5px;background:#222;border-radius:3px"><div style="height:100%;width:${hpPct}%;background:${hpCol};border-radius:3px;transition:width .3s"></div></div>
-      </div>
-      <div class="npc-card-hp-text-med">${n.hp_current} / ${n.hp_max} HP</div>
+    <div class="npc-row-info">
+      <span class="npc-row-name">${escapeHtml(n.name)}</span>
+      ${n.role ? `<span class="npc-row-role">${escapeHtml(n.role)}</span>` : ''}
     </div>
-    <div class="npc-card-actions-med">
+    <div class="npc-row-hp">
+      <div class="npc-row-bar-wrap"><div class="npc-row-bar" style="width:${hpPct}%;background:${hpCol}"></div></div>
+      <span class="npc-row-hp-text">${n.hp_current}/${n.hp_max}</span>
+    </div>
+    <div class="npc-row-actions">
       <button class="npc-edit-btn" data-npc-id="${n.id}" title="Bearbeiten">✏</button>
       <button class="npc-visibility-btn${n.is_visible_to_players ? ' active' : ''}" data-npc-id="${n.id}" title="Sichtbar für Spieler">${n.is_visible_to_players ? '👁' : '🙈'}</button>
       <button class="npc-dice-btn" data-npc-id="${n.id}" title="Würfeln">🎲</button>
@@ -964,7 +991,7 @@ function renderNpcGrid() {
   const overviewEl = document.getElementById('npcOverview');
   if (overviewEl) {
     const uniqueGroups = new Set(_npcs.map(n => n.group_name).filter(Boolean)).size;
-    const inCombat = combatSession?.combatants?.filter(c => c.isNpc).length ?? 0;
+    const inCombat = Object.values(combatSessions).reduce((acc, s) => acc + (s.combatants?.filter(c => c.isNpc).length ?? 0), 0);
     overviewEl.textContent = `${_npcs.length} NPCs · ${uniqueGroups} Gruppen · ${inCombat} im Kampf`;
   }
 
@@ -998,7 +1025,7 @@ function renderNpcGrid() {
       </div>
       <span class="dm-room-chevron" style="margin-left:${groupName ? '' : 'auto'}">${chevron}</span>
     </div>
-    <div class="npc-card-grid" data-group-content="${escapeHtml(groupKey)}" style="${isOpen ? '' : 'display:none'}">
+    <div class="npc-group-rows" data-group-content="${escapeHtml(groupKey)}" style="${isOpen ? '' : 'display:none'}">
       ${members.map(buildCompactNpcCard).join('')}
     </div>`;
   }
@@ -1231,12 +1258,13 @@ async function toggleNpcVisibility(id) {
   if (!npc) return;
   const newVal = !npc.is_visible_to_players;
   await patchNpc(id, { is_visible_to_players: newVal });
-  if (combatSession?.combatants) {
-    const updated = combatSession.combatants.map(c =>
+  for (const session of Object.values(combatSessions)) {
+    if (!session.combatants) continue;
+    const updated = session.combatants.map(c =>
       c.npcDbId === id ? { ...c, isVisibleToPlayers: newVal } : c
     );
-    if (JSON.stringify(updated) !== JSON.stringify(combatSession.combatants)) {
-      await saveCombat({ ...combatSession, combatants: updated });
+    if (JSON.stringify(updated) !== JSON.stringify(session.combatants)) {
+      await saveCombat({ ...session, combatants: updated });
     }
   }
 }
@@ -2773,58 +2801,117 @@ function openNpcQuickModal(total) {
 }
 
 // ── Combat Tracker ────────────────────────────────────────────
-function renderCombatBar() {
-  const bar = document.getElementById('combatBar');
-  if (!combatSession?.is_active) {
-    bar.style.display = 'none';
-    return;
-  }
-  bar.style.display = 'flex';
-  document.getElementById('combatRound').textContent = combatSession.round;
-  renderCombatOrder();
-}
-
-function renderCombatOrder() {
-  const list = document.getElementById('combatOrder');
-  const combatants = combatSession.combatants || [];
-  const idx = combatSession.current_turn_index ?? 0;
-  list.innerHTML = combatants.map((c, i) => {
+function renderCombatOrder(session) {
+  const combatants = session.combatants || [];
+  const idx = session.current_turn_index ?? 0;
+  return combatants.map((c, i) => {
     const isElim = c.isNpc && c.hp <= 0;
     const hpBar = c.isNpc
       ? `<div class="combat-npc-hp-ctrl">
-          <button class="combat-npc-hp-btn" data-ci="${i}" data-delta="-1">−</button>
+          <button class="combat-npc-hp-btn" data-sid="${session.id}" data-ci="${i}" data-delta="-1">−</button>
           <span class="combat-npc-hp-val${isElim ? ' elim' : ''}">${isElim ? '💀' : `${c.hp}/${c.maxHp}`}</span>
-          <button class="combat-npc-hp-btn" data-ci="${i}" data-delta="1">+</button>
+          <button class="combat-npc-hp-btn" data-sid="${session.id}" data-ci="${i}" data-delta="1">+</button>
         </div>`
       : `<span class="combat-char-hp" style="font-size:.68rem;color:${hpColor(c.hp, c.maxHp)}">${c.hp}/${c.maxHp}</span>`;
     return `<div class="combat-turn-chip${i === idx ? ' active' : ''}${isElim ? ' npc-eliminated' : ''}">
       <span>${escapeHtml(c.name)}</span>
       <span class="combat-init">${c.initiative}</span>
       ${hpBar}
-      <button class="combat-remove-btn" data-ci="${i}" title="Entfernen">✕</button>
+      <button class="combat-remove-btn" data-sid="${session.id}" data-ci="${i}" title="Entfernen">✕</button>
     </div>`;
   }).join('');
-  list.querySelectorAll('.combat-remove-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const i = parseInt(btn.dataset.ci);
-      const updated = [...(combatSession.combatants || [])];
-      updated.splice(i, 1);
-      let newIdx = combatSession.current_turn_index;
-      if (newIdx >= updated.length) newIdx = 0;
-      await saveCombat({ ...combatSession, combatants: updated, current_turn_index: newIdx });
-    });
-  });
-  list.querySelectorAll('.combat-npc-hp-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const ci = parseInt(btn.dataset.ci);
-      const delta = parseInt(btn.dataset.delta);
-      const updated = combatSession.combatants.map((c, i) =>
-        i === ci ? { ...c, hp: Math.max(0, (c.hp ?? 0) + delta) } : c
-      );
-      await saveCombat({ ...combatSession, combatants: updated });
-    });
-  });
 }
+
+function renderAllCombatBars() {
+  const container = document.getElementById('combatBarsContainer');
+  if (!container) return;
+  const sessions = Object.values(combatSessions);
+  if (!sessions.length) { container.innerHTML = ''; return; }
+  container.innerHTML = sessions.map(session => `
+    <div class="combat-bar" data-session-id="${session.id}" style="display:flex">
+      <div class="combat-meta">
+        <span class="combat-label" style="font-size:.6rem">${escapeHtml(session.name || 'KAMPF')}</span>
+        <span class="combat-round-num">R${session.round}</span>
+      </div>
+      <div class="combat-order" id="combatOrder-${session.id}">
+        ${renderCombatOrder(session)}
+      </div>
+      <div class="combat-actions">
+        <button class="ctrl-btn cbt-next-btn" data-sid="${session.id}">Next →</button>
+        <button class="ctrl-btn cbt-setup-btn" data-sid="${session.id}" style="font-size:.65rem">⚙</button>
+        <button class="ctrl-btn ctrl-btn-red cbt-end-btn" data-sid="${session.id}" style="font-size:.65rem">✕ Ende</button>
+      </div>
+    </div>`).join('');
+}
+
+// Event delegation for all combat bar button actions
+document.addEventListener('click', async e => {
+  // Next Turn
+  const nextBtn = e.target.closest('.cbt-next-btn');
+  if (nextBtn) {
+    const sid = nextBtn.dataset.sid;
+    const session = combatSessions[sid];
+    if (!session) return;
+    const combatants = session.combatants || [];
+    if (!combatants.length) return;
+    const nextIdx = (session.current_turn_index + 1) % combatants.length;
+    const newRound = nextIdx === 0 ? session.round + 1 : session.round;
+    await saveCombat({ ...session, current_turn_index: nextIdx, round: newRound });
+    return;
+  }
+  // Setup (edit existing combat)
+  const setupBtn = e.target.closest('.cbt-setup-btn');
+  if (setupBtn) {
+    _editingCombatId = setupBtn.dataset.sid;
+    const session = combatSessions[_editingCombatId];
+    setupCombatants = [...(session?.combatants || [])];
+    if (session?.name) document.getElementById('combatNameInput').value = session.name;
+    document.getElementById('combatSetupPanel').style.display = 'block';
+    renderSetupPlayerList();
+    renderCombatSetupNpcList();
+    renderSetupInitiativeList();
+    return;
+  }
+  // End Combat
+  const endBtn = e.target.closest('.cbt-end-btn');
+  if (endBtn) {
+    if (!confirm('Kampf wirklich beenden?')) return;
+    const sid = endBtn.dataset.sid;
+    await endCombat(sid);
+    return;
+  }
+  // Remove combatant
+  const removeBtn = e.target.closest('.combat-remove-btn');
+  if (removeBtn) {
+    const sid = removeBtn.dataset.sid;
+    const ci  = parseInt(removeBtn.dataset.ci);
+    const session = combatSessions[sid];
+    if (!session) return;
+    const updated = [...session.combatants];
+    updated.splice(ci, 1);
+    let newIdx = session.current_turn_index;
+    if (newIdx >= updated.length) newIdx = 0;
+    await saveCombat({ ...session, combatants: updated, current_turn_index: newIdx });
+    return;
+  }
+  // NPC HP ±
+  const hpBtn = e.target.closest('.combat-npc-hp-btn');
+  if (hpBtn) {
+    const sid   = hpBtn.dataset.sid;
+    const ci    = parseInt(hpBtn.dataset.ci);
+    const delta = parseInt(hpBtn.dataset.delta);
+    const session = combatSessions[sid];
+    if (!session) return;
+    const updated = session.combatants.map((c, i) =>
+      i === ci ? { ...c, hp: Math.max(0, (c.hp ?? 0) + delta) } : c
+    );
+    await saveCombat({ ...session, combatants: updated });
+    return;
+  }
+});
+
+// Legacy alias so existing code that calls renderCombatBar() still works
+function renderCombatBar() { renderAllCombatBars(); }
 
 function openCombatSetup() {
   document.getElementById('combatSetupPanel').style.display = 'block';
@@ -2878,23 +2965,14 @@ function renderSetupInitiativeList() {
 // Combat event handlers
 document.getElementById('newCombatBtn').addEventListener('click', () => {
   setupCombatants = [];
+  _editingCombatId = null;
+  document.getElementById('combatNameInput').value = '';
   openCombatSetup();
-});
-
-document.getElementById('combatSetupToggle').addEventListener('click', () => {
-  const p = document.getElementById('combatSetupPanel');
-  const isOpen = p.style.display === 'block';
-  p.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) {
-    setupCombatants = [...(combatSession?.combatants || [])];
-    renderSetupPlayerList();
-    renderCombatSetupNpcList();
-    renderSetupInitiativeList();
-  }
 });
 
 document.getElementById('combatCancelSetup').addEventListener('click', () => {
   document.getElementById('combatSetupPanel').style.display = 'none';
+  _editingCombatId = null;
 });
 
 document.getElementById('npcCombatAddBtn').addEventListener('click', () => {
@@ -2927,27 +3005,20 @@ document.getElementById('combatPlayerList').addEventListener('change', e => {
 document.getElementById('combatStartBtn').addEventListener('click', async () => {
   if (!setupCombatants.length) return;
   const sorted = [...setupCombatants].sort((a, b) => b.initiative - a.initiative);
-  await saveCombat({
-    ...(combatSession?.id ? { id: combatSession.id } : {}),
-    is_active: true, round: 1, current_turn_index: 0, combatants: sorted,
-  });
+  const name = document.getElementById('combatNameInput').value.trim() || 'Kampf';
+  const assignedIds = setupCombatants.filter(c => !c.isNpc).map(c => c.id).filter(Boolean);
+  if (_editingCombatId) {
+    // Update existing session
+    await saveCombat({ id: _editingCombatId, name, combatants: sorted, round: 1, current_turn_index: 0, assigned_character_ids: assignedIds });
+  } else {
+    // Create new session
+    await saveCombat({ name, assigned_character_ids: assignedIds, is_active: true, round: 1, current_turn_index: 0, combatants: sorted });
+  }
   document.getElementById('combatSetupPanel').style.display = 'none';
+  _editingCombatId = null;
 });
 
-document.getElementById('combatNextTurn').addEventListener('click', async () => {
-  if (!combatSession) return;
-  const combatants = combatSession.combatants || [];
-  const nextIdx = (combatSession.current_turn_index + 1) % combatants.length;
-  const newRound = nextIdx === 0 ? combatSession.round + 1 : combatSession.round;
-  await saveCombat({ ...combatSession, current_turn_index: nextIdx, round: newRound });
-});
-
-document.getElementById('combatEndBtn').addEventListener('click', async () => {
-  if (!combatSession || !confirm('Kampf wirklich beenden?')) return;
-  await endCombat(combatSession.id);
-  combatSession = null;
-  renderCombatBar();
-});
+// Next Turn and End Combat are now handled by event delegation in renderAllCombatBars section above.
 
 // ── DM Items Modal ────────────────────────────────────────────
 const DM_ITEM_CATS = ['Ranged Weapon','Melee Weapon','Exotic Weapon','Armor','Cyberware','Gear','Ammunition','Program','Fashion','Nomad Vehicle Access'];
@@ -3504,6 +3575,123 @@ document.getElementById('bmPanel').addEventListener('click', e => {
   // We hook into the existing handler by overriding the chars update path.
   // The actual subscription fires bmRefreshStatus via the chars update.
 })();
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     SESSION TIMER  (localStorage only, no Supabase)
+════════════════════════════════════════════════════ -->
+<script>
+let _sstInterval = null;
+
+function sstLoad() {
+  const raw = localStorage.getItem('lzrv_session_timer');
+  return raw ? JSON.parse(raw) : null;
+}
+function sstSave(s) { localStorage.setItem('lzrv_session_timer', JSON.stringify(s)); }
+
+function sstElapsedMs(s) {
+  if (!s) return 0;
+  const pauseAdjust = s.paused_at ? (Date.now() - s.paused_at) : 0;
+  return Date.now() - s.started_at - s.pause_total_ms - pauseAdjust;
+}
+
+function sstFmt(ms) {
+  const total = Math.floor(Math.max(0, ms) / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function sstTick() {
+  const s = sstLoad();
+  if (!s || s.paused_at) return;
+  const elapsed = sstElapsedMs(s);
+  document.getElementById('sstDisplay').textContent = sstFmt(elapsed);
+  if (s.target_s) {
+    const pct = Math.min(elapsed / (s.target_s * 1000), 1);
+    document.getElementById('sstProgressFill').style.width = (pct * 100) + '%';
+    document.getElementById('sstTargetRow').style.display = '';
+    const warn = document.getElementById('sstWarning');
+    const remaining = Math.max(0, s.target_s * 1000 - elapsed);
+    if (pct >= 1) {
+      warn.textContent = '🔴 Zeit überschritten';
+      warn.className = 'sst-warn-red';
+    } else if (pct >= 0.8) {
+      warn.textContent = '🟡 Noch ' + sstFmt(remaining);
+      warn.className = 'sst-warn-yellow';
+    } else {
+      warn.textContent = '';
+      warn.className = '';
+    }
+  }
+}
+
+function sstStart() {
+  clearInterval(_sstInterval);
+  let s = sstLoad();
+  if (!s) {
+    s = { started_at: Date.now(), pause_total_ms: 0, paused_at: null, target_s: null };
+    sstSave(s);
+  }
+  if (s.target_s) document.getElementById('sstTargetRow').style.display = '';
+  sstTick();
+  _sstInterval = setInterval(sstTick, 1000);
+}
+
+function sstPause() {
+  const s = sstLoad();
+  if (!s) return;
+  if (s.paused_at) {
+    s.pause_total_ms += Date.now() - s.paused_at;
+    s.paused_at = null;
+    document.getElementById('sstPauseBtn').textContent = '⏸';
+    _sstInterval = setInterval(sstTick, 1000);
+  } else {
+    s.paused_at = Date.now();
+    clearInterval(_sstInterval);
+    document.getElementById('sstPauseBtn').textContent = '▶';
+  }
+  sstSave(s);
+}
+
+function sstReset() {
+  if (!confirm('Session-Timer zurücksetzen?')) return;
+  clearInterval(_sstInterval);
+  localStorage.removeItem('lzrv_session_timer');
+  document.getElementById('sstPauseBtn').textContent = '⏸';
+  document.getElementById('sstTargetRow').style.display = 'none';
+  document.getElementById('sstWarning').textContent = '';
+  sstStart();
+}
+
+function sstSetTarget() {
+  const val = document.getElementById('sstTargetInput').value.trim();
+  if (!val) return;
+  const parts = val.split(':').map(Number);
+  if (parts.some(isNaN)) return;
+  let target_s = 0;
+  if (parts.length === 3) target_s = parts[0] * 3600 + parts[1] * 60 + parts[2];
+  else if (parts.length === 2) target_s = parts[0] * 3600 + parts[1] * 60;
+  else target_s = parts[0] * 60;
+  const s = sstLoad() || { started_at: Date.now(), pause_total_ms: 0, paused_at: null };
+  s.target_s = target_s;
+  sstSave(s);
+  document.getElementById('sstTargetRow').style.display = '';
+  sstTick();
+}
+
+function sstClearTarget() {
+  const s = sstLoad();
+  if (!s) return;
+  s.target_s = null;
+  sstSave(s);
+  document.getElementById('sstTargetRow').style.display = 'none';
+  document.getElementById('sstWarning').textContent = '';
+  document.getElementById('sstTargetInput').value = '';
+}
+
+document.addEventListener('DOMContentLoaded', sstStart);
 </script>
 
 </body>

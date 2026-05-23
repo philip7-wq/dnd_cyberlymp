@@ -279,7 +279,7 @@
 
 <script type="module">
 console.log('[player] module loaded');
-import { getCharacter, getCharacters, patchCharacter, patchCash, logRoll, getActiveCombat, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc, getRoomItems, addRoomItem, removeRoomItem, subscribeRoomItems } from './assets/js/supabase.js';
+import { getCharacter, getCharacters, patchCharacter, patchCash, logRoll, getActiveCombat, getActiveCombats, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc, getRoomItems, addRoomItem, removeRoomItem, subscribeRoomItems } from './assets/js/supabase.js';
 import { roll, initDiceBox, animateRollNumber } from './assets/js/dice.js';
 
 // ── Constants ─────────────────────────────────────────────────
@@ -339,11 +339,18 @@ let injuryData = null;  // { body: [...], head: [...] }
 let allChars   = [];    // alle anderen Charaktere (für Injury-Zuweisung)
 let critTarget = null;  // char-id oder 'npc'
 let AMMO_DATA  = null;  // ammunition.json data
-let combatSession       = null;
+let combatSession       = null;  // legacy alias for backward compat
+let myCombatSession     = null;  // the combat session this player is assigned to
 let _allCharsFull       = [];
 let deathSavePenalty    = 0;
 let deathSaveStabilized = false;
 let skillUpgradeMap     = {};   // skillName → { ip_cost_multiplier, ip_cost_by_next_level }
+function skillUpgradeLookup(name) {
+  if (skillUpgradeMap[name]) return skillUpgradeMap[name];
+  const norm = name.toLowerCase().replace(/\s+/g, ' ').trim().replace(/\s*\(x2\)$/i, '');
+  const canonical = (window._skillUpgradeNorm || {})[norm];
+  return canonical ? skillUpgradeMap[canonical] : null;
+}
 let buffTimerHandle     = null;
 const notifiedBuffIds   = new Set();
 let _timerState    = null;
@@ -414,22 +421,33 @@ if (id) {
   }, 15000);
 
   try {
-    let rawItems;
-    [char, injuryData, allChars, combatSession, rawItems, roleAbilities, AMMO_DATA] = await Promise.all([
+    let allActiveCombats, rawItems;
+    [char, injuryData, allChars, allActiveCombats, rawItems, roleAbilities, AMMO_DATA] = await Promise.all([
       getCharacter(id),
       fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
       getCharacters(),
-      getActiveCombat(),
+      getActiveCombats(),
       fetch('./assets/data/items.json').then(r => r.json()).then(d => d.items || d).catch(() => []),
       fetch('./assets/data/role-abilities.json').then(r => r.json()).catch(() => ({})),
       fetch('./assets/data/ammunition.json').then(r => r.json()).catch(() => ({ ammo_types: [], weapon_ammo_mapping: {} })),
     ]);
+    // Find the combat session this player is assigned to
+    myCombatSession = allActiveCombats.find(cs => (cs.assigned_character_ids ?? []).includes(id))
+                   ?? allActiveCombats.find(cs => (cs.combatants ?? []).some(c => c.id === id))
+                   ?? null;
+    combatSession = myCombatSession; // legacy alias
     _allCharsFull = allChars;
     allChars = allChars.filter(c => c.id !== id);
     activeNpcs = await getActiveNpcs();
     (rawItems || []).filter(i => i.category === 'Skill Upgrade').forEach(i => {
       skillUpgradeMap[i.name] = { ip_cost_multiplier: i.ip_cost_multiplier ?? 1, ip_cost_by_next_level: i.ip_cost_by_next_level || {} };
     });
+    // Build normalized alias map for fuzzy skill name matching (handles slash variants, (x2), extra spaces)
+    window._skillUpgradeNorm = {};
+    for (const k of Object.keys(skillUpgradeMap)) {
+      const norm = k.toLowerCase().replace(/\s+/g, ' ').trim().replace(/\s*\(x2\)$/i, '');
+      window._skillUpgradeNorm[norm] = k;
+    }
     clearTimeout(bootTimeout);
     renderAll();
     show();
@@ -458,7 +476,19 @@ if (id) {
 
     subscribeCombat(payload => {
       const cs = payload.new;
-      combatSession = cs?.is_active ? cs : null;
+      if (!cs) return;
+      if (!cs.is_active) {
+        if (myCombatSession?.id === cs.id) { myCombatSession = null; combatSession = null; }
+      } else {
+        const ids = cs.assigned_character_ids ?? [];
+        const inCombatants = (cs.combatants ?? []).some(c => c.id === id);
+        if (ids.includes(id) || inCombatants) {
+          myCombatSession = cs; combatSession = cs;
+        } else if (myCombatSession?.id === cs.id) {
+          // our session was updated
+          myCombatSession = cs; combatSession = cs;
+        }
+      }
       renderCombatPanel();
       updateTimerFromDb(cs?.timer ?? null);
     });
@@ -552,7 +582,7 @@ function renderAll() {
   renderBuffs();
   checkDeathSave();
   renderCombatPanel();
-  updateTimerFromDb(combatSession?.timer ?? null);
+  updateTimerFromDb(myCombatSession?.timer ?? null);
   // Always sync BM button/popup on load (hides button if BM is closed)
   checkBlackmarket(char.blackmarket_state);
 }
@@ -820,7 +850,7 @@ function setupStatEditing() {
 // ── Skills tab ────────────────────────────────────────────────
 function getFightNpcs() {
   const fightIds = new Set(
-    (combatSession?.combatants || [])
+    (myCombatSession?.combatants || [])
       .filter(c => c.isNpc && c.isVisibleToPlayers && c.npcDbId)
       .map(c => c.npcDbId)
   );
@@ -863,16 +893,17 @@ function renderSkills() {
     const expr     = base >= 0 ? `1d10+${base}` : `1d10${base}`;
     const penBadge = (armorPen > 0 || swPen > 0)
       ? `<span class="skill-pen-badge" title="${armorPen > 0 ? `−${armorPen} Rüstung` : ''}${armorPen > 0 && swPen > 0 ? ', ' : ''}${swPen > 0 ? '−2 SW' : ''}">⚠</span>` : '';
-    const upData   = skillUpgradeMap[sk.name] || {};
+    const upData   = skillUpgradeLookup(sk.name);
     const nextLvl  = (sk.lvl ?? 0) + 1;
-    const cost     = upData.ip_cost_by_next_level?.[String(nextLvl)]
-                   ?? (20 * (upData.ip_cost_multiplier ?? 1) * (sk.lvl ?? 1));
+    const cost     = upData
+      ? (upData.ip_cost_by_next_level?.[String(nextLvl)] ?? (20 * (upData.ip_cost_multiplier ?? 1) * (sk.lvl ?? 1)))
+      : null;
     const ip       = char.improvement_points ?? 0;
-    const canAfford = ip >= cost && nextLvl <= 10;
+    const canAfford = cost !== null ? (ip >= cost && nextLvl <= 10) : nextLvl <= 10;
     const upgradeBtn = nextLvl <= 10
       ? `<button class="skill-up-btn${canAfford ? '' : ' unaffordable'}"
-                 data-skill="${sk.name}" data-cost="${cost}" data-nextlvl="${nextLvl}"
-                 title="${canAfford ? `${cost} IP → Lvl ${nextLvl}` : `${cost - ip} IP fehlen`}">▲</button>`
+                 data-skill="${sk.name}" data-cost="${cost ?? 0}" data-nextlvl="${nextLvl}"
+                 title="${cost !== null ? (canAfford ? `${cost} IP → Lvl ${nextLvl}` : `${cost - ip} IP fehlen`) : `Lvl ${nextLvl} (IP unbekannt)`}">▲</button>`
       : `<span class="skill-maxed" title="Max">—</span>`;
     // Role-based visual notes
     const roleKey = (char.role || '').toLowerCase();
@@ -3394,16 +3425,16 @@ function renderDiceLog() {
 // ── Combat Panel ──────────────────────────────────────────────
 function renderCombatPanel() {
   const panel = document.getElementById('combatPanel');
-  if (!combatSession?.is_active) {
+  if (!myCombatSession?.is_active) {
     panel.style.display = 'none';
     document.body.classList.remove('my-turn', 'combat-active');
     return;
   }
   document.body.classList.add('combat-active');
   panel.style.display = 'block';
-  document.getElementById('initRound').textContent = combatSession.round ?? 1;
-  const combatants = combatSession.combatants || [];
-  const idx = combatSession.current_turn_index ?? 0;
+  document.getElementById('initRound').textContent = myCombatSession.round ?? 1;
+  const combatants = myCombatSession.combatants || [];
+  const idx = myCombatSession.current_turn_index ?? 0;
 
   // Grapple button (if player has Brawling or Martial Arts)
   const brawl = char.skills?.Brawling ?? 0;
@@ -3454,9 +3485,9 @@ function renderCombatPanel() {
 }
 
 function checkMyTurn() {
-  if (!combatSession?.is_active) { document.body.classList.remove('my-turn'); return; }
-  const combatants = combatSession.combatants || [];
-  const current = combatants[combatSession.current_turn_index];
+  if (!myCombatSession?.is_active) { document.body.classList.remove('my-turn'); return; }
+  const combatants = myCombatSession.combatants || [];
+  const current = combatants[myCombatSession.current_turn_index];
   const isMyTurn = current?.id === char.id;
   const was = document.body.classList.contains('my-turn');
   document.body.classList.toggle('my-turn', isMyTurn);

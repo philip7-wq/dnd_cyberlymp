@@ -159,14 +159,23 @@ export async function getActiveCombat() {
   return data;
 }
 
-/** Create or update a combat session. Pass id to update, omit to create new. */
+/** Fetch all currently active combat sessions. */
+export async function getActiveCombats() {
+  const { data, error } = await supabase
+    .from('combat_sessions').select('*')
+    .eq('is_active', true).order('created_at', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Create or update a combat session. Pass id to update, omit to create new.
+ *  Multiple sessions can be active simultaneously — no longer deactivates others. */
 export async function saveCombat(patch) {
   if (patch.id) {
     const { id, ...rest } = patch;
     const { error } = await supabase.from('combat_sessions').update(rest).eq('id', id);
     if (error) throw error;
   } else {
-    await supabase.from('combat_sessions').update({ is_active: false }).eq('is_active', true);
     const { error } = await supabase.from('combat_sessions').insert({ ...patch, is_active: true });
     if (error) throw error;
   }

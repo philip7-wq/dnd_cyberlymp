@@ -1003,3 +1003,162 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 .bm-neg-accept-btn:hover  { background: rgba(0,204,102,.2); }
 .bm-neg-decline-btn { color: var(--red); border-color: var(--red); background: rgba(255,45,45,.08); }
 .bm-neg-decline-btn:hover { background: rgba(255,45,45,.18); }
+
+/* ── Session Timer ── */
+.dm-session-timer {
+  background: #0d0d0d;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 6px;
+  padding: .55rem .75rem;
+  margin-bottom: .6rem;
+}
+.sst-header {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  font-size: .75rem;
+}
+.sst-header > span:first-child {
+  color: var(--text-muted);
+  flex: 1;
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+#sstDisplay {
+  font-family: Audiowide, monospace;
+  font-size: .82rem;
+  color: var(--text);
+  letter-spacing: .05em;
+}
+.sst-header button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 3px;
+  padding: .1rem .35rem;
+  cursor: pointer;
+  font-size: .72rem;
+  line-height: 1.4;
+}
+.sst-header button:hover { border-color: var(--text-muted); color: var(--text); }
+.sst-setup {
+  display: flex;
+  gap: .35rem;
+  align-items: center;
+  margin-top: .4rem;
+}
+#sstProgressWrap {
+  height: 4px;
+  background: rgba(255,255,255,.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: .35rem 0 .15rem;
+}
+#sstProgressFill {
+  height: 100%;
+  width: 0;
+  background: var(--red);
+  border-radius: 2px;
+  transition: width .9s linear;
+}
+#sstWarning { font-size: .67rem; display: block; }
+.sst-warn-yellow { color: #FFA000; }
+.sst-warn-red    { color: var(--red); font-weight: 600; }
+
+/* ── NPC Row Layout (replaces horizontal card grid) ── */
+.npc-group-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: .75rem;
+}
+.npc-row {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .35rem .5rem;
+  background: rgba(255,255,255,.02);
+  border-radius: 4px;
+  transition: background .15s;
+}
+.npc-row:hover { background: rgba(255,255,255,.045); }
+.npc-row.eliminated { opacity: .45; }
+.npc-row-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,.06);
+}
+.npc-row-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 80px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.npc-row-name {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+.npc-row-role {
+  font-size: .63rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+.npc-row-hp {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  min-width: 0;
+}
+.npc-row-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,.07);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.npc-row-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .3s, background .3s;
+}
+.npc-row-hp-text {
+  font-size: .65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 48px;
+  text-align: right;
+}
+.npc-row-actions {
+  display: flex;
+  gap: .2rem;
+  flex-shrink: 0;
+}
+.npc-row-actions button {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  border-radius: 3px;
+  padding: .15rem .3rem;
+  cursor: pointer;
+  font-size: .72rem;
+  line-height: 1.3;
+  transition: border-color .15s, color .15s;
+}
+.npc-row-actions button:hover { border-color: var(--border); color: var(--text); }
+.npc-row-actions .npc-visibility-btn.active { color: var(--cyan); }
