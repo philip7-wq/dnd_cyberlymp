@@ -16,7 +16,7 @@
   --agent-accent-warm: #ffb84d;
 
   --agent-phone-w: 780px;
-  --agent-phone-h: 46vh;
+  --agent-phone-h: 58vh;
   --agent-bar-h: 52px;
 }
 
@@ -80,8 +80,8 @@
 .agent-phone {
   position: fixed;
   left: 50%;
-  bottom: var(--agent-bar-h);
-  transform: translateX(-50%) translateY(calc(100% + var(--agent-bar-h)));
+  bottom: 0;
+  transform: translateX(-50%) translateY(100%);
   width: var(--agent-phone-w);
   max-width: 96vw;
   height: var(--agent-phone-h);
@@ -789,8 +789,8 @@
 .agent-dm-phone {
   position: fixed;
   left: 50%;
-  bottom: var(--agent-bar-h);
-  transform: translateX(-50%) translateY(calc(100% + var(--agent-bar-h)));
+  bottom: 0;
+  transform: translateX(-50%) translateY(100%);
   width: var(--agent-dm-w);
   max-width: 96vw;
   height: var(--agent-dm-h);
