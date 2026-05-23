@@ -349,7 +349,11 @@ function skillUpgradeLookup(name) {
   if (skillUpgradeMap[name]) return skillUpgradeMap[name];
   const norm = name.toLowerCase().replace(/\s+/g, ' ').trim().replace(/\s*\(x2\)$/i, '');
   const canonical = (window._skillUpgradeNorm || {})[norm];
-  return canonical ? skillUpgradeMap[canonical] : null;
+  if (canonical) return skillUpgradeMap[canonical];
+  // Strip parenthetical suffix: "Language (2nd)" → "Language", "Science (Biology)" → "Science"
+  const base = name.replace(/\s*\([^)]*\)\s*$/, '').trim();
+  if (base && base !== name) return skillUpgradeLookup(base);
+  return null;
 }
 let buffTimerHandle     = null;
 const notifiedBuffIds   = new Set();
