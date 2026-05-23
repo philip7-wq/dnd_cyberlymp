@@ -45,7 +45,8 @@
   transition: opacity 220ms;
   font-family: 'Inter', sans-serif;
 }
-.agent-bar.hidden { opacity: 0; pointer-events: none; }
+.agent-bar.hidden,
+.agent-dm-bar.hidden { opacity: 0; pointer-events: none; }
 
 .agent-bar-logo {
   font-family: 'Audiowide', sans-serif;
@@ -80,7 +81,7 @@
   position: fixed;
   left: 50%;
   bottom: var(--agent-bar-h);
-  transform: translateX(-50%) translateY(100%);
+  transform: translateX(-50%) translateY(calc(100% + var(--agent-bar-h)));
   width: var(--agent-phone-w);
   max-width: 96vw;
   height: var(--agent-phone-h);
@@ -253,6 +254,33 @@
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ---------- IN-APP TOAST NOTIFICATION ---------- */
+.agent-toast {
+  position: absolute;
+  top: 48px;
+  left: 10px;
+  right: 10px;
+  background: rgba(0, 10, 16, 0.9);
+  border: 1px solid var(--agent-hologram);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 200;
+  font-size: 12px;
+  color: var(--agent-text);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 220ms ease, transform 220ms ease;
+  box-shadow: 0 0 16px var(--agent-hologram-glow);
+  pointer-events: none;
+  overflow: hidden;
+}
+.agent-toast.show { opacity: 1; transform: translateY(0); }
+.agent-toast-name { color: var(--agent-hologram); font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.agent-toast-msg  { color: var(--agent-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- HOME / APP GRID ---------- */
 .agent-home {
@@ -762,7 +790,7 @@
   position: fixed;
   left: 50%;
   bottom: var(--agent-bar-h);
-  transform: translateX(-50%) translateY(100%);
+  transform: translateX(-50%) translateY(calc(100% + var(--agent-bar-h)));
   width: var(--agent-dm-w);
   max-width: 96vw;
   height: var(--agent-dm-h);

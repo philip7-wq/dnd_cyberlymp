@@ -188,14 +188,15 @@ async function renderThreadList() {
   if (!main) return;
 
   const me = getActiveIdentity();
-  // Get all threads where I'm a participant
-  const { data: threads } = await supabase
-    .from('agent_threads')
-    .select('*')
-    .or(`a_id.eq.${me.id},b_id.eq.${me.id}`)
-    .order('last_message_at', { ascending: false });
+  // Two separate queries to avoid PostgREST .or() syntax issues
+  const [{ data: asA }, { data: asB }] = await Promise.all([
+    supabase.from('agent_threads').select('*').eq('a_type', me.type).eq('a_id', me.id),
+    supabase.from('agent_threads').select('*').eq('b_type', me.type).eq('b_id', me.id),
+  ]);
+  const threads = [...(asA || []), ...(asB || [])]
+    .sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at));
 
-  if (!threads || !threads.length) {
+  if (!threads.length) {
     main.innerHTML = `<div class="agent-empty"><div class="agent-empty-glyph">CC</div>Keine Chats.<br>Wähle einen Kontakt.</div>`;
     return;
   }
@@ -311,18 +312,53 @@ function escapeHtml(s) {
   return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 }
 
+// In-app toast notification
+function showAgentToast(senderName, snippet) {
+  const existing = document.getElementById('agent-toast');
+  if (existing) existing.remove();
+  const frame = document.querySelector('.agent-phone-frame') || document.querySelector('.agent-dm-phone');
+  if (!frame) return;
+  const toast = document.createElement('div');
+  toast.id = 'agent-toast';
+  toast.className = 'agent-toast';
+  toast.innerHTML = `<span class="agent-toast-name">${escapeHtml(senderName)}</span><span class="agent-toast-msg">${escapeHtml(snippet.slice(0, 60))}</span>`;
+  frame.appendChild(toast);
+  requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
 // React to realtime
-window.addEventListener('agent:message', (e) => {
+window.addEventListener('agent:message', async (e) => {
   const { msg, thread } = e.detail;
-  // If the open thread matches, append
+  const me = getActiveIdentity();
+  const isOwn = msg.sender_type === me.type && msg.sender_id === me.id;
+
   if (agentState.currentThreadId === thread.id) {
+    // Open thread — just refresh stream
     refreshChatStream(thread.id);
-    // mark as read
-    if (msg.sender_id !== getActiveIdentity().id) {
-      supabase.from('agent_messages').update({ read_at: new Date().toISOString() }).eq('id', msg.id);
+    if (!isOwn) supabase.from('agent_messages').update({ read_at: new Date().toISOString() }).eq('id', msg.id);
+  } else {
+    // Different thread or different app — show toast if phone is open
+    if (!isOwn) {
+      const phoneOpen = document.getElementById('agent-phone')?.classList.contains('open')
+                     || document.getElementById('agent-dm-phone')?.classList.contains('open');
+      if (phoneOpen) {
+        // Resolve sender name for toast
+        let senderName = msg.sender_type === 'npc' ? 'NPC' : 'Spieler';
+        if (msg.sender_type === 'player') {
+          const { data: p } = await supabase.from('characters').select('handle,name').eq('id', msg.sender_id).maybeSingle();
+          senderName = p?.handle || p?.name || senderName;
+        } else {
+          const { data: n } = await supabase.from('npcs').select('name').eq('id', msg.sender_id).maybeSingle();
+          senderName = n?.name || senderName;
+        }
+        showAgentToast(senderName, msg.content || '—');
+      }
     }
-  } else if (agentState.currentApp === 'chrome-chat') {
-    renderThreadList();
+    if (agentState.currentApp === 'chrome-chat') renderThreadList();
   }
 });
 
@@ -358,10 +394,12 @@ async function refreshCallHistory() {
   const list = document.getElementById('cj-list');
   if (!list) return;
   const me = getActiveIdentity();
-  const { data: calls } = await supabase.from('agent_calls')
-    .select('*')
-    .or(`caller_id.eq.${me.id},callee_id.eq.${me.id}`)
-    .order('started_at', { ascending: false }).limit(50);
+  const [{ data: asCaller }, { data: asCallee }] = await Promise.all([
+    supabase.from('agent_calls').select('*').eq('caller_id', me.id).order('started_at', { ascending: false }).limit(25),
+    supabase.from('agent_calls').select('*').eq('callee_id', me.id).order('started_at', { ascending: false }).limit(25),
+  ]);
+  const calls = [...(asCaller || []), ...(asCallee || [])]
+    .sort((a, b) => new Date(b.started_at) - new Date(a.started_at)).slice(0, 50);
 
   if (!calls || !calls.length) {
     list.innerHTML = `<div class="agent-empty"><div class="agent-empty-glyph">☏</div>Keine Anrufe.</div>`;
@@ -640,10 +678,12 @@ async function refreshTransfers() {
   const list = document.getElementById('ew-history');
   if (!list) return;
   const me = getActiveIdentity();
-  const { data: trs } = await supabase.from('agent_transfers')
-    .select('*')
-    .or(`sender_id.eq.${me.id},recipient_id.eq.${me.id}`)
-    .order('created_at', { ascending: false }).limit(50);
+  const [{ data: asSender }, { data: asRecipient }] = await Promise.all([
+    supabase.from('agent_transfers').select('*').eq('sender_id', me.id).order('created_at', { ascending: false }).limit(25),
+    supabase.from('agent_transfers').select('*').eq('recipient_id', me.id).order('created_at', { ascending: false }).limit(25),
+  ]);
+  const trs = [...(asSender || []), ...(asRecipient || [])]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 50);
 
   if (!trs || !trs.length) {
     list.innerHTML = `<div class="agent-empty"><div class="agent-empty-glyph">€$</div>Keine Transfers.</div>`;

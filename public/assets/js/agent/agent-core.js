@@ -146,7 +146,9 @@ const PHONE_HTML = `
 export async function bootAgent() {
   const phone = document.getElementById('agent-phone');
   const boot  = document.getElementById('agent-boot');
+  const bar   = document.getElementById('agent-bar');
   if (!phone) return;
+  if (bar) bar.classList.add('hidden');
   boot.classList.remove('gone');
   phone.classList.add('open');
   playSound('boot');
@@ -157,13 +159,14 @@ export async function bootAgent() {
 export async function shutdownAgent() {
   const phone = document.getElementById('agent-phone');
   const shut  = document.getElementById('agent-shutdown');
+  const bar   = document.getElementById('agent-bar');
   if (!phone) return;
   shut.classList.add('active');
   playSound('shutdown');
   await new Promise(r => setTimeout(r, 380));
   phone.classList.remove('open');
   shut.classList.remove('active');
-  // reset to home
+  if (bar) bar.classList.remove('hidden');
   setTimeout(() => showApp('home'), 400);
 }
 
@@ -251,6 +254,14 @@ export async function initAgent({ characterId, characterName }) {
   // Clock
   tickClock();
   setInterval(tickClock, 1000 * 30);
+
+  // Unlock audio on first interaction (browser autoplay policy)
+  document.getElementById('agent-bar').addEventListener('click', () => {
+    if (!agentState._audioUnlocked) {
+      agentState._audioUnlocked = true;
+      const a = new Audio(); a.play().catch(() => {});
+    }
+  }, { once: true });
 
   // Bar click → boot
   document.getElementById('agent-bar').addEventListener('click', async () => {

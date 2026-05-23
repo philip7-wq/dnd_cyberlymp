@@ -144,7 +144,9 @@ export async function initDmAgent() {
 async function bootDmPhone() {
   const phone = document.getElementById('agent-dm-phone');
   const boot  = document.getElementById('agent-boot');
+  const bar   = document.getElementById('agent-dm-bar');
   if (!phone) return;
+  if (bar) bar.classList.add('hidden');
   boot.classList.remove('gone');
   phone.classList.add('open');
   playSound('boot');
@@ -155,12 +157,14 @@ async function bootDmPhone() {
 async function shutdownDmPhone() {
   const phone = document.getElementById('agent-dm-phone');
   const shut  = document.getElementById('agent-shutdown');
+  const bar   = document.getElementById('agent-dm-bar');
   if (!phone) return;
   shut.classList.add('active');
   playSound('shutdown');
   await new Promise(r => setTimeout(r, 380));
   phone.classList.remove('open');
   shut.classList.remove('active');
+  if (bar) bar.classList.remove('hidden');
   setTimeout(() => showApp('home'), 400);
 }
 
