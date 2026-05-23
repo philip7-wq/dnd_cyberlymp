@@ -31,23 +31,43 @@ function renderContactsApp() {
 async function refreshContacts() {
   const me = getActiveIdentity();
   if (me.type !== 'player') return;
-  const { data, error } = await supabase
+
+  // Always fetch all other players directly from characters table
+  const { data: chars } = await supabase
+    .from('characters')
+    .select('id, handle, name, image_url')
+    .neq('id', me.id)
+    .order('name');
+
+  // Fetch only NPC contacts (added via code)
+  const { data: npcContacts } = await supabase
     .from('agent_contacts')
     .select('*')
     .eq('owner_character_id', me.id)
+    .eq('contact_type', 'npc')
     .order('display_name');
-  if (error) { console.error(error); return; }
-  agentState.contacts = data || [];
+
+  // Build unified contact list for agentState (used by calljack/eddiewire pickers)
+  const playerContacts = (chars || []).map(c => ({
+    id: c.id,
+    contact_type: 'player',
+    contact_player_id: c.id,
+    contact_npc_id: null,
+    display_name: c.handle || c.name || '?',
+    avatar_url: c.image_url,
+  }));
+  agentState.contacts = [...playerContacts, ...(npcContacts || [])];
 
   const list = document.getElementById('contacts-list');
   if (!list) return;
-  if (!data || !data.length) {
-    list.innerHTML = `<div class="agent-empty"><div class="agent-empty-glyph">⌬</div>Keine Kontakte.<br>Code eingeben für NPCs.</div>`;
+
+  if (!agentState.contacts.length) {
+    list.innerHTML = `<div class="agent-empty"><div class="agent-empty-glyph">⌬</div>Keine Kontakte.</div>`;
     return;
   }
 
-  list.innerHTML = data.map(c => `
-    <div class="agent-list-item" data-contact-id="${c.id}" data-type="${c.contact_type}" data-ref="${c.contact_player_id || c.contact_npc_id}">
+  const renderItem = (c) => `
+    <div class="agent-list-item" data-type="${c.contact_type}" data-ref="${c.contact_player_id || c.contact_npc_id}">
       <div class="agent-avatar" ${c.avatar_url ? `style="background-image:url(${c.avatar_url})"` : ''}>
         ${c.avatar_url ? '' : (c.display_name || '?').slice(0,1).toUpperCase()}
       </div>
@@ -55,8 +75,9 @@ async function refreshContacts() {
         <div class="agent-list-name">${c.display_name}</div>
         <div class="agent-list-tag ${c.contact_type === 'npc' ? 'npc' : ''}">${c.contact_type === 'npc' ? 'NPC' : 'PLAYER'}</div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+
+  list.innerHTML = agentState.contacts.map(renderItem).join('');
 
   list.querySelectorAll('.agent-list-item').forEach(el => {
     el.addEventListener('click', () => openContactDetail(el.dataset.type, el.dataset.ref));

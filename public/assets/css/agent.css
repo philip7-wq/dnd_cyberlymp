@@ -15,9 +15,9 @@
   --agent-danger: #FF2D2D;
   --agent-accent-warm: #ffb84d;
 
-  --agent-phone-w: 400px;
-  --agent-phone-h: 65vh;
-  --agent-bar-h: 56px;
+  --agent-phone-w: 780px;
+  --agent-phone-h: 46vh;
+  --agent-bar-h: 52px;
 }
 
 /* ---------- BOTTOM BAR (collapsed) ---------- */
@@ -27,6 +27,7 @@
   bottom: 12px;
   transform: translateX(-50%);
   width: var(--agent-phone-w);
+  max-width: 96vw;
   height: var(--agent-bar-h);
   background: var(--agent-bg);
   border: 1px solid var(--agent-hologram);
@@ -81,6 +82,7 @@
   bottom: -10px;
   transform: translateX(-50%) translateY(105%);
   width: var(--agent-phone-w);
+  max-width: 96vw;
   height: var(--agent-phone-h);
   z-index: 8501;
   pointer-events: none;
@@ -255,10 +257,10 @@
 /* ---------- HOME / APP GRID ---------- */
 .agent-home {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px 22px;
-  padding: 28px 24px;
-  align-content: flex-start;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px 16px;
+  padding: 20px 28px;
+  align-content: center;
 }
 .app-icon {
   position: relative;
@@ -721,8 +723,8 @@
    DM PANEL — bigger, with NPC tabs
    ============================================================ */
 :root {
-  --agent-dm-w: 460px;
-  --agent-dm-h: 72vh;
+  --agent-dm-w: 880px;
+  --agent-dm-h: 50vh;
 }
 
 .agent-dm-bar {
@@ -731,6 +733,7 @@
   bottom: 12px;
   transform: translateX(-50%);
   width: var(--agent-dm-w);
+  max-width: 96vw;
   height: var(--agent-bar-h);
   background: var(--agent-bg);
   border: 1px solid var(--agent-accent-warm);
@@ -760,6 +763,7 @@
   bottom: -10px;
   transform: translateX(-50%) translateY(105%);
   width: var(--agent-dm-w);
+  max-width: 96vw;
   height: var(--agent-dm-h);
   z-index: 8501;
   pointer-events: none;
