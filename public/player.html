@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/player.css">
   <link rel="stylesheet" href="assets/css/agent.css">
+  <link rel="stylesheet" href="assets/css/roles.css">
 </head>
 <body>
 
@@ -55,6 +56,38 @@
       <button id="cashLogClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem">✕</button>
     </div>
     <div id="cashLogContent" style="font-size:.78rem;display:flex;flex-direction:column;gap:.3rem"></div>
+  </div>
+</div>
+
+<!-- Role Settings Modal -->
+<div id="roleSettingsModal" hidden style="position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center">
+  <div style="background:#111;border:1px solid var(--cyan);border-radius:6px;padding:1.5rem;max-width:300px;width:90%">
+    <div style="font-family:Audiowide,sans-serif;font-size:.75rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem">Rollen-Einstellungen</div>
+    <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.25rem">Rolle</label>
+    <select id="roleSettingsRole" style="width:100%;background:#1a1a1a;border:1px solid #444;color:var(--text);border-radius:4px;padding:.4rem;font-size:.82rem;margin-bottom:.75rem">
+      <option value="">— Keine —</option>
+      <option value="solo">Solo</option>
+      <option value="netrunner">Netrunner</option>
+      <option value="tech">Tech</option>
+      <option value="medtech">Medtech</option>
+      <option value="media">Media</option>
+      <option value="exec">Exec</option>
+      <option value="lawman">Lawman</option>
+      <option value="fixer">Fixer</option>
+      <option value="nomad">Nomad</option>
+      <option value="rockerboy">Rockerboy</option>
+    </select>
+    <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.25rem">Rank (1–10)</label>
+    <input type="number" id="roleSettingsRank" min="1" max="10" style="width:100%;background:#1a1a1a;border:1px solid #444;color:var(--text);border-radius:4px;padding:.4rem;font-size:.82rem;margin-bottom:1rem">
+    <div style="border-top:1px solid #2a2a2a;margin-bottom:.75rem;padding-top:.75rem">
+      <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.4rem">Punkteverteilung (Combat Awareness, Specialties, etc.) wird im <strong style="color:var(--text)">Rollen-Tab</strong> vergeben. Hier zurücksetzen um neu zu verteilen:</div>
+      <button id="roleSettingsReset" style="width:100%;background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:.35rem;cursor:pointer;font-size:.75rem">↺ Punkte zurücksetzen</button>
+      <div id="roleSettingsResetMsg" style="font-size:.7rem;color:#4caf50;margin-top:.3rem;min-height:.9rem"></div>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button id="roleSettingsSave" style="flex:1;background:var(--red);border:none;color:#fff;border-radius:4px;padding:.5rem;cursor:pointer;font-family:Audiowide,sans-serif;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase">Speichern</button>
+      <button id="roleSettingsCancel" style="flex:1;background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:.5rem;cursor:pointer;font-size:.78rem">Abbrechen</button>
+    </div>
   </div>
 </div>
 
@@ -159,7 +192,7 @@
 <div class="tabs" id="tabBar" style="display:none">
   <button class="tab-btn active" data-tab="stats">Stats</button>
   <button class="tab-btn" data-tab="skills">Skills</button>
-  <button class="tab-btn" data-tab="role">Rolle</button>
+  <button class="tab-btn" data-tab="role">Rolle</button><button id="roleSettingsBtnTab" title="Rolle & Rank ändern" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);cursor:pointer;padding:.35rem .25rem .35rem 0;font-size:.85rem;line-height:1;vertical-align:middle">⚙</button>
   <button class="tab-btn" data-tab="weapons">Weapons</button>
   <button class="tab-btn" data-tab="armor">Armor</button>
   <button class="tab-btn" data-tab="cyberware">Cyberware</button>
@@ -284,6 +317,7 @@ import { getCharacter, getCharacters, patchCharacter, patchCash, logRoll, getAct
 import { roll, initDiceBox, animateRollNumber } from './assets/js/dice.js';
 import { initAgent } from './assets/js/agent/agent-core.js';
 import './assets/js/agent/agent-apps.js';
+import { mountRoleInterface } from './assets/js/roles/roles-router.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const STATS_ORDER = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP'];
@@ -390,7 +424,6 @@ let _audioCtx      = null;
 let notesSaveTimer      = null;
 let chatUnread          = 0;
 let statsEditing        = false;
-let roleAbilities       = null;
 let activeNpcs          = [];
 let _tipPanel = null, _tipOverlay = null, _tipMap = new Map();
 let _diceAutoClose = null;
@@ -452,13 +485,12 @@ if (id) {
 
   try {
     let allActiveCombats, rawItems;
-    [char, injuryData, allChars, allActiveCombats, rawItems, roleAbilities, AMMO_DATA] = await Promise.all([
+    [char, injuryData, allChars, allActiveCombats, rawItems, AMMO_DATA] = await Promise.all([
       getCharacter(id),
       fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
       getCharacters(),
       getActiveCombats(),
       fetch('./assets/data/items.json').then(r => r.json()).then(d => d.items || d).catch(() => []),
-      fetch('./assets/data/role-abilities.json').then(r => r.json()).catch(() => ({})),
       fetch('./assets/data/ammunition.json').then(r => r.json()).catch(() => ({ ammo_types: [], weapon_ammo_mapping: {} })),
     ]);
     // Find the combat session this player is assigned to
@@ -1925,886 +1957,57 @@ function renderLifepath() {
 
 // ── Role tab ──────────────────────────────────────────────────
 
-function showRoleSaveToast(msg) {
-  const t = document.getElementById('rollToast');
-  if (!t) return;
-  t.textContent = msg;
-  t.className = 'roll-toast show';
-  setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-function initRoleAbilityData(r) {
-  switch (r) {
-    case 'solo':      return { combatAwareness: { damage_deflection:0, fumble_recovery:false,
-                                initiative_reaction:0, precision_attack:0, spot_weakness:0, threat_detection:0 }};
-    case 'medtech':   return { specialtyPoints: { surgery:0, pharmaceuticals:0, cryosystem_operation:0 }};
-    case 'tech':      return { specialtyRanks: { field:0, upgrade:0, fabrication:0, invention:0 }};
-    case 'exec':      return { teamMembers: [] };
-    case 'nomad':     return { vehiclePool: [], activeVehicle: null };
-    case 'rockerboy': return { fanRelations: '' };
-    default:          return {};
-  }
-}
-
-function getRankBand(bandsObj, rank) {
-  if (!bandsObj) return null;
-  for (const [key, val] of Object.entries(bandsObj)) {
-    const [lo, hi] = key.includes('-') ? key.split('-').map(Number) : [+key, +key];
-    if (rank >= lo && rank <= hi) return val;
-  }
-  return null;
-}
-
-// ── Info Tooltip System ───────────────────────────────────────
-function _initTipUI() {
-  if (_tipPanel) return;
-  _tipOverlay = document.createElement('div');
-  _tipOverlay.className = 'info-tip-overlay';
-  _tipOverlay.addEventListener('click', _hideTip);
-  _tipPanel = document.createElement('div');
-  _tipPanel.className = 'info-tip-panel';
-  _tipPanel.addEventListener('click', e => {
-    if (e.target.classList.contains('info-tip-close')) _hideTip();
-  });
-  document.body.append(_tipOverlay, _tipPanel);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') _hideTip(); });
-  document.addEventListener('click', e => {
-    if (_tipPanel.style.display === 'block' &&
-        !_tipPanel.contains(e.target) && !e.target.classList.contains('info-icon'))
-      _hideTip();
-  });
-}
-
-function _hideTip() {
-  if (_tipPanel) _tipPanel.style.display = '';
-  if (_tipOverlay) _tipOverlay.classList.remove('open');
-}
-
-function _showTip(triggerEl, html) {
-  _initTipUI();
-  const isMobile = window.innerWidth < 560 || !window.matchMedia('(hover: hover)').matches;
-  if (isMobile) {
-    _tipPanel.innerHTML = `<button class="info-tip-close">✕</button>${html}`;
-    _tipPanel.className = 'info-tip-panel is-modal';
-    _tipOverlay.classList.add('open');
-  } else {
-    _tipPanel.innerHTML = html;
-    _tipPanel.className = 'info-tip-panel';
-    const r = triggerEl.getBoundingClientRect();
-    _tipPanel.style.left = Math.min(r.left, window.innerWidth - 340) + 'px';
-    _tipPanel.style.top  = (r.bottom + 6) + 'px';
-  }
-  _tipPanel.style.display = 'block';
-}
-
-function setupInfoIcons(container) {
-  (container || document).querySelectorAll('.info-icon[data-tip]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const html = _tipMap.get(btn.dataset.tip);
-      if (html) _showTip(btn, html);
-      else _hideTip();
-    });
-  });
-}
-
-function buildTipMap(roleKey, roleData, rank) {
-  _tipMap.clear();
-  const h4 = t => `<h4>${t}</h4>`;
-
-  if (roleKey === 'rockerboy') {
-    const dvs = roleData.dvs || {};
-    _tipMap.set('rockerboy-main', `${h4('Charismatic Impact')}
-      <p>Beeinflusse Fans durch pure Persönlichkeit. Funktioniert nur bei echten Fans.</p>
-      <p><strong>Check:</strong> Rank + 1d10 vs DV ${dvs.single_fan ?? 8} (Fan) / ${dvs.small_group ?? 10} (Gruppe) / ${dvs.huge_group ?? 12} (Masse)</p>
-      <ul>${Object.entries(roleData.ranks || {}).map(([k,v]) =>
-        `<li><strong>Rank ${k}:</strong> ${escapeHtml(String(v.venues || ''))}</li>`).join('')}</ul>`);
-  }
-
-  if (roleKey === 'solo') {
-    _tipMap.set('solo-main', `${h4('Combat Awareness')}
-      <p>Verteile Rank-Punkte auf Kampf-Fähigkeiten. Neu verteilen = Action im Kampf.</p>
-      <ul>
-        <li><strong>Damage Deflection:</strong> 2/4/6/8/10 Pkt = −1/−2/−3/−4/−5 Schaden (1. Treffer/Runde)</li>
-        <li><strong>Fumble Recovery:</strong> 4 Pkt = Ignoriere kritische Fehlschläge beim Angriff</li>
-        <li><strong>Initiative Reaction:</strong> 1 Pkt = +1 Initiative (wird auto-addiert)</li>
-        <li><strong>Precision Attack:</strong> 3/6/9 Pkt = +1/+2/+3 auf Angriffswürfe</li>
-        <li><strong>Spot Weakness:</strong> 1 Pkt = +1 Schaden vor Rüstung (1. Treffer/Runde)</li>
-        <li><strong>Threat Detection:</strong> 1 Pkt = +1 auf Perception Checks</li>
-      </ul>`);
-    _tipMap.set('solo-dmgdefl', `${h4('Damage Deflection')}
-      <p>Reduziert Schaden des <em>ersten</em> Treffers pro Runde.</p>
-      <ul><li>2 Pkt → −1 Schaden</li><li>4 Pkt → −2 Schaden</li>
-          <li>6 Pkt → −3 Schaden</li><li>8 Pkt → −4 Schaden</li>
-          <li>10 Pkt → −5 Schaden</li></ul>`);
-    _tipMap.set('solo-fumble', `${h4('Fumble Recovery')}
-      <p>Kostet 4 Punkte. Wenn aktiv: Kritische Fehlschläge (natürliche 1) beim Angriff werden ignoriert — kein −1d10 Abzug.</p>`);
-    _tipMap.set('solo-initreact', `${h4('Initiative Reaction')}
-      <p>Jeder Punkt = +1 Initiative.</p>
-      <p>Wird automatisch auf Initiative-Würfe addiert. Max ${rank} Punkte bei Rank ${rank}.</p>`);
-    _tipMap.set('solo-precision', `${h4('Precision Attack')}
-      <p>Erhöht Angriffswürfe.</p>
-      <ul><li>3 Pkt → +1 auf Angriffswürfe</li>
-          <li>6 Pkt → +2 auf Angriffswürfe</li>
-          <li>9 Pkt → +3 auf Angriffswürfe</li></ul>`);
-    _tipMap.set('solo-spotweak', `${h4('Spot Weakness')}
-      <p>Jeder Punkt = +1 Schaden <em>vor</em> Rüstungsreduktion (1. erfolgreicher Treffer/Runde).</p>
-      <p>Max ${rank} Punkte bei Rank ${rank}.</p>`);
-    _tipMap.set('solo-threatdet', `${h4('Threat Detection')}
-      <p>Jeder Punkt = +1 auf Perception/Awareness Checks.</p>
-      <p>Max ${rank} Punkte bei Rank ${rank}.</p>`);
-  }
-
-  if (roleKey === 'netrunner') {
-    const actions = roleData.net_actions_per_turn || {};
-    const abilities = roleData.interface_abilities || {};
-    _tipMap.set('netrunner-main', `${h4('Interface')}
-      <p>Ermöglicht Netrunning und Cyberdeck-Nutzung.</p>
-      <p><strong>NET Actions/Runde:</strong></p>
-      <ul>${Object.entries(actions).map(([k,v]) => `<li>Rank ${k}: ${v} Actions</li>`).join('')}</ul>
-      <p><strong>Interface Abilities:</strong></p>
-      <ul>${Object.entries(abilities).map(([k,v]) =>
-        `<li><strong>${escapeHtml(k.replace(/_/g,' '))}:</strong> ${escapeHtml(String(v))}</li>`).join('')}</ul>`);
-  }
-
-  if (roleKey === 'tech') {
-    const dvTable = roleData.dv_time_table || {};
-    const dvRows = Object.entries(dvTable).map(([k,v]) => `${k} DV${v.dv}/${v.time}`).join(' · ');
-    const specs = roleData.specialties || {};
-    _tipMap.set('tech-field', `${h4('Field Expertise')}
-      <p>${escapeHtml(specs.field_expertise?.description || 'Addiere Specialty-Rang zu Basic Tech / Cybertech / Electronics / Weaponstech / Vehicle Tech Checks (außer Maker-Checks).')}</p>
-      <p>${escapeHtml(specs.field_expertise?.extra || 'Bonus: Temporäre Reparatur möglich (10 Min × Rang, danach verfällt zurück).')}</p>`);
-    _tipMap.set('tech-upgrade', `${h4('Upgrade Expertise')}
-      <p>${escapeHtml(specs.upgrade_expertise?.description || 'Verbessere ein Item (1 Upgrade/Item):')}</p>
-      <ul><li>Humanity Loss um 1d6 senken</li><li>+1 Option-Slot</li>
-          <li>Reparaturzeit halbieren</li><li>Waffe concealable machen</li>
-          <li>Average → Excellent Quality Waffe</li><li>SP um 1 erhöhen</li></ul>`);
-    _tipMap.set('tech-fabrication', `${h4('Fabrication Expertise')}
-      <p>${escapeHtml(specs.fabrication_expertise?.description || 'Baue Items aus Materialien (1 Preiskategorie günstiger).')}</p>
-      <p><strong>DV/Zeit:</strong> ${dvRows || 'Cheap DV9/1h · Costly DV13/6h · Premium DV17/1d · Expensive DV21/1W · Luxury DV29/1M'}</p>`);
-    _tipMap.set('tech-invention', `${h4('Invention Expertise')}
-      <p>${escapeHtml(specs.invention_expertise?.description || 'Erfinde neue Items oder Upgrades (GM-vermittelt).')}</p>
-      <p>Beschreibe Funktion → GM setzt DV &amp; Preiskategorie → Bauen mit Fabrication Expertise.</p>`);
-  }
-
-  if (roleKey === 'medtech') {
-    const pharmaList = roleData.pharmaceuticals_list || [];
-    const cryoBenefits = roleData.specialties?.cryosystem_operation?.benefits || {};
-    _tipMap.set('med-surgery', `${h4('Chirurgie (Surgery)')}
-      <p>Jeder Punkt = +2 Surgery Skill (max 10).</p>
-      <p>Behandelt: Schwere Critical Injuries (DV 13/15/17), Cyberware installieren/entfernen, Bodysculpting.</p>
-      <p>Exklusiv für Medtechs.</p>`);
-    _tipMap.set('med-pharma', `${h4('Pharmazeutika')}
-      <p>Jeder Punkt = +1 Medical Tech Skill + 1 Drug freigeschaltet:</p>
-      <ul>${pharmaList.map((p,i) =>
-        `<li><strong>${i+1}. ${escapeHtml(p.name)}:</strong> ${escapeHtml(p.effect || '')}</li>`).join('')}</ul>
-      <p>Synthetisieren: DV 13 Medical Tech · 200 eb → X Dosen (= Medical Tech Skill Wert)</p>`);
-    _tipMap.set('med-cryo', `${h4('Cryosystem Operation')}
-      <p>Jeder Punkt = +1 Medical Tech Skill + Benefit freigeschaltet:</p>
-      <ul>${Object.entries(cryoBenefits).map(([k,v]) =>
-        `<li><strong>${k} Pkt:</strong> ${escapeHtml(String(v))}</li>`).join('')}</ul>`);
-  }
-
-  if (roleKey === 'media') {
-    const ranks = roleData.ranks || {};
-    _tipMap.set('media-main', `${h4('Credibility')}
-      <p>Beeinflusse Publikum, greife auf Quellen zu, erhalte passiv Gerüchte.</p>
-      <p>GM würfelt 2×/Woche auf Gerüchte-DV. Story veröffentlichen = Believability % abhängig vom Rank.</p>
-      <ul>${Object.entries(ranks).map(([k,v]) =>
-        `<li><strong>Rank ${k}:</strong> ${escapeHtml(String(v.audience || '—'))}${v.believability !== undefined ? ` — ${v.believability}% Glaubwürdigkeit` : ''}</li>`
-      ).join('')}</ul>`);
-  }
-
-  if (roleKey === 'exec') {
-    const benefits = roleData.benefits_by_rank || {};
-    _tipMap.set('exec-main', `${h4('Teamwork')}
-      <p>Corporate Benefits &amp; Team Members (max ${execMaxMembers(rank)} Mitglieder bei Rank ${rank}):</p>
-      <ul>${Object.entries(benefits).map(([k,v]) =>
-        `<li><strong>Rank ${k}:</strong> ${escapeHtml(String(v))}</li>`).join('')}</ul>
-      <p style="font-size:.72rem;color:var(--text-muted)">Team Members: Max Light Armorjack · Loyalty 1–10 · Ersatz 200 eb</p>`);
-  }
-
-  if (roleKey === 'lawman') {
-    const ranks = roleData.ranks || {};
-    _tipMap.set('lawman-main', `${h4('Backup')}
-      <p>Action → 1d10 ≤ Rank ${rank} = Erfolg → 1d6 Runden bis Ankunft.</p>
-      <p>Bei 1d6=6: Nächsthöhere Tier erscheint.</p>
-      <ul>${Object.entries(ranks).map(([k,v]) =>
-        `<li><strong>Rank ${k}:</strong> ${escapeHtml(String(v.name || '—'))} (${v.count || 1}×), CN${v.combat_number ?? '?'}, SP${v.sp ?? '?'}, HP${v.hp ?? '?'}</li>`
-      ).join('')}</ul>`);
-  }
-
-  if (roleKey === 'fixer') {
-    const ranks = roleData.ranks || {};
-    _tipMap.set('fixer-main', `${h4('Operator')}
-      <p>Black Market Zugang &amp; Deals. 1 Deal pro Transaktion.</p>
-      <p><strong>Haggle:</strong> COOL + Trading + Rank + 1d10 vs DV (DM setzt)</p>
-      <ul>${Object.entries(ranks).map(([k,v]) =>
-        `<li><strong>Rank ${k}:</strong> ${escapeHtml(String(v.reach || '—'))} — Haggle: ${escapeHtml(String(v.haggle || '—'))}</li>`
-      ).join('')}</ul>
-      <p>Grease: +Kulturen &amp; Sprachen je Rank</p>`);
-  }
-
-  if (roleKey === 'nomad') {
-    const motorpool = roleData.family_motorpool || {};
-    _tipMap.set('nomad-main', `${h4('Moto')}
-      <p>Addiere Moto Rank zu allen Fahrzeug-Skills &amp; Vehicle Tech Checks.</p>
-      <p>Je Rank: +1 Fahrzeug aus Familienpool ODER 1 Upgrade. Nur 1 Fahrzeug gleichzeitig ausleihbar.</p>
-      <p>Zerstört: 500 eb + 1 Woche Reparatur.</p>
-      <ul>${Object.entries(motorpool).map(([k,v]) => {
-        const vehs = Array.isArray(v) ? v : (v.vehicles || []);
-        return `<li><strong>Rank ${k}:</strong> ${vehs.map(x => escapeHtml(x)).join(', ')}</li>`;
-      }).join('')}</ul>`);
-  }
-}
-
 function renderRoleTab() {
-  const el = document.getElementById('tab-role');
-  if (!el) return;
-  if (!roleAbilities || !char.role) {
-    el.innerHTML = '<p class="empty-state">Keine Rolle gesetzt.</p>';
-    return;
+  const container = document.getElementById('tab-role');
+  if (!container) return;
+  mountRoleInterface(container, { ...char, role_rank: char.role_ability_rank })
+    .catch(e => console.error('[roles]', e));
+}
+
+function openRoleSettings() {
+  document.getElementById('roleSettingsRole').value = char.role || '';
+  document.getElementById('roleSettingsRank').value = char.role_ability_rank ?? 4;
+  const modal = document.getElementById('roleSettingsModal');
+  modal.hidden = false;
+  modal.style.display = 'flex';
+}
+
+function closeRoleSettings() {
+  const modal = document.getElementById('roleSettingsModal');
+  modal.hidden = true;
+  modal.style.display = 'none';
+}
+
+document.getElementById('roleSettingsCancel').addEventListener('click', closeRoleSettings);
+document.getElementById('roleSettingsModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeRoleSettings();
+});
+document.getElementById('roleSettingsSave').addEventListener('click', async () => {
+  const role = document.getElementById('roleSettingsRole').value;
+  const rank = Math.min(10, Math.max(1, parseInt(document.getElementById('roleSettingsRank').value) || 4));
+  char.role = role || null;
+  char.role_ability_rank = rank;
+  await patchCharacter(char.id, { role: char.role, role_ability_rank: rank });
+  closeRoleSettings();
+  renderRoleTab();
+});
+
+document.getElementById('roleSettingsReset').addEventListener('click', async () => {
+  // Clear DB allocation
+  char.role_ability_data = {};
+  await patchCharacter(char.id, { role_ability_data: {} });
+  // Clear localStorage keys used by role modules (Solo, etc.)
+  if (char.id) {
+    localStorage.removeItem(`solo-ca-${char.id}`);
+    localStorage.removeItem(`tech-projects-${char.id}`);
+    localStorage.removeItem(`netrunner-deck-${char.id}`);
   }
-  const roleKey  = char.role.toLowerCase();
-  const roleData = roleAbilities[roleKey];
-  if (!roleData) { el.innerHTML = `<p class="empty-state">Rollendaten für "${char.role}" nicht gefunden.</p>`; return; }
-  // Merge defaults with saved values — preserves saved data, fills missing keys with 0
-  char.role_ability_data = { ...initRoleAbilityData(roleKey), ...(char.role_ability_data || {}) };
-  const rank = char.role_ability_rank ?? 0;
-  el.innerHTML = `
-    <div class="role-tab-header">
-      <span class="role-ability-name">${roleData.ability_name} <button class="info-icon" data-tip="${roleKey}-main" aria-label="Info">ℹ</button></span>
-      <span class="role-rank-badge">RANK ${rank}</span>
-    </div>
-    <p class="role-summary">${escapeHtml(roleData.summary)}</p>
-    <div id="role-specific-section"></div>
-  `;
-  buildRoleSection(roleKey, roleData, rank);
-  buildTipMap(roleKey, roleData, rank);
-  setupInfoIcons(el);
-}
+  const msg = document.getElementById('roleSettingsResetMsg');
+  msg.textContent = '✓ Punkte zurückgesetzt';
+  setTimeout(() => { msg.textContent = ''; }, 2500);
+  renderRoleTab();
+});
 
-function buildRoleSection(roleKey, roleData, rank) {
-  const builders = {
-    rockerboy: buildRockerboy, solo: buildSolo, netrunner: buildNetrunner,
-    tech: buildTech, medtech: buildMedtech, media: buildMedia,
-    exec: buildExec, lawman: buildLawman, fixer: buildFixer, nomad: buildNomad,
-  };
-  const fn = builders[roleKey];
-  if (fn) fn(roleData, rank);
-}
-
-function showRoleRollResult(elId, result, dv) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  const success = dv !== null ? result.total >= dv : null;
-  const critTxt = result.isCritSuccess ? '★ CRIT! ' : result.isCritFailure ? '✗ BOTCH! ' : '';
-  const succHtml = success !== null
-    ? `<span class="${success ? 'verdict-ok' : 'verdict-fail'}"> — ${success ? '✅ Erfolg' : '❌ Fehlschlag'}${dv ? ` (DV ${dv})` : ''}</span>`
-    : '';
-  el.innerHTML = `<strong>${critTxt}${result.total}</strong>${succHtml}`;
-}
-
-// ── Rockerboy ─────────────────────────────────────────────────
-function buildRockerboy(data, rank) {
-  const rad = char.role_ability_data || {};
-  const rankInfo = getRankBand(data.ranks, rank) || {};
-  const dvs = data.dvs || { single_fan: 8, small_group: 10, huge_group: 12 };
-  const target = document.getElementById('role-specific-section');
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">Charismatic Impact</div>
-      <div class="role-roll-group">
-        <button class="role-roll-btn" data-dv="${dvs.single_fan}">Fan (DV ${dvs.single_fan})</button>
-        <button class="role-roll-btn" data-dv="${dvs.small_group}">Gruppe (DV ${dvs.small_group})</button>
-        <button class="role-roll-btn" data-dv="${dvs.huge_group}">Große Gruppe (DV ${dvs.huge_group})</button>
-      </div>
-      <div class="role-roll-result" id="rockerRollResult"></div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Rank ${rank} Boni</div>
-      <div class="role-benefit-list">
-        ${rankInfo.venues  ? `<div><strong>Venues:</strong> ${escapeHtml(rankInfo.venues)}</div>` : ''}
-        ${rankInfo.single  ? `<div><strong>Fan:</strong> ${escapeHtml(String(rankInfo.single))}</div>` : ''}
-        ${rankInfo.group   ? `<div><strong>Gruppe:</strong> ${escapeHtml(String(rankInfo.group))}</div>` : ''}
-        ${rankInfo.huge    ? `<div><strong>Große Gruppe:</strong> ${escapeHtml(String(rankInfo.huge))}</div>` : ''}
-      </div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Aktive Fan-Beziehungen</div>
-      <textarea class="role-textarea" id="rockerFanRelations" rows="3"
-        placeholder="NPCs, Gruppen, laufende Gefälligkeiten…">${escapeHtml(rad.fanRelations || '')}</textarea>
-      <button class="role-save-btn" id="rockerSaveBtn">Speichern</button>
-    </div>`;
-  target.querySelectorAll('.role-roll-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const dv = parseInt(btn.dataset.dv);
-      const result = await roll(`1d10+${rank}`, {
-        context: `Charismatic Impact vs DV ${dv}`,
-        isSkillCheck: true, characterId: char.id, characterName: char.name,
-      });
-      showRoleRollResult('rockerRollResult', result, dv);
-      showToast(result);
-    });
-  });
-  document.getElementById('rockerSaveBtn').addEventListener('click', async () => {
-    char.role_ability_data = { ...char.role_ability_data, fanRelations: document.getElementById('rockerFanRelations').value };
-    await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
-  });
-}
-
-// ── Solo ──────────────────────────────────────────────────────
-function soloPointsUsed(ca) {
-  return (ca.damage_deflection||0) + (ca.fumble_recovery?4:0) + (ca.initiative_reaction||0)
-       + (ca.precision_attack||0)  + (ca.spot_weakness||0)    + (ca.threat_detection||0);
-}
-
-function buildSolo(data, rank) {
-  const ca = (char.role_ability_data || {}).combatAwareness || { damage_deflection:0, fumble_recovery:false,
-    initiative_reaction:0, precision_attack:0, spot_weakness:0, threat_detection:0 };
-  const used = soloPointsUsed(ca);
-  const target = document.getElementById('role-specific-section');
-
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">Combat Awareness — Punkte: <span id="soloPointsDisplay" class="${used > rank ? 'over-budget' : ''}">${used} / ${rank}</span></div>
-      <div class="specialty-grid">
-        <span class="specialty-label">Damage Deflection (2/4/6/8/10 Pkt) <button class="info-icon" data-tip="solo-dmgdefl" aria-label="Info">ℹ</button></span>
-        <select class="specialty-input" id="soloDmgDefl">
-          ${[0,2,4,6,8,10].map(v => `<option value="${v}"${ca.damage_deflection===v?' selected':''}>${v}</option>`).join('')}
-        </select>
-        <span class="specialty-label">Fumble Recovery (4 Pkt) <button class="info-icon" data-tip="solo-fumble" aria-label="Info">ℹ</button></span>
-        <input type="checkbox" id="soloFumble"${ca.fumble_recovery?' checked':''}>
-        <span class="specialty-label">Initiative Reaction (0–${rank} Pkt) <button class="info-icon" data-tip="solo-initreact" aria-label="Info">ℹ</button></span>
-        <input type="number" class="specialty-input" id="soloInitReact" min="0" max="${rank}" value="${ca.initiative_reaction||0}">
-        <span class="specialty-label">Precision Attack (3/6/9 Pkt) <button class="info-icon" data-tip="solo-precision" aria-label="Info">ℹ</button></span>
-        <select class="specialty-input" id="soloPrecision">
-          ${[0,3,6,9].map(v => `<option value="${v}"${ca.precision_attack===v?' selected':''}>${v}</option>`).join('')}
-        </select>
-        <span class="specialty-label">Spot Weakness (0–${rank} Pkt) <button class="info-icon" data-tip="solo-spotweak" aria-label="Info">ℹ</button></span>
-        <input type="number" class="specialty-input" id="soloSpotWeak" min="0" max="${rank}" value="${ca.spot_weakness||0}">
-        <span class="specialty-label">Threat Detection (0–${rank} Pkt) <button class="info-icon" data-tip="solo-threatdet" aria-label="Info">ℹ</button></span>
-        <input type="number" class="specialty-input" id="soloThreatDet" min="0" max="${rank}" value="${ca.threat_detection||0}">
-      </div>
-      <button class="role-save-btn" id="soloSaveBtn" ${used > rank ? 'disabled' : ''}>Verteilung speichern</button>
-      <p style="font-size:.72rem;color:var(--text-muted);margin-top:.35rem">Initiative Reaction wird automatisch auf Initiative-Würfe addiert.</p>
-    </div>`;
-
-  function updateSoloCounter() {
-    const cur = {
-      damage_deflection:   parseInt(document.getElementById('soloDmgDefl').value)    || 0,
-      fumble_recovery:     document.getElementById('soloFumble').checked,
-      initiative_reaction: parseInt(document.getElementById('soloInitReact').value)  || 0,
-      precision_attack:    parseInt(document.getElementById('soloPrecision').value)   || 0,
-      spot_weakness:       parseInt(document.getElementById('soloSpotWeak').value)    || 0,
-      threat_detection:    parseInt(document.getElementById('soloThreatDet').value)   || 0,
-    };
-    const u = soloPointsUsed(cur);
-    const disp = document.getElementById('soloPointsDisplay');
-    if (disp) { disp.textContent = `${u} / ${rank}`; disp.className = u > rank ? 'over-budget' : ''; }
-    const btn = document.getElementById('soloSaveBtn');
-    if (btn) btn.disabled = u > rank;
-    return cur;
-  }
-
-  target.querySelectorAll('input, select').forEach(el =>
-    el.addEventListener('input', updateSoloCounter));
-
-  document.getElementById('soloSaveBtn').addEventListener('click', async () => {
-    const cur = updateSoloCounter();
-    if (soloPointsUsed(cur) > rank) return;
-    char.role_ability_data = { ...char.role_ability_data, combatAwareness: cur };
-    await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
-    renderRoleTab();
-    showRoleSaveToast('Combat Awareness gespeichert');
-  });
-}
-
-// ── Netrunner ─────────────────────────────────────────────────
-function buildNetrunner(data, rank) {
-  const actions = getRankBand(data.net_actions_per_turn, rank) ?? '?';
-  const abilities = data.interface_abilities || {};
-  const target = document.getElementById('role-specific-section');
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">NET-Aktionen pro Runde</div>
-      <div style="font-family:var(--font-display);font-size:2rem;color:var(--cyan);text-align:center;padding:.5rem 0">${actions}</div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Interface Abilities <button class="info-icon" data-tip="netrunner-main" aria-label="Info">ℹ</button></div>
-      <div class="role-benefit-list">
-        ${Object.entries(abilities).map(([k,v]) =>
-          `<div><strong>${escapeHtml(v.name || k)}:</strong> ${escapeHtml(v.description || v.effect || '')}</div>`
-        ).join('')}
-      </div>
-    </div>
-    <div class="role-section">
-      <button class="role-roll-btn" id="netRunBtn">NET-Run starten</button>
-    </div>`;
-  document.getElementById('netRunBtn').addEventListener('click', () => {
-    const t = document.getElementById('rollToast');
-    if (t) { t.textContent = 'NET-Run — In Entwicklung…'; t.className = 'roll-toast show';
-      setTimeout(() => t.classList.remove('show'), 2500); }
-  });
-}
-
-// ── Tech ──────────────────────────────────────────────────────
-function buildTech(data, rank) {
-  const sr = (char.role_ability_data || {}).specialtyRanks || { field:0, upgrade:0, fabrication:0, invention:0 };
-  const maxPts = rank * 2;
-  const usedPts = (sr.field||0)+(sr.upgrade||0)+(sr.fabrication||0)+(sr.invention||0);
-  const specs = data.specialties || {};
-  const dvTable = data.dv_time_table || {};
-  const target = document.getElementById('role-specific-section');
-
-  const specLabels = { field: 'Field Expertise', upgrade: 'Upgrade Expertise',
-    fabrication: 'Fabrication Expertise', invention: 'Invention Expertise' };
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">Maker Specialties — <span id="techPtsDisplay" class="${usedPts > maxPts ? 'over-budget' : ''}">${usedPts} / ${maxPts} Punkte (max ${rank} je Specialty)</span></div>
-      <div class="specialty-grid">
-        ${['field','upgrade','fabrication','invention'].map(k => `
-          <span class="specialty-label">${specLabels[k]} <button class="info-icon" data-tip="tech-${k}" aria-label="Info">ℹ</button></span>
-          <input type="number" class="specialty-input" id="techSpec_${k}" min="0" max="${rank}" value="${sr[k]||0}">
-        `).join('')}
-      </div>
-      <button class="role-save-btn" id="techSaveBtn" ${usedPts > maxPts ? 'disabled' : ''}>Speichern</button>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Item craften / upgraden</div>
-      <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.5rem;flex-wrap:wrap">
-        <span style="font-size:.8rem">DV:</span>
-        <input type="number" class="role-dv-input" id="techDvInput" placeholder="DV" value="14" style="width:60px">
-        <button class="role-roll-btn" id="techRollBtn">TECH + Field + 1d10</button>
-        <span class="role-roll-result" id="techRollResult"></span>
-      </div>
-      <table class="role-table">
-        <thead><tr><th>Preis</th><th>DV</th><th>Zeit</th></tr></thead>
-        <tbody>${Object.entries(dvTable).map(([cat, info]) =>
-          `<tr><td>${escapeHtml(cat)}</td><td>${info.dv ?? '—'}</td><td>${info.time ?? '—'}</td></tr>`
-        ).join('')}</tbody>
-      </table>
-    </div>`;
-
-  function updateTechCounter() {
-    const vals = {};
-    let sum = 0;
-    ['field','upgrade','fabrication','invention'].forEach(k => {
-      vals[k] = Math.min(rank, Math.max(0, parseInt(document.getElementById(`techSpec_${k}`)?.value) || 0));
-      sum += vals[k];
-    });
-    const disp = document.getElementById('techPtsDisplay');
-    if (disp) { disp.textContent = `${sum} / ${maxPts} Punkte (max ${rank} je Specialty)`; disp.className = sum > maxPts ? 'over-budget' : ''; }
-    const btn = document.getElementById('techSaveBtn');
-    if (btn) btn.disabled = sum > maxPts;
-    return vals;
-  }
-
-  target.querySelectorAll('.specialty-input').forEach(el => el.addEventListener('input', updateTechCounter));
-
-  document.getElementById('techSaveBtn').addEventListener('click', async () => {
-    const vals = updateTechCounter();
-    const sum = Object.values(vals).reduce((a,b)=>a+b,0);
-    if (sum > maxPts) return;
-    char.role_ability_data = { ...char.role_ability_data, specialtyRanks: vals };
-    await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
-    renderSkills();
-    renderRoleTab();
-    showRoleSaveToast('Specialties gespeichert');
-  });
-
-  document.getElementById('techRollBtn').addEventListener('click', async () => {
-    const dv = parseInt(document.getElementById('techDvInput').value) || null;
-    const currentField = parseInt(document.getElementById('techSpec_field')?.value) || (sr.field||0);
-    const tech = char.stats?.TECH || 0;
-    const basicTechLvl = char.skills?.['Basic Tech']?.lvl || 0;
-    const expr = `1d10+${tech + basicTechLvl + currentField}`;
-    const result = await roll(expr, { context: 'Tech Maker Check', isSkillCheck: true,
-      characterId: char.id, characterName: char.name });
-    showRoleRollResult('techRollResult', result, dv);
-    showToast(result);
-  });
-}
-
-// ── Medtech ───────────────────────────────────────────────────
-function buildMedtech(data, rank) {
-  const sp = (char.role_ability_data || {}).specialtyPoints || { surgery:0, pharmaceuticals:0, cryosystem_operation:0 };
-  const usedPts = (sp.surgery||0) + (sp.pharmaceuticals||0) + (sp.cryosystem_operation||0);
-  const pharmaList = data.pharmaceuticals_list || [];
-  const cryoBenefits = data.specialties?.cryosystem_operation?.benefits || {};
-  const target = document.getElementById('role-specific-section');
-
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">Medicine Specialties — <span id="medPtsDisplay" class="${usedPts > rank ? 'over-budget' : ''}">${usedPts} / ${rank} Punkte</span></div>
-      <div class="specialty-grid">
-        <span class="specialty-label">Chirurgie <button class="info-icon" data-tip="med-surgery" aria-label="Info">ℹ</button></span>
-        <input type="number" class="specialty-input" id="medSurgery" min="0" max="${rank}" value="${sp.surgery||0}">
-        <span class="specialty-label">Pharmazeutika (max 5) <button class="info-icon" data-tip="med-pharma" aria-label="Info">ℹ</button></span>
-        <input type="number" class="specialty-input" id="medPharma" min="0" max="5" value="${sp.pharmaceuticals||0}">
-        <span class="specialty-label">Cryosystem (max 5) <button class="info-icon" data-tip="med-cryo" aria-label="Info">ℹ</button></span>
-        <input type="number" class="specialty-input" id="medCryo" min="0" max="5" value="${sp.cryosystem_operation||0}">
-      </div>
-      <button class="role-save-btn" id="medSaveBtn" ${usedPts > rank ? 'disabled' : ''}>Speichern</button>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Chirurgie</div>
-      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.35rem">
-        <span style="font-size:.8rem">DV:</span>
-        <select class="role-dv-select" id="medSurgDv">
-          <option value="13">13 — Einfach</option>
-          <option value="15">15 — Kompliziert</option>
-          <option value="17">17 — Schwierig</option>
-        </select>
-        <button class="role-roll-btn" id="medSurgRollBtn">TECH + Surgery + 1d10</button>
-      </div>
-      <div class="role-roll-result" id="medSurgResult"></div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Pharmazeutika (${sp.pharmaceuticals||0} Punkte freigeschaltet)</div>
-      <div class="role-benefit-list">
-        ${pharmaList.filter((_,i) => i < (sp.pharmaceuticals||0)).map(p =>
-          `<div><strong>${escapeHtml(p.name)}:</strong> ${escapeHtml(p.effect || '')}
-           <button class="role-roll-btn" style="margin-left:.4rem;padding:.2rem .4rem;font-size:.65rem"
-             data-pharma="${escapeHtml(p.name)}">Synthetisieren</button>
-           <span class="role-roll-result" id="pharmaResult_${p.name.replace(/\s+/g,'_')}"></span>
-          </div>`
-        ).join('') || '<div style="color:var(--text-muted);font-size:.78rem">Keine Punkte in Pharmazeutika.</div>'}
-      </div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Cryosystem Benefits (${sp.cryosystem_operation||0} Punkte)</div>
-      <div class="role-benefit-list">
-        ${Object.entries(cryoBenefits).filter(([k]) => parseInt(k) <= (sp.cryosystem_operation||0))
-          .map(([k,v]) => `<div><strong>Punkte ${k}:</strong> ${escapeHtml(String(v))}</div>`).join('')
-          || '<div style="color:var(--text-muted);font-size:.78rem">Keine Punkte in Cryosystem.</div>'}
-      </div>
-    </div>`;
-
-  function updateMedCounter() {
-    const s = Math.max(0, parseInt(document.getElementById('medSurgery')?.value)||0);
-    const p = Math.min(5, Math.max(0, parseInt(document.getElementById('medPharma')?.value)||0));
-    const c = Math.min(5, Math.max(0, parseInt(document.getElementById('medCryo')?.value)||0));
-    const sum = s+p+c;
-    const disp = document.getElementById('medPtsDisplay');
-    if (disp) { disp.textContent = `${sum} / ${rank} Punkte`; disp.className = sum > rank ? 'over-budget' : ''; }
-    const btn = document.getElementById('medSaveBtn');
-    if (btn) btn.disabled = sum > rank;
-    return { surgery:s, pharmaceuticals:p, cryosystem_operation:c };
-  }
-
-  target.querySelectorAll('.specialty-input').forEach(el => el.addEventListener('input', updateMedCounter));
-
-  document.getElementById('medSaveBtn').addEventListener('click', async () => {
-    const vals = updateMedCounter();
-    if (vals.surgery + vals.pharmaceuticals + vals.cryosystem_operation > rank) return;
-    char.role_ability_data = { ...char.role_ability_data, specialtyPoints: vals };
-    await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
-    renderSkills();
-    renderRoleTab();
-    showRoleSaveToast('Specialties gespeichert');
-  });
-
-  document.getElementById('medSurgRollBtn').addEventListener('click', async () => {
-    const dv = parseInt(document.getElementById('medSurgDv').value) || 15;
-    const surgPts = parseInt(document.getElementById('medSurgery')?.value) || (sp.surgery||0);
-    const tech = char.stats?.TECH || 0;
-    const surgLvl = char.skills?.['Surgery']?.lvl || 0;
-    const result = await roll(`1d10+${tech + surgLvl + surgPts}`, {
-      context: `Chirurgie vs DV ${dv}`, isSkillCheck: true,
-      characterId: char.id, characterName: char.name });
-    showRoleRollResult('medSurgResult', result, dv);
-    showToast(result);
-  });
-
-  target.querySelectorAll('[data-pharma]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const dv = 13;
-      const tech = char.stats?.TECH || 0;
-      const medTechLvl = char.skills?.['Medical Tech']?.lvl || 0;
-      const result = await roll(`1d10+${tech + medTechLvl}`, {
-        context: `${btn.dataset.pharma} synthetisieren vs DV ${dv}`, isSkillCheck: true,
-        characterId: char.id, characterName: char.name });
-      const rid = `pharmaResult_${btn.dataset.pharma.replace(/\s+/g,'_')}`;
-      showRoleRollResult(rid, result, dv);
-      showToast(result);
-    });
-  });
-}
-
-// ── Media ─────────────────────────────────────────────────────
-function buildMedia(data, rank) {
-  const rankInfo = getRankBand(data.ranks, rank) || {};
-  const dvs = data.rumor_dvs || {};
-  const target = document.getElementById('role-specific-section');
-
-  // Build DV select options from rumor_dvs
-  const dvOptions = [];
-  for (const [type, vals] of Object.entries(dvs)) {
-    for (const [mode, dv] of Object.entries(vals)) {
-      dvOptions.push({ label: `${type} / ${mode} (DV ${dv})`, dv });
-    }
-  }
-
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">Credibility Rank ${rank}</div>
-      <div class="role-benefit-list">
-        ${rankInfo.access    ? `<div><strong>Zugang:</strong> ${escapeHtml(rankInfo.access)}</div>` : ''}
-        ${rankInfo.audience  ? `<div><strong>Publikum:</strong> ${escapeHtml(String(rankInfo.audience))}</div>` : ''}
-        ${rankInfo.believability !== undefined ? `<div><strong>Glaubwürdigkeit:</strong> ${rankInfo.believability}%</div>` : ''}
-        ${rankInfo.impact    ? `<div><strong>Impact:</strong> ${escapeHtml(rankInfo.impact)}</div>` : ''}
-      </div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Gerüchte recherchieren</div>
-      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem">
-        <select class="role-dv-select" id="mediaDvSel">
-          ${dvOptions.map(o => `<option value="${o.dv}">${escapeHtml(o.label)}</option>`).join('')}
-        </select>
-        <button class="role-roll-btn" id="mediaResearchBtn">COOL + Rank + 1d10</button>
-      </div>
-      <div class="role-roll-result" id="mediaResearchResult"></div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Gerüchte-DV Tabelle</div>
-      <table class="role-table">
-        <thead><tr><th>Typ</th><th>Passiv</th><th>Aktiv</th></tr></thead>
-        <tbody>${Object.entries(dvs).map(([type, vals]) =>
-          `<tr><td>${escapeHtml(type)}</td><td>${vals.passive ?? '—'}</td><td>${vals.active ?? '—'}</td></tr>`
-        ).join('')}</tbody>
-      </table>
-    </div>`;
-
-  document.getElementById('mediaResearchBtn').addEventListener('click', async () => {
-    const dv = parseInt(document.getElementById('mediaDvSel').value) || null;
-    const cool = char.stats?.COOL || 0;
-    const result = await roll(`1d10+${cool + rank}`, {
-      context: `Credibility Recherche${dv ? ` vs DV ${dv}` : ''}`, isSkillCheck: true,
-      characterId: char.id, characterName: char.name });
-    showRoleRollResult('mediaResearchResult', result, dv);
-    showToast(result);
-  });
-}
-
-// ── Exec ──────────────────────────────────────────────────────
-function execMaxMembers(rank) {
-  return rank >= 9 ? 3 : rank >= 5 ? 2 : rank >= 3 ? 1 : 0;
-}
-
-function buildExec(data, rank) {
-  const rad = char.role_ability_data || {};
-  const members = rad.teamMembers || [];
-  const benefits = data.benefits_by_rank || {};
-  const maxM = execMaxMembers(rank);
-  const target = document.getElementById('role-specific-section');
-
-  const unlockedBenefits = Object.entries(benefits)
-    .filter(([k]) => parseInt(k) <= rank)
-    .map(([k,v]) => `<div><strong>Rank ${k}:</strong> ${escapeHtml(String(v))}</div>`).join('');
-
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">Teamwork Boni (Rank ${rank})</div>
-      <div class="role-benefit-list">${unlockedBenefits || '<div style="color:var(--text-muted)">Noch keine Boni.</div>'}</div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Team Members (${members.length} / ${maxM})</div>
-      <div id="execMemberList">
-        ${members.map(m => `
-          <div class="team-member-row" data-member-id="${m.id}">
-            <span class="team-member-name">${escapeHtml(m.name)}</span>
-            <span class="team-member-loyalty">Loyalty ${m.loyalty ?? 5}</span>
-            <button class="role-roll-btn" style="padding:.15rem .4rem;font-size:.65rem" data-loyalty-save="${m.id}">Save</button>
-            <span class="role-roll-result" id="loyaltyResult_${m.id}" style="min-width:40px"></span>
-            <button class="role-roll-btn" style="padding:.15rem .4rem;font-size:.65rem;border-color:var(--red);color:var(--red)" data-remove-member="${m.id}">✕</button>
-          </div>`).join('')}
-      </div>
-      ${members.length < maxM ? `
-        <div class="role-inline-form" style="margin-top:.5rem">
-          <input type="text" id="execMemberName" placeholder="Name">
-          <input type="number" id="execMemberLoyalty" placeholder="Loyalty" value="5" min="0" max="10" style="max-width:80px">
-          <button class="role-save-btn" id="execAddMemberBtn">+ Hinzufügen</button>
-        </div>` : `<p style="font-size:.75rem;color:var(--text-muted);margin-top:.4rem">Max. ${maxM} Mitglieder bei Rank ${rank}.</p>`}
-    </div>`;
-
-  // Loyalty saves
-  target.querySelectorAll('[data-loyalty-save]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.loyaltySave;
-      const m = members.find(x => String(x.id) === String(id));
-      if (!m) return;
-      const d6 = Math.floor(Math.random() * 6) + 1;
-      const success = d6 <= (m.loyalty ?? 5);
-      const el = document.getElementById(`loyaltyResult_${id}`);
-      if (el) el.innerHTML = `<span class="${success ? 'verdict-ok' : 'verdict-fail'}">${d6} ${success ? '✅' : '❌'}</span>`;
-    });
-  });
-
-  // Remove member
-  target.querySelectorAll('[data-remove-member]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.removeMember;
-      const newMembers = members.filter(m => String(m.id) !== String(id));
-      char.role_ability_data = { ...char.role_ability_data, teamMembers: newMembers };
-      await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
-      buildExec(data, rank);
-    });
-  });
-
-  // Add member
-  document.getElementById('execAddMemberBtn')?.addEventListener('click', async () => {
-    const name = document.getElementById('execMemberName').value.trim();
-    if (!name) return;
-    const loyalty = parseInt(document.getElementById('execMemberLoyalty').value) || 5;
-    const newMembers = [...members, { name, loyalty, id: Date.now() }];
-    char.role_ability_data = { ...char.role_ability_data, teamMembers: newMembers };
-    await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
-    buildExec(data, rank);
-  });
-}
-
-// ── Lawman ────────────────────────────────────────────────────
-function buildLawman(data, rank) {
-  const target = document.getElementById('role-specific-section');
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">Backup</div>
-      <p style="font-size:.8rem;color:var(--text-muted)">1d10 ≤ Rank ${rank} → Backup verfügbar · dann 1d6 Runden bis Ankunft</p>
-      <button class="role-roll-btn" id="lawmanBackupBtn">Backup rufen</button>
-      <div id="lawmanBackupResult" style="margin-top:.55rem"></div>
-    </div>`;
-
-  document.getElementById('lawmanBackupBtn').addEventListener('click', () => {
-    const d10 = Math.floor(Math.random() * 10) + 1;
-    const el = document.getElementById('lawmanBackupResult');
-    if (d10 > rank) {
-      el.innerHTML = `<span class="verdict-fail">Würfel: ${d10} > Rank ${rank} — Kein Backup verfügbar.</span>`;
-      return;
-    }
-    const d6 = Math.floor(Math.random() * 6) + 1;
-    const squad = getRankBand(data.ranks, rank);
-    el.innerHTML = `
-      <div><span class="verdict-ok">Würfel: ${d10} ≤ Rank ${rank} — Backup kommt in ${d6} Runden!</span></div>
-      ${squad ? `<div class="role-squad-card">
-        <div><strong>${escapeHtml(squad.name || 'Backup')}</strong> (${squad.count || 1}×)</div>
-        <div style="margin-top:.25rem">Combat #: ${squad.combat_number ?? '—'} · SP: ${squad.sp ?? '—'} · HP: ${squad.hp ?? '—'}</div>
-        <div>Waffen: ${escapeHtml(String(squad.weapons || '—'))}</div>
-        <div>Transport: ${escapeHtml(String(squad.transport || '—'))}</div>
-        ${squad.armor ? `<div>Rüstung: ${escapeHtml(String(squad.armor))}</div>` : ''}
-      </div>` : ''}`;
-  });
-}
-
-// ── Fixer ─────────────────────────────────────────────────────
-function buildFixer(data, rank) {
-  const rankInfo = getRankBand(data.ranks, rank) || {};
-  const target = document.getElementById('role-specific-section');
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">Operator Rank ${rank}</div>
-      ${rank >= 5 ? `<div class="role-badge">🌙 Night Market Zugang</div>` : ''}
-      <div class="role-benefit-list">
-        ${rankInfo.contacts !== undefined ? `<div><strong>Kontakte:</strong> ${rankInfo.contacts}</div>` : ''}
-        ${rankInfo.reach    ? `<div><strong>Reach:</strong> ${escapeHtml(String(rankInfo.reach))}</div>` : ''}
-        ${rankInfo.haggle   ? `<div><strong>Haggle Bonus:</strong> ${escapeHtml(String(rankInfo.haggle))}</div>` : ''}
-        ${rankInfo.grease   ? `<div><strong>Grease:</strong> ${escapeHtml(String(rankInfo.grease))}</div>` : ''}
-        ${rankInfo.culture  ? `<div><strong>Culture:</strong> ${escapeHtml(String(rankInfo.culture))}</div>` : ''}
-      </div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Deal abschließen</div>
-      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem">
-        <span style="font-size:.8rem">DV (DM setzt):</span>
-        <input type="number" class="role-dv-input" id="fixerDv" value="15" style="width:60px">
-        <button class="role-roll-btn" id="fixerDealBtn">COOL + Trading + Rank + 1d10</button>
-      </div>
-      <div class="role-roll-result" id="fixerDealResult"></div>
-    </div>`;
-
-  document.getElementById('fixerDealBtn').addEventListener('click', async () => {
-    const dv = parseInt(document.getElementById('fixerDv').value) || null;
-    const cool = char.stats?.COOL || 0;
-    const tradingLvl = char.skills?.['Trading']?.lvl || 0;
-    const result = await roll(`1d10+${cool + tradingLvl + rank}`, {
-      context: `Operator Deal${dv ? ` vs DV ${dv}` : ''}`, isSkillCheck: true,
-      characterId: char.id, characterName: char.name });
-    showRoleRollResult('fixerDealResult', result, dv);
-    showToast(result);
-  });
-}
-
-// ── Nomad ─────────────────────────────────────────────────────
-function buildNomad(data, rank) {
-  const rad = char.role_ability_data || {};
-  const pool = rad.vehiclePool || [];
-  const active = rad.activeVehicle || null;
-  const motorpool = getRankBand(data.family_motorpool, rank) || {};
-  const available = motorpool.vehicles || (Array.isArray(motorpool) ? motorpool : []);
-  const notInPool = available.filter(v => !pool.includes(v));
-  const target = document.getElementById('role-specific-section');
-
-  target.innerHTML = `
-    <div class="role-section">
-      <div class="role-section-head">Moto — Rank ${rank}</div>
-      <p style="font-size:.8rem;color:var(--text-muted);margin:0 0 .3rem">Moto +${rank} wird auf alle Fahrzeug-Checks addiert (manuell im Würfelwurf hinzufügen).</p>
-      <div class="role-benefit-list">
-        ${data.vehicle_skill_bonus ? `<div>${escapeHtml(data.vehicle_skill_bonus)}</div>` : ''}
-      </div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Family Motorpool</div>
-      <div>${available.map(v => `<span class="vehicle-pool-item">${escapeHtml(v)}</span>`).join('') || '<span style="color:var(--text-muted);font-size:.78rem">Keine Fahrzeuge bei Rank ${rank}.</span>'}</div>
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Dein Fahrzeugpool</div>
-      <div id="nomadPoolList">${pool.map(v =>
-        `<span class="vehicle-pool-item${v === active ? ' active' : ''}">
-          ${escapeHtml(v)}
-          <button data-remove-vehicle="${escapeHtml(v)}" title="Entfernen">✕</button>
-        </span>`).join('') || '<span style="color:var(--text-muted);font-size:.78rem">Keine Fahrzeuge im Pool.</span>'}</div>
-      ${notInPool.length ? `
-        <div class="role-inline-form" style="margin-top:.4rem">
-          <select class="role-dv-select" id="nomadAddSel">
-            ${notInPool.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('')}
-          </select>
-          <button class="role-save-btn" id="nomadAddBtn">+ Hinzufügen</button>
-        </div>` : ''}
-    </div>
-    <div class="role-section">
-      <div class="role-section-head">Aktives Fahrzeug</div>
-      <select class="role-dv-select" id="nomadActiveSel">
-        <option value="">— Keins —</option>
-        ${pool.map(v => `<option value="${escapeHtml(v)}"${v === active ? ' selected' : ''}>${escapeHtml(v)}</option>`).join('')}
-      </select>
-    </div>`;
-
-  target.querySelectorAll('[data-remove-vehicle]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const v = btn.dataset.removeVehicle;
-      const newPool = pool.filter(x => x !== v);
-      char.role_ability_data = { ...char.role_ability_data, vehiclePool: newPool,
-        activeVehicle: active === v ? null : active };
-      await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
-      buildNomad(data, rank);
-    });
-  });
-
-  document.getElementById('nomadAddBtn')?.addEventListener('click', async () => {
-    const v = document.getElementById('nomadAddSel')?.value;
-    if (!v || pool.includes(v)) return;
-    const newPool = [...pool, v];
-    char.role_ability_data = { ...char.role_ability_data, vehiclePool: newPool };
-    await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
-    buildNomad(data, rank);
-  });
-
-  document.getElementById('nomadActiveSel')?.addEventListener('change', async () => {
-    const v = document.getElementById('nomadActiveSel').value || null;
-    char.role_ability_data = { ...char.role_ability_data, activeVehicle: v };
-    await patchCharacter(char.id, { role_ability_data: char.role_ability_data });
-  });
-}
 
 // ── Tab navigation ────────────────────────────────────────────
 function setupTabs() {
@@ -2816,6 +2019,10 @@ function setupTabs() {
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     if (btn.dataset.tab === 'skills') { renderSkills(); setupSkillFavs(); setupSkillUpgrades(); }
+  });
+  document.getElementById('roleSettingsBtnTab').addEventListener('click', e => {
+    e.stopPropagation();
+    openRoleSettings();
   });
 }
 
