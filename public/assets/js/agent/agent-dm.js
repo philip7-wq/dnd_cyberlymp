@@ -95,12 +95,6 @@ export async function initDmAgent() {
   wrap.innerHTML = DM_HTML;
   document.body.appendChild(wrap);
 
-  // Preload sounds
-  Object.keys(SOUNDS.files).forEach(k => {
-    const a = new Audio(SOUNDS.base + SOUNDS.files[k]);
-    a.preload = 'auto';
-  });
-
   // Bar click → boot
   document.getElementById('agent-dm-bar').addEventListener('click', async () => {
     if (!dmState.activeNpcId) {

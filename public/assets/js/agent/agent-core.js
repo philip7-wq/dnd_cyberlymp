@@ -19,32 +19,34 @@ export const SOUNDS = {
   }
 };
 
-const audioCache = {};
-function loadSound(key) {
-  if (audioCache[key]) return audioCache[key];
+// Per-key active instance (for stop/loop control)
+const audioActive = {};
+
+export function playSound(key, { loop = false, volume = 0.6 } = {}) {
   const file = SOUNDS.files[key];
   if (!file) return null;
-  const a = new Audio(SOUNDS.base + file);
-  a.preload = 'auto';
-  audioCache[key] = a;
-  return a;
-}
-export function playSound(key, { loop = false, volume = 0.6 } = {}) {
-  const a = loadSound(key);
-  if (!a) return null;
+  // Stop any existing instance for this key
+  if (audioActive[key]) {
+    try { audioActive[key].pause(); audioActive[key].currentTime = 0; } catch {}
+  }
   try {
-    a.loop = loop;
+    const a = new Audio(SOUNDS.base + file);
+    a.loop   = loop;
     a.volume = volume;
-    a.currentTime = 0;
-    a.play().catch(() => {});
-  } catch {}
-  return a;
+    audioActive[key] = a;
+    a.play().catch(e => console.warn('[agent sound]', key, e.message));
+    return a;
+  } catch(e) {
+    console.warn('[agent sound]', key, e);
+    return null;
+  }
 }
+
 export function stopSound(key) {
-  const a = audioCache[key];
+  const a = audioActive[key];
   if (!a) return;
-  a.pause();
-  a.currentTime = 0;
+  try { a.pause(); a.currentTime = 0; } catch {}
+  delete audioActive[key];
 }
 
 // ---------- STATE ----------
@@ -245,9 +247,6 @@ export async function initAgent({ characterId, characterName }) {
   wrap.id = 'agent-root';
   wrap.innerHTML = PHONE_HTML;
   document.body.appendChild(wrap);
-
-  // Preload sounds
-  Object.keys(SOUNDS.files).forEach(k => loadSound(k));
 
   // Clock
   tickClock();

@@ -236,6 +236,7 @@
   z-index: 4;
   overflow: hidden;
 }
+.agent-app-view[hidden] { display: none; }
 .agent-app-view {
   position: absolute;
   inset: 0;

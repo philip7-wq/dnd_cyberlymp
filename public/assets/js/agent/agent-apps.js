@@ -317,7 +317,7 @@ function renderCallJackApp() {
       <span class="agent-app-action" id="cj-new">+ Anruf</span>
     </div>
     <div class="agent-list" id="cj-list"></div>
-    <div class="agent-call-active" id="cj-active">
+    <div class="agent-call-active hidden" id="cj-active">
       <div class="agent-avatar" id="cj-active-avatar"></div>
       <div class="name" id="cj-active-name">—</div>
       <div class="state" id="cj-active-state">Verbinde…</div>
