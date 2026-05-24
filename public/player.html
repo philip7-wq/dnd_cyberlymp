@@ -581,6 +581,15 @@ if (id) {
       renderCyberware();
       renderWeapons();
       deathSavePenalty = char.death_save_penalty ?? 0;
+      // Wenn DM heilt von ≤0 auf >0: Mortally Wounded entfernen + DSP auf Base zurücksetzen
+      if (prevHp <= 0 && (char.current_hp ?? 0) > 0 &&
+          (char.conditions || []).includes('Mortally Wounded')) {
+        char.conditions = char.conditions.filter(c => c !== 'Mortally Wounded');
+        const base = getBaseDeathSavePenalty(char);
+        char.death_save_penalty = base;
+        deathSavePenalty = base;
+        patchCharacter(char.id, { conditions: char.conditions, death_save_penalty: base }).catch(() => {});
+      }
       renderCombatPanel();
       updateNavCash();
       const newHp = char.current_hp ?? 0;
@@ -2936,6 +2945,7 @@ function checkDeathSave() {
   const show = (char.current_hp ?? 0) <= 0 || isMortCond;
   const btn = document.getElementById('deathSaveBtn');
   btn.style.display = show ? 'block' : 'none';
+  if (show) btn.textContent = deathSavePenalty > 0 ? `☠ DEATH SAVE  (Pen. ${deathSavePenalty})` : '☠ DEATH SAVE';
   // Reset stabilized state if healed
   if (!show && deathSaveStabilized) {
     deathSaveStabilized = false;
@@ -2985,6 +2995,8 @@ document.getElementById('deathSaveBtn').addEventListener('click', async () => {
   deathSavePenalty        = ds.newPenalty;
   char.death_save_penalty = ds.newPenalty;
   patchCharacter(char.id, { death_save_penalty: ds.newPenalty }).catch(() => {});
+  const dsBtn2 = document.getElementById('deathSaveBtn');
+  if (dsBtn2) dsBtn2.textContent = `☠ DEATH SAVE  (Pen. ${ds.newPenalty})`;
 
   const surviveMax = Math.max(0, ds.body - ds.penalty - 1);  // höchster überlebender d10
   const context    = `Death Save (BODY ${ds.body}, Penalty ${ds.penalty})`;

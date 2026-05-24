@@ -3599,11 +3599,11 @@ function buildPlayerPanel() {
             </div>
             <div class="atk-input-row">
               <span style="font-size:.63rem;color:#666">Aimed Shot</span>
-              <select id="atkAimed" style="background:#0f0f18;border:1px solid #2a2a3a;color:#e0e0e8;border-radius:4px;font-size:.62rem;padding:.12rem .2rem">
-                <option value="">—</option>
-                <option value="head">Kopf (−8, ×2 Dmg)</option>
-                <option value="leg">Bein (−8, Broken Leg)</option>
-                <option value="held_item">Item (−8, droppt)</option>
+              <select id="atkAimed" style="background:#0f0f18;border:1px solid #2a2a3a;color:#e0e0e8;border-radius:4px;font-size:.7rem;padding:.28rem .4rem;width:100%;margin-top:.1rem">
+                <option value="">— kein Aimed Shot —</option>
+                <option value="head">🎯 Kopf  (−8, ×2 Schaden)</option>
+                <option value="leg">🦵 Bein  (−8, Broken Leg)</option>
+                <option value="held_item">✋ Held Item  (−8, droppt Item)</option>
               </select>
             </div>
             <div class="atk-dv-display" id="atkDvDisplay"></div>
@@ -3745,8 +3745,9 @@ function buildPlayerPanel() {
     const raw = weapons[i];
     if (!raw) return;
     const dvType = guessWeaponDvType(raw.ammo, raw.name);
-    const _ref   = S.char?.stats?.REF ?? 0;
-    const _skill = S.char?.skills?.[WEAPON_SKILL_MAP[dvType]] ?? 0;
+    const _ref      = S.char?.stats?.REF ?? 0;
+    const _skillRaw = S.char?.skills?.[WEAPON_SKILL_MAP[dvType]] ?? 0;
+    const _skill    = typeof _skillRaw === 'object' ? (_skillRaw?.lvl ?? 0) : (_skillRaw ?? 0);
     S.activeWeapon = {
       name: raw.name,
       rangeM: WEAPON_RANGES[raw.ammo?.toLowerCase()] || WEAPON_RANGES[dvType] || 50,
