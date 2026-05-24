@@ -374,7 +374,8 @@ import {
 const urlParams = new URLSearchParams(location.search);
 const CHAR_ID   = urlParams.get('id');
 const MAP_ID    = urlParams.get('map');
-const IS_DM     = sessionStorage.getItem('dm_auth') === '1' || localStorage.getItem('dm_auth') === '1';
+// If a character ID is in the URL, always treat as player (even if DM is logged in on same browser)
+const IS_DM     = !CHAR_ID && (sessionStorage.getItem('dm_auth') === '1' || localStorage.getItem('dm_auth') === '1');
 
 if (!IS_DM && !CHAR_ID) location.replace('index.html');
 
