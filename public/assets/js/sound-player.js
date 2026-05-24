@@ -29,18 +29,18 @@ const indicator = document.getElementById('sound-indicator');
 const settingsBtn = document.createElement('button');
 settingsBtn.id    = 'sound-settings-btn';
 settingsBtn.title = 'Lautstärke';
-settingsBtn.textContent = '⚙';
+settingsBtn.textContent = '🔊';
 settingsBtn.style.cssText = `
-  position:fixed; bottom:72px; right:52px; z-index:1000;
-  width:28px; height:28px; border-radius:50%;
-  background:#0a0a0f; border:1px solid #222;
-  color:#444; font-size:13px; cursor:pointer;
+  position:fixed; top:12px; right:14px; z-index:1100;
+  width:36px; height:36px; border-radius:8px;
+  background:#0a0a0f; border:1px solid #2a2a3a;
+  color:#555; font-size:15px; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  transition:color .2s, border-color .2s;
+  transition:color .2s, border-color .2s, box-shadow .2s;
   padding:0; line-height:1;
 `;
-settingsBtn.addEventListener('mouseenter', () => { settingsBtn.style.borderColor='#555'; settingsBtn.style.color='#aaa'; });
-settingsBtn.addEventListener('mouseleave', () => { settingsBtn.style.borderColor='#222'; settingsBtn.style.color='#444'; });
+settingsBtn.addEventListener('mouseenter', () => { settingsBtn.style.borderColor='#00E5FF55'; settingsBtn.style.color='#00E5FF'; settingsBtn.style.boxShadow='0 0 8px #00E5FF33'; });
+settingsBtn.addEventListener('mouseleave', () => { settingsBtn.style.borderColor='#2a2a3a'; settingsBtn.style.color='#555'; settingsBtn.style.boxShadow='none'; });
 document.body.appendChild(settingsBtn);
 
 // ── Volume Panel ──────────────────────────────────────────────
@@ -48,7 +48,7 @@ document.body.appendChild(settingsBtn);
 const panel = document.createElement('div');
 panel.id = 'sound-vol-panel';
 panel.style.cssText = `
-  display:none; position:fixed; bottom:110px; right:8px; z-index:1001;
+  display:none; position:fixed; top:56px; right:8px; z-index:1100;
   background:#0f0f18; border:1px solid #2a2a3a; border-radius:10px;
   padding:16px; width:220px;
   font-family:'Audiowide',sans-serif;

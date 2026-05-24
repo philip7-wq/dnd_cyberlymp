@@ -20,6 +20,8 @@
   <div class="map-ctx-item" id="ctxGrapple">⛓ Grapple</div>
   <div class="map-ctx-sep"></div>
   <div class="map-ctx-item" id="ctxFocus">🎯 Fokussieren</div>
+  <div class="map-ctx-item" id="ctxVehicleSize" style="display:none">📐 Größe ändern</div>
+  <div class="map-ctx-item" id="ctxDeath" style="display:none">☠ Tod / Beleben</div>
   <div class="map-ctx-sep"></div>
   <div class="map-ctx-item danger" id="ctxRemove">✕ Entfernen</div>
 </div>
@@ -161,6 +163,14 @@
   </div>
 </div>
 
+<!-- Death / Spectator Banner -->
+<div id="deathBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:2000;
+  background:rgba(255,45,45,.12);border-bottom:2px solid #FF2D2D;color:#FF2D2D;
+  font-family:Audiowide,sans-serif;font-size:.8rem;letter-spacing:.1em;
+  text-align:center;padding:.45rem;pointer-events:none;">
+  ☠ DU BIST TOT — SPECTATOR MODE
+</div>
+
 <!-- Top Bar -->
 <div class="map-topbar">
   <img src="assets/img/logo.png" alt="LZRV Hub" class="map-topbar-logo">
@@ -172,9 +182,11 @@
       <input type="checkbox" id="gridToggle" class="ts-check" checked>
       Grid
     </label>
-    <input type="range" id="gridSizeSlider" min="25" max="100" value="50"
-      style="width:72px;accent-color:var(--cyan)" title="Grid-Größe">
-    <span id="gridSizeLabel" style="font-size:.65rem;color:var(--cyan);font-family:Audiowide,sans-serif;min-width:36px">50px</span>
+    <span id="gridSizeWrap" style="display:none;align-items:center;gap:4px">
+      <input type="range" id="gridSizeSlider" min="25" max="100" value="50"
+        style="width:72px;accent-color:var(--cyan)" title="Grid-Größe">
+      <span id="gridSizeLabel" style="font-size:.65rem;color:var(--cyan);font-family:Audiowide,sans-serif;min-width:36px">50px</span>
+    </span>
     <span class="map-topbar-sep"></span>
     <button class="map-topbar-btn" id="zoomInBtn">+</button>
     <span id="zoomLabel" style="font-size:.65rem;color:var(--text-muted);min-width:36px;text-align:center">100%</span>
@@ -185,6 +197,13 @@
     <span class="map-topbar-sep"></span>
     <a id="mapBackBtn" href="index.html" class="map-topbar-btn">← Zurück</a>
   </div>
+</div>
+
+<!-- Combat Bar -->
+<div id="combatBar" style="display:none;overflow-x:auto;white-space:nowrap;
+  background:#09090f;border-bottom:1px solid #1e1e2a;padding:6px 10px;
+  height:68px;align-items:center;gap:8px;flex-shrink:0;">
+  <div id="combatCards" style="display:inline-flex;gap:6px;align-items:center;height:100%"></div>
 </div>
 
 <!-- Main Area -->
@@ -252,6 +271,25 @@
       <button id="bgClearBtn"  class="ctrl-btn red" style="width:100%;margin-top:.25rem">✕ Entfernen</button>
       <input type="file" id="bgFileInput" accept="image/*" style="display:none">
     </div>
+
+    <div class="map-sidebar-section" id="savedMapsSection" style="display:none">
+      <div class="map-right-head" style="padding:0 0 .25rem;border:none;display:flex;align-items:center;gap:4px">
+        KARTEN <span id="unsavedDot" style="display:none;color:#FFD700;font-size:.8rem" title="Ungespeichert">●</span>
+      </div>
+      <select id="savedMapsDropdown" class="ctrl-input" style="width:100%;margin-bottom:.25rem">
+        <option value="">— Karte wählen —</option>
+      </select>
+      <div style="display:flex;gap:.25rem;margin-bottom:.25rem">
+        <button id="saveSnapshotBtn" class="ctrl-btn" style="flex:1">💾</button>
+        <button id="loadSnapshotBtn" class="ctrl-btn" style="flex:1">📂 Laden</button>
+      </div>
+      <div style="display:flex;gap:.25rem;margin-bottom:.25rem">
+        <button id="newSnapshotBtn"    class="ctrl-btn" style="flex:1">+ Neu</button>
+        <button id="renameSnapshotBtn" class="ctrl-btn" style="flex:1">✏</button>
+        <button id="deleteSnapshotBtn" class="ctrl-btn red" style="flex:0 0 auto">🗑</button>
+      </div>
+      <div id="lastSavedLabel" style="font-size:.6rem;color:var(--text-muted)"></div>
+    </div>
   </div>
 
 </div>
@@ -262,6 +300,31 @@
   <span id="statusCoords">—</span>
   <span id="statusZoom">100%</span>
   <span id="statusTokCount">0 Tokens</span>
+</div>
+
+<!-- Roll Request Modal (Player Self-Roll) -->
+<div id="rollRequestModal" style="display:none;position:fixed;inset:0;z-index:10001;
+  background:rgba(0,0,0,.88);align-items:center;justify-content:center;">
+  <div style="background:#0f0f18;border:1px solid #FF2D2D;border-radius:10px;
+    padding:1.5rem;max-width:340px;width:90%;text-align:center;
+    box-shadow:0 0 40px rgba(255,45,45,.25);">
+    <div style="font-family:Audiowide,sans-serif;font-size:.85rem;color:#FF2D2D;
+      letter-spacing:.1em;margin-bottom:.75rem;">⚠ SCHADEN ERHALTEN!</div>
+    <div id="rrSource" style="font-size:.9rem;color:#e0e0e8;margin-bottom:.25rem"></div>
+    <div id="rrFormula" style="font-family:Audiowide,sans-serif;font-size:1.1rem;
+      color:#FFD700;margin-bottom:1rem"></div>
+    <button id="rrRollBtn" style="width:100%;padding:.7rem;font-family:Audiowide,sans-serif;
+      font-size:.9rem;background:rgba(255,45,45,.15);border:1px solid #FF2D2D;
+      color:#FF2D2D;border-radius:6px;cursor:pointer;letter-spacing:.08em;">
+      🎲 WÜRFELN
+    </button>
+    <div id="rrResultArea" style="display:none;margin-top:1rem">
+      <div id="rrResultText" style="font-size:1rem;color:#e0e0e8;margin-bottom:.75rem"></div>
+      <button id="rrConfirmBtn" style="width:100%;padding:.6rem;font-family:Audiowide,sans-serif;
+        font-size:.8rem;background:rgba(0,229,255,.12);border:1px solid #00E5FF;
+        color:#00E5FF;border-radius:6px;cursor:pointer;">✅ Bestätigen</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -401,12 +464,15 @@ const S = {
 };
 
 const VEHICLES = [
-  { name:'Compact Car',   sdp:25, maxSdp:25, move:20, label:'🚗', color:'#6B7280' },
-  { name:'Midsize Car',   sdp:30, maxSdp:30, move:18, label:'🚙', color:'#6B7280' },
-  { name:'Motorcycle',    sdp:15, maxSdp:15, move:30, label:'🏍', color:'#9CA3AF' },
-  { name:'SUV / Truck',   sdp:40, maxSdp:40, move:15, label:'🚛', color:'#78716C' },
-  { name:'AV (Aerodyne)', sdp:50, maxSdp:50, move:60, label:'✈', color:'#7DD3FC' },
-  { name:'Custom',        sdp:30, maxSdp:30, move:20, label:'🚘', color:'#FF8C00' },
+  { name:'Motorrad',       sdp:15, maxSdp:15, move:30, label:'🏍', color:'#9CA3AF', size_w:1, size_h:2 },
+  { name:'Compact Car',    sdp:25, maxSdp:25, move:20, label:'🚗', color:'#6B7280', size_w:2, size_h:3 },
+  { name:'Midsize Car',    sdp:30, maxSdp:30, move:18, label:'🚙', color:'#6B7280', size_w:2, size_h:3 },
+  { name:'SUV / Truck',    sdp:40, maxSdp:40, move:15, label:'🚛', color:'#78716C', size_w:2, size_h:4 },
+  { name:'AV (Aerodyne)',  sdp:50, maxSdp:50, move:60, label:'✈',  color:'#7DD3FC', size_w:3, size_h:3 },
+  { name:'Gyrocopter',     sdp:20, maxSdp:20, move:40, label:'🚁', color:'#A78BFA', size_w:2, size_h:2 },
+  { name:'Helikopter',     sdp:60, maxSdp:60, move:50, label:'🚁', color:'#7DD3FC', size_w:3, size_h:3 },
+  { name:'Aerozep',        sdp:80, maxSdp:80, move:30, label:'🎈', color:'#60A5FA', size_w:4, size_h:6 },
+  { name:'Custom',         sdp:30, maxSdp:30, move:20, label:'🚘', color:'#FF8C00', size_w:2, size_h:2 },
 ];
 
 // ── Coordinate helpers ────────────────────────────────────────
@@ -414,10 +480,14 @@ function sw(sx, sy) { return { x:(sx-S.ox)/S.scale, y:(sy-S.oy)/S.scale }; }
 function snapGrid(v) { return S.snapToGrid && S.gridSize ? Math.round(v/S.gridSize)*S.gridSize : v; }
 
 function hitToken(wx, wy) {
-  const r = S.gridSize * 0.5;
   for (let i = S.tokens.length-1; i>=0; i--) {
     const t = S.tokens[i];
-    if (Math.hypot(wx-t.x, wy-t.y) < r) return t;
+    if (t.type === 'vehicle') {
+      const vw = (t.size_w || 2) * S.gridSize, vh = (t.size_h || 2) * S.gridSize;
+      if (wx >= t.x-vw/2 && wx <= t.x+vw/2 && wy >= t.y-vh/2 && wy <= t.y+vh/2) return t;
+    } else {
+      if (Math.hypot(wx-t.x, wy-t.y) < S.gridSize * 0.5) return t;
+    }
   }
   return null;
 }
@@ -543,7 +613,16 @@ function stripImages(t) { const {_img,_imgLoaded,...r}=t; return r; }
 // saveTokens then saveAoe within 150ms → tokens patch lost → Realtime
 // fires with stale DB row → mergeTokens([]) wipes all tokens).
 let _pendingSave = {};
+let _activeSavedMapId = null;
+let _unsavedChanges = false;
+function markUnsaved() {
+  if (!IS_DM) return;
+  _unsavedChanges = true;
+  const dot = document.getElementById('unsavedDot');
+  if (dot) dot.style.display = '';
+}
 function scheduleSave(patch) {
+  if (IS_DM) markUnsaved();
   Object.assign(_pendingSave, patch);
   clearTimeout(S.saveTimer);
   S.saveTimer = setTimeout(async () => {
@@ -938,9 +1017,9 @@ function drawTokens() {
       ctx.restore();
     }
 
-    // Vehicle: render as rounded rectangle
+    // Vehicle: render as rounded rectangle scaled to grid cells
     if (isVehicle) {
-      const vw = r*2.2, vh = r*1.4;
+      const vw = (token.size_w || 2) * S.gridSize, vh = (token.size_h || 2) * S.gridSize;
       ctx.save();
       ctx.fillStyle = hexToRgba(token.color||'#6B7280', .15);
       ctx.strokeStyle = token.color||'#6B7280'; ctx.lineWidth=2/S.scale;
@@ -1103,7 +1182,7 @@ function drawTokens() {
     }
 
     // Dead overlay — grey wash + red ✕
-    const isDead = token.maxHp != null && (token.hp ?? token.maxHp) <= 0;
+    const isDead = token.death_state || (token.maxHp != null && (token.hp ?? token.maxHp) <= 0);
     if (isDead) {
       ctx.save();
       // Grey wash
@@ -1359,6 +1438,10 @@ function showCtxMenu(cx, cy, target) {
   S.ctxTarget = target;
   const hp = document.getElementById('ctxHp');
   if (hp) hp.style.display = (target.type!=='char') ? '' : 'none';
+  const vsz = document.getElementById('ctxVehicleSize');
+  if (vsz) vsz.style.display = target.type==='vehicle' ? '' : 'none';
+  const ctxDeath = document.getElementById('ctxDeath');
+  if (ctxDeath) ctxDeath.style.display = (target.type==='char' && IS_DM) ? '' : 'none';
   const m=document.getElementById('ctxMenu');
   m.style.display='block'; m.style.left=cx+'px'; m.style.top=cy+'px';
 }
@@ -1386,6 +1469,26 @@ document.getElementById('ctxFocus').addEventListener('click', e => {
   e.stopPropagation();
   const t=S.ctxTarget; if (!t) return;
   S.selectedToken=t; markDirty(); hideCtxMenu();
+});
+document.getElementById('ctxDeath').addEventListener('click', async e => {
+  e.stopPropagation();
+  const t=S.ctxTarget; if (!t||t.type!=='char') return;
+  hideCtxMenu();
+  const prev = !!t.death_state;
+  t.death_state = !prev;
+  saveTokens(); markDirty();
+  const { patchCharacter } = await import('./assets/js/supabase.js');
+  await patchCharacter(t.charId, { death_state: !prev }).catch(()=>{});
+});
+document.getElementById('ctxVehicleSize').addEventListener('click', async e => {
+  e.stopPropagation();
+  const t=S.ctxTarget; if (!t) return;
+  hideCtxMenu();
+  const v = await mapPrompt(`Größe für ${t.name} (BxH, z.B. 2x3)`, `${t.size_w||2}x${t.size_h||2}`, { placeholder:'2x3' });
+  if (v===null) return;
+  const parts = v.split(/[x×]/i).map(s=>parseInt(s.trim())).filter(n=>n>0);
+  if (parts.length===2) { t.size_w=parts[0]; t.size_h=parts[1]; } else if (parts.length===1) { t.size_w=parts[0]; t.size_h=parts[0]; }
+  saveTokens(); markDirty();
 });
 document.getElementById('ctxRemove').addEventListener('click', e => {
   e.stopPropagation();
@@ -1495,7 +1598,7 @@ canvas.addEventListener('mousedown', e => {
   if (S.tool==='select') {
     const hit=hitToken(wp.x,wp.y);
     if (hit) {
-      const canDrag = IS_DM || hit.charId===CHAR_ID;
+      const canDrag = IS_DM || (hit.charId===CHAR_ID && !S.char?.death_state);
       S.selectedToken = hit;
       if (canDrag) {
         S.dragging={token:hit,wx0:wp.x,wy0:wp.y,tx0:hit.x,ty0:hit.y};
@@ -1983,6 +2086,7 @@ function renderTokenPicker() {
       addToken({type:'vehicle',name:v.name,label:v.label,imageUrl:null,color:v.color,
         sdp:v.sdp,maxSdp:v.maxSdp,hp:v.sdp,maxHp:v.maxSdp,
         move:v.move,stats:{MOVE:v.move},conditions:[],
+        size_w:v.size_w??2, size_h:v.size_h??2,
         grapplePartner:null,humanShield:null,
       });
       flashAddedBanner(v.name);
@@ -2209,11 +2313,12 @@ function openAoeBlastModal(aoe) {
   };
 
   document.getElementById('aoeBlastApply').onclick = async () => {
-    const {patchCharacter,patchNpc} = await import('./assets/js/supabase.js');
+    const {patchCharacter, patchNpc, createRollRequest} = await import('./assets/js/supabase.js');
+    const damageSource = aoe.label || 'AoE-Schaden';
+    const damageFormula = document.getElementById('aoeBlastExpr').value.trim() || '1d6';
     for (const t of affected) {
       const covered = hasCoverBetween(t.x,t.y,aoe.cx,aoe.cy);
       if (covered) {
-        // Damage the cover instead
         const coversBetween = S.coverObjects.filter(c=>!c.destroyed && lineIntersectsRect(aoe.cx,aoe.cy,t.x,t.y,c));
         for (const c of coversBetween) {
           c.hp = Math.max(0, c.hp - rollResult);
@@ -2224,14 +2329,45 @@ function openAoeBlastModal(aoe) {
       }
       const dmg = perTokenDmg[t.id] ?? rollResult;
       if (!dmg) continue;
-      const newHp = Math.max(0,(t.hp??t.maxHp??0)-dmg);
-      t.hp = newHp;
-      if (t.type==='char') await patchCharacter(t.charId,{current_hp:newHp}).catch(()=>{});
-      else if (t.type==='npc') await patchNpc(t.npcId,{hp_current:newHp}).catch(()=>{});
+      if (t.type==='char' && t.charId) {
+        // Player rolls their own damage
+        const req = await createRollRequest({
+          character_id: t.charId,
+          damage_formula: damageFormula,
+          damage_source: damageSource,
+          effect_description: `${damageSource} — ${rollResult} gewürfelt`,
+        }).catch(()=>null);
+        if (req) {
+          // 60s timeout: DM can force-apply
+          setTimeout(async () => {
+            const { getPendingRollRequests, resolveRollRequest, patchCharacter: pc } = await import('./assets/js/supabase.js');
+            const pending = await getPendingRollRequests(t.charId).catch(()=>[]);
+            const stillPending = pending.find(r => r.id === req.id);
+            if (!stillPending) return;
+            // Auto-roll for the player
+            const parts = damageFormula.match(/(\d+)d(\d+)/i);
+            let fallback = rollResult;
+            if (parts) { const [,n,d]=[,parseInt(parts[1]),parseInt(parts[2])]; fallback=0; for(let i=0;i<n;i++) fallback+=Math.floor(Math.random()*d)+1; }
+            const tok = S.tokens.find(x=>x.charId===t.charId);
+            const newHp = Math.max(0, (tok?.hp ?? t.hp ?? t.maxHp ?? 0) - fallback);
+            if (tok) tok.hp = newHp;
+            await Promise.all([
+              resolveRollRequest(req.id, fallback),
+              pc(t.charId, { current_hp: newHp })
+            ]).catch(()=>{});
+            saveTokens(); markDirty();
+            showMapToast(`⏱ ${t.name}: Auto-Schaden ${fallback}`, 'red');
+          }, 60000);
+        }
+      } else {
+        const newHp = Math.max(0,(t.hp??t.maxHp??0)-dmg);
+        t.hp = newHp;
+        if (t.type==='npc') await patchNpc(t.npcId,{hp_current:newHp}).catch(()=>{});
+      }
     }
     saveTokens(); markDirty();
     modal.style.display='none';
-    showMapToast(`Explosion: ${rollResult} Schaden auf ${affected.length} Token`,'red');
+    showMapToast(`${damageSource}: ${rollResult} Schaden beantragt`,'red');
   };
 
   document.getElementById('aoeBlastClose').onclick = () => modal.style.display='none';
@@ -2546,6 +2682,7 @@ function setupDmControls() {
     saveDrawings(); saveAoe(); saveSupp(); markDirty();
   });
   document.getElementById('addTokenBtn')?.addEventListener('click',openTokenModal);
+  document.getElementById('gridSizeWrap').style.display = 'inline-flex';
   document.getElementById('gridToggle')?.addEventListener('change',e=>{S.gridEnabled=e.target.checked;saveGrid();markDirty();});
   document.getElementById('gridSizeSlider')?.addEventListener('input',e=>{
     S.gridSize=parseInt(e.target.value);
@@ -2574,6 +2711,111 @@ function setupDmControls() {
     await saveMap({id:S.mapId,name});
   });
   document.getElementById('nextTurnBtn')?.addEventListener('click', doNextTurn);
+
+  // ── Saved Maps ──────────────────────────────────────────────
+  document.getElementById('savedMapsSection').style.display = '';
+
+  async function refreshSavedMapsDropdown() {
+    const { getSavedMaps } = await import('./assets/js/supabase.js');
+    const maps = await getSavedMaps().catch(() => []);
+    const dd = document.getElementById('savedMapsDropdown');
+    dd.innerHTML = '<option value="">— Karte wählen —</option>' +
+      maps.map(m => `<option value="${m.id}"${m.id===_activeSavedMapId?' selected':''}>${m.name}</option>`).join('');
+  }
+  refreshSavedMapsDropdown();
+
+  document.getElementById('saveSnapshotBtn').addEventListener('click', async () => {
+    const { upsertSavedMap } = await import('./assets/js/supabase.js');
+    let name;
+    if (_activeSavedMapId) {
+      name = document.getElementById('savedMapsDropdown').selectedOptions[0]?.text || S.mapName || 'Karte';
+    } else {
+      name = await mapPrompt('Name für diese Karte', S.mapName || 'Karte');
+      if (!name) return;
+    }
+    const mapData = {
+      name: S.mapName, grid_size: S.gridSize, grid_enabled: S.gridEnabled,
+      background_url: S.bgUrl || null, tokens: S.tokens.map(stripImages),
+      drawings: S.drawings, cover_objects: S.coverObjects,
+      aoe_markers: S.aoeMarkers, suppressive_zones: S.suppressiveZones,
+    };
+    try {
+      const saved = await upsertSavedMap(_activeSavedMapId, name, mapData);
+      _activeSavedMapId = saved.id;
+      _unsavedChanges = false;
+      document.getElementById('unsavedDot').style.display = 'none';
+      document.getElementById('lastSavedLabel').textContent = 'Gespeichert: ' + new Date().toLocaleTimeString('de');
+      await refreshSavedMapsDropdown();
+    } catch(e) { showMapToast('Speichern fehlgeschlagen: ' + e.message, 'red'); }
+  });
+
+  document.getElementById('loadSnapshotBtn').addEventListener('click', async () => {
+    const id = document.getElementById('savedMapsDropdown').value;
+    if (!id) return;
+    if (_unsavedChanges && !confirm('Ungespeicherte Änderungen verwerfen?')) return;
+    try {
+      const { loadSavedMapData } = await import('./assets/js/supabase.js');
+      const snap = await loadSavedMapData(id);
+      const md = snap.map_data || {};
+      await saveMap({ id: S.mapId, ...md });
+      _activeSavedMapId = id;
+      _unsavedChanges = false;
+      document.getElementById('unsavedDot').style.display = 'none';
+      document.getElementById('lastSavedLabel').textContent = 'Geladen: ' + (snap.name || '');
+    } catch(e) { showMapToast('Laden fehlgeschlagen: ' + e.message, 'red'); }
+  });
+
+  document.getElementById('newSnapshotBtn').addEventListener('click', async () => {
+    const name = await mapPrompt('Name der neuen Karte', 'Neue Karte');
+    if (!name) return;
+    _activeSavedMapId = null;
+    // Temporarily update dropdown selection to nothing so saveSnapshotBtn creates new
+    document.getElementById('savedMapsDropdown').value = '';
+    const { upsertSavedMap } = await import('./assets/js/supabase.js');
+    const mapData = {
+      name: S.mapName, grid_size: S.gridSize, grid_enabled: S.gridEnabled,
+      background_url: S.bgUrl || null, tokens: S.tokens.map(stripImages),
+      drawings: S.drawings, cover_objects: S.coverObjects,
+      aoe_markers: S.aoeMarkers, suppressive_zones: S.suppressiveZones,
+    };
+    try {
+      const saved = await upsertSavedMap(null, name, mapData);
+      _activeSavedMapId = saved.id;
+      _unsavedChanges = false;
+      document.getElementById('unsavedDot').style.display = 'none';
+      document.getElementById('lastSavedLabel').textContent = 'Gespeichert: ' + new Date().toLocaleTimeString('de');
+      await refreshSavedMapsDropdown();
+    } catch(e) { showMapToast('Fehler: ' + e.message, 'red'); }
+  });
+
+  document.getElementById('renameSnapshotBtn').addEventListener('click', async () => {
+    const id = document.getElementById('savedMapsDropdown').value;
+    if (!id) return;
+    const name = await mapPrompt('Neuer Name', document.getElementById('savedMapsDropdown').selectedOptions[0]?.text || '');
+    if (!name) return;
+    const { upsertSavedMap } = await import('./assets/js/supabase.js');
+    await upsertSavedMap(id, name, null).catch(e => showMapToast('Fehler: '+e.message,'red'));
+    await refreshSavedMapsDropdown();
+  });
+
+  document.getElementById('deleteSnapshotBtn').addEventListener('click', async () => {
+    const id = document.getElementById('savedMapsDropdown').value;
+    if (!id) return;
+    if (!confirm('Karte löschen?')) return;
+    const { deleteSavedMap } = await import('./assets/js/supabase.js');
+    await deleteSavedMap(id).catch(e => showMapToast('Fehler: '+e.message,'red'));
+    if (_activeSavedMapId === id) { _activeSavedMapId = null; document.getElementById('lastSavedLabel').textContent = ''; }
+    await refreshSavedMapsDropdown();
+  });
+
+  // Ctrl+S → save snapshot
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's' && IS_DM && !isInputFocused()) {
+      e.preventDefault();
+      document.getElementById('saveSnapshotBtn').click();
+    }
+  });
+
   renderToolSettings('select');
 }
 
@@ -2589,9 +2831,8 @@ function setupPlayerControls() {
   document.querySelectorAll('.tool-group-head').forEach(h=>h.style.display='none');
   // Show player panel
   buildPlayerPanel();
-  // Grid toggle for player
+  // Grid toggle for player (size is DM-only — slider stays hidden)
   document.getElementById('gridToggle')?.addEventListener('change',e=>{S.gridEnabled=e.target.checked;markDirty();});
-  document.getElementById('gridSizeSlider')?.addEventListener('input',e=>{S.gridSize=parseInt(e.target.value);document.getElementById('gridSizeLabel').textContent=S.gridSize+'px';markDirty();});
   document.getElementById('zoomInBtn')?.addEventListener('click',()=>zoomAt(1.2));
   document.getElementById('zoomOutBtn')?.addEventListener('click',()=>zoomAt(0.85));
   document.getElementById('zoomResetBtn')?.addEventListener('click',()=>{S.scale=1;S.ox=0;S.oy=0;markDirty();});
@@ -2634,6 +2875,7 @@ function applyCharToToken(ch) {
   tok.hp          = ch.current_hp;
   tok.maxHp       = ch.max_hp;
   tok.conditions  = ch.conditions || [];
+  tok.death_state = ch.death_state || false;
   tok.critInjuries = parseInjuries(ch.critical_injuries);
   // Armor SP (only overwrite if the payload actually has armor)
   if (ch.armor !== undefined) {
@@ -2672,6 +2914,7 @@ function syncTokensWithLiveData() {
     tok.hp         = c.current_hp;
     tok.maxHp      = c.max_hp;
     tok.conditions = c.conditions || [];
+    tok.death_state = c.death_state || false;
     changed = true;
   }
   for (const n of S.npcs) {
@@ -2696,6 +2939,16 @@ async function boot() {
       try { S.char = await getCharacter(CHAR_ID); } catch(_) {
         S.char = S.chars.find(c=>c.id===CHAR_ID) || null;
       }
+      const db = document.getElementById('deathBanner');
+      if (db) db.style.display = S.char?.death_state ? 'block' : 'none';
+
+      // Subscribe to incoming damage roll requests
+      if (!IS_DM && CHAR_ID) {
+        const { getPendingRollRequests, subscribeRollRequests } = await import('./assets/js/supabase.js');
+        const pending = await getPendingRollRequests(CHAR_ID).catch(()=>[]);
+        if (pending.length) showRollModal(pending[0]);
+        subscribeRollRequests(CHAR_ID, payload => showRollModal(payload.new));
+      }
     }
 
     const mapData=MAP_ID?await getMap(MAP_ID):await getLatestMap();
@@ -2711,6 +2964,7 @@ async function boot() {
     document.getElementById('mapLoader').style.display='none';
     resizeCanvas();
     if (IS_DM) setupDmControls(); else setupPlayerControls();
+    renderCombatBar();
     startRenderLoop();
 
     const back=document.getElementById('mapBackBtn');
@@ -2737,6 +2991,7 @@ async function boot() {
         const btn=document.getElementById('nextTurnBtn');
         if (btn) btn.style.display=S.combatSession?.is_active?'':'none';
       }
+      renderCombatBar();
       markDirty();
     });
     // Sync all token HPs/conditions from fresh chars/npcs after map load
@@ -2749,6 +3004,8 @@ async function boot() {
       if (!IS_DM && ch.id===CHAR_ID) {
         Object.assign(S.char, ch);
         buildPlayerPanel();
+        const db = document.getElementById('deathBanner');
+        if (db) db.style.display = S.char?.death_state ? 'block' : 'none';
       }
       applyCharToToken(ch);
     });
@@ -2763,6 +3020,151 @@ async function boot() {
   } catch(e) {
     document.getElementById('mapLoader').textContent='Fehler: '+e.message;
     console.error(e);
+  }
+}
+
+// ── Player Self-Roll ─────────────────────────────────────────
+function showRollModal(req) {
+  if (!req || req.resolved) return;
+  const modal = document.getElementById('rollRequestModal');
+  if (!modal) return;
+  document.getElementById('rrSource').textContent = req.damage_source || '';
+  document.getElementById('rrFormula').textContent = req.damage_formula || '';
+  document.getElementById('rrResultArea').style.display = 'none';
+  document.getElementById('rrRollBtn').style.display = '';
+  modal.style.display = 'flex';
+  modal.dataset.reqId = req.id;
+
+  document.getElementById('rrRollBtn').onclick = () => {
+    const formula = req.damage_formula || '1d6';
+    const parts = formula.match(/(\d+)d(\d+)/i);
+    let rolls = [], total = 0;
+    if (parts) {
+      const [,n,d] = [, parseInt(parts[1]), parseInt(parts[2])];
+      for (let i = 0; i < n; i++) { const r = Math.floor(Math.random()*d)+1; rolls.push(r); total += r; }
+    } else { total = parseInt(formula) || 0; rolls = [total]; }
+    document.getElementById('rrResultText').textContent = `[${rolls.join('][')}] = ${total} Schaden`;
+    document.getElementById('rrResultArea').style.display = '';
+    document.getElementById('rrRollBtn').style.display = 'none';
+    modal.dataset.rollResult = total;
+  };
+
+  document.getElementById('rrConfirmBtn').onclick = async () => {
+    const rollVal = parseInt(modal.dataset.rollResult) || 0;
+    const { resolveRollRequest, patchCharacter } = await import('./assets/js/supabase.js');
+    const newHp = Math.max(0, (S.char?.current_hp ?? 0) - rollVal);
+    if (S.char) S.char.current_hp = newHp;
+    await Promise.all([
+      resolveRollRequest(req.id, rollVal),
+      patchCharacter(CHAR_ID, { current_hp: newHp }),
+    ]).catch(() => {});
+    modal.style.display = 'none';
+  };
+}
+
+// ── Combat Bar ────────────────────────────────────────────────
+function renderCombatBar() {
+  const bar = document.getElementById('combatBar');
+  if (!bar) return;
+  const cs = S.combatSession;
+  if (!cs?.is_active) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  const combatants = cs.combatants || [];
+  const idx = cs.current_turn_index ?? 0;
+
+  let cardsHtml = '';
+  combatants.forEach((c, i) => {
+    const isActive = i === idx;
+    const pct = (c.maxHp && c.maxHp > 0) ? Math.round((c.hp / c.maxHp) * 100) : 100;
+    const barColor = pct > 50 ? '#22C55E' : pct > 25 ? '#EAB308' : pct > 10 ? '#F97316' : '#FF2D2D';
+    const isDead = c.maxHp && c.hp <= 0;
+    const imgEl = c.imageUrl
+      ? `<img class="combat-card-avatar" src="${c.imageUrl}" loading="lazy">`
+      : `<div class="combat-card-placeholder">${c.isNpc ? '👤' : '⚡'}</div>`;
+    const initBadge = (c.initiative != null) ? `<div class="combat-card-init">INI ${c.initiative}</div>` : '';
+    const killBtn = IS_DM ? `<button class="combat-card-kill" data-cidx="${i}"
+      style="font-size:.5rem;background:none;border:none;color:#FF2D2D;cursor:pointer;padding:1px 2px;line-height:1"
+      title="Aus Kampf entfernen">✕</button>` : '';
+    cardsHtml += `<div class="combat-card${isActive?' active':''}${isDead?' dead':''}"
+      data-cidx="${i}" draggable="${IS_DM?'true':'false'}">
+      ${imgEl}
+      <div class="combat-card-name">${c.name||'?'}</div>
+      <div class="combat-card-hpbar"><div class="combat-card-hpbar-fill"
+        style="width:${pct}%;background:${barColor}"></div></div>
+      ${initBadge}${killBtn}
+    </div>`;
+  });
+
+  let actionsHtml = '';
+  if (IS_DM) {
+    actionsHtml = `<div class="combat-bar-actions">
+      <button id="cbNextTurnBtn" style="font-family:Audiowide,sans-serif;font-size:.58rem;
+        padding:.2rem .45rem;background:rgba(0,229,255,.1);border:1px solid #00E5FF;
+        color:#00E5FF;border-radius:4px;cursor:pointer;white-space:nowrap;">▶ Nächster</button>
+      <button id="cbEndCombatBtn" style="font-family:Audiowide,sans-serif;font-size:.58rem;
+        padding:.2rem .45rem;background:rgba(255,45,45,.1);border:1px solid #FF2D2D;
+        color:#FF2D2D;border-radius:4px;cursor:pointer;white-space:nowrap;">✕ Beenden</button>
+    </div>`;
+  }
+
+  document.getElementById('combatCards').innerHTML = cardsHtml + actionsHtml;
+
+  document.getElementById('cbNextTurnBtn')?.addEventListener('click', doNextTurn);
+  document.getElementById('cbEndCombatBtn')?.addEventListener('click', async () => {
+    if (!confirm('Kampf beenden?')) return;
+    const { endCombat } = await import('./assets/js/supabase.js');
+    await endCombat(cs.id);
+    S.combatSession = null;
+    renderCombatBar();
+    markDirty();
+  });
+
+  // Kill buttons — remove combatant from session
+  document.querySelectorAll('#combatCards .combat-card-kill').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      const ci = parseInt(btn.dataset.cidx);
+      const newCombatants = [...combatants];
+      newCombatants.splice(ci, 1);
+      let newIdx = cs.current_turn_index;
+      if (ci < newIdx) newIdx--;
+      if (newIdx >= newCombatants.length) newIdx = 0;
+      const { saveCombat } = await import('./assets/js/supabase.js');
+      await saveCombat({ ...cs, combatants: newCombatants, current_turn_index: newIdx });
+    });
+  });
+
+  // Drag-and-drop reorder (DM only)
+  if (IS_DM) {
+    let _dragIdx = null;
+    document.querySelectorAll('#combatCards .combat-card').forEach(card => {
+      card.addEventListener('dragstart', e => {
+        _dragIdx = parseInt(card.dataset.cidx);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        card.classList.add('dragging-over');
+      });
+      card.addEventListener('dragleave', () => card.classList.remove('dragging-over'));
+      card.addEventListener('drop', async e => {
+        e.preventDefault();
+        card.classList.remove('dragging-over');
+        const dropIdx = parseInt(card.dataset.cidx);
+        if (_dragIdx === null || _dragIdx === dropIdx) return;
+        const newOrder = [...combatants];
+        const [moved] = newOrder.splice(_dragIdx, 1);
+        newOrder.splice(dropIdx, 0, moved);
+        let newTurnIdx = cs.current_turn_index ?? 0;
+        if (_dragIdx === newTurnIdx) newTurnIdx = dropIdx;
+        else if (_dragIdx < newTurnIdx && dropIdx >= newTurnIdx) newTurnIdx--;
+        else if (_dragIdx > newTurnIdx && dropIdx <= newTurnIdx) newTurnIdx++;
+        _dragIdx = null;
+        const { saveCombat } = await import('./assets/js/supabase.js');
+        await saveCombat({ ...cs, combatants: newOrder, current_turn_index: Math.max(0, newTurnIdx) });
+      });
+    });
   }
 }
 

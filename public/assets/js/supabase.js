@@ -471,3 +471,67 @@ export function createSoundChannel() {
     config: { broadcast: { ack: false, self: true } }
   });
 }
+
+// ── Roll Requests (Player Self-Roll) ─────────────────────────
+
+export async function createRollRequest({ character_id, damage_formula, damage_source, effect_description }) {
+  const { data, error } = await supabase.from('roll_requests')
+    .insert([{ character_id, damage_formula, damage_source, effect_description }])
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function resolveRollRequest(id, roll_result) {
+  const { error } = await supabase.from('roll_requests')
+    .update({ roll_result, resolved: true }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function getPendingRollRequests(character_id) {
+  const { data } = await supabase.from('roll_requests')
+    .select('*').eq('character_id', character_id).eq('resolved', false);
+  return data || [];
+}
+
+export function subscribeRollRequests(character_id, callback) {
+  return supabase.channel(`roll-req-${character_id}`)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'roll_requests',
+      filter: `character_id=eq.${character_id}`
+    }, callback).subscribe();
+}
+
+// ── Saved Maps ───────────────────────────────────────────────
+
+export async function getSavedMaps() {
+  const { data } = await supabase.from('saved_maps')
+    .select('id,name,created_at,updated_at')
+    .order('updated_at', { ascending: false });
+  return data || [];
+}
+
+export async function upsertSavedMap(id, name, mapData) {
+  const payload = { name, updated_at: new Date().toISOString() };
+  if (mapData !== null) payload.map_data = mapData;
+  if (id) {
+    const { data, error } = await supabase.from('saved_maps').update(payload).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+  }
+  if (mapData !== null) payload.map_data = mapData;
+  const { data, error } = await supabase.from('saved_maps').insert([payload]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function loadSavedMapData(id) {
+  const { data, error } = await supabase.from('saved_maps').select('*').eq('id', id).single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteSavedMap(id) {
+  const { error } = await supabase.from('saved_maps').delete().eq('id', id);
+  if (error) throw error;
+}
