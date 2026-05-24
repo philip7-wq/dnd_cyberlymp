@@ -1537,9 +1537,9 @@ function setupMainTabs() {
       document.querySelectorAll('.dm-content-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const panel = btn.dataset.panel;
-      document.getElementById('dmGrid').style.display    = panel === 'chars' ? '' : 'none';
-      document.getElementById('npcPanel').style.display  = panel === 'npcs'  ? '' : 'none';
-      document.getElementById('soundPanel').style.display= panel === 'sound' ? '' : 'none';
+      document.getElementById('dmGrid').style.display    = panel === 'chars' ? 'block' : 'none';
+      document.getElementById('npcPanel').style.display  = panel === 'npcs'  ? 'block' : 'none';
+      document.getElementById('soundPanel').style.display= panel === 'sound' ? 'block' : 'none';
       if (panel === 'sound' && !_soundMounted) {
         _soundMounted = true;
         mountSound(document.getElementById('soundPanel')).catch(e => console.error('[sound]', e));

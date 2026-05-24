@@ -9,54 +9,58 @@ import {
   createSoundChannel,
 } from './supabase.js';
 
-// ── Module state ────────────────────────────────────────────
+// ── Module state ─────────────────────────────────────────────
 
-let sounds  = [];   // sound_library rows
-let buttons = [];   // sound_buttons rows (with joined .sound)
-let channel = null; // Realtime broadcast channel
+let sounds  = [];
+let buttons = [];
+let channel = null;
+let _container = null; // reference to outer soundPanel — never touch its .id
 
-// soundId → { el: HTMLAudioElement, category: string }
-const pool = {};
-
+const pool = {}; // soundId → { el: HTMLAudioElement, category: string }
 const vols = { master: 0.7, oneshot: 1.0, ambiente: 0.7, music: 0.7 };
-let currentMusicId = null;  // soundId of currently playing music strip
+let currentMusicId = null;
 
-let mounted = false; // prevent double-mount
+let mounted = false;
 
-// ── Mount ────────────────────────────────────────────────────
+// Library preview state
+let previewAudio = null;
+let previewingId = null;
+
+// ── Mount ─────────────────────────────────────────────────────
 
 export async function mountSound(container) {
   if (mounted) return;
   mounted = true;
+  _container = container;
 
-  container.id = 'sound-tab';
-  container.innerHTML = '<div style="color:#555;font-size:12px;padding:20px;font-family:Audiowide,sans-serif;">Lade…</div>';
+  container.innerHTML = '<div id="sound-tab"><div style="color:#555;font-size:12px;padding:20px;font-family:Audiowide,sans-serif;">Lade…</div></div>';
 
   [sounds, buttons] = await Promise.all([getSoundLibrary(), getSoundButtons()]);
 
   channel = createSoundChannel();
   channel.on('broadcast', { event: 'sound' }, ({ payload }) => handleBroadcast(payload)).subscribe();
 
-  render(container);
+  render();
 }
 
-function render(container) {
-  container.innerHTML = '';
+function render() {
+  const inner = _container.querySelector('#sound-tab');
+  inner.innerHTML = '';
 
-  container.appendChild(buildMasterBar());
-  container.appendChild(buildOneShotSection());
-  container.appendChild(buildAmbienceSection());
-  container.appendChild(buildMusicSection());
-  container.appendChild(buildLibrarySection(container));
+  inner.appendChild(buildMasterBar());
+  inner.appendChild(buildOneShotSection());
+  inner.appendChild(buildAmbienceSection());
+  inner.appendChild(buildMusicSection());
+  inner.appendChild(buildLibrarySection());
 }
 
-// ── Master Volume Bar ────────────────────────────────────────
+// ── Master Volume Bar ─────────────────────────────────────────
 
 function buildMasterBar() {
   const bar = el(`<div class="snd-master-bar"></div>`);
 
   const groups = [
-    { key: 'master',  label: 'Master',  cls: 'master' },
+    { key: 'master',  label: 'Master',   cls: 'master' },
     { key: 'oneshot', label: 'One-Shot', cls: 'red' },
     { key: 'ambiente',label: 'Ambiente', cls: 'cyan' },
     { key: 'music',   label: 'Music',    cls: 'purple' },
@@ -72,10 +76,9 @@ function buildMasterBar() {
     const slider = grp.querySelector('input');
     const pctEl  = grp.querySelector('.snd-vol-pct');
     slider.addEventListener('input', () => {
-      const v = slider.value / 100;
       slider.style.setProperty('--val', slider.value + '%');
       pctEl.textContent = slider.value + '%';
-      vols[g.key] = v;
+      vols[g.key] = slider.value / 100;
       applyVolumeAll();
     });
     bar.appendChild(grp);
@@ -88,7 +91,7 @@ function buildMasterBar() {
   return bar;
 }
 
-// ── One-Shot Section ─────────────────────────────────────────
+// ── One-Shot Section ──────────────────────────────────────────
 
 function buildOneShotSection() {
   const sec = el(`<div class="snd-section">
@@ -101,7 +104,7 @@ function buildOneShotSection() {
   btns.forEach(b => grid.appendChild(buildPadButton(b)));
 
   const addBtn = el(`<button class="snd-pad-add" type="button" title="Neuer One-Shot Button">+</button>`);
-  addBtn.addEventListener('click', () => openButtonEditor({ category: 'one-shot' }, () => reloadButtons(document.getElementById('sound-tab'))));
+  addBtn.addEventListener('click', () => openButtonEditor({ category: 'one-shot' }, reloadButtons));
   grid.appendChild(addBtn);
 
   setupHotkeys(btns);
@@ -126,13 +129,13 @@ function buildPadButton(btn) {
 
   pad.addEventListener('contextmenu', e => {
     e.preventDefault();
-    openButtonEditor(btn, () => reloadButtons(document.getElementById('sound-tab')));
+    openButtonEditor(btn, reloadButtons);
   });
 
   return pad;
 }
 
-// ── Ambiente Section ─────────────────────────────────────────
+// ── Ambiente Section ──────────────────────────────────────────
 
 function buildAmbienceSection() {
   const sec = el(`<div class="snd-section">
@@ -141,11 +144,10 @@ function buildAmbienceSection() {
   </div>`);
 
   const list = sec.querySelector('#snd-ambiente-list');
-  const btns = buttons.filter(b => b.category === 'ambiente');
-  btns.forEach(b => list.appendChild(buildAmbienceStrip(b)));
+  buttons.filter(b => b.category === 'ambiente').forEach(b => list.appendChild(buildAmbienceStrip(b)));
 
   const addBtn = el(`<button class="snd-strip-add" type="button">+ Ambiente hinzufügen</button>`);
-  addBtn.addEventListener('click', () => openButtonEditor({ category: 'ambiente' }, () => reloadButtons(document.getElementById('sound-tab'))));
+  addBtn.addEventListener('click', () => openButtonEditor({ category: 'ambiente' }, reloadButtons));
   list.appendChild(addBtn);
 
   return sec;
@@ -153,46 +155,41 @@ function buildAmbienceSection() {
 
 function buildAmbienceStrip(btn) {
   const isOn = isActive(btn.sound_id);
+  const curFaderVal = isOn && pool[btn.sound_id]
+    ? Math.round((pool[btn.sound_id].el.volume / Math.max(vols.master, 0.01)) * 100)
+    : Math.round(vols.ambiente * 100);
+
   const strip = el(`<div class="snd-strip ${isOn ? 'active-cyan' : ''}" data-strip="${btn.id}">
     <div class="snd-led cyan ${isOn ? 'active' : ''}" data-led="${btn.id}"></div>
-    <button class="snd-strip-toggle ${isOn ? 'on cyan' : ''}" type="button" data-toggle title="Toggle">
-      ${isOn ? '⏸' : '▶'}
-    </button>
+    <button class="snd-strip-toggle ${isOn ? 'on cyan' : ''}" type="button" data-toggle>${isOn ? '⏸' : '▶'}</button>
     <span class="snd-strip-name">${btn.name}</span>
-    <input type="range" class="snd-fader cyan" min="0" max="100" value="${isOn ? Math.round((pool[btn.sound_id]?.el.volume / vols.master) * 100) : Math.round(vols.ambiente * 100)}" style="--val:${isOn ? Math.round((pool[btn.sound_id]?.el.volume / vols.master) * 100) : Math.round(vols.ambiente * 100)}%">
+    <input type="range" class="snd-fader cyan" min="0" max="100" value="${curFaderVal}" style="--val:${curFaderVal}%">
     <button class="snd-strip-stop" type="button" title="Stop">⏹</button>
     <button class="snd-strip-edit" type="button" title="Bearbeiten">✏️</button>
   </div>`);
 
-  const fader  = strip.querySelector('.snd-fader');
-  const toggle = strip.querySelector('[data-toggle]');
-  const stopBtn= strip.querySelector('.snd-strip-stop');
-  const editBtn= strip.querySelector('.snd-strip-edit');
-  const led    = strip.querySelector('.snd-led');
+  const fader   = strip.querySelector('.snd-fader');
+  const toggle  = strip.querySelector('[data-toggle]');
+  strip.querySelector('.snd-strip-stop').addEventListener('click', () => {
+    if (btn.sound_id) broadcast({ type: 'stop', soundId: btn.sound_id });
+  });
+  strip.querySelector('.snd-strip-edit').addEventListener('click', () => openButtonEditor(btn, reloadButtons));
 
   toggle.addEventListener('click', () => {
     if (!btn.sound_id || !btn.sound) return;
     if (isActive(btn.sound_id)) {
       broadcast({ type: 'stop', soundId: btn.sound_id });
     } else {
-      const vol = clampVol(vols.master * (fader.value / 100));
-      broadcast({ type: 'play', soundId: btn.sound_id, url: btn.sound.file_url, category: 'ambiente', volume: vol, loop: true });
+      broadcast({ type: 'play', soundId: btn.sound_id, url: btn.sound.file_url, category: 'ambiente', volume: clampVol(vols.master * (fader.value / 100)), loop: true });
     }
   });
 
   fader.addEventListener('input', () => {
     fader.style.setProperty('--val', fader.value + '%');
     if (btn.sound_id && pool[btn.sound_id]) {
-      const vol = clampVol(vols.master * (fader.value / 100));
-      broadcast({ type: 'volume', soundId: btn.sound_id, volume: vol });
+      broadcast({ type: 'volume', soundId: btn.sound_id, volume: clampVol(vols.master * (fader.value / 100)) });
     }
   });
-
-  stopBtn.addEventListener('click', () => {
-    if (btn.sound_id) broadcast({ type: 'stop', soundId: btn.sound_id });
-  });
-
-  editBtn.addEventListener('click', () => openButtonEditor(btn, () => reloadButtons(document.getElementById('sound-tab'))));
 
   return strip;
 }
@@ -206,11 +203,10 @@ function buildMusicSection() {
   </div>`);
 
   const list = sec.querySelector('#snd-music-list');
-  const btns = buttons.filter(b => b.category === 'music');
-  btns.forEach(b => list.appendChild(buildMusicStrip(b)));
+  buttons.filter(b => b.category === 'music').forEach(b => list.appendChild(buildMusicStrip(b)));
 
   const addBtn = el(`<button class="snd-strip-add" type="button">+ Track hinzufügen</button>`);
-  addBtn.addEventListener('click', () => openButtonEditor({ category: 'music' }, () => reloadButtons(document.getElementById('sound-tab'))));
+  addBtn.addEventListener('click', () => openButtonEditor({ category: 'music' }, reloadButtons));
   list.appendChild(addBtn);
 
   return sec;
@@ -218,50 +214,43 @@ function buildMusicSection() {
 
 function buildMusicStrip(btn) {
   const isOn = isActive(btn.sound_id);
+  const faderVal = Math.round(vols.music * 100);
+
   const strip = el(`<div class="snd-strip ${isOn ? 'active-purple' : ''}" data-strip="${btn.id}">
     <div class="snd-led purple ${isOn ? 'active' : ''}" data-led="${btn.id}"></div>
-    <button class="snd-strip-toggle ${isOn ? 'on purple' : ''}" type="button" data-toggle title="Play/Stop">
-      ${isOn ? '⏸' : '▶'}
-    </button>
+    <button class="snd-strip-toggle ${isOn ? 'on purple' : ''}" type="button" data-toggle>${isOn ? '⏸' : '▶'}</button>
     <span class="snd-strip-name">${btn.name}</span>
     <div class="snd-strip-progress" data-progress="${btn.sound_id || ''}">
       <div class="snd-strip-progress-bar" style="width:0%"></div>
     </div>
-    <input type="range" class="snd-fader purple" min="0" max="100" value="${Math.round(vols.music * 100)}" style="--val:${Math.round(vols.music * 100)}%">
+    <input type="range" class="snd-fader purple" min="0" max="100" value="${faderVal}" style="--val:${faderVal}%">
     <button class="snd-strip-stop" type="button" title="Stop">⏹</button>
     <button class="snd-strip-edit" type="button" title="Bearbeiten">✏️</button>
   </div>`);
 
   const fader  = strip.querySelector('.snd-fader');
   const toggle = strip.querySelector('[data-toggle]');
-  const stopBtn= strip.querySelector('.snd-strip-stop');
-  const editBtn= strip.querySelector('.snd-strip-edit');
+  strip.querySelector('.snd-strip-stop').addEventListener('click', () => {
+    if (btn.sound_id) broadcast({ type: 'stop', soundId: btn.sound_id });
+  });
+  strip.querySelector('.snd-strip-edit').addEventListener('click', () => openButtonEditor(btn, reloadButtons));
 
   toggle.addEventListener('click', () => {
     if (!btn.sound_id || !btn.sound) return;
     if (isActive(btn.sound_id)) {
       broadcast({ type: 'stop', soundId: btn.sound_id });
     } else {
-      const vol = clampVol(vols.master * (fader.value / 100));
-      broadcast({ type: 'play', soundId: btn.sound_id, url: btn.sound.file_url, category: 'music', volume: vol, loop: true });
+      broadcast({ type: 'play', soundId: btn.sound_id, url: btn.sound.file_url, category: 'music', volume: clampVol(vols.master * (fader.value / 100)), loop: true });
     }
   });
 
   fader.addEventListener('input', () => {
     fader.style.setProperty('--val', fader.value + '%');
     if (btn.sound_id && pool[btn.sound_id]) {
-      const vol = clampVol(vols.master * (fader.value / 100));
-      broadcast({ type: 'volume', soundId: btn.sound_id, volume: vol });
+      broadcast({ type: 'volume', soundId: btn.sound_id, volume: clampVol(vols.master * (fader.value / 100)) });
     }
   });
 
-  stopBtn.addEventListener('click', () => {
-    if (btn.sound_id) broadcast({ type: 'stop', soundId: btn.sound_id });
-  });
-
-  editBtn.addEventListener('click', () => openButtonEditor(btn, () => reloadButtons(document.getElementById('sound-tab'))));
-
-  // Progress polling
   if (isOn && btn.sound_id && pool[btn.sound_id]) startProgressPoll(btn.sound_id, strip);
 
   return strip;
@@ -269,7 +258,7 @@ function buildMusicStrip(btn) {
 
 // ── Library Section ───────────────────────────────────────────
 
-function buildLibrarySection(container) {
+function buildLibrarySection() {
   const sec = el(`<div class="snd-section">
     <div class="snd-label white">📁 SOUND LIBRARY</div>
     <div id="snd-upload-area"></div>
@@ -282,7 +271,7 @@ function buildLibrarySection(container) {
     </table>
   </div>`);
 
-  sec.querySelector('#snd-upload-area').appendChild(buildUploadZone(container));
+  sec.querySelector('#snd-upload-area').appendChild(buildUploadZone());
   renderLibraryRows(sec.querySelector('#snd-lib-body'), '');
 
   sec.querySelector('#snd-lib-search').addEventListener('input', e => {
@@ -292,27 +281,27 @@ function buildLibrarySection(container) {
   return sec;
 }
 
-function buildUploadZone(container) {
+function buildUploadZone() {
   const zone = el(`<div class="snd-upload-zone" id="snd-drop-zone">
     <div class="upload-icon">🎵</div>
     <div class="upload-text">MP3 / OGG / WAV hier ablegen oder klicken</div>
-    <div class="upload-sub">Maximale Dateigröße: 20 MB</div>
+    <div class="upload-sub">Max. 20 MB</div>
   </div>`);
 
   const fileInput = document.createElement('input');
-  fileInput.type = 'file'; fileInput.accept = 'audio/mp3,audio/ogg,audio/wav,audio/*'; fileInput.style.display = 'none';
+  fileInput.type = 'file'; fileInput.accept = 'audio/*'; fileInput.style.display = 'none';
   document.body.appendChild(fileInput);
 
   zone.addEventListener('click', () => fileInput.click());
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); handleFileSelected(e.dataTransfer.files[0], container); });
-  fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFileSelected(fileInput.files[0], container); fileInput.value = ''; });
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); handleFileSelected(e.dataTransfer.files[0]); });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFileSelected(fileInput.files[0]); fileInput.value = ''; });
 
   return zone;
 }
 
-async function handleFileSelected(file, container) {
+async function handleFileSelected(file) {
   if (!file) return;
   const name = await promptUploadName(file.name.replace(/\.[^.]+$/, ''));
   if (!name) return;
@@ -321,7 +310,7 @@ async function handleFileSelected(file, container) {
   try {
     const row = await uploadSound(file, name, category);
     sounds.unshift(row);
-    render(container);
+    render();
   } catch (e) {
     alert('Upload fehlgeschlagen: ' + e.message);
   }
@@ -331,29 +320,66 @@ function renderLibraryRows(tbody, query) {
   tbody.innerHTML = '';
   const filtered = sounds.filter(s => !query || s.name.toLowerCase().includes(query));
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="4" style="color:#444;font-size:12px;padding:12px 8px;">Keine Sounds gefunden.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="color:#444;font-size:12px;padding:12px 8px;">Keine Sounds.</td></tr>`;
     return;
   }
   filtered.forEach(s => {
     const sizeKB = s.size_bytes ? (s.size_bytes / 1024).toFixed(0) + ' KB' : '—';
-    const tr = el(`<tr>
+    const isPreviewing = previewingId === s.id;
+    const tr = el(`<tr data-lib-row="${s.id}">
       <td>${s.name}</td>
       <td><span class="snd-cat-pill ${s.category}">${catLabel(s.category)}</span></td>
       <td style="color:#555;font-size:11px;">${sizeKB}</td>
       <td style="text-align:right;">
-        <button class="snd-lib-btn" data-preview title="Preview">▶</button>
+        <button class="snd-lib-btn" data-preview title="${isPreviewing ? 'Stop' : 'Preview'}">${isPreviewing ? '⏹' : '▶'}</button>
         <button class="snd-lib-btn del" data-del title="Löschen">🗑</button>
       </td>
     </tr>`);
-    tr.querySelector('[data-preview]').addEventListener('click', () => previewLocal(s));
+
+    const previewBtn = tr.querySelector('[data-preview]');
+    previewBtn.addEventListener('click', () => togglePreview(s, tbody, query));
+
     tr.querySelector('[data-del]').addEventListener('click', async () => {
       if (!confirm(`"${s.name}" löschen?`)) return;
+      if (previewingId === s.id) stopPreview();
       await deleteSound(s.id, s.file_path);
       sounds = sounds.filter(x => x.id !== s.id);
       renderLibraryRows(tbody, query);
     });
+
     tbody.appendChild(tr);
   });
+}
+
+function togglePreview(sound, tbody, query) {
+  if (previewingId === sound.id) {
+    stopPreview();
+    refreshPreviewBtn(tbody, query, sound.id, false);
+    return;
+  }
+  stopPreview();
+  previewAudio = new Audio(sound.file_url);
+  previewAudio.volume = 0.6;
+  previewAudio.play().catch(() => {});
+  previewingId = sound.id;
+  refreshPreviewBtn(tbody, query, sound.id, true);
+  previewAudio.addEventListener('ended', () => {
+    previewingId = null;
+    refreshPreviewBtn(tbody, query, sound.id, false);
+  });
+}
+
+function stopPreview() {
+  if (previewAudio) { previewAudio.pause(); previewAudio = null; }
+  previewingId = null;
+}
+
+function refreshPreviewBtn(tbody, query, soundId, playing) {
+  // Try to update in-place without full re-render
+  const row = tbody.querySelector(`[data-lib-row="${soundId}"]`);
+  if (!row) return renderLibraryRows(tbody, query);
+  const btn = row.querySelector('[data-preview]');
+  if (btn) { btn.textContent = playing ? '⏹' : '▶'; btn.title = playing ? 'Stop' : 'Preview'; }
 }
 
 // ── Button Editor Modal ───────────────────────────────────────
@@ -363,33 +389,22 @@ function openButtonEditor(btn, onSave) {
   const overlay = el(`<div class="snd-modal-overlay"></div>`);
   const modal = el(`<div class="snd-modal">
     <h3>${isNew ? 'Neuer Button' : 'Button bearbeiten'}</h3>
-    <div>
-      <label>Name</label>
-      <input id="bm-name" type="text" value="${btn.name || ''}" placeholder="z.B. Gunshot">
-    </div>
-    <div>
-      <label>Sound</label>
+    <div><label>Name</label><input id="bm-name" type="text" value="${btn.name || ''}" placeholder="z.B. Gunshot"></div>
+    <div><label>Sound</label>
       <select id="bm-sound">
         <option value="">— Kein Sound —</option>
         ${sounds.map(s => `<option value="${s.id}" ${btn.sound_id === s.id ? 'selected' : ''}>[${catLabel(s.category)}] ${s.name}</option>`).join('')}
       </select>
     </div>
-    <div>
-      <label>Kategorie</label>
+    <div><label>Kategorie</label>
       <select id="bm-cat">
         <option value="one-shot" ${btn.category === 'one-shot' ? 'selected' : ''}>One-Shot</option>
         <option value="ambiente" ${btn.category === 'ambiente' ? 'selected' : ''}>Ambiente</option>
         <option value="music"    ${btn.category === 'music'    ? 'selected' : ''}>Music</option>
       </select>
     </div>
-    <div>
-      <label>Farbe (optional, Hex)</label>
-      <input id="bm-color" type="text" value="${btn.color || ''}" placeholder="#FF2D2D">
-    </div>
-    <div>
-      <label>Hotkey (optional, z.B. q, 1)</label>
-      <input id="bm-hotkey" type="text" value="${btn.hotkey || ''}" placeholder="q" maxlength="3">
-    </div>
+    <div><label>Farbe (optional, Hex)</label><input id="bm-color" type="text" value="${btn.color || ''}" placeholder="#FF2D2D"></div>
+    <div><label>Hotkey (optional)</label><input id="bm-hotkey" type="text" value="${btn.hotkey || ''}" placeholder="q" maxlength="3"></div>
     <div class="snd-modal-actions">
       ${!isNew ? '<button class="danger" data-del type="button">Löschen</button>' : ''}
       <button class="cancel" data-cancel type="button">Abbrechen</button>
@@ -399,24 +414,22 @@ function openButtonEditor(btn, onSave) {
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-
   const close = () => overlay.remove();
-  modal.querySelector('[data-cancel]').addEventListener('click', close);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  modal.querySelector('[data-cancel]').addEventListener('click', close);
 
   if (!isNew) {
     modal.querySelector('[data-del]').addEventListener('click', async () => {
       if (!confirm(`"${btn.name}" löschen?`)) return;
       await deleteSoundButton(btn.id);
-      close();
-      onSave();
+      close(); onSave();
     });
   }
 
   modal.querySelector('[data-save]').addEventListener('click', async () => {
     const name = modal.querySelector('#bm-name').value.trim();
     if (!name) { modal.querySelector('#bm-name').focus(); return; }
-    const data = {
+    await saveSoundButton({
       id: btn.id,
       name,
       sound_id: modal.querySelector('#bm-sound').value || null,
@@ -424,10 +437,8 @@ function openButtonEditor(btn, onSave) {
       color: modal.querySelector('#bm-color').value.trim() || null,
       hotkey: modal.querySelector('#bm-hotkey').value.trim().toLowerCase() || null,
       position: btn.position ?? 0,
-    };
-    await saveSoundButton(data);
-    close();
-    onSave();
+    });
+    close(); onSave();
   });
 }
 
@@ -439,10 +450,10 @@ function broadcast(payload) {
 
 function handleBroadcast(payload) {
   switch (payload.type) {
-    case 'play':     handlePlay(payload);    break;
-    case 'stop':     handleStop(payload);    break;
-    case 'volume':   handleVolume(payload);  break;
-    case 'stop-all': handleStopAll();        break;
+    case 'play':     handlePlay(payload);   break;
+    case 'stop':     handleStop(payload);   break;
+    case 'volume':   handleVolume(payload); break;
+    case 'stop-all': handleStopAll();       break;
   }
   updateDMUI();
 }
@@ -450,10 +461,7 @@ function handleBroadcast(payload) {
 function handlePlay({ soundId, url, category, volume, loop }) {
   if (pool[soundId]) { pool[soundId].el.pause(); delete pool[soundId]; }
   if (category === 'music') {
-    if (currentMusicId && pool[currentMusicId]) {
-      pool[currentMusicId].el.pause();
-      delete pool[currentMusicId];
-    }
+    if (currentMusicId && pool[currentMusicId]) { pool[currentMusicId].el.pause(); delete pool[currentMusicId]; }
     currentMusicId = soundId;
   }
   const audio = new Audio(url);
@@ -482,31 +490,28 @@ function handleStopAll() {
 function applyVolumeAll() {
   Object.entries(pool).forEach(([id, { el, category }]) => {
     const catVol = category === 'one-shot' ? vols.oneshot : category === 'ambiente' ? vols.ambiente : vols.music;
-    el.volume = clampVol(vols.master * catVol);
-    broadcast({ type: 'volume', soundId: id, volume: el.volume });
+    const vol = clampVol(vols.master * catVol);
+    el.volume = vol;
+    broadcast({ type: 'volume', soundId: id, volume: vol });
   });
 }
 
-// ── UI Updates ────────────────────────────────────────────────
+// ── DM UI Updates ─────────────────────────────────────────────
 
 function updateDMUI() {
-  // Update LEDs and strip states based on pool
   document.querySelectorAll('[data-led]').forEach(led => {
-    const btnId  = led.dataset.led;
-    const btn    = buttons.find(b => b.id === btnId);
-    const active = btn && btn.sound_id && !!pool[btn.sound_id];
-    const cat    = btn?.category === 'one-shot' ? 'red' : btn?.category === 'ambiente' ? 'cyan' : 'purple';
+    const btn = buttons.find(b => b.id === led.dataset.led);
+    const active = btn?.sound_id && !!pool[btn.sound_id];
+    const cat = btn?.category === 'one-shot' ? 'red' : btn?.category === 'ambiente' ? 'cyan' : 'purple';
     led.className = `snd-led ${cat} ${active ? 'active' : ''}`;
   });
 
   document.querySelectorAll('[data-strip]').forEach(strip => {
-    const btnId = strip.dataset.strip;
-    const btn   = buttons.find(b => b.id === btnId);
+    const btn = buttons.find(b => b.id === strip.dataset.strip);
     if (!btn) return;
-    const active = btn.sound_id && !!pool[btn.sound_id];
+    const active = !!(btn.sound_id && pool[btn.sound_id]);
     const catCls = btn.category === 'ambiente' ? 'active-cyan' : 'active-purple';
-    strip.classList.toggle(catCls, !!active);
-
+    strip.classList.toggle(catCls, active);
     const toggle = strip.querySelector('[data-toggle]');
     if (toggle) {
       const colorCls = btn.category === 'ambiente' ? 'cyan' : 'purple';
@@ -518,15 +523,11 @@ function updateDMUI() {
 }
 
 function startProgressPoll(soundId, strip) {
-  const progWrap = strip.querySelector(`[data-progress]`);
-  if (!progWrap) return;
-  const bar = progWrap.querySelector('.snd-strip-progress-bar');
-  const entry = pool[soundId];
-  if (!entry) return;
-  const { el } = entry;
-
+  const bar = strip.querySelector('.snd-strip-progress-bar');
+  if (!bar) return;
   const tick = () => {
     if (!pool[soundId]) { bar.style.width = '0%'; return; }
+    const { el } = pool[soundId];
     if (el.duration) bar.style.width = ((el.currentTime / el.duration) * 100).toFixed(1) + '%';
     requestAnimationFrame(tick);
   };
@@ -535,29 +536,28 @@ function startProgressPoll(soundId, strip) {
 
 // ── Helpers ───────────────────────────────────────────────────
 
-async function reloadButtons(container) {
+async function reloadButtons() {
   buttons = await getSoundButtons();
-  render(container);
+  render();
 }
 
-function isActive(soundId) {
-  return soundId && !!pool[soundId];
-}
-
-function clampVol(v) {
-  return Math.min(1, Math.max(0, v));
-}
-
+function isActive(soundId) { return soundId && !!pool[soundId]; }
+function clampVol(v) { return Math.min(1, Math.max(0, v)); }
 function catLabel(cat) {
   return cat === 'one-shot' ? 'One-Shot' : cat === 'ambiente' ? 'Ambiente' : 'Music';
 }
 
-let previewAudio = null;
-function previewLocal(sound) {
-  if (previewAudio) { previewAudio.pause(); previewAudio = null; }
-  previewAudio = new Audio(sound.file_url);
-  previewAudio.volume = 0.5;
-  previewAudio.play().catch(() => {});
+function setupHotkeys(btns) {
+  const map = {};
+  btns.forEach(b => { if (b.hotkey) map[b.hotkey.toLowerCase()] = b; });
+  if (!Object.keys(map).length) return;
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (!document.getElementById('sound-tab')) return;
+    const b = map[e.key.toLowerCase()];
+    if (!b?.sound) return;
+    broadcast({ type: 'play', soundId: b.sound_id, url: b.sound.file_url, category: 'one-shot', volume: clampVol(vols.master * vols.oneshot), loop: false });
+  });
 }
 
 function promptUploadName(defaultName) {
@@ -601,21 +601,6 @@ function promptUploadCategory() {
     const sel = modal.querySelector('#up-cat');
     modal.querySelector('[data-cancel]').addEventListener('click', () => { overlay.remove(); resolve(null); });
     modal.querySelector('[data-ok]').addEventListener('click', () => { overlay.remove(); resolve(sel.value); });
-  });
-}
-
-function setupHotkeys(btns) {
-  const map = {};
-  btns.forEach(b => { if (b.hotkey) map[b.hotkey.toLowerCase()] = b; });
-  if (!Object.keys(map).length) return;
-
-  document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    if (!document.getElementById('sound-tab')) return;
-    const b = map[e.key.toLowerCase()];
-    if (!b || !b.sound) return;
-    const vol = clampVol(vols.master * vols.oneshot);
-    broadcast({ type: 'play', soundId: b.sound_id, url: b.sound.file_url, category: 'one-shot', volume: vol, loop: false });
   });
 }
 
