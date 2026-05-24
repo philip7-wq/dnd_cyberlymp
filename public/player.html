@@ -318,6 +318,7 @@ import { roll, initDiceBox, animateRollNumber } from './assets/js/dice.js';
 import { initAgent } from './assets/js/agent/agent-core.js';
 import './assets/js/agent/agent-apps.js';
 import { mountRoleInterface } from './assets/js/roles/roles-router.js';
+import './assets/js/sound-player.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const STATS_ORDER = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP'];
@@ -3616,6 +3617,8 @@ function bmHandleClose() {
   }, 1500);
 }
 </script>
+
+<div id="sound-indicator" title="Sound aktiv" aria-hidden="true">🔊</div>
 
 </body>
 </html>

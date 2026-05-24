@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="assets/css/base.css?v=2">
   <link rel="stylesheet" href="assets/css/dm.css?v=2">
   <link rel="stylesheet" href="assets/css/agent.css">
+  <link rel="stylesheet" href="assets/css/sound.css">
 </head>
 <body>
 
@@ -129,6 +130,7 @@
     <div class="dm-content-tabs">
       <button class="dm-content-tab active" data-panel="chars">CHARAKTERE</button>
       <button class="dm-content-tab" data-panel="npcs">NPCs</button>
+      <button class="dm-content-tab" data-panel="sound">🔊 SOUND</button>
     </div>
     <div class="dm-grid-wrap" id="dmGrid">
       <div style="color:var(--text-muted);font-size:.82rem;padding:.5rem">Lade Charaktere…</div>
@@ -145,6 +147,7 @@
         <div style="color:var(--text-muted);font-size:.78rem">Lade NPCs…</div>
       </div>
     </div>
+    <div id="soundPanel" style="display:none; overflow-y:auto; flex:1;"></div>
   </div>
 
   <!-- Sidebar: Roll Log + DM Notes -->
@@ -424,6 +427,7 @@ import {
 import { animateRollNumber } from './assets/js/dice.js';
 import { initDmAgent } from './assets/js/agent/agent-dm.js';
 import './assets/js/agent/agent-apps.js';
+import { mountSound } from './assets/js/sound-dm.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const DM_PIN = 'DM2077';
@@ -1526,14 +1530,20 @@ function addNpcWeaponRow(name, damage) {
   list.appendChild(div);
 }
 
+let _soundMounted = false;
 function setupMainTabs() {
   document.querySelectorAll('.dm-content-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.dm-content-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const panel = btn.dataset.panel;
-      document.getElementById('dmGrid').style.display   = panel === 'chars' ? '' : 'none';
-      document.getElementById('npcPanel').style.display = panel === 'npcs'  ? '' : 'none';
+      document.getElementById('dmGrid').style.display    = panel === 'chars' ? '' : 'none';
+      document.getElementById('npcPanel').style.display  = panel === 'npcs'  ? '' : 'none';
+      document.getElementById('soundPanel').style.display= panel === 'sound' ? '' : 'none';
+      if (panel === 'sound' && !_soundMounted) {
+        _soundMounted = true;
+        mountSound(document.getElementById('soundPanel')).catch(e => console.error('[sound]', e));
+      }
     });
   });
 }

@@ -415,3 +415,59 @@ export function subscribeRoomItems(callback) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'room_items' }, callback)
     .subscribe();
 }
+
+// ── Sound ────────────────────────────────────────────────────
+
+export async function getSoundLibrary() {
+  const { data, error } = await supabase.from('sound_library').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function uploadSound(file, name, category) {
+  const ext = file.name.split('.').pop();
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error: upErr } = await supabase.storage.from('sounds').upload(path, file, { contentType: file.type });
+  if (upErr) throw upErr;
+  const { data: urlData } = supabase.storage.from('sounds').getPublicUrl(path);
+  const { data, error } = await supabase.from('sound_library')
+    .insert({ name, file_path: path, file_url: urlData.publicUrl, category, size_bytes: file.size })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteSound(id, filePath) {
+  await supabase.storage.from('sounds').remove([filePath]);
+  const { error } = await supabase.from('sound_library').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function getSoundButtons() {
+  const { data, error } = await supabase.from('sound_buttons').select('*, sound:sound_id(*)').order('category').order('position');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function saveSoundButton(btn) {
+  const payload = { name: btn.name, sound_id: btn.sound_id || null, category: btn.category, color: btn.color || null, hotkey: btn.hotkey || null, position: btn.position ?? 0 };
+  if (btn.id) {
+    const { data, error } = await supabase.from('sound_buttons').update(payload).eq('id', btn.id).select().single();
+    if (error) throw error;
+    return data;
+  }
+  const { data, error } = await supabase.from('sound_buttons').insert(payload).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteSoundButton(id) {
+  const { error } = await supabase.from('sound_buttons').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export function createSoundChannel() {
+  return supabase.channel('sound-control', {
+    config: { broadcast: { ack: false, self: true } }
+  });
+}
