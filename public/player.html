@@ -1205,15 +1205,34 @@ function renderWeapons() {
   const weapons = char.weapons || [];
   const el = document.getElementById('tab-weapons');
 
+  // Distance bar HTML (prepended to weapons tab)
+  const distBarHtml = `<div class="weapon-distance-bar">
+    <div style="font-size:.65rem;color:#555;letter-spacing:.08em;margin-bottom:.35rem">DISTANZ ZUM ZIEL</div>
+    <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.35rem">
+      <input type="number" id="weaponDistInput" min="0" placeholder="m"
+        style="width:56px;background:#0f0f18;border:1px solid #2a2a3a;color:#e0e0e8;border-radius:4px;padding:.2rem .4rem;font-size:.8rem">
+      <span style="font-size:.7rem;color:#555">m</span>
+      <button id="weaponDistMapBtn" class="ctrl-btn" style="font-size:.65rem;padding:.2rem .5rem;flex:1">📡 Aus Map</button>
+    </div>
+    <div id="weaponDistInfo" style="display:none;font-size:.72rem;color:#888;
+      padding:.25rem .5rem;background:#0f0f18;border:1px solid #1e1e2a;border-radius:4px;margin-bottom:.5rem">
+      <span id="wdBracket">—</span> · DV:
+      <span id="wdDv" style="color:#FFD700;font-family:Audiowide,sans-serif">—</span>
+      <span id="wdWeaponName" style="color:#555;margin-left:.4rem"></span>
+    </div>
+  </div>`;
+
   if (!weapons.length) {
-    el.innerHTML = buildAmmoInventoryHtml() + '<p class="empty-state">Keine Waffen eingetragen.</p>';
+    el.innerHTML = buildAmmoInventoryHtml() + distBarHtml + '<p class="empty-state">Keine Waffen eingetragen.</p>';
+    // still wire distance bar handlers
+    wireDistanceBar();
     return;
   }
 
   const ammoTypes = AMMO_DATA?.ammo_types || [];
   const inv = char.ammo_inventory || {};
 
-  el.innerHTML = buildAmmoInventoryHtml() + weapons.map((w, i) => {
+  el.innerHTML = buildAmmoInventoryHtml() + distBarHtml + weapons.map((w, i) => {
     const sellPrice = Math.round((w.price || 0) * 0.65);
     const meta = [w.ammo ? `Ammo: ${w.ammo}` : '', w.rof ? `ROF: ${w.rof}` : '', w.hands ? `Hands: ${w.hands}` : ''].filter(Boolean).join(' · ');
 
@@ -1437,7 +1456,51 @@ function renderWeapons() {
       if (typeof rollDice === 'function') rollDice(expr, { context: ctx, isSkillCheck: false });
     });
   });
+
+  wireDistanceBar();
 }
+
+// ── Distance bar (syncs map measurement to player.html) ───────
+
+const _RB  = [6,12,25,50,100,200,400,800];
+const _RBL = ['0–6m','7–12m','13–25m','26–50m','51–100m','101–200m','201–400m','401–800m'];
+function _getBracketIdx(d) { for(let i=0;i<_RB.length;i++) if(d<=_RB[i]) return i; return 7; }
+
+function applyDist(d, dv, wname) {
+  const bEl  = document.getElementById('wdBracket');
+  const dvEl = document.getElementById('wdDv');
+  const wEl  = document.getElementById('wdWeaponName');
+  const info = document.getElementById('weaponDistInfo');
+  if (!bEl || !info) return;
+  bEl.textContent  = _RBL[_getBracketIdx(d)];
+  dvEl.textContent = dv != null ? String(dv) : '—';
+  wEl.textContent  = wname || '';
+  info.style.display = '';
+}
+
+function loadMapRange() {
+  try {
+    const data = JSON.parse(localStorage.getItem('map-range-sync') || 'null');
+    if (!data || data.character_id !== id || Date.now() - data.ts > 60000) return;
+    applyDist(data.distanceM, data.dv, data.weaponName);
+    const inp = document.getElementById('weaponDistInput');
+    if (inp) inp.value = parseFloat(data.distanceM).toFixed(1);
+  } catch {}
+}
+
+function wireDistanceBar() {
+  document.getElementById('weaponDistMapBtn')?.addEventListener('click', loadMapRange);
+  document.getElementById('weaponDistInput')?.addEventListener('input', e => {
+    const d = parseFloat(e.target.value);
+    if (!isNaN(d)) applyDist(d, null, null);
+    else { const info = document.getElementById('weaponDistInfo'); if(info) info.style.display='none'; }
+  });
+}
+
+// Listen for map-range-sync updates from map.html in another tab
+window.addEventListener('storage', e => { if (e.key === 'map-range-sync') loadMapRange(); });
+// Load on page init if already measured
+loadMapRange();
 
 async function reloadWeapon(idx) {
   const w = char.weapons[idx];

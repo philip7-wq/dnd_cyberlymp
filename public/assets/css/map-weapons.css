@@ -1,0 +1,222 @@
+/* ── Weapon card in player panel ─────────────────────────────── */
+.map-weapon-card {
+  background: rgba(15,15,24,0.9);
+  border: 1px solid #1e1e2a;
+  border-radius: 8px;
+  padding: .5rem;
+  margin-top: .4rem;
+}
+.map-weapon-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-bottom: .25rem;
+}
+.map-weapon-card-name {
+  font-family: 'Audiowide', sans-serif;
+  font-size: .72rem;
+  color: #e0e0e8;
+  letter-spacing: .04em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.map-weapon-damage {
+  font-family: 'Audiowide', sans-serif;
+  font-size: .75rem;
+  color: #FFD700;
+  white-space: nowrap;
+}
+.map-weapon-meta {
+  font-size: .62rem;
+  color: #555;
+  margin-bottom: .3rem;
+  letter-spacing: .03em;
+}
+.map-weapon-mag {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  margin-bottom: .3rem;
+}
+.map-weapon-mag-val {
+  font-size: .65rem;
+  color: #888;
+  white-space: nowrap;
+  min-width: 34px;
+}
+.map-weapon-mag-bar-wrap {
+  flex: 1;
+  height: 3px;
+  background: #222;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.map-weapon-mag-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .3s, background .3s;
+}
+.map-weapon-actions {
+  display: flex;
+  gap: .3rem;
+  flex-wrap: wrap;
+  margin-top: .25rem;
+}
+
+/* ── DV info box ─────────────────────────────────────────────── */
+.dv-info-box {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+  background: rgba(0,0,0,.5);
+  border: 1px solid #1e1e2a;
+  border-radius: 6px;
+  padding: .3rem .5rem;
+  margin-top: .35rem;
+  font-size: .65rem;
+}
+.dv-info-dist {
+  color: #00E5FF;
+  font-family: 'Audiowide', sans-serif;
+  font-size: .72rem;
+}
+.dv-info-bracket {
+  color: #555;
+}
+.dv-info-value {
+  color: #FFD700;
+  font-family: 'Audiowide', sans-serif;
+  font-size: .75rem;
+}
+
+/* ── Attack flow ─────────────────────────────────────────────── */
+#attackRollPanel {
+  margin-top: .4rem;
+}
+.atk-step {
+  border-top: 1px solid #1e1e2a;
+  padding: .45rem 0 .2rem;
+}
+.atk-step-header {
+  font-family: 'Audiowide', sans-serif;
+  font-size: .6rem;
+  letter-spacing: .12em;
+  color: #555;
+  margin-bottom: .35rem;
+}
+.atk-input-row {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .68rem;
+  color: #888;
+  margin-bottom: .3rem;
+  flex-wrap: wrap;
+}
+.atk-input-row input {
+  background: #0f0f18;
+  border: 1px solid #2a2a3a;
+  color: #e0e0e8;
+  border-radius: 4px;
+  padding: .15rem .3rem;
+  font-size: .75rem;
+  text-align: center;
+}
+.atk-input-row input:focus {
+  outline: none;
+  border-color: #00E5FF44;
+}
+.atk-dv-display {
+  font-size: .62rem;
+  color: #555;
+  margin-bottom: .3rem;
+  min-height: .8rem;
+}
+.atk-btn {
+  width: 100%;
+  padding: .45rem;
+  font-family: 'Audiowide', sans-serif;
+  font-size: .7rem;
+  letter-spacing: .06em;
+  background: rgba(0,229,255,.08);
+  border: 1px solid #00E5FF;
+  color: #00E5FF;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .15s, box-shadow .15s;
+}
+.atk-btn:hover {
+  background: rgba(0,229,255,.15);
+  box-shadow: 0 0 8px #00E5FF33;
+}
+.atk-btn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+.atk-btn-danger {
+  background: rgba(255,45,45,.08);
+  border-color: #FF2D2D;
+  color: #FF2D2D;
+}
+.atk-btn-danger:hover {
+  background: rgba(255,45,45,.15);
+  box-shadow: 0 0 8px #FF2D2D33;
+}
+.atk-result {
+  margin-top: .35rem;
+  font-size: .75rem;
+  line-height: 1.45;
+  color: #e0e0e8;
+}
+
+/* Roll result badges */
+.atk-badge-crit {
+  display: inline-block;
+  padding: .15rem .5rem;
+  background: rgba(255,215,0,.12);
+  border: 1px solid #FFD700;
+  color: #FFD700;
+  border-radius: 4px;
+  font-family: 'Audiowide', sans-serif;
+  font-size: .6rem;
+  letter-spacing: .08em;
+  margin-bottom: .25rem;
+  animation: pulse-gold .8s ease-in-out infinite alternate;
+}
+.atk-badge-miss {
+  display: inline-block;
+  padding: .15rem .5rem;
+  background: rgba(100,100,100,.12);
+  border: 1px solid #555;
+  color: #777;
+  border-radius: 4px;
+  font-family: 'Audiowide', sans-serif;
+  font-size: .6rem;
+  letter-spacing: .08em;
+  margin-bottom: .25rem;
+}
+.atk-badge-injury {
+  display: inline-block;
+  padding: .15rem .5rem;
+  background: rgba(255,45,45,.15);
+  border: 1px solid #FF2D2D;
+  color: #FF2D2D;
+  border-radius: 4px;
+  font-family: 'Audiowide', sans-serif;
+  font-size: .6rem;
+  letter-spacing: .08em;
+  margin-top: .25rem;
+  animation: pulse-red .6s ease-in-out infinite alternate;
+}
+@keyframes pulse-gold {
+  from { box-shadow: 0 0 4px #FFD70066; }
+  to   { box-shadow: 0 0 12px #FFD700AA; }
+}
+@keyframes pulse-red {
+  from { box-shadow: 0 0 4px #FF2D2D66; }
+  to   { box-shadow: 0 0 12px #FF2D2DAA; }
+}
