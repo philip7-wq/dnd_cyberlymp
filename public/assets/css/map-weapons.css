@@ -1,3 +1,19 @@
+/* ── Weapon pill selector ────────────────────────────────────── */
+.weapon-pill {
+  background: rgba(0,229,255,.06);
+  border: 1px solid #1e1e2a;
+  border-radius: 12px;
+  font-size: .62rem;
+  padding: .2rem .55rem;
+  cursor: pointer;
+  color: #666;
+  font-family: 'Audiowide', sans-serif;
+  white-space: nowrap;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.weapon-pill:hover { border-color: rgba(0,229,255,.27); color: #aaa; }
+.weapon-pill.active { border-color: #00E5FF; color: #00E5FF; background: rgba(0,229,255,.12); }
+
 /* ── Weapon card in player panel ─────────────────────────────── */
 .map-weapon-card {
   background: rgba(15,15,24,0.9);
@@ -219,4 +235,35 @@
 @keyframes pulse-red {
   from { box-shadow: 0 0 4px #FF2D2D66; }
   to   { box-shadow: 0 0 12px #FF2D2DAA; }
+}
+
+/* ── Attack dice overlay ──────────────────────────────────────── */
+.atk-dice-d10 {
+  width: 100px; height: 100px;
+  background: rgba(15,15,24,.95);
+  border: 2px solid #00E5FF;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 40px rgba(0,229,255,.3);
+}
+.atk-dice-num {
+  font-family: 'Audiowide', sans-serif;
+  font-size: 3rem; color: #00E5FF;
+  transition: color .2s, text-shadow .2s;
+}
+.atk-dice-num.rolling {
+  animation: dice-spin .35s ease-in-out infinite alternate;
+}
+.atk-dice-num.crit   { color: #FFD700; text-shadow: 0 0 24px #FFD700AA; }
+.atk-dice-num.fumble { color: #FF2D2D; animation: atk-shake .18s ease-in-out 4; }
+.atk-hit-badge  { color: #00FF88; font-family: Audiowide, sans-serif; font-size: .82rem; }
+.atk-miss-badge { color: #FF2D2D; font-family: Audiowide, sans-serif; font-size: .82rem; }
+@keyframes dice-spin {
+  from { transform: scale(.85) rotate(-8deg); opacity: .5; }
+  to   { transform: scale(1.12) rotate(8deg); opacity: 1;  }
+}
+@keyframes atk-shake {
+  0%,100% { transform: translateX(0); }
+  25%     { transform: translateX(-7px); }
+  75%     { transform: translateX(7px); }
 }

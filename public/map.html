@@ -21,6 +21,10 @@
   <div class="map-ctx-item" id="ctxGrapple">⛓ Grapple</div>
   <div class="map-ctx-sep"></div>
   <div class="map-ctx-item" id="ctxFocus">🎯 Fokussieren</div>
+  <div class="map-ctx-sep" id="ctxColorSep" style="display:none"></div>
+  <div class="map-ctx-item" id="ctxColor" style="display:none">🎨 Farbe setzen</div>
+  <div class="map-ctx-item" id="ctxGroup" style="display:none">👥 Gruppe</div>
+  <div class="map-ctx-item danger" id="ctxDmgRoll" style="display:none">💥 Schaden würfeln</div>
   <div class="map-ctx-item" id="ctxVehicleSize" style="display:none">📐 Größe ändern</div>
   <div class="map-ctx-item" id="ctxDeath" style="display:none">☠ Tod / Beleben</div>
   <div class="map-ctx-sep"></div>
@@ -63,6 +67,48 @@
       <button id="mapInputModalCancel" style="background:none;border:1px solid #444;color:#888;border-radius:4px;padding:.35rem .85rem;cursor:pointer;font-size:.75rem">Abbrechen</button>
       <button id="mapInputModalOk" style="background:rgba(0,229,255,.12);border:1px solid var(--cyan);color:var(--cyan);border-radius:4px;padding:.35rem .85rem;cursor:pointer;font-size:.75rem;font-family:Audiowide,sans-serif">OK</button>
     </div>
+  </div>
+</div>
+
+<!-- Attack Dice Animation Overlay -->
+<div id="atkDiceOverlay" style="display:none;position:fixed;inset:0;z-index:9000;
+  background:rgba(0,0,0,.72);align-items:center;justify-content:center;flex-direction:column">
+  <div class="atk-dice-d10">
+    <div class="atk-dice-num rolling" id="atkDiceNum">?</div>
+  </div>
+  <div id="atkDiceLabel" style="margin-top:.75rem;font-size:.72rem;color:#e0e0e8;
+    font-family:Audiowide,sans-serif;text-align:center;max-width:300px;line-height:1.7;padding:0 1rem"></div>
+</div>
+
+<!-- DM Damage Roll Modal -->
+<div id="dmRollModal" style="display:none;position:fixed;inset:0;z-index:10002;
+  background:rgba(0,0,0,.75);align-items:center;justify-content:center">
+  <div style="background:#111;border:1px solid rgba(255,45,45,.3);border-radius:8px;
+    padding:1.25rem;min-width:280px;max-width:340px;width:90%;box-shadow:0 0 40px rgba(0,0,0,.8)">
+    <div style="font-family:Audiowide,sans-serif;font-size:.7rem;color:#e0e0e8;
+      letter-spacing:.08em;margin-bottom:.75rem">SCHADEN WÜRFELN</div>
+    <div style="font-size:.62rem;color:#555;letter-spacing:.08em;margin-bottom:.2rem">QUELLE / WAFFE</div>
+    <input id="dmRollSource" type="text" placeholder="z.B. Asp ICE, Explosion"
+      style="width:100%;margin-bottom:.5rem;background:#0f0f18;border:1px solid #2a2a3a;
+             color:#e0e0e8;border-radius:4px;padding:.3rem .5rem;font-size:.75rem;box-sizing:border-box">
+    <div style="font-size:.62rem;color:#555;letter-spacing:.08em;margin-bottom:.2rem">WÜRFELFORMEL</div>
+    <input id="dmRollExpr" type="text" placeholder="z.B. 3d6, 2d6+4"
+      style="width:100%;margin-bottom:.4rem;background:#0f0f18;border:1px solid #2a2a3a;
+             color:#e0e0e8;border-radius:4px;padding:.3rem .5rem;font-size:.75rem;box-sizing:border-box">
+    <div id="dmQuickBtns" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.5rem"></div>
+    <div id="dmRollResult" style="display:none;margin-bottom:.5rem;font-size:.85rem;
+      font-family:Audiowide,sans-serif;color:#FFD700;text-align:center;padding:.4rem;
+      background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:4px"></div>
+    <button id="dmRollExecBtn" class="atk-btn" style="margin-bottom:.35rem">🎲 Würfeln</button>
+    <div id="dmSpRow" style="display:none">
+      <div class="atk-input-row" style="margin-bottom:.3rem">
+        <span style="font-size:.65rem;color:#888">SP des Ziels</span>
+        <input id="dmSpInput" type="number" min="0" value="0" style="width:46px">
+      </div>
+      <div id="dmFinalDmg" style="font-size:.72rem;color:#00E5FF;margin-bottom:.35rem"></div>
+      <button id="dmApplyBtn" class="atk-btn atk-btn-danger" style="margin-bottom:.3rem">✅ Anwenden</button>
+    </div>
+    <button id="dmRollClose" class="ts-btn" style="width:100%;font-size:.62rem">Abbrechen</button>
   </div>
 </div>
 
@@ -251,6 +297,11 @@
   <!-- Left Sidebar -->
   <div class="map-left-sidebar" id="leftSidebar">
 
+    <!-- Player Panel (first = top of sidebar) -->
+    <div id="playerPanel" style="display:none;flex-direction:column;overflow-y:auto;flex:1">
+      <!-- Populated in boot -->
+    </div>
+
     <!-- DM Tool List -->
     <div class="tool-list" id="toolList" style="display:none">
       <div class="tool-group-head">Auswahl</div>
@@ -273,11 +324,6 @@
     <!-- Tool Settings (DM) -->
     <div class="tool-settings" id="toolSettings" style="display:none">
       <!-- Populated dynamically per tool -->
-    </div>
-
-    <!-- Player Panel -->
-    <div id="playerPanel" style="display:none;flex-direction:column;overflow-y:auto;flex:1">
-      <!-- Populated in boot -->
     </div>
 
   </div>
@@ -452,6 +498,7 @@ const S = {
   coverPlacing:false,
 
   measureStart:null, measureEnd:null, measureTimer:null, measurePinned:false, measuringActive:false,
+  measureSourceToken:null, measureTargetToken:null,
 
   selectedToken:null,
   hoverToken:null, hoverCover:null,
@@ -469,9 +516,12 @@ const S = {
   shotgunConeActive: false,
   shotgunFacing:     0,
   aoeBlastTarget:    null,
+  _shotgunConeTargets: null,
 
   combatSession:null,
   char:null, chars:[], npcs:[],
+
+  groupColors:{},
 
   localDragging:false,
   dirty:false, saveTimer:null, animFrame:null,
@@ -505,6 +555,18 @@ function hitToken(wx, wy) {
   }
   return null;
 }
+function getSnapToken(wp) {
+  const snapPx = S.gridSize * 0.5 + 12 / S.scale;
+  for (let i = S.tokens.length - 1; i >= 0; i--) {
+    const t = S.tokens[i];
+    if (t.type === 'vehicle') {
+      const hw = (t.size_w||2)*S.gridSize/2, hh = (t.size_h||2)*S.gridSize/2;
+      if (Math.abs(wp.x-t.x) <= hw && Math.abs(wp.y-t.y) <= hh) return t;
+    } else if (Math.hypot(wp.x-t.x, wp.y-t.y) <= snapPx) return t;
+  }
+  return null;
+}
+
 function hitCover(wx, wy) {
   for (let i = S.coverObjects.length-1; i>=0; i--) {
     const c = S.coverObjects[i];
@@ -606,6 +668,7 @@ function applyMapData(m) {
       mergeTokens(incomingTokens);
     }
   }
+  if (m.groups_json    !== undefined) S.groupColors = m.groups_json || {};
   if (m.background_url !== undefined && m.background_url !== S.bgUrl) loadBackground(m.background_url || null);
   document.getElementById('mapNameDisplay').textContent = S.mapName;
   if (IS_DM) {
@@ -646,7 +709,8 @@ function scheduleSave(patch) {
     try { await saveMap({ id:S.mapId, ...toSave }); } catch(e) { console.warn('saveMap:', e); }
   }, 150);
 }
-const saveTokens   = () => scheduleSave({ tokens:   S.tokens.map(stripImages) });
+const saveTokens      = () => scheduleSave({ tokens:      S.tokens.map(stripImages) });
+const saveGroupColors = () => scheduleSave({ groups_json: S.groupColors });
 const saveDrawings = () => scheduleSave({ drawings: S.drawings });
 const saveGrid     = () => scheduleSave({ grid_size: S.gridSize, grid_enabled: S.gridEnabled });
 const saveCover    = () => scheduleSave({ cover_objects: S.coverObjects });
@@ -937,13 +1001,31 @@ function drawMoveRange() {
   ctx.restore();
 }
 
-function drawRangeRings() {
-  if (!S.showRangeZones || !S.activeWeapon) return;
-  const ownToken = IS_DM ? S.selectedToken : S.tokens.find(t => t.charId === CHAR_ID);
-  if (!ownToken) return;
-  const { x: cx, y: cy } = ownToken;
-  const dvs = DV_TABLE[S.activeWeapon.dvType] || DV_TABLE.pistol;
+let _ringsOffscreen = null, _ringsKey = '';
+let _moveDirtyPending = false;
+let mapAmmoData = null;
 
+const WEAPON_SKILL_MAP = {
+  pistol:           'Handgun',
+  smg:              'Shoulder Arms',
+  shotgun:          'Shoulder Arms',
+  assault_rifle:    'Shoulder Arms',
+  sniper_rifle:     'Shoulder Arms',
+  bow:              'Archery',
+  grenade_launcher: 'Heavy Weapons',
+  rocket_launcher:  'Heavy Weapons',
+};
+
+function pointToSegmentDist(px,py,ax,ay,bx,by) {
+  const dx=bx-ax, dy=by-ay, len2=dx*dx+dy*dy;
+  if (len2===0) return Math.hypot(px-ax,py-ay);
+  const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/len2));
+  return Math.hypot(px-(ax+t*dx), py-(ay+t*dy));
+}
+fetch('./assets/data/ammunition.json').then(r=>r.json()).then(d=>{ mapAmmoData=d; }).catch(()=>{});
+
+function _renderRingZones(oCtx, cx, cy, dvType) {
+  const dvs = DV_TABLE[dvType] || DV_TABLE.pistol;
   const FILLS = [
     'rgba(255,45,45,0.12)','rgba(255,140,0,0.10)','rgba(255,215,0,0.09)',
     'rgba(0,229,255,0.08)','rgba(100,120,255,0.07)','rgba(150,80,255,0.06)',
@@ -954,40 +1036,61 @@ function drawRangeRings() {
     'rgba(0,229,255,0.5)','rgba(100,120,255,0.5)','rgba(150,80,255,0.5)',
     'rgba(100,255,150,0.5)','rgba(255,255,255,0.5)',
   ];
-
-  ctx.save();
+  oCtx.save();
   let prevR = 0;
   for (let i = 0; i < RANGE_BRACKETS.length; i++) {
     const r    = RANGE_BRACKETS[i] * S.gridSize;
     const dv   = dvs[i];
     const isNA = dv === null;
-
-    // Fill annulus between prevR and r
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    if (prevR > 0) ctx.arc(cx, cy, prevR, 0, Math.PI * 2, true);
-    ctx.fillStyle = isNA ? 'rgba(80,80,80,0.04)' : FILLS[i];
-    ctx.fill();
-
-    // Outer ring stroke
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = isNA ? 'rgba(80,80,80,0.3)' : STROKES[i];
-    ctx.lineWidth = 1 / S.scale;
-    if (isNA) ctx.setLineDash([4/S.scale, 4/S.scale]);
-    else ctx.setLineDash([]);
-    ctx.stroke(); ctx.setLineDash([]);
-
-    // Label at top of this zone band
+    oCtx.beginPath();
+    oCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    if (prevR > 0) oCtx.arc(cx, cy, prevR, 0, Math.PI * 2, true);
+    oCtx.fillStyle = isNA ? 'rgba(80,80,80,0.04)' : FILLS[i];
+    oCtx.fill();
+    oCtx.beginPath(); oCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    oCtx.strokeStyle = isNA ? 'rgba(80,80,80,0.3)' : STROKES[i];
+    oCtx.lineWidth = 1 / S.scale;
+    if (isNA) oCtx.setLineDash([4/S.scale, 4/S.scale]);
+    else oCtx.setLineDash([]);
+    oCtx.stroke(); oCtx.setLineDash([]);
     const labelR = prevR + (r - prevR) * 0.5;
     const lbl = isNA ? `${BRACKET_LABELS[i]} (N/A)` : `${BRACKET_LABELS[i]} · DV ${dv}`;
-    ctx.font = `${8/S.scale}px Audiowide,sans-serif`;
-    ctx.fillStyle = isNA ? 'rgba(120,120,120,0.6)' : STROKES[i];
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(lbl, cx, cy - labelR);
-
+    oCtx.font = `${8/S.scale}px Audiowide,sans-serif`;
+    oCtx.fillStyle = isNA ? 'rgba(120,120,120,0.6)' : STROKES[i];
+    oCtx.textAlign = 'center'; oCtx.textBaseline = 'middle';
+    oCtx.fillText(lbl, cx, cy - labelR);
     prevR = r;
-    if (i >= 4 && isNA) break; // stop after first unreachable zone
+    if (i >= 4 && isNA) break;
   }
+  oCtx.restore();
+}
+
+function drawRangeRings() {
+  if (!S.showRangeZones || !S.activeWeapon) return;
+  const ownToken = IS_DM ? S.selectedToken : S.tokens.find(t => t.charId === CHAR_ID);
+  if (!ownToken) return;
+  const { x: cx, y: cy } = ownToken;
+  const key = `${cx}|${cy}|${S.scale}|${S.ox}|${S.oy}|${S.activeWeapon.dvType}|${canvas.width}|${canvas.height}`;
+
+  if (key !== _ringsKey) {
+    if (!_ringsOffscreen || _ringsOffscreen.width !== canvas.width || _ringsOffscreen.height !== canvas.height) {
+      _ringsOffscreen = document.createElement('canvas');
+      _ringsOffscreen.width = canvas.width;
+      _ringsOffscreen.height = canvas.height;
+    }
+    const oCtx = _ringsOffscreen.getContext('2d');
+    oCtx.clearRect(0, 0, canvas.width, canvas.height);
+    oCtx.save();
+    oCtx.translate(S.ox, S.oy);
+    oCtx.scale(S.scale, S.scale);
+    _renderRingZones(oCtx, cx, cy, S.activeWeapon.dvType);
+    oCtx.restore();
+    _ringsKey = key;
+  }
+
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(_ringsOffscreen, 0, 0);
   ctx.restore();
 }
 
@@ -1000,6 +1103,14 @@ function getFireExpr(token) {
   if (c.includes('Deadly')) return '8d6';
   if (c.includes('Severe')) return '4d6';
   return '2d6';
+}
+
+function getTokenBorderStyle(token) {
+  if (token.charId && token.charId === CHAR_ID) return { color: '#FFD700', lw: 3 };
+  if (token.type === 'char')  return { color: '#3B82F6', lw: 2 };
+  if (token.type === 'npc' && token.group) return { color: S.groupColors?.[token.group] || '#666666', lw: 2 };
+  if (token.type === 'npc')   return { color: token.borderColor || '#FF2D2D', lw: 2 };
+  return { color: token.color || '#FF8C00', lw: 2 };
 }
 
 function drawTokens() {
@@ -1016,7 +1127,8 @@ function drawTokens() {
     const r  = S.gridSize * 0.44;
     const cx = token.x, cy = token.y;
     const isChar = token.type==='char', isNpc=token.type==='npc';
-    const borderColor = isChar ? '#00E5FF' : isNpc ? '#FF2D2D' : (token.color||'#FF8C00');
+    const _bs = getTokenBorderStyle(token);
+    const borderColor = _bs.color;
     const isSelected = S.selectedToken?.id === token.id;
 
     // Active combatant glow + DRAN label
@@ -1076,10 +1188,20 @@ function drawTokens() {
       ctx.strokeStyle = token.color||'#6B7280'; ctx.lineWidth=2/S.scale;
       roundRectPath(ctx, cx-vw/2, cy-vh/2, vw, vh, 5/S.scale);
       ctx.fill(); ctx.stroke();
-      // Icon/label
+      // Vehicle image (if loaded)
+      if (token._img) {
+        ctx.save();
+        roundRectPath(ctx, cx-vw/2, cy-vh/2, vw, vh, 5/S.scale);
+        ctx.clip();
+        ctx.drawImage(token._img, cx-vw/2, cy-vh/2, vw, vh);
+        ctx.restore();
+      }
+      // Icon/label (only shown when no image)
+      if (!token._img) {
       ctx.fillStyle='#fff'; ctx.font=`${r*.8}px sans-serif`;
       ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(token.label||'🚗', cx, cy);
+      }
       // Name
       ctx.fillStyle='#e0e0e8'; ctx.font=`${10/S.scale}px Inter`;
       ctx.textBaseline='top';
@@ -1132,6 +1254,17 @@ function drawTokens() {
       ctx.restore();
     }
 
+    // Measure snap highlight ring
+    if (S.measureTargetToken?.id === token.id || S.measureSourceToken?.id === token.id) {
+      const zc = S.lastMeasuredDist ? getZoneColor(S.lastMeasuredDist) : '#00E5FF';
+      ctx.save();
+      ctx.strokeStyle = zc; ctx.lineWidth = 1.5/S.scale;
+      ctx.setLineDash([3/S.scale, 3/S.scale]);
+      ctx.beginPath(); ctx.arc(cx, cy, r + 6/S.scale, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
     // Background fill + portrait
     ctx.save();
     ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
@@ -1162,7 +1295,7 @@ function drawTokens() {
     }
     // Border
     ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
-    ctx.strokeStyle=borderColor; ctx.lineWidth=2/S.scale; ctx.stroke();
+    ctx.strokeStyle=borderColor; ctx.lineWidth=_bs.lw/S.scale; ctx.stroke();
     ctx.restore();
 
     // SP badge (top-left of token circle) — bigger + dark bg
@@ -1317,11 +1450,13 @@ function drawMeasureLine() {
     try {
       localStorage.setItem('map-range-sync', JSON.stringify({
         character_id: CHAR_ID,
-        distanceM: distM,
-        bracketIdx: getRangeBracketIndex(distM),
-        dv: S.activeWeapon ? getDV(S.activeWeapon.dvType, distM) : null,
-        weaponName: S.activeWeapon?.name || null,
-        ts: Date.now(),
+        distanceM:   distM,
+        bracketIdx:  getRangeBracketIndex(distM),
+        dv:          S.activeWeapon ? getDV(S.activeWeapon.dvType, distM) : null,
+        weaponName:  S.activeWeapon?.name || null,
+        targetId:    S.measureTargetToken?.id   || null,
+        targetName:  S.measureTargetToken?.name || null,
+        ts:          Date.now(),
       }));
     } catch {}
   }
@@ -1465,11 +1600,6 @@ function updateMeasureDisplay(distM) {
   const el = document.getElementById('measureLive');
   if (!el) return;
   el.textContent = `${distM.toFixed(2)} m  |  ${distM.toFixed(1)} Felder`;
-  const dv = document.getElementById('dvLive');
-  if (dv && S.activeWeapon) {
-    const d = getDV(S.activeWeapon.dvType, distM);
-    dv.textContent = `DV: ${d}  (${S.activeWeapon.name})`;
-  }
 }
 
 // ── Status bar ────────────────────────────────────────────────
@@ -1533,6 +1663,11 @@ function showCtxMenu(cx, cy, target) {
   if (vsz) vsz.style.display = target.type==='vehicle' ? '' : 'none';
   const ctxDeath = document.getElementById('ctxDeath');
   if (ctxDeath) ctxDeath.style.display = (target.type==='char' && IS_DM) ? '' : 'none';
+  const showColorGroup = IS_DM && target.type !== 'char';
+  document.getElementById('ctxColorSep').style.display = showColorGroup ? '' : 'none';
+  document.getElementById('ctxColor').style.display    = showColorGroup ? '' : 'none';
+  document.getElementById('ctxGroup').style.display    = showColorGroup ? '' : 'none';
+  document.getElementById('ctxDmgRoll').style.display  = IS_DM ? '' : 'none';
   const m=document.getElementById('ctxMenu');
   m.style.display='block'; m.style.left=cx+'px'; m.style.top=cy+'px';
 }
@@ -1600,6 +1735,115 @@ document.getElementById('ctxGrapple').addEventListener('click', e => {
   hideCtxMenu();
   openGrappleModal(t);
 });
+document.getElementById('ctxColor').addEventListener('click', async e => {
+  e.stopPropagation();
+  const t=S.ctxTarget; if (!t) return;
+  hideCtxMenu();
+  const color = await mapPrompt('Farbe (hex, z.B. #FF2D2D):', t.borderColor || t.color || '#FF2D2D');
+  if (!color) return;
+  if (t.group && S.groupColors) {
+    const forAll = await mapConfirm(`Farbe "${color}" für alle Tokens in Gruppe "${t.group}" übernehmen?`);
+    if (forAll) {
+      if (!S.groupColors) S.groupColors = {};
+      S.groupColors[t.group] = color;
+      S.tokens.filter(tk => tk.group === t.group).forEach(tk => { tk.borderColor = color; });
+      scheduleSave({ tokens: S.tokens.map(stripImages), groups_json: S.groupColors });
+      markDirty(); return;
+    }
+  }
+  t.borderColor = color;
+  saveTokens(); markDirty();
+});
+document.getElementById('ctxGroup').addEventListener('click', async e => {
+  e.stopPropagation();
+  const t=S.ctxTarget; if (!t) return;
+  hideCtxMenu();
+  const group = await mapPrompt('Gruppe (leer = keine):', t.group || '');
+  if (group === null) return;
+  t.group = group.trim() || null;
+  saveTokens(); markDirty();
+});
+// ── DM damage roll (Feature 10) ──────────────────────────────
+document.getElementById('ctxDmgRoll')?.addEventListener('click', e => {
+  e.stopPropagation();
+  const t = S.ctxTarget; hideCtxMenu();
+  openDmRollModal(t);
+});
+
+let _dmRollTotal = 0;
+
+function openDmRollModal(target) {
+  const modal = document.getElementById('dmRollModal');
+  if (!modal) return;
+  document.getElementById('dmRollSource').value = '';
+  document.getElementById('dmRollExpr').value   = '';
+  document.getElementById('dmRollResult').style.display = 'none';
+  document.getElementById('dmSpRow').style.display     = 'none';
+  document.getElementById('dmSpInput').value = target?.bodySP ?? 0;
+  // Build quick roll buttons
+  const qb = document.getElementById('dmQuickBtns');
+  if (qb && !qb.children.length) {
+    ['1d6','2d6','3d6','4d6','2d6+2','3d6+3'].forEach(e => {
+      const b = document.createElement('button');
+      b.className = 'ts-btn'; b.dataset.expr = e;
+      b.style.cssText = 'font-size:.6rem;padding:.15rem .4rem';
+      b.textContent = e;
+      b.addEventListener('click', () => document.getElementById('dmRollExpr').value = e);
+      qb.appendChild(b);
+    });
+  }
+  modal.style.display = 'flex';
+  modal._target = target;
+}
+
+document.getElementById('dmRollExecBtn')?.addEventListener('click', () => {
+  const expr = document.getElementById('dmRollExpr').value.trim();
+  const m    = expr.match(/(\d+)[dD](\d+)([+-]\d+)?/);
+  if (!m) { showMapToast('Ungültige Formel', 'red'); return; }
+  const [, count, sides, bonusStr] = m;
+  let rolls=[], total=0;
+  for (let i=0;i<+count;i++) { const r=Math.floor(Math.random()*+sides)+1; rolls.push(r); total+=r; }
+  total += parseInt(bonusStr||0);
+  _dmRollTotal = total;
+  document.getElementById('dmRollResult').textContent = `[${rolls.join(', ')}]${bonusStr||''} = ${total}`;
+  document.getElementById('dmRollResult').style.display = '';
+  document.getElementById('dmSpRow').style.display      = '';
+  updateDmArmorCalc();
+});
+
+document.getElementById('dmSpInput')?.addEventListener('input', updateDmArmorCalc);
+
+function updateDmArmorCalc() {
+  const sp  = parseInt(document.getElementById('dmSpInput')?.value) || 0;
+  const net = Math.max(0, _dmRollTotal - sp);
+  const el  = document.getElementById('dmFinalDmg');
+  if (el) el.textContent = `${_dmRollTotal} − SP ${sp} = ${net} HP Schaden`;
+}
+
+document.getElementById('dmApplyBtn')?.addEventListener('click', async () => {
+  const sp  = parseInt(document.getElementById('dmSpInput').value) || 0;
+  const net = Math.max(0, _dmRollTotal - sp);
+  const tgt = document.getElementById('dmRollModal')._target;
+  const src = document.getElementById('dmRollSource').value.trim() || 'Schaden';
+  if (!tgt) return;
+  const ok  = await mapConfirm(
+    `${src} → ${tgt.name}:\n${_dmRollTotal} − SP ${sp} = ${net} HP\n(SP ${sp} → ${Math.max(0,sp-1)})`
+  );
+  if (!ok) return;
+  const newHp = Math.max(0, (tgt.hp ?? tgt.maxHp ?? 0) - net);
+  tgt.hp = newHp;
+  if (tgt.bodySP != null) tgt.bodySP = Math.max(0, tgt.bodySP - 1);
+  const { patchCharacter, patchNpc } = await import('./assets/js/supabase.js');
+  if (tgt.type==='char' && tgt.charId)  await patchCharacter(tgt.charId,{current_hp:newHp}).catch(()=>{});
+  else if (tgt.type==='npc' && tgt.npcId) await patchNpc(tgt.npcId,{hp:newHp}).catch(()=>{});
+  saveTokens(); markDirty();
+  showMapToast(`${net} HP → ${tgt.name}`, 'red');
+  document.getElementById('dmRollModal').style.display = 'none';
+});
+
+document.getElementById('dmRollClose')?.addEventListener('click',
+  () => { document.getElementById('dmRollModal').style.display = 'none'; });
+
 // AoE context menu
 let _ctxAoeIdx = -1;
 document.getElementById('ctxAoeBlast').addEventListener('click', e => {
@@ -1700,13 +1944,15 @@ canvas.addEventListener('mousedown', e => {
       S.selectedToken=null;
     }
   } else if (S.tool==='measure') {
+    const snapped = getSnapToken(wp);
+    const pt = snapped ? {x: snapped.x, y: snapped.y} : wp;
     if (!S.measuringActive) {
-      // First click: set start point
-      S.measureStart=wp; S.measureEnd=null; S.measuringActive=true;
+      S.measureStart=pt; S.measureEnd=null; S.measuringActive=true;
+      S.measureSourceToken=snapped||null;
       clearTimeout(S.measureTimer);
     } else {
-      // Second click: pin end point
-      S.measureEnd=wp; S.measuringActive=false;
+      S.measureEnd=pt; S.measuringActive=false;
+      S.measureTargetToken=snapped||null;
     }
   } else if (S.tool==='pen') {
     S.drawPath=[wp];
@@ -1761,14 +2007,19 @@ canvas.addEventListener('mousemove', e => {
   // Shotgun cone direction follows mouse
   if (S.shotgunConeActive) {
     const ownToken = S.tokens.find(t=>t.charId===CHAR_ID) || S.selectedToken;
-    if (ownToken) { S.shotgunFacing=Math.atan2(wp.y-ownToken.y,wp.x-ownToken.x); markDirty(); }
+    if (ownToken) S.shotgunFacing = Math.atan2(wp.y-ownToken.y, wp.x-ownToken.x);
   }
 
   const h=hitToken(wp.x,wp.y);
-  if (h!==S.hoverToken) { S.hoverToken=h; markDirty(); }
+  if (h!==S.hoverToken) S.hoverToken=h;
   showTooltip(h, e.clientX, e.clientY);
   document.getElementById('statusCoords').textContent =
     `${Math.round(wp.x/S.gridSize*10)/10}m, ${Math.round(wp.y/S.gridSize*10)/10}m`;
+  // Throttle canvas redraws to at most one per animation frame
+  if (!_moveDirtyPending) {
+    _moveDirtyPending = true;
+    requestAnimationFrame(() => { _moveDirtyPending = false; markDirty(); });
+  }
 });
 
 canvas.addEventListener('mouseup', e => {
@@ -1924,7 +2175,7 @@ function setTool(tool) {
   S.drawPath=null; S.shapeStart=null; S.shapeCurrent=null;
   S.aoeDragStart=null; S.suppressStart=null;
   S.coverDragStart=null; S.coverDragCurrent=null;
-  if (tool!=='measure') { S.measuringActive=false; }
+  if (tool!=='measure') { S.measuringActive=false; S.measureSourceToken=null; S.measureTargetToken=null; }
   document.querySelectorAll('.tool-btn-row[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
   setCursor(cursorForTool(tool));
   document.getElementById('statusTool').textContent=tool;
@@ -1956,18 +2207,7 @@ function renderToolSettings(tool) {
         <input type="checkbox" id="measurePin" class="ts-check" ${S.measurePinned?'checked':''}>
         <span class="ts-label">📌 Messung pinnen</span>
       </div>
-      <div class="measure-live" id="measureLive">— m</div>
-      <div class="tool-settings-head" style="margin-top:.35rem">DV Berechnung</div>
-      <select id="dvWeaponType" class="ts-input">
-        <option value="pistol">Pistol / Very Heavy</option>
-        <option value="smg">SMG</option>
-        <option value="shotgun">Shotgun</option>
-        <option value="rifle">Assault Rifle</option>
-        <option value="sniper">Sniper Rifle</option>
-        <option value="bow">Bow / Crossbow</option>
-        <option value="grenade">Grenade Launcher</option>
-      </select>
-      <div class="dv-live" id="dvLive">DV: —</div>`,
+      <div class="measure-live" id="measureLive">— m</div>`,
 
     aoe: ()=>`
       <div class="tool-settings-head">AoE Marker</div>
@@ -2057,7 +2297,6 @@ function renderToolSettings(tool) {
   // Wire up tool-settings controls
   el.querySelector('#snapToggle')?.addEventListener('change', e=>{ S.snapToGrid=e.target.checked; });
   el.querySelector('#measurePin')?.addEventListener('change', e=>{ S.measurePinned=e.target.checked; if(!e.target.checked){clearTimeout(S.measureTimer);} });
-  el.querySelector('#dvWeaponType')?.addEventListener('change', ()=>{ if(S.measureEnd) updateMeasureDisplay(Math.hypot(S.measureEnd.x-S.measureStart.x,S.measureEnd.y-S.measureStart.y)/S.gridSize); });
   el.querySelectorAll('.effect-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
       S.activeAoeEffect=btn.dataset.eff;
@@ -2743,25 +2982,12 @@ function buildPlayerPanel() {
         <span class="pmap-bar-val">${c.current_humanity??'?'}/${c.max_humanity??'?'}</span>
       </div>
     </div>
-    ${armorHtml?`<div class="player-map-section">
-      <div class="player-map-section-label">Rüstung</div>
-      ${armorHtml}
-    </div>`:''}
-    <div class="player-map-section">
-      <div class="player-map-section-label">Conditions</div>
-      <div class="pmap-cond-list">
-        ${conds.length?conds.map(cd=>`<span class="pmap-cond" style="color:${COND_C[cd]||'#888'};border-color:${COND_C[cd]||'#888'}">${cd}</span>`).join(''):'<span class="pmap-none">keine</span>'}
-      </div>
-    </div>
-    ${injHtml}
-    ${buffHtml}
     <div class="weapon-selector-wrap">
-      <div class="weapon-selector-label">Aktive Waffe / Item</div>
-      <select id="weaponSelector">
-        <option value="">— keine Anzeige —</option>
-        ${weapons.length?`<optgroup label="Waffen">${weapons.map((w,i)=>`<option value="w:${i}">${w.name||'Waffe'}</option>`).join('')}</optgroup>`:''}
-        ${cyberWeapons.length?`<optgroup label="Cyberware">${cyberWeapons.map((w,i)=>`<option value="c:${i}">${w.name}</option>`).join('')}</optgroup>`:''}
-      </select>
+      <div id="weaponPills" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem">
+        ${weapons.length
+          ? weapons.map((w,i)=>`<button class="weapon-pill" type="button" data-widx="${i}">${w.name||'Waffe'}</button>`).join('')
+          : '<span style="font-size:.62rem;color:#555">Keine Waffen ausgerüstet</span>'}
+      </div>
 
       <div id="mapWeaponCard" style="display:none">
         <!-- DV info box: shows measured dist + bracket + DV -->
@@ -2793,18 +3019,39 @@ function buildPlayerPanel() {
           </div>
         </div>
 
+        <!-- Ammo type selector -->
+        <div id="mwcAmmoRow" style="display:none;margin-top:.3rem">
+          <div style="font-size:.58rem;color:#555;letter-spacing:.08em;margin-bottom:.2rem">MUNITION</div>
+          <select id="mwcAmmoSelect"
+            style="width:100%;font-size:.65rem;background:#0f0f18;border:1px solid #2a2a3a;
+                   color:#e0e0e8;border-radius:4px;padding:.2rem .35rem">
+            <option value="basic">Standard (Basic)</option>
+          </select>
+        </div>
+
         <!-- Attack roll flow -->
         <div id="attackRollPanel">
           <!-- Step 1: Attack roll -->
           <div class="atk-step" id="atkStep1">
             <div class="atk-step-header">ANGRIFFSWURF</div>
+            <!-- Shooter → Target context -->
+            <div id="atkContext" style="display:none;font-size:.6rem;color:#555;margin-bottom:.3rem;line-height:1.5">
+              <span id="atkCtxShooter" style="color:#FFD700"></span>
+              <span style="color:#333"> → </span>
+              <span id="atkCtxTarget" style="color:#FF2D2D"></span><br>
+              <span id="atkCtxWeapon" style="color:#888"></span>
+              <span id="atkCtxDist" style="color:#00E5FF;margin-left:.35rem"></span>
+            </div>
+            <!-- Auto-filled stats -->
+            <div class="atk-input-row" style="font-size:.63rem;color:#666;margin-bottom:.2rem">
+              <span>REF <b id="atkRefVal" style="color:#e0e0e8">—</b></span>
+              <span>+ Skill <b id="atkSkillVal" style="color:#e0e0e8">—</b></span>
+              <span id="atkSkillName" style="color:#444;font-size:.58rem"></span>
+            </div>
             <div class="atk-input-row">
-              <span>REF</span>
-              <input id="atkRef" type="number" min="1" max="10" value="5" style="width:38px">
-              <span>Skill</span>
-              <input id="atkSkill" type="number" min="0" max="10" value="4" style="width:38px">
-              <span>Mod</span>
-              <input id="atkMod" type="number" value="0" style="width:38px">
+              <span style="font-size:.63rem;color:#666">Modifier</span>
+              <input id="atkMod" type="number" value="0" style="width:42px">
+              <span style="font-size:.58rem;color:#444">(Deckung, Dunkel…)</span>
             </div>
             <div class="atk-dv-display" id="atkDvDisplay"></div>
             <button id="atkRollBtn" class="atk-btn">🎲 Angriff würfeln</button>
@@ -2829,7 +3076,19 @@ function buildPlayerPanel() {
           </div>
         </div>
       </div>
-    </div>`;
+    </div>
+    ${armorHtml?`<div class="player-map-section">
+      <div class="player-map-section-label">Rüstung</div>
+      ${armorHtml}
+    </div>`:''}
+    <div class="player-map-section">
+      <div class="player-map-section-label">Conditions</div>
+      <div class="pmap-cond-list">
+        ${conds.length?conds.map(cd=>`<span class="pmap-cond" style="color:${COND_C[cd]||'#888'};border-color:${COND_C[cd]||'#888'}">${cd}</span>`).join(''):'<span class="pmap-none">keine</span>'}
+      </div>
+    </div>
+    ${injHtml}
+    ${buffHtml}`;
 
   document.getElementById('playerPanel').style.display='flex';
 
@@ -2868,53 +3127,128 @@ function buildPlayerPanel() {
         ? `Distanz: ${dist.toFixed(1)}m · ${BRACKET_LABELS[idx]} · DV ${dv}`
         : `Distanz: ${dist.toFixed(1)}m · ${BRACKET_LABELS[idx]} · außer Reichweite`;
     _atkDv = dv;
+
+    // Update attack context header
+    const ctx = document.getElementById('atkContext');
+    const tgt = S.measureTargetToken;
+    if (ctx && tgt && S.activeWeapon) {
+      document.getElementById('atkCtxShooter').textContent = S.char?.handle || S.char?.name || '—';
+      document.getElementById('atkCtxTarget').textContent  = tgt.name || '?';
+      document.getElementById('atkCtxWeapon').textContent  = S.activeWeapon.name;
+      document.getElementById('atkCtxDist').textContent    = `· ${dist.toFixed(1)}m`;
+      ctx.style.display = '';
+    } else if (ctx) {
+      ctx.style.display = 'none';
+    }
   }
 
   // Expose updateDvInfoBox globally so drawMeasureLine can call it
   window.updateDvInfoBox = updateDvInfoBox;
 
-  // ── Weapon selector ──────────────────────────────────────────
-  document.getElementById('weaponSelector')?.addEventListener('change', e=>{
-    const v = e.target.value;
+  // ── Ammo category helper ─────────────────────────────────────
+  const _AMMO_NORM = {
+    'M Pistol':'pistol','Medium Pistol':'pistol','Heavy Pistol':'pistol',
+    'Light Pistol':'pistol','Very Heavy Pistol':'pistol','Pistol':'pistol',
+    'Arrow':'arrow','Rifle':'rifle','Shotgun':'shotgun','SMG':'rifle',
+  };
+  function _repopAmmo(i) {
+    const raw = weapons[i];
+    const ammoRow = document.getElementById('mwcAmmoRow');
+    const ammoSel = document.getElementById('mwcAmmoSelect');
+    if (!ammoRow || !ammoSel || !raw?.ammo) { if (ammoRow) ammoRow.style.display='none'; return; }
+    const weaponAmmoType =
+      mapAmmoData?.weapon_ammo_mapping?.[raw.name]?.ammo_type ||
+      _AMMO_NORM[raw.ammo] ||
+      raw.ammo.toLowerCase();
+    const inv = S.char?.ammo_inventory || {};
+    const allTypes = (mapAmmoData?.ammo_types || [])
+      .filter(t => t.ammo_type === weaponAmmoType && !t.id.startsWith('ammo-basic-'));
+    const opts = allTypes.filter(t => (inv[t.id] || 0) > 0)
+      .map(t => `<option value="${t.id}"${raw.loaded_ammo===t.id?' selected':''}>${t.name} (${inv[t.id]})</option>`)
+      .join('');
+    ammoSel.innerHTML = `<option value="basic"${(!raw.loaded_ammo||raw.loaded_ammo==='basic')?' selected':''}>Standard (Basic)</option>${opts}`;
+    ammoRow.style.display = '';
+  }
+
+  // ── Weapon selection (pill buttons) ─────────────────────────
+  function selectWeaponByIdx(i) {
     S.shotgunConeActive = false;
     S.showRangeZones    = false;
+    _ringsKey = '';
     const zoneBtn = document.getElementById('mapZoneToggleBtn');
     if (zoneBtn) zoneBtn.textContent = '👁 Zonen';
-    if (!v) {
-      S.activeWeapon = null;
-      document.getElementById('mapWeaponCard').style.display = 'none';
-      markDirty(); return;
-    }
-    const [type, idx] = v.split(':');
-    let w;
-    if (type === 'w') {
-      const raw = weapons[+idx];
-      const dvType = guessWeaponDvType(raw.ammo, raw.name);
-      w = {
-        name: raw.name,
-        rangeM: WEAPON_RANGES[raw.ammo?.toLowerCase()] || WEAPON_RANGES[dvType] || 50,
-        dvType, isShotgun: dvType === 'shotgun',
-        rawIdx: +idx,
-        damage: raw.damage || '2d6',
-        isAutofire: raw.is_autofire || false,
-      };
-    } else {
-      w = { ...cyberWeapons[+idx], isShotgun: false, rawIdx: null, damage: '2d6', isAutofire: false };
-    }
-    S.activeWeapon = w;
-
-    // Populate weapon card
-    document.getElementById('mwcName').textContent   = w.name;
-    document.getElementById('mwcDamage').textContent = w.damage;
-    const rawW = type === 'w' ? weapons[+idx] : null;
-    const metaParts = [rawW?.ammo, rawW?.rof != null ? `ROF ${rawW.rof}` : null, rawW?.hands != null ? `${rawW.hands}H` : null].filter(Boolean);
+    const raw = weapons[i];
+    if (!raw) return;
+    const dvType = guessWeaponDvType(raw.ammo, raw.name);
+    const _ref   = S.char?.stats?.REF ?? 0;
+    const _skill = S.char?.skills?.[WEAPON_SKILL_MAP[dvType]] ?? 0;
+    S.activeWeapon = {
+      name: raw.name,
+      rangeM: WEAPON_RANGES[raw.ammo?.toLowerCase()] || WEAPON_RANGES[dvType] || 50,
+      dvType, isShotgun: dvType === 'shotgun',
+      rawIdx: i,
+      damage: raw.damage || '2d6',
+      isAutofire: raw.is_autofire || false,
+      _ref, _skill,
+    };
+    // Auto-fill attack panel stats
+    const rvEl = document.getElementById('atkRefVal'),   svEl = document.getElementById('atkSkillVal');
+    const snEl = document.getElementById('atkSkillName');
+    if (rvEl) rvEl.textContent = _ref;
+    if (svEl) svEl.textContent = _skill;
+    if (snEl) snEl.textContent = `(${WEAPON_SKILL_MAP[dvType] || ''})`;
+    document.getElementById('mwcName').textContent   = S.activeWeapon.name;
+    document.getElementById('mwcDamage').textContent = S.activeWeapon.damage;
+    const metaParts = [raw.ammo, raw.rof != null ? `ROF ${raw.rof}` : null, raw.hands != null ? `${raw.hands}H` : null].filter(Boolean);
     document.getElementById('mwcMeta').textContent = metaParts.join(' · ');
-    document.getElementById('shotgunConeBtn').style.display = w.isShotgun ? '' : 'none';
-    document.getElementById('mapAutofireToggle').style.display = w.isAutofire ? '' : 'none';
+    document.getElementById('shotgunConeBtn').style.display   = S.activeWeapon.isShotgun   ? '' : 'none';
+    document.getElementById('mapAutofireToggle').style.display = S.activeWeapon.isAutofire ? '' : 'none';
     document.getElementById('mapWeaponCard').style.display = '';
+    // Populate ammo type dropdown
+    _repopAmmo(i);
     updateMwcMag();
     updateDvInfoBox();
     markDirty();
+  }
+
+  document.getElementById('weaponPills')?.querySelectorAll('.weapon-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.widx);
+      if (btn.classList.contains('active')) {
+        btn.classList.remove('active');
+        S.activeWeapon = null;
+        S.shotgunConeActive = false;
+        S.showRangeZones    = false;
+        _ringsKey = '';
+        document.getElementById('mapWeaponCard').style.display = 'none';
+        markDirty(); return;
+      }
+      document.getElementById('weaponPills').querySelectorAll('.weapon-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectWeaponByIdx(i);
+    });
+  });
+
+  // Restore active weapon pill state across buildPlayerPanel rebuilds
+  if (S.activeWeapon?.rawIdx != null && weapons[S.activeWeapon.rawIdx]) {
+    const savedIdx = S.activeWeapon.rawIdx;
+    const pill = document.querySelector(`.weapon-pill[data-widx="${savedIdx}"]`);
+    if (pill) {
+      pill.classList.add('active');
+      document.getElementById('mapWeaponCard').style.display = '';
+      _repopAmmo(savedIdx);
+      updateMwcMag();
+      updateDvInfoBox();
+    }
+  }
+
+  // ── Ammo type change ─────────────────────────────────────────
+  document.getElementById('mwcAmmoSelect')?.addEventListener('change', async e => {
+    const raw = S.activeWeapon?.rawIdx != null ? S.char?.weapons?.[S.activeWeapon.rawIdx] : null;
+    if (!raw) return;
+    raw.loaded_ammo = e.target.value;
+    const { patchCharacter } = await import('./assets/js/supabase.js');
+    await patchCharacter(CHAR_ID, { weapons: S.char.weapons }).catch(()=>{});
   });
 
   // ── Zone toggle ──────────────────────────────────────────────
@@ -2948,11 +3282,64 @@ function buildPlayerPanel() {
     showMapToast('Waffe nachgeladen', 'cyan');
   });
 
+  // ── Dice animation helper ────────────────────────────────────
+  function showAtkDiceAnim(d10, bonus, ref, skill, mod, total, dv, hit, isCrit, isFumble, onDone) {
+    const overlay = document.getElementById('atkDiceOverlay');
+    const numEl   = document.getElementById('atkDiceNum');
+    const lblEl   = document.getElementById('atkDiceLabel');
+    if (!overlay) { onDone(); return; }
+    overlay.style.display = 'flex';
+    numEl.textContent = '?'; numEl.className = 'atk-dice-num rolling';
+    lblEl.textContent = '';
+    setTimeout(() => {
+      numEl.textContent = d10;
+      numEl.className = 'atk-dice-num ' + (isCrit ? 'crit' : isFumble ? 'fumble' : '');
+      const critStr = isCrit ? ` + ${bonus}🎯` : isFumble ? ` − ${bonus}💀` : '';
+      lblEl.innerHTML =
+        `d10: ${d10}${critStr} + REF ${ref} + Skill ${skill}${mod ? (mod>0?` +${mod}`:` ${mod}`):''}` +
+        ` = <b>${total}</b> vs DV ${dv}<br>` +
+        `<span class="${hit ? 'atk-hit-badge' : 'atk-miss-badge'}">${hit ? '✓ TREFFER' : '✗ VERFEHLT'}</span>`;
+    }, 480);
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      onDone();
+    }, 2100);
+  }
+
+  // ── Miss: shot-line collision ────────────────────────────────
+  function handleMissLine() {
+    const src = S.measureSourceToken, tgt = S.measureTargetToken;
+    if (!src || !tgt) return;
+    const lineTokens = S.tokens.filter(t => {
+      if (t.id === src.id || t.id === tgt.id) return false;
+      return pointToSegmentDist(t.x, t.y, src.x, src.y, tgt.x, tgt.y) <= S.gridSize * 0.5;
+    }).sort((a,b) => Math.hypot(a.x-src.x,a.y-src.y) - Math.hypot(b.x-src.x,b.y-src.y));
+    if (!lineTokens.length) return;
+    const res = document.getElementById('atkRollResult');
+    const lineHtml = lineTokens.map((t,i) =>
+      `<div style="display:flex;align-items:center;gap:.3rem;margin:.15rem 0">
+        <span style="font-size:.63rem;color:#888">${t.name}</span>
+        <button class="atk-btn" data-miss-idx="${i}"
+          style="font-size:.55rem;padding:.08rem .35rem;flex-shrink:0">💥 Schaden</button>
+      </div>`
+    ).join('');
+    res.innerHTML += `<div style="margin-top:.35rem;border-top:1px solid #1e1e2a;padding-top:.3rem">
+      <div style="font-size:.55rem;color:#555;letter-spacing:.08em;margin-bottom:.15rem">AUF DER SCHUSSLINIE</div>
+      ${lineHtml}</div>`;
+    res.querySelectorAll('[data-miss-idx]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        S.measureTargetToken = lineTokens[parseInt(btn.dataset.missIdx)];
+        document.getElementById('atkStep2').style.display = '';
+        showMapToast(`Ziel: ${S.measureTargetToken.name}`, 'cyan');
+      });
+    });
+  }
+
   // ── Attack roll (Step 1) ─────────────────────────────────────
-  document.getElementById('atkRollBtn')?.addEventListener('click', ()=>{
-    const ref   = parseInt(document.getElementById('atkRef').value)   || 0;
-    const skill = parseInt(document.getElementById('atkSkill').value) || 0;
-    const mod   = parseInt(document.getElementById('atkMod').value)   || 0;
+  document.getElementById('atkRollBtn')?.addEventListener('click', () => {
+    const ref   = S.activeWeapon?._ref   ?? 0;
+    const skill = S.activeWeapon?._skill ?? 0;
+    const mod   = parseInt(document.getElementById('atkMod').value) || 0;
     const d10   = Math.floor(Math.random() * 10) + 1;
     let total = d10 + ref + skill + mod, bonus = 0;
     let isCrit = false, isFumble = false;
@@ -2961,38 +3348,36 @@ function buildPlayerPanel() {
     _atkRollTotal = total;
     const dv = _atkDv ?? 15;
     const hit = total >= dv;
-    let html = '';
-    if (isCrit)   html += '<div class="atk-badge-crit">✨ CRITICAL SUCCESS!</div>';
-    if (isFumble) html += '<div class="atk-badge-miss">☠ CRITICAL FAILURE</div>';
-    html += `<span style="color:#888">d10:</span> <b>${d10}</b>`;
-    if (bonus) html += isCrit ? ` +${bonus}` : ` −${bonus}`;
-    html += ` + REF ${ref} + Skill ${skill}${mod ? (mod>0?` +${mod}`:` ${mod}`):''}`;
-    html += ` = <b style="font-family:Audiowide;font-size:.9rem">${total}</b>`;
-    html += ` vs DV <b>${dv}</b>`;
-    html += hit
-      ? `<div style="color:#22C55E;margin-top:.25rem;font-size:.72rem">✅ TREFFER (+${total-dv} über DV)</div>`
-      : `<div style="color:#FF2D2D;margin-top:.25rem;font-size:.72rem">✕ FEHLSCHUSS (${dv-total} unter DV)</div>`;
-    const res = document.getElementById('atkRollResult');
-    res.innerHTML = html; res.style.display = '';
-    if (hit) document.getElementById('atkStep2').style.display = '';
+    showAtkDiceAnim(d10, bonus, ref, skill, mod, total, dv, hit, isCrit, isFumble, () => {
+      let html = '';
+      if (isCrit)   html += '<div class="atk-badge-crit">✨ CRITICAL SUCCESS!</div>';
+      if (isFumble) html += '<div class="atk-badge-miss">☠ CRITICAL FAILURE</div>';
+      html += `d10: <b>${d10}</b>`;
+      if (bonus) html += isCrit ? ` +${bonus}` : ` −${bonus}`;
+      html += ` + REF ${ref} + Skill ${skill}${mod ? (mod>0?` +${mod}`:` ${mod}`):''}`;
+      html += ` = <b style="font-family:Audiowide;font-size:.9rem">${total}</b> vs DV <b>${dv}</b>`;
+      html += hit
+        ? `<div style="color:#22C55E;margin-top:.2rem;font-size:.7rem">✅ TREFFER (+${total-dv})</div>`
+        : `<div style="color:#FF2D2D;margin-top:.2rem;font-size:.7rem">✕ FEHLSCHUSS (${dv-total} unter DV)</div>`;
+      const res = document.getElementById('atkRollResult');
+      res.innerHTML = html; res.style.display = '';
+      if (hit) document.getElementById('atkStep2').style.display = '';
+      else     handleMissLine();
+    });
   });
 
   // ── Damage roll (Step 2) ─────────────────────────────────────
-  document.getElementById('dmgRollBtn')?.addEventListener('click', ()=>{
+  document.getElementById('dmgRollBtn')?.addEventListener('click', () => {
     const w = S.activeWeapon;
     const expr = w?.damage || '2d6';
     const m = expr.match(/(\d+)[dD](\d+)/);
     const count = m ? parseInt(m[1]) : 2, sides = m ? parseInt(m[2]) : 6;
     let rolls = [], total = 0;
-    for (let i = 0; i < count; i++) {
-      const r = Math.floor(Math.random() * sides) + 1;
-      rolls.push(r); total += r;
-    }
+    for (let i = 0; i < count; i++) { const r = Math.floor(Math.random()*sides)+1; rolls.push(r); total+=r; }
     let mult = 1, critInjury = false;
     if (_autofireOn) {
-      const wtype = w?.dvType || 'smg';
-      const maxMult = wtype === 'assault_rifle' ? 4 : 3;
-      const margin = Math.max(0, (_atkRollTotal ?? 0) - (_atkDv ?? 15));
+      const maxMult = w?.dvType === 'assault_rifle' ? 4 : 3;
+      const margin  = Math.max(0, (_atkRollTotal ?? 0) - (_atkDv ?? 15));
       mult = Math.min(Math.max(1, margin), maxMult);
       total = total * mult;
       critInjury = rolls.filter(r => r === sides).length >= 2;
@@ -3000,15 +3385,20 @@ function buildPlayerPanel() {
     _dmgTotal = total;
     let html = `[${rolls.join('][')}]`;
     if (_autofireOn && mult > 1) html += ` × <b>${mult}</b>`;
-    html += ` = <b style="color:#FF2D2D;font-family:Audiowide;font-size:.95rem">${total}</b> Schaden`;
+    html += ` = <b style="color:#FF2D2D;font-family:Audiowide;font-size:.9rem">${total}</b> Schaden`;
     if (critInjury) html += '<div class="atk-badge-injury">⚠ CRITICAL INJURY!</div>';
     const res = document.getElementById('dmgRollResult');
     res.innerHTML = html; res.style.display = '';
+    if (critInjury) showMapToast('⚠ Critical Injury!', 'red');
+
+    // Auto-fill target SP
+    const tgtSP = S.measureTargetToken?.bodySP ?? 0;
+    document.getElementById('atkSpInput').value = tgtSP;
     document.getElementById('atkStep3').style.display = '';
-    if (critInjury) showMapToast('⚠ Critical Injury! (2× Maximalwürfel bei Autofire)', 'red');
+    updateArmorCalc();
 
     // Deduct ammo
-    const rawW = S.char?.weapons?.[S.activeWeapon?.rawIdx];
+    const rawW = S.char?.weapons?.[w?.rawIdx];
     if (rawW) {
       rawW.ammo_current = Math.max(0, (rawW.ammo_current ?? rawW.magazine_max ?? 0) - (_autofireOn ? 10 : 1));
       import('./assets/js/supabase.js').then(({ patchCharacter }) => {
@@ -3016,42 +3406,92 @@ function buildPlayerPanel() {
       });
       updateMwcMag();
     }
+
+    // Shotgun cone — queue additional targets (Feature 11)
+    if (w?.isShotgun && S.shotgunConeActive) {
+      const ownToken = S.tokens.find(t => t.charId === CHAR_ID);
+      if (ownToken) {
+        const coneLen = 6*S.gridSize, coneAngle = Math.PI/3;
+        const coneTargets = S.tokens.filter(t =>
+          t.id !== ownToken.id &&
+          t.id !== S.measureTargetToken?.id &&
+          isInCone(t.x,t.y,ownToken.x,ownToken.y,S.shotgunFacing,coneAngle,coneLen)
+        );
+        if (coneTargets.length) {
+          S._shotgunConeTargets = coneTargets;
+          showMapToast(`Shotgun: ${coneTargets.length} weitere Token im Kegel`, 'red');
+        }
+      }
+    }
   });
 
   // ── Armor calc (Step 3) ──────────────────────────────────────
   function updateArmorCalc() {
     const sp  = parseInt(document.getElementById('atkSpInput').value) || 0;
-    const net = Math.max(0, _dmgTotal - sp);
+    const net = Math.max(0, (_dmgTotal ?? 0) - sp);
     const newSp = Math.max(0, sp - 1);
     document.getElementById('atkFinalDmg').textContent =
-      `${_dmgTotal} − ${sp} SP = ${net} HP · SP sinkt auf ${newSp}`;
+      `${_dmgTotal ?? 0} − ${sp} SP = ${net} HP · SP sinkt auf ${newSp}`;
     document.getElementById('atkApplyDmg').style.display = net > 0 ? '' : 'none';
   }
   document.getElementById('atkSpInput')?.addEventListener('input', updateArmorCalc);
 
-  document.getElementById('atkApplyDmg')?.addEventListener('click', async ()=>{
+  // ── Apply damage to target (Feature 8) ──────────────────────
+  document.getElementById('atkApplyDmg')?.addEventListener('click', async () => {
     const sp  = parseInt(document.getElementById('atkSpInput').value) || 0;
     const net = Math.max(0, (_dmgTotal ?? 0) - sp);
-    const ownToken = S.tokens.find(t => t.charId === CHAR_ID);
-    if (ownToken && net > 0) {
-      const newHp = Math.max(0, (ownToken.hp ?? ownToken.maxHp ?? 0) - net);
-      ownToken.hp = newHp;
-      const { patchCharacter } = await import('./assets/js/supabase.js');
-      await patchCharacter(CHAR_ID, { current_hp: newHp }).catch(()=>{});
-      saveTokens(); markDirty();
-      showMapToast(`${net} HP Schaden angewendet`, 'red');
-    }
+    const tgt = S.measureTargetToken;
+    if (!tgt) { showMapToast('Kein Ziel gemessen', 'red'); return; }
+    const ok = await mapConfirm(
+      `${S.activeWeapon?.name || 'Angriff'} → ${tgt.name}:\n` +
+      `${_dmgTotal} − SP ${sp} = ${net} HP Schaden\n` +
+      `(Rüstung SP ${sp} → ${Math.max(0, sp-1)})`
+    );
+    if (!ok) return;
+    const newHp = Math.max(0, (tgt.hp ?? tgt.maxHp ?? 0) - net);
+    tgt.hp = newHp;
+    if (tgt.bodySP != null) tgt.bodySP = Math.max(0, tgt.bodySP - 1);
+    const { patchCharacter, patchNpc } = await import('./assets/js/supabase.js');
+    if (tgt.type === 'char' && tgt.charId)
+      await patchCharacter(tgt.charId, { current_hp: newHp }).catch(()=>{});
+    else if (tgt.type === 'npc' && tgt.npcId)
+      await patchNpc(tgt.npcId, { hp: newHp }).catch(()=>{});
+    saveTokens(); markDirty();
+    showMapToast(`${net} HP → ${tgt.name}`, 'red');
     document.getElementById('atkResetBtn').click();
   });
 
-  // ── Reset ────────────────────────────────────────────────────
-  document.getElementById('atkResetBtn')?.addEventListener('click', ()=>{
+  // ── Reset + shotgun cone queue (Features 8 + 11) ─────────────
+  document.getElementById('atkResetBtn')?.addEventListener('click', async () => {
     ['atkRollResult','atkStep2','dmgRollResult','atkStep3'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.style.display='none'; el.innerHTML=''; }
     });
     document.getElementById('atkApplyDmg').style.display = 'none';
     _atkRollTotal = null; _dmgTotal = null;
+
+    // Process queued shotgun cone targets
+    if (S._shotgunConeTargets?.length) {
+      const next = S._shotgunConeTargets.shift();
+      S.measureTargetToken = next;
+      const sp  = next?.bodySP ?? 0;
+      const dmg = _dmgTotal ?? 0;
+      const net = Math.max(0, dmg - sp);
+      const ok  = await mapConfirm(`Shotgun Streuung → ${next.name}:\n${dmg} − SP ${sp} = ${net} HP`);
+      if (ok) {
+        next.hp = Math.max(0, (next.hp ?? next.maxHp ?? 0) - net);
+        if (next.bodySP != null) next.bodySP = Math.max(0, next.bodySP - 1);
+        const { patchCharacter, patchNpc } = await import('./assets/js/supabase.js');
+        if (next.type==='char' && next.charId)
+          await patchCharacter(next.charId, {current_hp: next.hp}).catch(()=>{});
+        else if (next.type==='npc' && next.npcId)
+          await patchNpc(next.npcId, {hp: next.hp}).catch(()=>{});
+        saveTokens(); markDirty();
+        showMapToast(`${net} HP → ${next.name}`, 'red');
+      }
+    } else {
+      S._shotgunConeTargets = null;
+    }
   });
 }
 

@@ -1219,6 +1219,7 @@ function renderWeapons() {
       <span id="wdBracket">—</span> · DV:
       <span id="wdDv" style="color:#FFD700;font-family:Audiowide,sans-serif">—</span>
       <span id="wdWeaponName" style="color:#555;margin-left:.4rem"></span>
+      <span id="wdTargetName" style="color:#FF2D2D;font-size:.6rem;margin-left:.4rem"></span>
     </div>
   </div>`;
 
@@ -1466,15 +1467,17 @@ const _RB  = [6,12,25,50,100,200,400,800];
 const _RBL = ['0–6m','7–12m','13–25m','26–50m','51–100m','101–200m','201–400m','401–800m'];
 function _getBracketIdx(d) { for(let i=0;i<_RB.length;i++) if(d<=_RB[i]) return i; return 7; }
 
-function applyDist(d, dv, wname) {
+function applyDist(d, dv, wname, targetName) {
   const bEl  = document.getElementById('wdBracket');
   const dvEl = document.getElementById('wdDv');
   const wEl  = document.getElementById('wdWeaponName');
+  const tEl  = document.getElementById('wdTargetName');
   const info = document.getElementById('weaponDistInfo');
   if (!bEl || !info) return;
   bEl.textContent  = _RBL[_getBracketIdx(d)];
   dvEl.textContent = dv != null ? String(dv) : '—';
   wEl.textContent  = wname || '';
+  if (tEl) tEl.textContent = targetName ? `→ ${targetName}` : '';
   info.style.display = '';
 }
 
@@ -1482,7 +1485,7 @@ function loadMapRange() {
   try {
     const data = JSON.parse(localStorage.getItem('map-range-sync') || 'null');
     if (!data || data.character_id !== id || Date.now() - data.ts > 60000) return;
-    applyDist(data.distanceM, data.dv, data.weaponName);
+    applyDist(data.distanceM, data.dv, data.weaponName, data.targetName || null);
     const inp = document.getElementById('weaponDistInput');
     if (inp) inp.value = parseFloat(data.distanceM).toFixed(1);
   } catch {}

@@ -85,7 +85,8 @@ body.map-page {
 
 /* ── Tool Settings Pane ── */
 .tool-settings {
-  flex: 1; overflow-y: auto;
+  flex: 0 0 auto; overflow-y: auto;
+  max-height: 220px;
   padding: .65rem .75rem;
   border-top: 1px solid var(--border);
   display: flex; flex-direction: column; gap: .5rem;
