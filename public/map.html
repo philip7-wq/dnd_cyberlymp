@@ -70,6 +70,69 @@
   </div>
 </div>
 
+<!-- AoE Hover Popup (DM) -->
+<div id="aoeHoverPopup" style="display:none;position:fixed;z-index:8000;
+  background:#111;border:1px solid rgba(255,80,0,.4);border-radius:6px;
+  padding:.4rem .65rem;font-size:.68rem;font-family:Audiowide,sans-serif;
+  box-shadow:0 4px 16px rgba(0,0,0,.7);pointer-events:auto">
+  <div id="aoeHoverLabel" style="color:#FF8C00;margin-bottom:.3rem"></div>
+  <button id="aoeHoverApplyBtn" class="ctrl-btn"
+    style="font-size:.62rem;padding:.2rem .6rem;border-color:#FF4500;color:#FF4500;
+           background:rgba(255,45,0,.08);width:100%">💥 Schaden anwenden</button>
+</div>
+
+<!-- Fog Hover Popup (DM) -->
+<div id="fogHoverPopup" style="display:none;position:fixed;z-index:8000;
+  background:#111;border:1px solid #333;border-radius:6px;
+  padding:.4rem .65rem;font-size:.65rem;font-family:Audiowide,sans-serif;
+  box-shadow:0 4px 16px rgba(0,0,0,.7);pointer-events:auto;min-width:140px">
+  <div style="color:#555;font-size:.55rem;letter-spacing:.1em;margin-bottom:.3rem">VERDECKTER BEREICH</div>
+  <div id="fogHoverNote" style="color:#888;font-size:.62rem;margin-bottom:.35rem;min-height:.8rem"></div>
+  <button id="fogHoverRevealBtn" class="ctrl-btn"
+    style="font-size:.62rem;padding:.2rem .5rem;width:100%;margin-bottom:.25rem;
+           border-color:#00E5FF;color:#00E5FF;background:rgba(0,229,255,.06)">👁 Aufdecken</button>
+  <button id="fogHoverNoteBtn" class="ctrl-btn"
+    style="font-size:.6rem;padding:.15rem .5rem;width:100%">✏ Notiz bearbeiten</button>
+</div>
+
+<!-- Map Dice FAB + Popup -->
+<button class="map-dice-fab" id="mapDiceFab" title="Würfeln">🎲</button>
+<div class="map-dice-popup" id="mapDicePopup">
+  <div class="map-dice-popup-head">
+    <span>WÜRFELN</span>
+    <button id="mapDiceClose" style="background:none;border:none;color:#555;cursor:pointer;font-size:1rem;padding:0 .1rem;line-height:1">✕</button>
+  </div>
+  <div class="map-dice-section">
+    <div class="map-dice-label">Schnellwurf</div>
+    <div class="map-dice-quick">
+      <button class="map-die-btn" data-expr="1d4">d4</button>
+      <button class="map-die-btn" data-expr="1d6">d6</button>
+      <button class="map-die-btn" data-expr="1d8">d8</button>
+      <button class="map-die-btn" data-expr="1d10">d10</button>
+      <button class="map-die-btn" data-expr="1d12">d12</button>
+      <button class="map-die-btn" data-expr="1d20">d20</button>
+      <button class="map-die-btn" data-expr="2d6">2d6</button>
+      <button class="map-die-btn map-skill-btn" data-expr="1d10" data-skill="1">Skill</button>
+    </div>
+  </div>
+  <div class="map-dice-section">
+    <div class="map-dice-label">Eigener Wurf</div>
+    <div class="map-dice-custom">
+      <input type="text" id="mapDiceExpr" placeholder="z.B. 2d6+3" spellcheck="false">
+      <button id="mapDiceRollBtn">Roll</button>
+    </div>
+  </div>
+  <div class="map-dice-result-area">
+    <div class="map-dice-label">Ergebnis</div>
+    <div class="map-dice-num" id="mapDiceNum">—</div>
+    <div class="map-dice-detail" id="mapDiceDetail"></div>
+  </div>
+  <div class="map-dice-section">
+    <div class="map-dice-label">Verlauf</div>
+    <div class="map-dice-log" id="mapDiceLog"></div>
+  </div>
+</div>
+
 <!-- Attack Dice Animation Overlay -->
 <div id="atkDiceOverlay" style="display:none;position:fixed;inset:0;z-index:9000;
   background:rgba(0,0,0,.72);align-items:center;justify-content:center;flex-direction:column">
@@ -285,10 +348,10 @@
 </div>
 
 <!-- Combat Bar -->
-<div id="combatBar" style="display:none;overflow-x:auto;white-space:nowrap;
-  background:#09090f;border-bottom:1px solid #1e1e2a;padding:6px 10px;
-  height:68px;align-items:center;gap:8px;flex-shrink:0;">
-  <div id="combatCards" style="display:inline-flex;gap:6px;align-items:center;height:100%"></div>
+<div id="combatBar" style="display:none;overflow-y:auto;
+  background:#09090f;border-bottom:1px solid #1e1e2a;padding:5px 10px;
+  max-height:130px;flex-shrink:0;">
+  <div id="combatCards" style="display:flex;flex-wrap:wrap;gap:5px;align-items:flex-start"></div>
 </div>
 
 <!-- Main Area -->
@@ -307,7 +370,7 @@
       <div class="tool-group-head">Auswahl</div>
       <div class="tool-btn-row active" data-tool="select"><span class="tool-icon">🖱</span><span class="tool-name">Select / Move</span></div>
       <div class="tool-group-head">Messung</div>
-      <div class="tool-btn-row" data-tool="measure"><span class="tool-icon">📏</span><span class="tool-name">Messen</span></div>
+      <div class="tool-btn-row" data-tool="measure"><span class="tool-icon">📏</span><span class="tool-name">Messen / Target</span></div>
       <div class="tool-group-head">Kampf</div>
       <div class="tool-btn-row" data-tool="aoe"><span class="tool-icon">⭕</span><span class="tool-name">AoE Marker</span></div>
       <div class="tool-btn-row" data-tool="cover"><span class="tool-icon">🧱</span><span class="tool-name">Deckung / Objekt</span></div>
@@ -316,6 +379,8 @@
       <div class="tool-btn-row" data-tool="pen"><span class="tool-icon">✏️</span><span class="tool-name">Freihand</span></div>
       <div class="tool-btn-row" data-tool="rect"><span class="tool-icon">▭</span><span class="tool-name">Rechteck</span></div>
       <div class="tool-btn-row" data-tool="circle"><span class="tool-icon">○</span><span class="tool-name">Kreis</span></div>
+      <div class="tool-group-head">Sicht</div>
+      <div class="tool-btn-row" data-tool="fog"><span class="tool-icon">🌑</span><span class="tool-name">Verdecken</span></div>
       <div class="tool-group-head">Löschen</div>
       <div class="tool-btn-row" data-tool="delete"><span class="tool-icon">🗑</span><span class="tool-name">Element löschen</span></div>
       <div class="tool-btn-row" id="clearAllRow"><span class="tool-icon">🧹</span><span class="tool-name">Alles löschen</span></div>
@@ -411,6 +476,7 @@ import {
   uploadMapBackground, subscribeCombat, subscribeCharacters,
   subscribeNpcs,
   saveCombat as saveCombatDb,
+  createCombatEventChannel,
 } from './assets/js/supabase.js';
 import {
   getDV, guessWeaponDvType, DV_TABLE, RANGE_BRACKETS, BRACKET_LABELS, getRangeBracketIndex,
@@ -513,9 +579,14 @@ const S = {
   coverConfig:{ material:'Steel Thin', hp:25, label:'' },
   coverDragStart:null, coverDragCurrent:null,
 
+  fogObjects:[],
+  fogDragStart:null, fogDragCurrent:null,
+
   shotgunConeActive: false,
   shotgunFacing:     0,
   aoeBlastTarget:    null,
+  hoverAoeIdx:       -1,
+  hoverFogIdx:       -1,
   _shotgunConeTargets: null,
 
   combatSession:null,
@@ -586,7 +657,8 @@ function hitDrawing(wx, wy) {
 function hitAoe(wx, wy) {
   for (let i = S.aoeMarkers.length-1; i>=0; i--) {
     const a = S.aoeMarkers[i];
-    if (Math.abs(Math.hypot(wx-a.cx,wy-a.cy)-a.r)<12 || Math.hypot(wx-a.cx,wy-a.cy)<a.r) return i;
+    const _cx=a.cxM!=null?a.cxM*S.gridSize:(a.cx??0), _cy=a.cyM!=null?a.cyM*S.gridSize:(a.cy??0), _r=a.rM!=null?a.rM*S.gridSize:(a.r??0);
+    if (Math.abs(Math.hypot(wx-_cx,wy-_cy)-_r)<12 || Math.hypot(wx-_cx,wy-_cy)<_r) return i;
   }
   return -1;
 }
@@ -669,6 +741,7 @@ function applyMapData(m) {
     }
   }
   if (m.groups_json    !== undefined) S.groupColors = m.groups_json || {};
+  if (m.fog_objects    !== undefined) S.fogObjects  = m.fog_objects  || [];
   if (m.background_url !== undefined && m.background_url !== S.bgUrl) loadBackground(m.background_url || null);
   document.getElementById('mapNameDisplay').textContent = S.mapName;
   if (IS_DM) {
@@ -716,6 +789,7 @@ const saveGrid     = () => scheduleSave({ grid_size: S.gridSize, grid_enabled: S
 const saveCover    = () => scheduleSave({ cover_objects: S.coverObjects });
 const saveAoe      = () => scheduleSave({ aoe_markers: S.aoeMarkers });
 const saveSupp     = () => scheduleSave({ suppressive_zones: S.suppressiveZones });
+const saveFog      = () => scheduleSave({ fog_objects: S.fogObjects });
 
 // ── Render loop ───────────────────────────────────────────────
 function markDirty() { S.dirty = true; }
@@ -734,7 +808,9 @@ function redraw() {
   ctx.translate(S.ox, S.oy);
   ctx.scale(S.scale, S.scale);
   drawBackground();
+  drawFogObjects();
   drawGrid();
+  drawActiveFog();
   drawSuppressiveZones();
   drawCoverObjects();
   drawDrawings();
@@ -779,6 +855,60 @@ function drawGrid() {
   for (let x=sx; x<=vr; x+=gs) { ctx.moveTo(x,vt); ctx.lineTo(x,vb); }
   for (let y=sy; y<=vb; y+=gs) { ctx.moveTo(vl,y); ctx.lineTo(vr,y); }
   ctx.stroke();
+}
+
+function drawFogObjects() {
+  ctx.save();
+  for (const fog of S.fogObjects) {
+    if (fog.revealed) continue;
+    // DM: black overlay with label. Player: matches map background (#07070d)
+    ctx.fillStyle = IS_DM ? '#000' : '#07070d';
+    ctx.fillRect(fog.x, fog.y, fog.w, fog.h);
+    if (IS_DM) {
+      // Dashed border so DM sees the edges clearly
+      ctx.strokeStyle = '#2a2a3a'; ctx.lineWidth = 1/S.scale;
+      ctx.setLineDash([5/S.scale, 4/S.scale]);
+      ctx.strokeRect(fog.x, fog.y, fog.w, fog.h);
+      ctx.setLineDash([]);
+      // "VERDECKT" label
+      ctx.font = `bold ${Math.min(12, fog.w/8)/S.scale}px Audiowide`;
+      ctx.fillStyle = '#2a2a3a'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      const midY = fog.y + fog.h/2;
+      ctx.fillText('VERDECKT', fog.x+fog.w/2, fog.note ? midY - 9/S.scale : midY);
+      if (fog.note) {
+        ctx.fillStyle = '#333'; ctx.font = `${9/S.scale}px Inter`;
+        ctx.fillText(fog.note, fog.x+fog.w/2, midY + 8/S.scale);
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function drawActiveFog() {
+  if (S.tool!=='fog' || !S.fogDragStart || !S.fogDragCurrent) return;
+  const x=Math.min(S.fogDragStart.x,S.fogDragCurrent.x), y=Math.min(S.fogDragStart.y,S.fogDragCurrent.y);
+  const w=Math.abs(S.fogDragCurrent.x-S.fogDragStart.x), h=Math.abs(S.fogDragCurrent.y-S.fogDragStart.y);
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.45)';
+  ctx.strokeStyle='#444'; ctx.lineWidth=1.5/S.scale;
+  ctx.setLineDash([6/S.scale,4/S.scale]);
+  ctx.fillRect(x,y,w,h); ctx.strokeRect(x,y,w,h);
+  ctx.setLineDash([]);
+  if (w>30/S.scale && h>16/S.scale) {
+    ctx.fillStyle='#333'; ctx.font=`bold ${10/S.scale}px Audiowide`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('VERDECKT', x+w/2, y+h/2);
+  }
+  ctx.restore();
+}
+
+function hitFog(wx, wy) {
+  for (let i=S.fogObjects.length-1; i>=0; i--) {
+    const f=S.fogObjects[i];
+    if (f.revealed) continue;
+    if (wx>=f.x && wx<=f.x+f.w && wy>=f.y && wy<=f.y+f.h) return i;
+  }
+  return -1;
 }
 
 function drawCoverObjects() {
@@ -875,25 +1005,35 @@ function drawSuppressiveZones() {
 function drawAoeMarkers() {
   const now = Date.now();
   for (const a of S.aoeMarkers) {
-    const pulse = 0.05 + 0.12 * (0.5 + 0.5*Math.sin(now/400));
+    // cx/cy: absolute world pixels (center never moves with gridSize change)
+    // rM: radius in meters → r = rM * gridSize (scales with grid)
+    // Fallback: if marker was saved with old cxM/cyM, convert on-the-fly
+    const cx = a.cxM != null ? a.cxM * S.gridSize : (a.cx ?? 0);
+    const cy = a.cyM != null ? a.cyM * S.gridSize : (a.cy ?? 0);
+    const r  = a.rM  != null ? a.rM  * S.gridSize : (a.r  ?? 0);
+    const rM = a.rM  != null ? a.rM  : ((a.r ?? 0) / S.gridSize);
+
+    const applied = !!a.applied;
+    const pulse = applied ? (0.05 + 0.12*(0.5+0.5*Math.sin(now/400))) : 0.04;
     ctx.save();
     ctx.fillStyle   = hexToRgba(a.color, pulse);
     ctx.strokeStyle = a.color;
-    ctx.lineWidth   = 2 / S.scale;
-    ctx.beginPath(); ctx.arc(a.cx,a.cy,a.r,0,Math.PI*2);
+    ctx.lineWidth   = (applied ? 2 : 1.5) / S.scale;
+    if (!applied) ctx.setLineDash([6/S.scale, 5/S.scale]);
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
     ctx.fill(); ctx.stroke();
+    ctx.setLineDash([]);
     ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
     if (a.label) {
       ctx.fillStyle=a.color; ctx.font=`bold ${13/S.scale}px Audiowide`;
       ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(a.label, a.cx, a.cy);
+      ctx.fillText(a.label, cx, cy);
     }
-    const rM = (a.r/S.gridSize).toFixed(1);
     const eff = AOE_EFFECTS[a.effect];
-    const radiusLbl = `${rM}m${eff ? ' — '+eff.desc : ''}`;
+    const radiusLbl = `${rM.toFixed(1)}m${eff ? ' — '+eff.desc : ''}`;
     ctx.fillStyle=a.color; ctx.font=`bold ${11/S.scale}px Inter`;
     ctx.textAlign='center'; ctx.textBaseline='bottom';
-    ctx.fillText(radiusLbl, a.cx, a.cy-a.r-4/S.scale);
+    ctx.fillText(radiusLbl, cx, cy - r - 4/S.scale);
     ctx.shadowBlur=0;
     ctx.restore();
   }
@@ -1004,6 +1144,7 @@ function drawMoveRange() {
 let _ringsOffscreen = null, _ringsKey = '';
 let _moveDirtyPending = false;
 let mapAmmoData = null;
+let _combatChannel = null;
 
 const WEAPON_SKILL_MAP = {
   pistol:           'Handgun',
@@ -1413,13 +1554,18 @@ function drawMeasureLine() {
   ctx.setLineDash([]);
 
   // Arrowhead at endpoint when measurement is complete
+  // Always points from own token toward the target, regardless of click order
   if (S.measureEnd) {
-    const ang = Math.atan2(y2-y1, x2-x1), as = 8/S.scale;
+    let ax1=x1, ay1=y1, ax2=x2, ay2=y2;
+    if (!IS_DM && CHAR_ID && S.measureTargetToken?.charId === CHAR_ID) {
+      ax1=x2; ay1=y2; ax2=x1; ay2=y1; // flip: target is own token, arrow points back
+    }
+    const ang = Math.atan2(ay2-ay1, ax2-ax1), as = 14/S.scale;
     ctx.fillStyle = col;
     ctx.beginPath();
-    ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - as*Math.cos(ang-0.4), y2 - as*Math.sin(ang-0.4));
-    ctx.lineTo(x2 - as*Math.cos(ang+0.4), y2 - as*Math.sin(ang+0.4));
+    ctx.moveTo(ax2, ay2);
+    ctx.lineTo(ax2 - as*Math.cos(ang-0.38), ay2 - as*Math.sin(ang-0.38));
+    ctx.lineTo(ax2 - as*Math.cos(ang+0.38), ay2 - as*Math.sin(ang+0.38));
     ctx.closePath(); ctx.fill();
   }
 
@@ -1502,7 +1648,10 @@ function drawShotgunCone() {
   const {x:cx, y:cy} = ownToken;
   const coneAngle = Math.PI/3;
   const coneLen   = 6 * S.gridSize;
-  const facing    = S.shotgunFacing;
+  // Derive facing from measure line when available, otherwise follow mouse
+  const tgt = S.measureTargetToken || S.measureEnd;
+  if (tgt) S.shotgunFacing = Math.atan2(tgt.y - cy, tgt.x - cx);
+  const facing = S.shotgunFacing;
   ctx.save();
   ctx.beginPath(); ctx.moveTo(cx,cy);
   ctx.arc(cx,cy,coneLen,facing-coneAngle/2,facing+coneAngle/2);
@@ -1962,6 +2111,8 @@ canvas.addEventListener('mousedown', e => {
     S.aoeDragStart=wp; S.aoeDragRadius=0;
   } else if (S.tool==='cover') {
     S.coverDragStart=wp; S.coverDragCurrent=wp;
+  } else if (S.tool==='fog') {
+    S.fogDragStart=wp; S.fogDragCurrent=wp;
   } else if (S.tool==='suppressive') {
     S.suppressStart=wp; S.suppressCurrent=wp;
   } else if (S.tool==='delete') {
@@ -2004,6 +2155,7 @@ canvas.addEventListener('mousemove', e => {
   }
   if (S.tool==='suppressive'&&S.suppressStart) { S.suppressCurrent=wp; markDirty(); return; }
   if (S.tool==='cover'&&S.coverDragStart) { S.coverDragCurrent=wp; markDirty(); return; }
+  if (S.tool==='fog'&&S.fogDragStart) { S.fogDragCurrent=wp; markDirty(); return; }
   // Shotgun cone direction follows mouse
   if (S.shotgunConeActive) {
     const ownToken = S.tokens.find(t=>t.charId===CHAR_ID) || S.selectedToken;
@@ -2015,6 +2167,24 @@ canvas.addEventListener('mousemove', e => {
   showTooltip(h, e.clientX, e.clientY);
   document.getElementById('statusCoords').textContent =
     `${Math.round(wp.x/S.gridSize*10)/10}m, ${Math.round(wp.y/S.gridSize*10)/10}m`;
+
+  // AoE hover popup (DM only)
+  if (IS_DM) {
+    const hAoe = hitAoe(wp.x, wp.y);
+    if (hAoe !== S.hoverAoeIdx) {
+      S.hoverAoeIdx = hAoe;
+      if (hAoe >= 0) showAoeHoverPopup(hAoe);
+      else hideAoeHoverPopup(150);
+    }
+    // Fog hover popup (DM only, only when select tool)
+    const hFog = (S.tool==='select'||S.tool==='fog') ? hitFog(wp.x,wp.y) : -1;
+    if (hFog !== S.hoverFogIdx) {
+      S.hoverFogIdx = hFog;
+      if (hFog >= 0) showFogHoverPopup(hFog);
+      else hideFogHoverPopup(150);
+    }
+  }
+
   // Throttle canvas redraws to at most one per animation frame
   if (!_moveDirtyPending) {
     _moveDirtyPending = true;
@@ -2043,8 +2213,12 @@ canvas.addEventListener('mouseup', e => {
         return;
       }
     }
+    const droppedToken = t;
     S.dragging=null; S.dragOrigin=null;
-    saveTokens(); markDirty(); return;
+    saveTokens(); markDirty();
+    // Check if token landed inside any AoE
+    checkTokenInAoe(droppedToken);
+    return;
   }
   const {sx,sy}=getPos(e);
   const wp=sw(sx,sy);
@@ -2074,10 +2248,18 @@ canvas.addEventListener('mouseup', e => {
       const cfg = S.activeAoeEffect==='custom'
         ? {color:S.aoeCustomColor,label:'',effect:'custom'}
         : {color:AOE_EFFECTS[S.activeAoeEffect].color, label:document.getElementById('aoeLabel')?.value||AOE_EFFECTS[S.activeAoeEffect].label, effect:S.activeAoeEffect};
-      const r = S.aoeDragRadius>S.gridSize*0.3
+      const rPx = S.aoeDragRadius>S.gridSize*0.3
         ? S.aoeDragRadius
         : (parseFloat(document.getElementById('aoeRadiusM')?.value)||5)*S.gridSize;
-      S.aoeMarkers.push({id:uid(),cx:S.aoeDragStart.x,cy:S.aoeDragStart.y,r,...cfg});
+      // Center stored in absolute world pixels (like tokens) so it never drifts.
+      // Only radius stored in meters so it scales correctly when grid size changes.
+      S.aoeMarkers.push({
+        id: uid(),
+        cx: S.aoeDragStart.x,
+        cy: S.aoeDragStart.y,
+        rM: rPx / S.gridSize,
+        ...cfg,
+      });
       S.aoeDragStart=null; S.aoeDragRadius=0;
       saveAoe(); markDirty();
     }
@@ -2111,10 +2293,22 @@ canvas.addEventListener('mouseup', e => {
     }
     S.coverDragStart=null; S.coverDragCurrent=null; markDirty();
   }
+  if (S.tool==='fog'&&S.fogDragStart) {
+    const {x:x1,y:y1}=S.fogDragStart;
+    const x=Math.min(x1,wp.x), y=Math.min(y1,wp.y);
+    const w=Math.abs(wp.x-x1), h=Math.abs(wp.y-y1);
+    if (w>10&&h>10) {
+      const note = document.getElementById('fogNoteInput')?.value.trim()||'';
+      S.fogObjects.push({id:uid(), x, y, w, h, note, revealed:false});
+      saveFog();
+    }
+    S.fogDragStart=null; S.fogDragCurrent=null; markDirty();
+  }
 });
 
 canvas.addEventListener('mouseleave', ()=>{
   S.hoverToken=null; hideTooltip();
+  hideAoeHoverPopup(150); hideFogHoverPopup(150);
   document.getElementById('statusCoords').textContent='—';
 });
 
@@ -2176,6 +2370,7 @@ function setTool(tool) {
   S.aoeDragStart=null; S.suppressStart=null;
   S.coverDragStart=null; S.coverDragCurrent=null;
   if (tool!=='measure') { S.measuringActive=false; S.measureSourceToken=null; S.measureTargetToken=null; }
+  if (tool!=='fog') { S.fogDragStart=null; S.fogDragCurrent=null; }
   document.querySelectorAll('.tool-btn-row[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
   setCursor(cursorForTool(tool));
   document.getElementById('statusTool').textContent=tool;
@@ -2250,6 +2445,14 @@ function renderToolSettings(tool) {
       <div class="ts-row">
         <span class="ts-label">Label</span>
         <input type="text" id="coverLabel" class="ts-input" placeholder="Name" value="${S.coverConfig.label||''}" maxlength="20">
+      </div>`,
+
+    fog: ()=>`
+      <div class="tool-settings-head">Verdecken</div>
+      <div class="tool-settings-hint">Klick + Ziehen → Bereich verdecken</div>
+      <div class="ts-row" style="margin-top:.35rem">
+        <span class="ts-label">Notiz (optional)</span>
+        <input type="text" id="fogNoteInput" class="ts-input" placeholder="z.B. Geheimgang" maxlength="32">
       </div>`,
 
     suppressive: ()=>`
@@ -2636,6 +2839,7 @@ function openGrappleModal(initiatorToken) {
 // ── AoE Blast Modal ───────────────────────────────────────────
 function openAoeBlastModal(aoe) {
   const modal = document.getElementById('aoeBlastModal');
+  modal._aoe = aoe; // store reference so apply handler can mark it
   const eff = AOE_EFFECTS[aoe.effect] || {};
   const defaultExpr = aoe.effect==='explosion'?'8d6':aoe.effect==='fire'?'2d6':aoe.effect==='poison'?'1d6':'4d6';
   document.getElementById('aoeBlastTitle').textContent = `💥 ${aoe.label||eff.label||'AoE'} — SCHADEN ANWENDEN`;
@@ -2645,22 +2849,25 @@ function openAoeBlastModal(aoe) {
   modal.style.display='flex';
 
   // Find affected tokens
-  const affected = S.tokens.filter(t=>Math.hypot(t.x-aoe.cx,t.y-aoe.cy)<=aoe.r);
+  const _acx=aoe.cxM!=null?aoe.cxM*S.gridSize:(aoe.cx??0), _acy=aoe.cyM!=null?aoe.cyM*S.gridSize:(aoe.cy??0), _ar=aoe.rM!=null?aoe.rM*S.gridSize:(aoe.r??0);
+  const affected = S.tokens.filter(t=>Math.hypot(t.x-_acx,t.y-_acy)<=_ar);
   let rollResult = 0;
   let perTokenDmg = {};
 
   function renderTargets() {
     const wrap = document.getElementById('aoeBlastTargets');
     wrap.innerHTML = affected.map(t => {
-      const covered = hasCoverBetween(t.x,t.y,aoe.cx,aoe.cy);
+      const covered  = hasCoverBetween(t.x,t.y,aoe.cx,aoe.cy);
+      const isPlayer = t.type === 'char';
       const canDodge = (t.stats?.REF??0) >= 8;
-      const dmg = perTokenDmg[t.id] ?? rollResult;
+      const dmgVal   = covered ? '—' : isPlayer ? '' : String(perTokenDmg[t.id] ?? rollResult);
       return `<div class="blast-target-row">
         <div class="token-list-icon" style="width:28px;height:28px">${t.label||t.name?.[0]||'?'}</div>
         <div class="blast-target-name">${t.name||''}</div>
-        ${covered?'<span class="blast-cover-badge">🧱 DECKUNG</span>':''}
-        ${canDodge&&rollResult>0?`<button class="blast-dodge-btn ctrl-btn" data-tid="${t.id}" style="font-size:.6rem;padding:.1rem .3rem;border-color:#00E5FF;color:#00E5FF">🤸 Dodge</button>`:''}
-        <div class="blast-dmg-val">${covered?'—':(perTokenDmg[t.id]??rollResult)}</div>
+        ${covered ? '<span class="blast-cover-badge">🧱 DECKUNG</span>' : ''}
+        ${isPlayer && !covered ? '<span style="font-size:.58rem;color:#00E5FF;font-family:Audiowide,sans-serif">📨 Spieler entscheidet</span>' : ''}
+        ${!isPlayer && canDodge && rollResult>0 ? `<button class="blast-dodge-btn ctrl-btn" data-tid="${t.id}" style="font-size:.6rem;padding:.1rem .3rem;border-color:#00E5FF;color:#00E5FF">🤸 Dodge</button>` : ''}
+        <div class="blast-dmg-val">${dmgVal}</div>
       </div>`;
     }).join('') || '<div style="color:var(--text-muted);font-size:.78rem;padding:.5rem">Keine Tokens im Radius.</div>';
     wrap.querySelectorAll('.blast-dodge-btn').forEach(btn=>{
@@ -2741,7 +2948,11 @@ function openAoeBlastModal(aoe) {
         if (t.type==='npc') await patchNpc(t.npcId,{hp_current:newHp}).catch(()=>{});
       }
     }
-    saveTokens(); markDirty();
+    saveTokens();
+    // Mark AoE as applied → switches from dashed to solid circle
+    const appliedAoe = modal._aoe;
+    if (appliedAoe) { appliedAoe.applied = true; saveAoe(); }
+    markDirty();
     modal.style.display='none';
     showMapToast(`${damageSource}: ${rollResult} Schaden beantragt`,'red');
   };
@@ -2830,6 +3041,257 @@ function showMapToast(msg, type='cyan') {
   t.textContent = msg; t.style.opacity='1';
   clearTimeout(t._tid);
   t._tid=setTimeout(()=>{ t.style.opacity='0'; },3500);
+}
+
+// ── AoE token-entry trigger ───────────────────────────────────
+function checkTokenInAoe(token) {
+  if (!token) return;
+  for (const aoe of S.aoeMarkers) {
+    const cx = aoe.cxM!=null ? aoe.cxM*S.gridSize : (aoe.cx??0);
+    const cy = aoe.cyM!=null ? aoe.cyM*S.gridSize : (aoe.cy??0);
+    const r  = aoe.rM !=null ? aoe.rM *S.gridSize : (aoe.r ??0);
+    if (Math.hypot(token.x-cx, token.y-cy) > r) continue;
+
+    const expr = aoe.effect==='explosion'?'8d6':aoe.effect==='fire'?'2d6':
+                 aoe.effect==='poison'?'1d6':'4d6';
+    const src  = aoe.label || 'AoE-Schaden';
+
+    if (IS_DM) {
+      openDmRollModal(token);
+      document.getElementById('dmRollSource').value = src;
+      document.getElementById('dmRollExpr').value   = expr;
+    } else if (token.charId === CHAR_ID) {
+      showRollModal({ damage_formula: expr, damage_source: src, id: 'aoe-entry', resolved: false });
+    }
+    break; // only first matching AoE
+  }
+}
+
+// ── Shared hover popup helpers ────────────────────────────────
+// Convert world coords → screen coords
+function worldToScreen(wx, wy) {
+  const r = canvas.getBoundingClientRect();
+  return { x: wx * S.scale + S.ox + r.left, y: wy * S.scale + S.oy + r.top };
+}
+
+// Position popup at the top border of the object, centered horizontally.
+// If popup fits inside the object: place it inside near the top edge.
+// If object is too small: place popup just above the top edge.
+function positionPopupAtBorder(pop, sx, sy, sw, sh) {
+  pop.style.display = 'block';
+  const pw = pop.offsetWidth  || 148;
+  const ph = pop.offsetHeight || 80;
+  const left = Math.max(4, Math.min(window.innerWidth - pw - 4, sx + sw/2 - pw/2));
+  let top;
+  if (sh >= ph + 20) {
+    top = sy + 10; // inside, just below top edge
+  } else {
+    top = sy - ph - 6; // just above top edge
+  }
+  top = Math.max(4, Math.min(window.innerHeight - ph - 4, top));
+  pop.style.left = left + 'px';
+  pop.style.top  = top  + 'px';
+}
+// Alias kept for backwards compat
+const positionPopupInArea = positionPopupAtBorder;
+
+let _aoeHideTimer = null, _fogHideTimer = null;
+
+function showAoeHoverPopup(idx) {
+  const pop = document.getElementById('aoeHoverPopup'); if (!pop) return;
+  const aoe = S.aoeMarkers[idx]; if (!aoe) return;
+  clearTimeout(_aoeHideTimer);
+  const _hcx=aoe.cxM!=null?aoe.cxM*S.gridSize:aoe.cx, _hcy=aoe.cyM!=null?aoe.cyM*S.gridSize:aoe.cy, _hr=aoe.rM!=null?aoe.rM*S.gridSize:aoe.r;
+  document.getElementById('aoeHoverLabel').textContent =
+    `${aoe.label||'AoE'} · ${(_hr/S.gridSize).toFixed(1)}m`;
+  pop._idx = idx;
+  const sc  = worldToScreen(_hcx, _hcy);
+  const sr  = _hr * S.scale;
+  positionPopupInArea(pop, sc.x - sr, sc.y - sr, sr*2, sr*2);
+}
+function hideAoeHoverPopup(delay = 0) {
+  if (!delay) {
+    clearTimeout(_aoeHideTimer);
+    const p = document.getElementById('aoeHoverPopup'); if (p) p.style.display='none';
+    S.hoverAoeIdx = -1;
+  } else {
+    _aoeHideTimer = setTimeout(() => hideAoeHoverPopup(0), delay);
+  }
+}
+document.getElementById('aoeHoverApplyBtn')?.addEventListener('click', () => {
+  const idx = document.getElementById('aoeHoverPopup')._idx;
+  const aoe = S.aoeMarkers[idx]; if (!aoe) return;
+  hideAoeHoverPopup(0);
+  openAoeBlastModal(aoe);
+});
+document.getElementById('aoeHoverPopup')?.addEventListener('mouseenter', () => clearTimeout(_aoeHideTimer));
+document.getElementById('aoeHoverPopup')?.addEventListener('mouseleave', () => hideAoeHoverPopup(80));
+
+// ── Fog hover popup ───────────────────────────────────────────
+function showFogHoverPopup(idx) {
+  const pop = document.getElementById('fogHoverPopup'); if (!pop) return;
+  const fog = S.fogObjects[idx]; if (!fog) return;
+  clearTimeout(_fogHideTimer);
+  document.getElementById('fogHoverNote').textContent = fog.note || '';
+  pop._idx = idx;
+  const sc = worldToScreen(fog.x, fog.y);
+  const sw = fog.w * S.scale, sh = fog.h * S.scale;
+  positionPopupInArea(pop, sc.x, sc.y, sw, sh);
+}
+function hideFogHoverPopup(delay = 0) {
+  if (!delay) {
+    clearTimeout(_fogHideTimer);
+    const p = document.getElementById('fogHoverPopup'); if (p) p.style.display='none';
+    S.hoverFogIdx = -1;
+  } else {
+    _fogHideTimer = setTimeout(() => hideFogHoverPopup(0), delay);
+  }
+}
+document.getElementById('fogHoverRevealBtn')?.addEventListener('click', async () => {
+  const idx = document.getElementById('fogHoverPopup')._idx;
+  const fog  = S.fogObjects[idx]; if (!fog) return;
+  hideFogHoverPopup(0);
+  const ok = await mapConfirm(`Bereich aufdecken?${fog.note ? ' ('+fog.note+')' : ''}\nDieser Schritt kann nicht rückgängig gemacht werden.`);
+  if (!ok) return;
+  fog.revealed = true;
+  saveFog(); markDirty();
+});
+document.getElementById('fogHoverNoteBtn')?.addEventListener('click', async () => {
+  const idx = document.getElementById('fogHoverPopup')._idx;
+  const fog  = S.fogObjects[idx]; if (!fog) return;
+  hideFogHoverPopup(0);
+  const note = await mapPrompt('Notiz für diesen Bereich:', fog.note || '');
+  if (note === null) return;
+  fog.note = note.trim();
+  saveFog(); markDirty();
+});
+document.getElementById('fogHoverPopup')?.addEventListener('mouseenter', () => clearTimeout(_fogHideTimer));
+document.getElementById('fogHoverPopup')?.addEventListener('mouseleave', () => hideFogHoverPopup(80));
+
+// ── Damage dice animation (reusable, module-level) ────────────
+function showDmgDiceAnim(total, label, onDone) {
+  const overlay = document.getElementById('atkDiceOverlay');
+  const numEl   = document.getElementById('atkDiceNum');
+  const lblEl   = document.getElementById('atkDiceLabel');
+  if (!overlay) { onDone(); return; }
+  overlay.style.display = 'flex';
+  numEl.textContent = '?'; numEl.className = 'atk-dice-num rolling';
+  lblEl.textContent = '';
+  setTimeout(() => {
+    numEl.textContent = total;
+    numEl.className   = 'atk-dice-num';
+    lblEl.innerHTML   = `<span style="color:#FF2D2D;font-family:Audiowide,sans-serif">${label}</span>`;
+  }, 480);
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    onDone();
+  }, 2100);
+}
+
+// ── Map dice FAB wiring ───────────────────────────────────────
+{
+  const fab     = document.getElementById('mapDiceFab');
+  const popup   = document.getElementById('mapDicePopup');
+  const numEl   = document.getElementById('mapDiceNum');
+  const detEl   = document.getElementById('mapDiceDetail');
+  const logEl   = document.getElementById('mapDiceLog');
+  const exprIn  = document.getElementById('mapDiceExpr');
+  let _closeTimer = null;
+
+  function startCloseTimer() {
+    clearTimeout(_closeTimer);
+    _closeTimer = setTimeout(() => popup.classList.remove('open'), 6000);
+  }
+
+  fab.addEventListener('click', () => {
+    popup.classList.toggle('open');
+    if (popup.classList.contains('open')) startCloseTimer();
+  });
+  document.getElementById('mapDiceClose').addEventListener('click', () => {
+    popup.classList.remove('open'); clearTimeout(_closeTimer);
+  });
+  popup.addEventListener('mouseenter', startCloseTimer);
+  popup.addEventListener('input',      startCloseTimer);
+  document.addEventListener('click', e => {
+    if (popup.classList.contains('open') && !popup.contains(e.target) && e.target !== fab) {
+      popup.classList.remove('open'); clearTimeout(_closeTimer);
+    }
+  }, true);
+
+  function rollExpr(expr, isSkill) {
+    const m = expr.match(/^(\d+)d(\d+)([+-]\d+)?$/i);
+    if (!m) return null;
+    const [,n,d,bon] = m;
+    let rolls=[], total=0;
+    for (let i=0;i<+n;i++) { const r=Math.floor(Math.random()*+d)+1; rolls.push(r); total+=r; }
+    total += parseInt(bon||0);
+    let isCritS = false, isCritF = false;
+    if (isSkill && +n===1 && +d===10) {
+      if (rolls[0]===10) { const b=Math.floor(Math.random()*10)+1; total+=b; isCritS=true; }
+      else if (rolls[0]===1) { const b=Math.floor(Math.random()*10)+1; total-=b; isCritF=true; }
+    }
+    return { rolls, total, isCritS, isCritF, bonus: parseInt(bon||0) };
+  }
+
+  function doMapRoll(expr, isSkill) {
+    const res = rollExpr(expr, isSkill);
+    if (!res) { showMapToast('Ungültige Formel', 'red'); return; }
+    const { rolls, total, isCritS, isCritF } = res;
+    // Animate
+    numEl.className = 'map-dice-num spinning'; numEl.textContent = '?';
+    detEl.textContent = '';
+    setTimeout(() => {
+      numEl.textContent = total;
+      numEl.className   = 'map-dice-num pop' + (isCritS?' crit-s':isCritF?' crit-f':'');
+      const detail = `[${rolls.join(', ')}]${res.bonus?((res.bonus>0?'+':'')+res.bonus):''}` +
+        (isCritS ? ' 🎯 CRITICAL!' : isCritF ? ' 💀 FUMBLE!' : '');
+      detEl.textContent = detail;
+      // Add to log
+      const row = document.createElement('div');
+      row.className = 'map-dice-log-row' + (isCritS?' crit-s':isCritF?' crit-f':'');
+      row.innerHTML = `<span class="map-dice-log-expr">${expr}</span><span class="map-dice-log-tot">${total}</span>`;
+      logEl.prepend(row);
+      if (logEl.children.length > 10) logEl.lastChild.remove();
+    }, 420);
+    startCloseTimer();
+  }
+
+  document.querySelectorAll('.map-die-btn').forEach(btn => {
+    btn.addEventListener('click', () => doMapRoll(btn.dataset.expr, btn.dataset.skill === '1'));
+  });
+  document.getElementById('mapDiceRollBtn').addEventListener('click',
+    () => doMapRoll(exprIn.value.trim() || '1d10', false));
+  exprIn.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doMapRoll(exprIn.value.trim() || '1d10', false);
+  });
+}
+
+// ── DM miss notification popup ────────────────────────────────
+function showMissPopupDm(data) {
+  if (!IS_DM) return;
+  const existing = document.getElementById('missPopupDm');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'missPopupDm';
+  div.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+    'background:#111;border:1px solid #FF2D2D44;border-radius:8px;padding:.75rem 1rem;' +
+    'z-index:9500;min-width:260px;max-width:340px;box-shadow:0 0 30px rgba(0,0,0,.7)';
+  const lineItems = (data.lineTokens||[]).map(n =>
+    `<div style="font-size:.65rem;color:#888;padding:.1rem 0">• ${n}</div>`).join('');
+  div.innerHTML = `
+    <div style="font-family:Audiowide,sans-serif;font-size:.65rem;color:#FF2D2D;letter-spacing:.1em;margin-bottom:.4rem">✕ FEHLSCHUSS</div>
+    <div style="font-size:.68rem;color:#e0e0e8;margin-bottom:.2rem">
+      <b style="color:#FFD700">${data.shooter||'?'}</b> verfehlt <b style="color:#FF2D2D">${data.target||'?'}</b>
+    </div>
+    <div style="font-size:.6rem;color:#555;margin-bottom:.3rem">
+      ${data.weapon||''} · ${data.distM||''}m · DV ${data.dv||'?'} · Gewürfelt: <b>${data.rolled||'?'}</b>
+    </div>
+    ${lineItems ? `<div style="font-size:.58rem;color:#555;letter-spacing:.08em;margin-bottom:.15rem">AUF DER SCHUSSLINIE</div>${lineItems}` : '<div style="font-size:.62rem;color:#555">Niemand auf der Linie</div>'}
+    <button style="margin-top:.5rem;width:100%;background:none;border:1px solid #333;color:#888;
+      border-radius:4px;padding:.25rem;font-size:.65rem;cursor:pointer">OK</button>`;
+  div.querySelector('button').onclick = () => div.remove();
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 12000);
 }
 
 // ── Custom prompt (replaces browser prompt()) ─────────────────
@@ -2982,6 +3444,10 @@ function buildPlayerPanel() {
         <span class="pmap-bar-val">${c.current_humanity??'?'}/${c.max_humanity??'?'}</span>
       </div>
     </div>
+    ${armorHtml?`<div class="player-map-section">
+      <div class="player-map-section-label">Rüstung</div>
+      ${armorHtml}
+    </div>`:''}
     <div class="weapon-selector-wrap">
       <div id="weaponPills" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem">
         ${weapons.length
@@ -3054,7 +3520,11 @@ function buildPlayerPanel() {
               <span style="font-size:.58rem;color:#444">(Deckung, Dunkel…)</span>
             </div>
             <div class="atk-dv-display" id="atkDvDisplay"></div>
-            <button id="atkRollBtn" class="atk-btn">🎲 Angriff würfeln</button>
+            <div style="position:relative">
+              <button id="atkRollBtn" class="atk-btn" disabled>🎲 Angriff würfeln</button>
+              <div id="atkRollHint" style="font-size:.58rem;color:#555;margin-top:.2rem;text-align:center;
+                font-style:italic">Erst mit Messtool Ziel auswählen</div>
+            </div>
             <div class="atk-result" id="atkRollResult" style="display:none"></div>
           </div>
           <!-- Step 2: Damage roll (revealed on hit) -->
@@ -3077,10 +3547,6 @@ function buildPlayerPanel() {
         </div>
       </div>
     </div>
-    ${armorHtml?`<div class="player-map-section">
-      <div class="player-map-section-label">Rüstung</div>
-      ${armorHtml}
-    </div>`:''}
     <div class="player-map-section">
       <div class="player-map-section-label">Conditions</div>
       <div class="pmap-cond-list">
@@ -3110,9 +3576,20 @@ function buildPlayerPanel() {
   }
 
   function updateDvInfoBox() {
-    const info = document.getElementById('mapDvInfo');
+    const info    = document.getElementById('mapDvInfo');
+    const rollBtn = document.getElementById('atkRollBtn');
     if (!info) return;
-    if (!S.activeWeapon || !S.lastMeasuredDist) { info.style.display='none'; return; }
+    if (!S.activeWeapon || !S.lastMeasuredDist) {
+      info.style.display='none';
+      if (rollBtn) rollBtn.disabled = true;
+      const hint = document.getElementById('atkRollHint');
+      if (hint) hint.style.display = '';
+      return;
+    }
+    const hasMeasuredTarget = !!(S.measureTargetToken && S.lastMeasuredDist);
+    if (rollBtn) rollBtn.disabled = !hasMeasuredTarget;
+    const hint = document.getElementById('atkRollHint');
+    if (hint) hint.style.display = hasMeasuredTarget ? 'none' : '';
     const dist = S.lastMeasuredDist;
     const dv   = getDV(S.activeWeapon.dvType, dist);
     const idx  = getRangeBracketIndex(dist);
@@ -3314,6 +3791,23 @@ function buildPlayerPanel() {
       if (t.id === src.id || t.id === tgt.id) return false;
       return pointToSegmentDist(t.x, t.y, src.x, src.y, tgt.x, tgt.y) <= S.gridSize * 0.5;
     }).sort((a,b) => Math.hypot(a.x-src.x,a.y-src.y) - Math.hypot(b.x-src.x,b.y-src.y));
+
+    // Broadcast miss event to DM
+    if (_combatChannel) {
+      _combatChannel.send({
+        type: 'broadcast', event: 'miss',
+        payload: {
+          shooter:    S.char?.handle || S.char?.name || '?',
+          target:     tgt.name || '?',
+          weapon:     S.activeWeapon?.name || '?',
+          distM:      S.lastMeasuredDist?.toFixed(1) || '?',
+          dv:         _atkDv ?? '?',
+          rolled:     _atkRollTotal ?? '?',
+          lineTokens: lineTokens.map(t => t.name),
+        }
+      }).catch(()=>{});
+    }
+
     if (!lineTokens.length) return;
     const res = document.getElementById('atkRollResult');
     const lineHtml = lineTokens.map((t,i) =>
@@ -3521,9 +4015,28 @@ function setupDmControls() {
   document.getElementById('gridSizeWrap').style.display = 'inline-flex';
   document.getElementById('gridToggle')?.addEventListener('change',e=>{S.gridEnabled=e.target.checked;saveGrid();markDirty();});
   document.getElementById('gridSizeSlider')?.addEventListener('input',e=>{
-    S.gridSize=parseInt(e.target.value);
-    document.getElementById('gridSizeLabel').textContent=S.gridSize+'px';
-    saveGrid(); markDirty();
+    const newSize = parseInt(e.target.value);
+    // Migrate AoE markers before changing gridSize:
+    // - Center (cx/cy) stays in absolute pixels — never changes
+    // - Only radius gets migrated to meters using the OLD gridSize
+    // - Also fix any erroneously-stored cxM/cyM back to absolute pixels
+    S.aoeMarkers = S.aoeMarkers.map(a => {
+      const result = { ...a };
+      // Undo previous buggy cxM/cyM → back to absolute pixels
+      if (result.cxM != null) {
+        result.cx = result.cxM * S.gridSize;
+        result.cy = result.cyM * S.gridSize;
+        delete result.cxM; delete result.cyM;
+      }
+      // Convert pixel radius to meters if not already done
+      if (result.rM == null && result.r != null) {
+        result.rM = result.r / S.gridSize;
+      }
+      return result;
+    });
+    S.gridSize = newSize;
+    document.getElementById('gridSizeLabel').textContent = newSize + 'px';
+    saveGrid(); saveAoe(); markDirty();
   });
   document.getElementById('zoomInBtn')?.addEventListener('click',()=>zoomAt(1.2));
   document.getElementById('zoomOutBtn')?.addEventListener('click',()=>zoomAt(0.85));
@@ -3847,6 +4360,15 @@ async function boot() {
       applyNpcToToken(n);
     });
 
+    // Combat event broadcast (miss notifications DM ↔ player)
+    _combatChannel = createCombatEventChannel();
+    if (IS_DM) {
+      _combatChannel.on('broadcast', { event: 'miss' }, ({ payload }) => {
+        showMissPopupDm(payload);
+      });
+    }
+    _combatChannel.subscribe();
+
     window.addEventListener('resize',resizeCanvas);
   } catch(e) {
     document.getElementById('mapLoader').textContent='Fehler: '+e.message;
@@ -3868,16 +4390,19 @@ function showRollModal(req) {
 
   document.getElementById('rrRollBtn').onclick = () => {
     const formula = req.damage_formula || '1d6';
-    const parts = formula.match(/(\d+)d(\d+)/i);
+    const parts   = formula.match(/(\d+)d(\d+)/i);
     let rolls = [], total = 0;
     if (parts) {
       const [,n,d] = [, parseInt(parts[1]), parseInt(parts[2])];
       for (let i = 0; i < n; i++) { const r = Math.floor(Math.random()*d)+1; rolls.push(r); total += r; }
     } else { total = parseInt(formula) || 0; rolls = [total]; }
-    document.getElementById('rrResultText').textContent = `[${rolls.join('][')}] = ${total} Schaden`;
-    document.getElementById('rrResultArea').style.display = '';
-    document.getElementById('rrRollBtn').style.display = 'none';
-    modal.dataset.rollResult = total;
+    const label = `${formula}: [${rolls.join(', ')}] = ${total} Schaden`;
+    showDmgDiceAnim(total, label, () => {
+      document.getElementById('rrResultText').textContent = label;
+      document.getElementById('rrResultArea').style.display = '';
+      document.getElementById('rrRollBtn').style.display = 'none';
+      modal.dataset.rollResult = total;
+    });
   };
 
   document.getElementById('rrConfirmBtn').onclick = async () => {

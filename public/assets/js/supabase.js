@@ -472,6 +472,12 @@ export function createSoundChannel() {
   });
 }
 
+export function createCombatEventChannel() {
+  return supabase.channel('combat-events', {
+    config: { broadcast: { ack: false, self: false } }
+  });
+}
+
 // ── Roll Requests (Player Self-Roll) ─────────────────────────
 
 export async function createRollRequest({ character_id, damage_formula, damage_source, effect_description }) {

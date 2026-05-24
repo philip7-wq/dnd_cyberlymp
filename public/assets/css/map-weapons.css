@@ -267,3 +267,85 @@
   25%     { transform: translateX(-7px); }
   75%     { transform: translateX(7px); }
 }
+
+/* ── Map Dice FAB + Popup (bottom-right) ──────────────────────── */
+.map-dice-fab {
+  position: fixed; bottom: 1.5rem; left: 296px;
+  width: 50px; height: 50px; border-radius: 50%;
+  background: #FF2D2D; border: none; color: #fff;
+  font-size: 1.3rem; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255,45,45,.5);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  transition: transform .15s, background .15s;
+}
+.map-dice-fab:hover { transform: scale(1.07); background: rgba(200,30,30,.95); }
+
+.map-dice-popup {
+  position: fixed; bottom: 5.25rem; left: 296px; width: 296px;
+  background: #0f0f18; border: 1px solid #1e1e2a;
+  border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,.88);
+  z-index: 199; display: none; flex-direction: column; overflow: hidden;
+}
+.map-dice-popup.open { display: flex; }
+.map-dice-popup-head {
+  padding: .55rem .9rem;
+  background: linear-gradient(90deg, #0c0c16 0%, #12121e 100%);
+  border-bottom: 2px solid #FF2D2D;
+  font-family: Audiowide, sans-serif; font-size: .68rem; letter-spacing: .14em;
+  color: #FF2D2D; display: flex; justify-content: space-between; align-items: center;
+}
+.map-dice-section { padding: .5rem .85rem .45rem; border-bottom: 1px solid #1e1e2a; }
+.map-dice-section:last-child { border-bottom: none; }
+.map-dice-label {
+  font-size: .5rem; letter-spacing: .18em; text-transform: uppercase;
+  color: #555; font-family: Audiowide, sans-serif; margin-bottom: .38rem;
+}
+.map-dice-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: .28rem; }
+.map-die-btn {
+  padding: .42rem .2rem;
+  background: #0d0d18; border: 1px solid #1e1e2a;
+  border-radius: 5px; color: #00E5FF; font-family: Audiowide, sans-serif;
+  font-size: .68rem; cursor: pointer; text-align: center;
+  transition: border-color .12s, background .12s;
+}
+.map-die-btn:hover { border-color: #00E5FF; background: rgba(0,229,255,.08); }
+.map-die-btn.map-skill-btn { color: #e0e0e8; font-size: .62rem; border-color: rgba(0,229,255,.25); }
+.map-dice-custom { display: flex; gap: .3rem; }
+.map-dice-custom input {
+  flex: 1; background: #0d0d18; border: 1px solid #1e1e2a;
+  border-radius: 5px; color: #e0e0e8; padding: .38rem .55rem;
+  font-size: .82rem; font-family: Audiowide, sans-serif;
+}
+.map-dice-custom input:focus { outline: none; border-color: #FF2D2D; }
+.map-dice-custom button {
+  background: #FF2D2D; border: none; border-radius: 5px;
+  color: #fff; padding: .38rem .75rem; font-family: Audiowide, sans-serif;
+  font-size: .72rem; cursor: pointer; white-space: nowrap;
+}
+.map-dice-custom button:hover { background: rgba(200,30,30,.9); }
+.map-dice-result-area {
+  padding: .5rem .85rem .6rem;
+  background: linear-gradient(180deg, #09090f 0%, #0d0d1a 100%);
+  border-top: 1px solid #1e1e2a; border-bottom: 1px solid #1e1e2a;
+  text-align: center; display: flex; flex-direction: column; align-items: center;
+}
+.map-dice-num {
+  font-family: Audiowide, sans-serif; font-size: 2.4rem; color: #e0e0e8;
+  line-height: 1; margin: .05rem 0; transition: color .2s;
+}
+.map-dice-num.crit-s { color: #00E5FF; text-shadow: 0 0 18px rgba(0,229,255,.55); }
+.map-dice-num.crit-f { color: #FF2D2D; text-shadow: 0 0 18px rgba(255,45,45,.55); }
+.map-dice-num.pop    { animation: roll-pop .32s ease forwards; }
+.map-dice-num.spinning { opacity: .45; animation: dice-result-pulse .6s ease-in-out infinite alternate; }
+.map-dice-detail { font-size: .65rem; color: #555; margin-top: .25rem; line-height: 1.4; }
+@keyframes roll-pop { 0%{transform:scale(.5);opacity:0} 70%{transform:scale(1.18)} 100%{transform:scale(1);opacity:1} }
+@keyframes dice-result-pulse { from{opacity:.25} to{opacity:.6} }
+.map-dice-log { max-height: 96px; overflow-y: auto; }
+.map-dice-log-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .22rem .85rem; font-size: .72rem;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.map-dice-log-row:last-child { border-bottom: none; }
+.map-dice-log-expr { color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%; }
+.map-dice-log-tot  { font-family: Audiowide, sans-serif; color: #e0e0e8; font-size: .8rem; }
