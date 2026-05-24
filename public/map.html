@@ -451,7 +451,7 @@ const S = {
   aoeDragStart:null, aoeDragRadius:0,
   coverPlacing:false,
 
-  measureStart:null, measureEnd:null, measureTimer:null, measurePinned:false,
+  measureStart:null, measureEnd:null, measureTimer:null, measurePinned:false, measuringActive:false,
 
   selectedToken:null,
   hoverToken:null, hoverCover:null,
@@ -1700,8 +1700,14 @@ canvas.addEventListener('mousedown', e => {
       S.selectedToken=null;
     }
   } else if (S.tool==='measure') {
-    S.measureStart=wp; S.measureEnd=null;
-    if (!S.measurePinned) clearTimeout(S.measureTimer);
+    if (!S.measuringActive) {
+      // First click: set start point
+      S.measureStart=wp; S.measureEnd=null; S.measuringActive=true;
+      clearTimeout(S.measureTimer);
+    } else {
+      // Second click: pin end point
+      S.measureEnd=wp; S.measuringActive=false;
+    }
   } else if (S.tool==='pen') {
     S.drawPath=[wp];
   } else if (S.tool==='rect'||S.tool==='circle') {
@@ -1743,7 +1749,7 @@ canvas.addEventListener('mousemove', e => {
     t.y=snapGrid(S.dragging.ty0+(wp.y-S.dragging.wy0));
     markDirty(); return;
   }
-  if (S.tool==='measure'&&S.measureStart) { S.measureEnd=wp; markDirty(); return; }
+  if (S.tool==='measure'&&S.measuringActive) { S.measureEnd=wp; markDirty(); return; }
   if (S.tool==='pen'&&S.drawPath) { S.drawPath.push(wp); markDirty(); return; }
   if ((S.tool==='rect'||S.tool==='circle')&&S.shapeStart) { S.shapeCurrent=wp; markDirty(); return; }
   if (S.tool==='aoe'&&S.aoeDragStart) {
@@ -1792,14 +1798,7 @@ canvas.addEventListener('mouseup', e => {
   const {sx,sy}=getPos(e);
   const wp=sw(sx,sy);
 
-  if (S.tool==='measure'&&S.measureStart) {
-    S.measureEnd=wp;
-    if (!S.measurePinned) {
-      clearTimeout(S.measureTimer);
-      S.measureTimer=setTimeout(()=>{S.measureStart=null;S.measureEnd=null;markDirty();},5000);
-    }
-    markDirty(); return;
-  }
+  if (S.tool==='measure') { markDirty(); return; }
   if (S.tool==='pen'&&S.drawPath&&S.drawPath.length>1) {
     const c=document.getElementById('penColor')?.value||'#00E5FF';
     const sz=parseInt(document.getElementById('penSize')?.value)||2;
@@ -1925,6 +1924,7 @@ function setTool(tool) {
   S.drawPath=null; S.shapeStart=null; S.shapeCurrent=null;
   S.aoeDragStart=null; S.suppressStart=null;
   S.coverDragStart=null; S.coverDragCurrent=null;
+  if (tool!=='measure') { S.measuringActive=false; }
   document.querySelectorAll('.tool-btn-row[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
   setCursor(cursorForTool(tool));
   document.getElementById('statusTool').textContent=tool;
