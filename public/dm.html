@@ -425,6 +425,7 @@ import {
   saveTimer,
 } from './assets/js/supabase.js';
 import { animateRollNumber } from './assets/js/dice.js';
+import { loadCombatData, getBaseDeathSavePenalty } from './assets/js/combat-modifiers.js';
 import { initDmAgent } from './assets/js/agent/agent-dm.js';
 import './assets/js/agent/agent-apps.js';
 import { mountSound } from './assets/js/sound-dm.js';
@@ -506,6 +507,7 @@ async function boot() {
       getActiveCombats(),
       fetch('./assets/data/role-abilities.json').then(r => r.json()).catch(() => ({})),
     ]);
+  loadCombatData().catch(() => {});
   for (const cs of activeCombatsList) combatSessions[cs.id] = cs;
   combatSession = activeCombatsList[activeCombatsList.length - 1] ?? null;
   } catch (e) {
@@ -1864,7 +1866,7 @@ function buildStatsHtml() {
   const stats = c.stats || {};
   const STAT_ORDER = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP','LUCK'];
   const injuries = parseInjuries(c.critical_injuries);
-  const injPenalty = injuries.filter(i => i.effect?.includes('Base Death Save Penalty is increased')).length;
+  const injPenalty = getBaseDeathSavePenalty(c);   // Engine ist SoT (Σ base_dsp_increase)
 
   const statCells = STAT_ORDER.map(s => `
     <div class="dm-stat-cell">
@@ -1880,7 +1882,13 @@ function buildStatsHtml() {
     ['IP',         c.improvement_points ?? 0],
     ['Rep',        c.reputation ?? 0],
     ['Role Rank',  c.role_ability_rank ?? 0],
-    ['Death Save', injPenalty ? `${(c.death_save ?? 0) + injPenalty} <small style="color:var(--red)">(+${injPenalty})</small>` : (c.death_save ?? 0)],
+    ['Death Save', (() => {
+      const cur = c.death_save_penalty ?? 0;
+      let s = `${c.death_save ?? 0}`;
+      if (injPenalty) s += ` <small style="color:var(--red)">(Base +${injPenalty})</small>`;
+      if (cur > injPenalty) s += ` <small style="color:#FF8C42">· DSP ${cur}</small>`;
+      return s;
+    })()],
     ['SW Thresh',  c.seriously_wounded_threshold ?? 0],
   ];
 

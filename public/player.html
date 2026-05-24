@@ -315,6 +315,7 @@
 console.log('[player] module loaded');
 import { getCharacter, getCharacters, patchCharacter, patchCash, logRoll, getActiveCombat, getActiveCombats, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc, getRoomItems, addRoomItem, removeRoomItem, subscribeRoomItems } from './assets/js/supabase.js';
 import { roll, initDiceBox, animateRollNumber } from './assets/js/dice.js';
+import { loadCombatData, resolveDeathSave, getBaseDeathSavePenalty, getHighestArmorPenalty, getInjuryPenaltyStruct } from './assets/js/combat-modifiers.js';
 import { initAgent } from './assets/js/agent/agent-core.js';
 import './assets/js/agent/agent-apps.js';
 import { mountRoleInterface } from './assets/js/roles/roles-router.js';
@@ -485,15 +486,17 @@ if (id) {
   }, 15000);
 
   try {
-    let allActiveCombats, rawItems;
-    [char, injuryData, allChars, allActiveCombats, rawItems, AMMO_DATA] = await Promise.all([
+    let allActiveCombats, rawItems, _cmReady;
+    [char, injuryData, allChars, allActiveCombats, rawItems, AMMO_DATA, _cmReady] = await Promise.all([
       getCharacter(id),
       fetch('./assets/data/critical-injuries.json').then(r => r.json()).catch(() => null),
       getCharacters(),
       getActiveCombats(),
       fetch('./assets/data/items.json').then(r => r.json()).then(d => d.items || d).catch(() => []),
       fetch('./assets/data/ammunition.json').then(r => r.json()).catch(() => ({ ammo_types: [], weapon_ammo_mapping: {} })),
+      loadCombatData().catch(() => null),
     ]);
+    deathSavePenalty = char.death_save_penalty ?? 0;
     // Find the combat session this player is assigned to
     myCombatSession = allActiveCombats.find(cs => (cs.assigned_character_ids ?? []).includes(id))
                    ?? allActiveCombats.find(cs => (cs.combatants ?? []).some(c => c.id === id))
@@ -577,7 +580,7 @@ if (id) {
       renderCritInjuries();
       renderCyberware();
       renderWeapons();
-      if ((char.current_hp ?? 0) > 0) deathSavePenalty = 0;
+      deathSavePenalty = char.death_save_penalty ?? 0;
       renderCombatPanel();
       updateNavCash();
       const newHp = char.current_hp ?? 0;
@@ -955,8 +958,7 @@ function getFightNpcs() {
 }
 
 function getArmorRefPenalty() {
-  const a = char?.armor || {};
-  return (a.head?.penalty ?? 0) + (a.body?.penalty ?? 0) + (a.shield?.penalty ?? 0);
+  return getHighestArmorPenalty(char);   // höchste Penalty, nur einmal (Regel) — Engine ist SoT
 }
 function getSWPenalty() {
   const sw = char?.seriously_wounded_threshold ?? 0;
@@ -987,22 +989,7 @@ function getBuffStatBonus(statName) {
 }
 
 function getInjuryPenalties() {
-  const r = { move: 0, allActions: 0, ranged: 0, melee: 0, perception: 0, social: 0 };
-  for (const inj of getInjuries()) {
-    const name = inj.name || inj;
-    if (name === 'Collapsed Lung')   r.move -= 2;
-    if (name === 'Broken Leg')       r.move -= 4;
-    if (name === 'Dismembered Leg')  r.move -= 6;
-    if (name === 'Brain Injury')     r.allActions -= 2;
-    if (name === 'Concussion')       r.allActions -= 2;
-    if (name === 'Torn Muscle')      r.melee -= 2;
-    if (name === 'Damaged Eye')    { r.ranged -= 2; r.perception -= 2; }
-    if (name === 'Lost Eye')       { r.ranged -= 4; r.perception -= 4; }
-    if (name === 'Damaged Ear')      r.perception -= 2;
-    if (name === 'Lost Ear')         r.perception -= 4;
-    if (name === 'Broken Jaw')       r.social -= 4;
-  }
-  return r;
+  return getInjuryPenaltyStruct(char);   // Engine ist Single Source of Truth (inkl. Crushed Fingers etc.)
 }
 
 function getInjurySkillPenalty(skillName) {
@@ -2952,7 +2939,12 @@ function checkDeathSave() {
   // Reset stabilized state if healed
   if (!show && deathSaveStabilized) {
     deathSaveStabilized = false;
-    deathSavePenalty = 0;
+    const base = getBaseDeathSavePenalty(char);
+    deathSavePenalty = base;
+    if ((char.death_save_penalty ?? 0) !== base) {
+      char.death_save_penalty = base;
+      patchCharacter(char.id, { death_save_penalty: base }).catch(() => {});
+    }
   }
   if (!show) {
     btn.textContent = '☠ DEATH SAVE';
@@ -2987,30 +2979,35 @@ document.getElementById('deathSaveBtn').addEventListener('click', async () => {
     return;
   }
 
-  const body   = char.stats?.BODY ?? 0;
-  const target = Math.max(1, (char.death_save ?? body) - deathSavePenalty);
-  const d10    = Math.floor(Math.random() * 10) + 1;
-  deathSavePenalty++;
+  // Penalty aus persistiertem Wert (resolveDeathSave liest char.death_save_penalty)
+  char.death_save_penalty = deathSavePenalty;
+  const ds = resolveDeathSave(char);          // {d10, body, penalty, newPenalty, survived, autoFail}
+  deathSavePenalty        = ds.newPenalty;
+  char.death_save_penalty = ds.newPenalty;
+  patchCharacter(char.id, { death_save_penalty: ds.newPenalty }).catch(() => {});
 
-  const success = d10 !== 10 && d10 <= target;
-  const context = `Death Save (Ziel ≤${target}, Penalty ${deathSavePenalty - 1})`;
+  const surviveMax = Math.max(0, ds.body - ds.penalty - 1);  // höchster überlebender d10
+  const context    = `Death Save (BODY ${ds.body}, Penalty ${ds.penalty})`;
 
   logRoll({
     characterId: char.id, characterName: char.name,
-    expression: '1d10', individualRolls: [{ die: 10, value: d10 }],
-    modifier: 0, total: d10, context,
-    isCritSuccess: false, isCritFailure: d10 === 10,
+    expression: '1d10', individualRolls: [{ die: 10, value: ds.d10 }],
+    modifier: 0, total: ds.d10, context,
+    isCritSuccess: false, isCritFailure: ds.autoFail,
   }).catch(() => {});
 
-  await showDeathSaveResult(d10, target, success);
+  await showDeathSaveResult(ds.d10, surviveMax, ds.survived);
 
-  if (success) {
+  if (ds.survived) {
     deathSaveStabilized = true;
-    // HP auf 1 + Mortally Wounded entfernen damit Reload korrekt ist
+    // HP auf 1, Mortally Wounded entfernen, DSP zurück auf Base (permanente Injuries)
+    const base  = getBaseDeathSavePenalty(char);
     const conds = (char.conditions || []).filter(c => c !== 'Mortally Wounded');
     char.current_hp = 1;
     char.conditions = conds;
-    await patchCharacter(char.id, { current_hp: 1, conditions: conds }).catch(() => {});
+    char.death_save_penalty = base;
+    deathSavePenalty = base;
+    await patchCharacter(char.id, { current_hp: 1, conditions: conds, death_save_penalty: base }).catch(() => {});
     updateResDisplay();
     renderConditionBadges();
     document.body.classList.remove('near-death');
@@ -3019,6 +3016,7 @@ document.getElementById('deathSaveBtn').addEventListener('click', async () => {
   } else {
     const conds = [...(char.conditions || [])];
     if (!conds.includes('Mortally Wounded')) conds.push('Mortally Wounded');
+    char.conditions = conds;
     await patchCharacter(char.id, { conditions: conds }).catch(() => {});
   }
 });

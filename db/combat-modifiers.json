@@ -1,0 +1,546 @@
+{
+  "meta": {
+    "source": "Cyberpunk RED Core Rulebook — Friday Night Firefight (S.167-194) + Trauma Team (S.220-224)",
+    "version": "2.0",
+    "description": "Alle situativen Modifier, Auto-Effekte und Critical Injuries — gegen das Playbook validiert.",
+    "formula": "1d10 + STAT + Skill + situative_modifier vs DV",
+    "tie_rule": "Bei Gleichstand gewinnt der Defender."
+  },
+
+  "modifiers": [
+    {
+      "id": "aimed_shot",
+      "name": "Aimed Shot",
+      "value": -8,
+      "category": "attack",
+      "trigger": "manual",
+      "description": "Gezielter Angriff auf eine Körperregion. Braucht die gesamte Action (max ROF 1). Nicht mit Autofire oder Shotgun Shells möglich. Effekt hängt vom gewählten Ziel ab.",
+      "applies_to": ["ranged_attack", "melee_attack"],
+      "incompatible_with": ["autofire", "shotgun_shell"],
+      "requires_target_location": true,
+      "target_locations": {
+        "head": "Damage, der durch HEAD-Armor durchkommt, wird mit ×2 multipliziert (×3 wenn Ziel Cracked Skull hat).",
+        "held_item": "Wenn ≥1 Damage durch BODY-Armor durchkommt: Ziel droppt 1 gewähltes Item.",
+        "leg": "Wenn ≥1 Damage durch BODY-Armor durchkommt: Ziel erleidet zusätzlich Broken Leg Critical Injury."
+      }
+    },
+    {
+      "id": "vehicle_aimed_shot",
+      "name": "Aimed Shot (Vehicle Weak Point)",
+      "value": -8,
+      "category": "attack",
+      "trigger": "manual",
+      "description": "Gezielt auf Schwachstellen eines Fahrzeugs schießen.",
+      "applies_to": ["ranged_attack"],
+      "target_type": "vehicle"
+    },
+
+    {
+      "id": "seriously_wounded",
+      "name": "Seriously Wounded",
+      "value": -2,
+      "category": "wound_state",
+      "trigger": "automatic",
+      "condition": "hp < ceil(max_hp / 2)",
+      "description": "HP unter der halben Maximal-HP (aufgerundet). −2 auf ALLE Actions.",
+      "applies_to": ["all_actions"]
+    },
+    {
+      "id": "mortally_wounded",
+      "name": "Mortally Wounded",
+      "value": -4,
+      "category": "wound_state",
+      "trigger": "automatic",
+      "condition": "hp < 1",
+      "description": "HP < 1. −4 auf ALLE Actions, −6 MOVE (Min 1). Death Save zu Turn-Start. Jeder weitere Treffer durch Attack = Critical Injury zusätzlich, und Death Save Penalty erhöht sich um 1.",
+      "applies_to": ["all_actions"],
+      "side_effects": {
+        "move_penalty": -6,
+        "move_minimum": 1,
+        "requires_death_save_per_turn": true,
+        "damage_triggers_critical_injury": true,
+        "damage_increments_death_save_penalty": 1
+      }
+    },
+
+    {
+      "id": "grapple",
+      "name": "Grappled",
+      "value": -2,
+      "category": "combat_state",
+      "trigger": "automatic",
+      "condition": "is_grappling",
+      "description": "Solange Charakter in einem Grapple ist (als Attacker oder Defender): −2 auf alle Actions. Kein 2H-Waffeneinsatz möglich. Defender kann keine Move Action nutzen.",
+      "applies_to": ["all_actions"]
+    },
+
+    {
+      "id": "armor_penalty_2",
+      "name": "Mittlere Rüstung (−2)",
+      "value": -2,
+      "category": "equipment",
+      "trigger": "automatic",
+      "condition": "highest_worn_armor_penalty == 2",
+      "description": "Medium Armorjack oder Heavy Armorjack. Penalty wird nur EINMAL angewendet, auch wenn Body+Head Armor getragen wird (höchster zählt).",
+      "applies_to": ["ref_checks", "dex_checks", "move_checks"]
+    },
+    {
+      "id": "armor_penalty_4",
+      "name": "Schwere Rüstung (−4)",
+      "value": -4,
+      "category": "equipment",
+      "trigger": "automatic",
+      "condition": "highest_worn_armor_penalty == 4",
+      "description": "Flak oder Metalgear. Penalty wird nur EINMAL angewendet (höchster zählt).",
+      "applies_to": ["ref_checks", "dex_checks", "move_checks"]
+    },
+
+    {
+      "id": "smoke_obscured",
+      "name": "Smoke (Rauch)",
+      "value": -4,
+      "category": "environmental",
+      "trigger": "manual",
+      "description": "In einem 10×10m Smoke Ammunition Bereich: −4 auf Aktionen durch Rauch.",
+      "applies_to": ["ranged_attack", "perception_check"]
+    },
+
+    {
+      "id": "ci_dismembered_arm",
+      "name": "Dismembered Arm (Body Crit 2)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:dismembered_arm",
+      "description": "Arm verloren. Items in dieser Hand fallen sofort. Base Death Save Penalty +1 (permanent).",
+      "applies_to": [],
+      "side_effects": { "base_dsp_increase": 1, "lost_limb": "arm" }
+    },
+    {
+      "id": "ci_dismembered_hand",
+      "name": "Dismembered Hand (Body Crit 3)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:dismembered_hand",
+      "description": "Hand verloren. Items in dieser Hand fallen sofort. Base Death Save Penalty +1 (permanent).",
+      "applies_to": [],
+      "side_effects": { "base_dsp_increase": 1, "lost_limb": "hand" }
+    },
+    {
+      "id": "ci_collapsed_lung",
+      "name": "Collapsed Lung (Body Crit 4)",
+      "value": -2,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:collapsed_lung",
+      "description": "Eingefallene Lunge. −2 MOVE (min 1). Base Death Save Penalty +1 (permanent).",
+      "applies_to": ["move_checks"],
+      "side_effects": { "base_dsp_increase": 1, "move_minimum": 1 }
+    },
+    {
+      "id": "ci_broken_ribs",
+      "name": "Broken Ribs (Body Crit 5)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:broken_ribs",
+      "description": "Gebrochene Rippen. Am Ende jedes Turns, in dem Charakter zu Fuß >4m bewegt: Re-suffer 5 Bonus Damage direkt auf HP.",
+      "applies_to": [],
+      "side_effects": { "movement_damage_threshold_m": 4, "movement_damage": 5 }
+    },
+    {
+      "id": "ci_broken_arm",
+      "name": "Broken Arm (Body Crit 6)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:broken_arm",
+      "description": "Gebrochener Arm. Arm unbenutzbar, Items in dieser Hand fallen.",
+      "applies_to": [],
+      "side_effects": { "arm_unusable": true }
+    },
+    {
+      "id": "ci_foreign_object_body",
+      "name": "Foreign Object (Body Crit 7)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:foreign_object_body",
+      "description": "Fremdkörper im Körper. Am Ende jedes Turns, in dem Charakter zu Fuß >4m bewegt: Re-suffer 5 Bonus Damage direkt auf HP.",
+      "applies_to": [],
+      "side_effects": { "movement_damage_threshold_m": 4, "movement_damage": 5 }
+    },
+    {
+      "id": "ci_broken_leg",
+      "name": "Broken Leg (Body Crit 8)",
+      "value": -4,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:broken_leg",
+      "description": "Gebrochenes Bein. −4 auf MOVE (min 1).",
+      "applies_to": ["move_checks"],
+      "side_effects": { "move_minimum": 1 }
+    },
+    {
+      "id": "ci_torn_muscle",
+      "name": "Torn Muscle (Body Crit 9)",
+      "value": -2,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:torn_muscle",
+      "description": "Gerissener Muskel. −2 auf alle Melee Attacks (Melee Weapon, Brawling, Martial Arts).",
+      "applies_to": ["melee_attack"]
+    },
+    {
+      "id": "ci_spinal_injury",
+      "name": "Spinal Injury (Body Crit 10)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:spinal_injury",
+      "description": "Rückenmarksverletzung. NÄCHSTE Runde kann der Charakter KEINE Action ausführen (Move Action geht). Base Death Save Penalty +1 (permanent). Hinweis: das ist KEIN −2 auf REF/DEX, sondern eine Lock-Out-Mechanik für die nächste Runde.",
+      "applies_to": [],
+      "side_effects": { "base_dsp_increase": 1, "skip_next_turn_action": true }
+    },
+    {
+      "id": "ci_crushed_fingers",
+      "name": "Crushed Fingers (Body Crit 11)",
+      "value": -4,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:crushed_fingers",
+      "description": "Zerquetschte Finger. −4 auf alle Actions mit dieser Hand.",
+      "applies_to": ["ranged_attack", "melee_attack", "hand_actions"]
+    },
+    {
+      "id": "ci_dismembered_leg",
+      "name": "Dismembered Leg (Body Crit 12)",
+      "value": -6,
+      "category": "critical_injury",
+      "location": "body",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:dismembered_leg",
+      "description": "Bein verloren. −6 MOVE (min 1). Kein Dodge möglich. Base Death Save Penalty +1 (permanent).",
+      "applies_to": ["move_checks"],
+      "side_effects": { "base_dsp_increase": 1, "cannot_dodge": true, "move_minimum": 1, "lost_limb": "leg" }
+    },
+
+    {
+      "id": "ci_lost_eye",
+      "name": "Lost Eye (Head Crit 2)",
+      "value": -4,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:lost_eye",
+      "description": "Auge verloren. −4 auf Ranged Attacks und Vision-Perception. Base Death Save Penalty +1 (permanent).",
+      "applies_to": ["ranged_attack", "perception_check_vision"],
+      "side_effects": { "base_dsp_increase": 1 }
+    },
+    {
+      "id": "ci_brain_injury",
+      "name": "Brain Injury (Head Crit 3)",
+      "value": -2,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:brain_injury",
+      "description": "Hirnverletzung. −2 auf alle Actions. Base Death Save Penalty +1 (permanent).",
+      "applies_to": ["all_actions"],
+      "side_effects": { "base_dsp_increase": 1 }
+    },
+    {
+      "id": "ci_damaged_eye",
+      "name": "Damaged Eye (Head Crit 4)",
+      "value": -2,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:damaged_eye",
+      "description": "Beschädigtes Auge. −2 auf Ranged Attacks und Vision-Perception.",
+      "applies_to": ["ranged_attack", "perception_check_vision"]
+    },
+    {
+      "id": "ci_concussion",
+      "name": "Concussion (Head Crit 5)",
+      "value": -2,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:concussion",
+      "description": "Gehirnerschütterung. −2 auf alle Actions.",
+      "applies_to": ["all_actions"]
+    },
+    {
+      "id": "ci_broken_jaw",
+      "name": "Broken Jaw (Head Crit 6)",
+      "value": -4,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:broken_jaw",
+      "description": "Gebrochener Kiefer. −4 auf alle Actions, die Sprache erfordern (Persuasion, Acting, Bribery, Trading, etc.).",
+      "applies_to": ["speech_actions"]
+    },
+    {
+      "id": "ci_foreign_object_head",
+      "name": "Foreign Object (Head Crit 7)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:foreign_object_head",
+      "description": "Fremdkörper im Kopf. Am Ende jedes Turns, in dem Charakter zu Fuß >4m bewegt: Re-suffer 5 Bonus Damage direkt auf HP.",
+      "applies_to": [],
+      "side_effects": { "movement_damage_threshold_m": 4, "movement_damage": 5 }
+    },
+    {
+      "id": "ci_whiplash",
+      "name": "Whiplash (Head Crit 8)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:whiplash",
+      "description": "Schleudertrauma. Base Death Save Penalty +1 (permanent).",
+      "applies_to": [],
+      "side_effects": { "base_dsp_increase": 1 }
+    },
+    {
+      "id": "ci_cracked_skull",
+      "name": "Cracked Skull (Head Crit 9)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:cracked_skull",
+      "description": "Schädelbruch. Aimed Shots gegen Head multiplizieren durchgekommenen Schaden ×3 statt ×2. Base Death Save Penalty +1 (permanent).",
+      "applies_to": [],
+      "side_effects": { "base_dsp_increase": 1, "head_aimed_shot_multiplier_override": 3 }
+    },
+    {
+      "id": "ci_damaged_ear",
+      "name": "Damaged Ear (Head Crit 10)",
+      "value": -2,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:damaged_ear",
+      "description": "Beschädigtes Ohr. Wenn Charakter zu Fuß >4m bewegt: keine Move Action in nächster Runde. −2 auf Hearing-Perception.",
+      "applies_to": ["perception_check_hearing"],
+      "side_effects": { "movement_locks_next_move_action_threshold_m": 4 }
+    },
+    {
+      "id": "ci_crushed_windpipe",
+      "name": "Crushed Windpipe (Head Crit 11)",
+      "value": 0,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:crushed_windpipe",
+      "description": "Zerquetschte Luftröhre. Kein Sprechen möglich. Base Death Save Penalty +1 (permanent).",
+      "applies_to": [],
+      "side_effects": { "base_dsp_increase": 1, "cannot_speak": true }
+    },
+    {
+      "id": "ci_lost_ear",
+      "name": "Lost Ear (Head Crit 12)",
+      "value": -4,
+      "category": "critical_injury",
+      "location": "head",
+      "trigger": "automatic",
+      "condition": "has_critical_injury:lost_ear",
+      "description": "Ohr verloren. Wenn Charakter zu Fuß >4m bewegt: keine Move Action in nächster Runde. −4 auf Hearing-Perception. Base Death Save Penalty +1 (permanent).",
+      "applies_to": ["perception_check_hearing"],
+      "side_effects": { "base_dsp_increase": 1, "movement_locks_next_move_action_threshold_m": 4 }
+    }
+  ],
+
+  "special_rules": [
+    {
+      "id": "dodge_high_ref",
+      "name": "Dodge Bullets (REF ≥ 8)",
+      "description": "Anstatt den Range-DV zu verwenden, kann das Ziel REF + Evasion + 1d10 als Defense Roll würfeln. Nur möglich wenn REF ≥ 8.",
+      "condition": "target.ref >= 8",
+      "applies_to": ["ranged_attack", "autofire", "shotgun_shell", "explosive"]
+    },
+    {
+      "id": "cover_hp_system",
+      "name": "Cover (HP-System)",
+      "description": "Cover ist ein HP-Pool basierend auf Material und Dicke. Schaden geht zuerst auf Cover. Bei 0 HP: Cover zerstört, Excess-Damage verloren (außer Explosives).",
+      "applies_to": ["ranged_attack"],
+      "no_modifier": true
+    },
+    {
+      "id": "shield_hp_system",
+      "name": "Shield",
+      "description": "Equip/Drop = 1 Action. Bulletproof Shield = 10 HP. Corpse Shield = BODY des Toten. Solange HP > 0 = in Cover. Bei Schild-Interpose: kein Dodge möglich, Schaden komplett auf Shield-HP.",
+      "applies_to": ["ranged_attack"]
+    },
+    {
+      "id": "suppressive_fire",
+      "name": "Suppressive Fire",
+      "description": "Kostet 1 Action + 10 Bullets. Reichweite 25m. Schütze (REF + Autofire + 1d10) vs Ziel (WILL + Concentration + 1d10). Bei Verlust: Ziel muss Move Action für Cover nutzen, zusätzlich Run Action wenn nötig.",
+      "applies_to": ["ranged_attack"]
+    },
+    {
+      "id": "autofire_damage",
+      "name": "Autofire Damage Formula",
+      "description": "Bei Treffer: 2d6 × (Trefferwurf − DV), max = Weapon-Autofire-Wert (SMG/Heavy SMG = 3, Assault Rifle = 4). Bei beiden 6er auf 2d6: zusätzlich Critical Injury.",
+      "applies_to": ["autofire"]
+    },
+    {
+      "id": "melee_armor_halving",
+      "name": "Melee Weapon / Martial Arts Armor Halving",
+      "description": "Melee Weapons und Martial Arts ignorieren die HÄLFTE der Defender-Armor, AUFGERUNDET. sp_effective = floor(sp/2). Brawling halbiert NICHT. Choke und Throw ignorieren Armor komplett (und ablate nicht).",
+      "applies_to": ["melee_attack", "martial_arts"]
+    },
+    {
+      "id": "aimed_shot_head_multiplier",
+      "name": "Aimed Shot Head Multiplier",
+      "description": "Bei Aimed Shot Head: Schaden, der durch HEAD-Armor durchkommt, wird ×2 multipliziert. Wenn Ziel die Critical Injury 'Cracked Skull' hat: ×3 statt ×2. Multiplikator wird NACH Armor-Abzug angewendet.",
+      "applies_to": ["aimed_shot"]
+    },
+    {
+      "id": "mortally_wounded_damage",
+      "name": "Mortally Wounded — Schaden",
+      "description": "Wenn ein Mortally Wounded Charakter durch eine Melee- oder Ranged-Attack getroffen wird: er erhält automatisch eine Critical Injury (würfeln) UND sein Death Save Penalty erhöht sich um 1.",
+      "applies_to": ["mortally_wounded"]
+    },
+    {
+      "id": "death_save",
+      "name": "Death Save Mechanik",
+      "description": "Am Start jedes Turns im Mortally Wounded State: roll 1d10. Survive wenn (roll + DSP) < BODY. Roll == 10 ist immer Auto-Fail. JEDER Death Save erhöht DSP um 1 (kumulativ). Bei Stabilization auf 1 HP: DSP resettet auf Base-DSP. Base-DSP wird durch bestimmte Critical Injuries permanent erhöht (siehe ci_*).",
+      "applies_to": ["death_save"]
+    },
+    {
+      "id": "stabilization",
+      "name": "Stabilization",
+      "description": "TECH + First Aid + 1d10 (oder Paramedic) vs DV nach Wound State (10/13/15). Bei Mortally Wounded und Erfolg: zurück auf 1 HP + Unconscious 1 Minute. Heilung nach Stabilization: +BODY HP pro Tag mit Rest (keine schwere Tätigkeit).",
+      "applies_to": ["stabilization"]
+    },
+    {
+      "id": "critical_injury_treatment",
+      "name": "Critical Injury Treatment",
+      "description": "Quick Fix: entfernt Injury Effect bis Ende des Tages, 1 Minute pro Versuch, kann an sich selbst. Treatment: entfernt Injury Effect permanent, 4 Stunden pro Versuch, NICHT an sich selbst. Cybertech-Skill ersetzt First Aid/Paramedic/Surgery bei Cyberlimb-Schäden (selbe DVs).",
+      "applies_to": ["healing"]
+    },
+    {
+      "id": "armor_penalty_single",
+      "name": "Armor Penalty wird nur einmal angewendet",
+      "description": "Wenn Body + Head Armor getragen wird, gilt nur die HÖCHSTE Armor Penalty (REF/DEX/MOVE), nicht die Summe.",
+      "applies_to": ["armor_calculation"]
+    },
+    {
+      "id": "first_aid_baseline",
+      "name": "First Aid Skill Baseline",
+      "description": "Alle Charaktere haben First Aid standardmäßig mind. +2 trained.",
+      "applies_to": ["character_generation"]
+    }
+  ],
+
+  "tables": {
+    "wound_states": {
+      "healthy":           { "threshold": "hp == max_hp",                       "effect": "none",                       "stabilization_dv": null },
+      "lightly_wounded":   { "threshold": "hp < max_hp",                        "effect": "none",                       "stabilization_dv": 10 },
+      "seriously_wounded": { "threshold": "hp < ceil(max_hp / 2)",              "effect": "-2 to all actions",          "stabilization_dv": 13 },
+      "mortally_wounded":  { "threshold": "hp < 1",                             "effect": "-4 all actions, -6 MOVE (min 1), death save per turn, damage triggers critical injury + DSP+1", "stabilization_dv": 15 },
+      "dead":              { "threshold": "failed death save or auto-fail (roll 10)", "effect": "dead",                  "stabilization_dv": null }
+    },
+    "armor": [
+      { "name": "Leathers",          "sp": 4,  "penalty": 0, "cost_eb": 20    },
+      { "name": "Kevlar",            "sp": 7,  "penalty": 0, "cost_eb": 50    },
+      { "name": "Light Armorjack",   "sp": 11, "penalty": 0, "cost_eb": 100   },
+      { "name": "Bodyweight Suit",   "sp": 11, "penalty": 0, "cost_eb": 1000  },
+      { "name": "Medium Armorjack",  "sp": 12, "penalty": 2, "cost_eb": 100   },
+      { "name": "Heavy Armorjack",   "sp": 13, "penalty": 2, "cost_eb": 500   },
+      { "name": "Flak",              "sp": 15, "penalty": 4, "cost_eb": 500   },
+      { "name": "Metalgear",         "sp": 18, "penalty": 4, "cost_eb": 5000  }
+    ],
+    "cover_hp": {
+      "steel":              { "thick": 50, "thin": 25 },
+      "stone":              { "thick": 40, "thin": 20 },
+      "bulletproof_glass":  { "thick": 30, "thin": 15 },
+      "concrete":           { "thick": 25, "thin": 10 },
+      "wood":               { "thick": 20, "thin": 5  },
+      "plaster_foam_plastic": { "thick": 15, "thin": 0 }
+    },
+    "range_dv_single_shot": {
+      "pistol":           [13, 15, 20, 25, 30, 30, null, null],
+      "smg":              [15, 13, 15, 20, 25, 25, 30, null],
+      "shotgun_slug":     [13, 15, 20, 25, 30, 35, null, null],
+      "assault_rifle":    [17, 16, 15, 13, 15, 20, 25, 30],
+      "sniper_rifle":     [30, 25, 25, 20, 15, 16, 17, 20],
+      "bow_crossbow":     [15, 13, 15, 17, 20, 22, null, null],
+      "grenade_launcher": [16, 15, 15, 17, 20, 22, 25, null],
+      "rocket_launcher":  [17, 16, 15, 15, 20, 20, 25, 30]
+    },
+    "range_dv_autofire": {
+      "smg":           [15, 13, 15, 20, 25],
+      "assault_rifle": [17, 16, 15, 13, 15]
+    },
+    "range_bands_m": [
+      "0-6", "7-12", "13-25", "26-50", "51-100", "101-200", "201-400", "401-800"
+    ],
+    "autofire_max_multiplier": {
+      "smg": 3,
+      "heavy_smg": 3,
+      "assault_rifle": 4
+    },
+    "ammunition_per_mode": {
+      "single_shot": 1,
+      "rof_2_full": 2,
+      "autofire": 10,
+      "suppressive_fire": 10,
+      "shotgun_shell": 1
+    },
+    "brawling_damage_by_body": {
+      "le_4":  "1d6",
+      "le_4_with_cyberarm": "2d6",
+      "5_to_6": "2d6",
+      "7_to_10": "3d6",
+      "ge_11": "4d6"
+    },
+    "stat_definitions": {
+      "INT": "Intelligence — perception, learning, awareness",
+      "REF": "Reflexes — coordination, RANGED attacks, initiative",
+      "DEX": "Dexterity — MELEE attacks, athletics, EVASION",
+      "TECH": "Technique — tools, healing skills, repairs",
+      "COOL": "Cool — charisma, social",
+      "WILL": "Willpower — concentration, drugs, HP component",
+      "LUCK": "Luck — refills per session",
+      "MOVE": "Movement — MOVE × 2 m/yds per Move Action",
+      "BODY": "Body — HP, Death Save target, BODY-based damage",
+      "EMP": "Empathy — Humanity = EMP × 10"
+    },
+    "derived_stats": {
+      "hp_formula": "10 + 5 * ceil((BODY + WILL) / 2)",
+      "seriously_wounded_threshold": "ceil(HP / 2)",
+      "death_save_target": "BODY (raw)",
+      "humanity": "EMP * 10",
+      "first_aid_baseline": "+2 trained for all characters"
+    }
+  },
+
+  "display": {
+    "categories": {
+      "attack":           { "label": "Angriff",                "color": "#FF2D2D" },
+      "wound_state":      { "label": "Verwundungszustand",     "color": "#FF8C42" },
+      "combat_state":     { "label": "Kampfzustand",           "color": "#FFD700" },
+      "equipment":        { "label": "Ausrüstung",             "color": "#4FC3F7" },
+      "critical_injury":  { "label": "Critical Injury",        "color": "#B14EFF" },
+      "environmental":    { "label": "Umgebung",               "color": "#7DBE94" }
+    }
+  }
+}

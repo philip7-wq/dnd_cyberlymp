@@ -159,6 +159,14 @@
       style="width:100%;margin-bottom:.4rem;background:#0f0f18;border:1px solid #2a2a3a;
              color:#e0e0e8;border-radius:4px;padding:.3rem .5rem;font-size:.75rem;box-sizing:border-box">
     <div id="dmQuickBtns" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.5rem"></div>
+    <div style="font-size:.62rem;color:#555;letter-spacing:.08em;margin-bottom:.2rem">WAFFENKLASSE</div>
+    <select id="dmWeaponClass" style="width:100%;margin-bottom:.5rem;background:#0f0f18;border:1px solid #2a2a3a;
+             color:#e0e0e8;border-radius:4px;padding:.3rem .5rem;font-size:.72rem;box-sizing:border-box">
+      <option value="ranged">Ranged / Brawling (volle SP)</option>
+      <option value="melee_weapon">Melee Weapon (½ SP)</option>
+      <option value="martial_arts">Martial Arts (½ SP)</option>
+      <option value="choke_throw">Choke / Throw (ignoriert SP)</option>
+    </select>
     <div id="dmRollResult" style="display:none;margin-bottom:.5rem;font-size:.85rem;
       font-family:Audiowide,sans-serif;color:#FFD700;text-align:center;padding:.4rem;
       background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:4px"></div>
@@ -481,6 +489,10 @@ import {
 import {
   getDV, guessWeaponDvType, DV_TABLE, RANGE_BRACKETS, BRACKET_LABELS, getRangeBracketIndex,
 } from './assets/js/weapon-utils.js';
+import {
+  loadCombatData, getWeaponClass, computeDamageThrough, rollCriticalInjury, rollWithModifiers,
+  getCriticalInjuryTable,
+} from './assets/js/combat-modifiers.js';
 
 // ── Auth ──────────────────────────────────────────────────────
 const urlParams = new URLSearchParams(location.search);
@@ -1164,6 +1176,7 @@ function pointToSegmentDist(px,py,ax,ay,bx,by) {
   return Math.hypot(px-(ax+t*dx), py-(ay+t*dy));
 }
 fetch('./assets/data/ammunition.json').then(r=>r.json()).then(d=>{ mapAmmoData=d; }).catch(()=>{});
+loadCombatData().catch(()=>{});
 
 function _renderRingZones(oCtx, cx, cy, dvType) {
   const dvs = DV_TABLE[dvType] || DV_TABLE.pistol;
@@ -1920,6 +1933,59 @@ document.getElementById('ctxDmgRoll')?.addEventListener('click', e => {
 });
 
 let _dmRollTotal = 0;
+let _dmRollSides = 6, _dmRollCritInjury = false, _dmRollWeaponClass = 'ranged';
+
+// ── Injury-Helper ────────────────────────────────────────────────
+function tokenHasInjury(tok, name) {
+  return (tok?.critInjuries || []).some(i => (i?.name || i) === name);
+}
+
+// ── Schaden auf Token anwenden (geteilt: Angriff, DM-Modal, Shotgun) ──
+// through = bereits durch Rüstung (computeDamageThrough). Bonus: Crit-Injury
+// +5 direkt auf HP, Injury an critical_injuries des Ziels (Char + NPC).
+async function applyDamageToToken(tgt, through, opts = {}) {
+  const { isHead = false, spAfter = null, critInjury = false, aimed = null } = opts;
+  if (!tgt) return;
+  const { patchCharacter, patchNpc } = await import('./assets/js/supabase.js');
+
+  let hpDmg = Math.max(0, through || 0);
+  const injuriesAdded = [];
+  const existing = (tgt.critInjuries || []).map(i => i?.name || i);
+  const ciTable  = getCriticalInjuryTable();
+
+  // Critical Injury (2+ Sechsen) → +5 Bonus-Schaden + Injury
+  if (critInjury) {
+    const ci = rollCriticalInjury(isHead ? 'head' : 'body', existing, ciTable);
+    if (ci) { injuriesAdded.push(ci.injury); existing.push(ci.injury.name); hpDmg += ci.bonusDamage; }
+  }
+  // Aimed Leg → Broken Leg (wenn Schaden durchkam)
+  if (aimed === 'leg' && (through || 0) > 0 && !existing.includes('Broken Leg')) {
+    const bl = (ciTable?.body || []).find(e => e.name === 'Broken Leg');
+    if (bl) { injuriesAdded.push({ ...bl, table: 'body' }); existing.push('Broken Leg'); }
+  }
+  // Aimed Held Item → Item droppt (rein narrativ)
+  if (aimed === 'held_item' && (through || 0) > 0) showMapToast(`${tgt.name} lässt ein Item fallen`, 'cyan');
+
+  const newHp = Math.max(0, (tgt.hp ?? tgt.maxHp ?? 0) - hpDmg);
+  tgt.hp = newHp;
+  // SP an Trefferlokation ablaten
+  if (isHead) { if (tgt.headSP != null) tgt.headSP = spAfter != null ? spAfter : Math.max(0, (tgt.headSP || 0) - 1); }
+  else        { if (tgt.bodySP != null) tgt.bodySP = spAfter != null ? spAfter : Math.max(0, (tgt.bodySP || 0) - 1); }
+
+  const patch = {};
+  if (injuriesAdded.length) {
+    tgt.critInjuries = [...(tgt.critInjuries || []), ...injuriesAdded];
+    patch.critical_injuries = JSON.stringify(tgt.critInjuries);
+  }
+  if (tgt.type === 'char' && tgt.charId) { patch.current_hp = newHp; await patchCharacter(tgt.charId, patch).catch(() => {}); }
+  else if (tgt.type === 'npc' && tgt.npcId) { patch.hp_current = newHp; await patchNpc(tgt.npcId, patch).catch(() => {}); }
+
+  saveTokens(); markDirty();
+  let msg = `${hpDmg} HP → ${tgt.name}`;
+  if (injuriesAdded.length) msg += ` · ${injuriesAdded.map(i => i.name).join(', ')}`;
+  showMapToast(msg, 'red');
+  return { hpDmg, injuriesAdded, newHp };
+}
 
 function openDmRollModal(target) {
   const modal = document.getElementById('dmRollModal');
@@ -1929,6 +1995,9 @@ function openDmRollModal(target) {
   document.getElementById('dmRollResult').style.display = 'none';
   document.getElementById('dmSpRow').style.display     = 'none';
   document.getElementById('dmSpInput').value = target?.bodySP ?? 0;
+  const wcSel = document.getElementById('dmWeaponClass');
+  if (wcSel) wcSel.value = 'ranged';
+  _dmRollWeaponClass = 'ranged'; _dmRollCritInjury = false; _dmRollSides = 6;
   // Build quick roll buttons
   const qb = document.getElementById('dmQuickBtns');
   if (qb && !qb.children.length) {
@@ -1954,9 +2023,19 @@ document.getElementById('dmRollExecBtn')?.addEventListener('click', () => {
   for (let i=0;i<+count;i++) { const r=Math.floor(Math.random()*+sides)+1; rolls.push(r); total+=r; }
   total += parseInt(bonusStr||0);
   _dmRollTotal = total;
-  document.getElementById('dmRollResult').textContent = `[${rolls.join(', ')}]${bonusStr||''} = ${total}`;
+  _dmRollSides = +sides;
+  _dmRollCritInjury = rolls.filter(r => r === +sides).length >= 2;   // 2+ Sechsen → Critical Injury
+  _dmRollWeaponClass = document.getElementById('dmWeaponClass')?.value || 'ranged';
+  let resHtml = `[${rolls.join(', ')}]${bonusStr||''} = ${total}`;
+  if (_dmRollCritInjury) resHtml += ' ⚠ CRIT INJURY';
+  document.getElementById('dmRollResult').textContent = resHtml;
   document.getElementById('dmRollResult').style.display = '';
   document.getElementById('dmSpRow').style.display      = '';
+  updateDmArmorCalc();
+});
+
+document.getElementById('dmWeaponClass')?.addEventListener('change', () => {
+  _dmRollWeaponClass = document.getElementById('dmWeaponClass').value || 'ranged';
   updateDmArmorCalc();
 });
 
@@ -1964,29 +2043,28 @@ document.getElementById('dmSpInput')?.addEventListener('input', updateDmArmorCal
 
 function updateDmArmorCalc() {
   const sp  = parseInt(document.getElementById('dmSpInput')?.value) || 0;
-  const net = Math.max(0, _dmRollTotal - sp);
+  const { through, spEff, spAfter } = computeDamageThrough(_dmRollTotal, sp, { weaponClass: _dmRollWeaponClass });
   const el  = document.getElementById('dmFinalDmg');
-  if (el) el.textContent = `${_dmRollTotal} − SP ${sp} = ${net} HP Schaden`;
+  if (!el) return;
+  let label = `${_dmRollTotal} − SP ${sp}`;
+  if (spEff !== sp) label += ` (effektiv ${spEff})`;
+  label += ` = ${through} HP · SP → ${spAfter}`;
+  if (_dmRollCritInjury) label += ' · +5 Crit-Injury';
+  el.textContent = label;
 }
 
 document.getElementById('dmApplyBtn')?.addEventListener('click', async () => {
   const sp  = parseInt(document.getElementById('dmSpInput').value) || 0;
-  const net = Math.max(0, _dmRollTotal - sp);
   const tgt = document.getElementById('dmRollModal')._target;
   const src = document.getElementById('dmRollSource').value.trim() || 'Schaden';
   if (!tgt) return;
+  const { through, spAfter } = computeDamageThrough(_dmRollTotal, sp, { weaponClass: _dmRollWeaponClass });
   const ok  = await mapConfirm(
-    `${src} → ${tgt.name}:\n${_dmRollTotal} − SP ${sp} = ${net} HP\n(SP ${sp} → ${Math.max(0,sp-1)})`
+    `${src} → ${tgt.name}:\n${through} HP Schaden (SP ${sp} → ${spAfter})` +
+    (_dmRollCritInjury ? '\n⚠ Critical Injury (+5)' : '')
   );
   if (!ok) return;
-  const newHp = Math.max(0, (tgt.hp ?? tgt.maxHp ?? 0) - net);
-  tgt.hp = newHp;
-  if (tgt.bodySP != null) tgt.bodySP = Math.max(0, tgt.bodySP - 1);
-  const { patchCharacter, patchNpc } = await import('./assets/js/supabase.js');
-  if (tgt.type==='char' && tgt.charId)  await patchCharacter(tgt.charId,{current_hp:newHp}).catch(()=>{});
-  else if (tgt.type==='npc' && tgt.npcId) await patchNpc(tgt.npcId,{hp:newHp}).catch(()=>{});
-  saveTokens(); markDirty();
-  showMapToast(`${net} HP → ${tgt.name}`, 'red');
+  await applyDamageToToken(tgt, through, { spAfter, critInjury: _dmRollCritInjury });
   document.getElementById('dmRollModal').style.display = 'none';
 });
 
@@ -3519,6 +3597,15 @@ function buildPlayerPanel() {
               <input id="atkMod" type="number" value="0" style="width:42px">
               <span style="font-size:.58rem;color:#444">(Deckung, Dunkel…)</span>
             </div>
+            <div class="atk-input-row">
+              <span style="font-size:.63rem;color:#666">Aimed Shot</span>
+              <select id="atkAimed" style="background:#0f0f18;border:1px solid #2a2a3a;color:#e0e0e8;border-radius:4px;font-size:.62rem;padding:.12rem .2rem">
+                <option value="">—</option>
+                <option value="head">Kopf (−8, ×2 Dmg)</option>
+                <option value="leg">Bein (−8, Broken Leg)</option>
+                <option value="held_item">Item (−8, droppt)</option>
+              </select>
+            </div>
             <div class="atk-dv-display" id="atkDvDisplay"></div>
             <div style="position:relative">
               <button id="atkRollBtn" class="atk-btn" disabled>🎲 Angriff würfeln</button>
@@ -3560,6 +3647,7 @@ function buildPlayerPanel() {
 
   // ── Attack flow state ────────────────────────────────────────
   let _atkDv = null, _atkRollTotal = null, _dmgTotal = null, _autofireOn = false;
+  let _atkAimed = null, _atkWeaponClass = 'ranged', _critInjuryPending = false;
 
   function updateMwcMag() {
     const rawW = S.char?.weapons?.[S.activeWeapon?.rawIdx];
@@ -3830,25 +3918,43 @@ function buildPlayerPanel() {
   }
 
   // ── Attack roll (Step 1) ─────────────────────────────────────
-  document.getElementById('atkRollBtn')?.addEventListener('click', () => {
-    const ref   = S.activeWeapon?._ref   ?? 0;
-    const skill = S.activeWeapon?._skill ?? 0;
-    const mod   = parseInt(document.getElementById('atkMod').value) || 0;
-    const d10   = Math.floor(Math.random() * 10) + 1;
-    let total = d10 + ref + skill + mod, bonus = 0;
-    let isCrit = false, isFumble = false;
-    if (d10 === 10) { bonus = Math.floor(Math.random()*10)+1; total += bonus; isCrit = true; }
-    else if (d10 === 1) { bonus = Math.floor(Math.random()*10)+1; total -= bonus; isFumble = true; }
-    _atkRollTotal = total;
-    const dv = _atkDv ?? 15;
+  document.getElementById('atkRollBtn')?.addEventListener('click', async () => {
+    const ref       = S.activeWeapon?._ref   ?? 0;
+    const skill     = S.activeWeapon?._skill ?? 0;
+    const manualMod = parseInt(document.getElementById('atkMod').value) || 0;
+    const aimed     = document.getElementById('atkAimed')?.value || null;
+    _atkAimed       = aimed;
+    const aimedMod  = aimed ? -8 : 0;
+    const shooter   = S.char || S.tokens.find(t => t.charId === CHAR_ID) || {};
+
+    // Universeller Roll-Wrapper: REF + Skill + manueller Mod + Aimed + Auto (Wound/Injury) → dice.js
+    const { result, autoSum } = await rollWithModifiers(shooter, {
+      statVal: ref, skillVal: skill, actionType: 'ranged_attack',
+      manualMods: [manualMod, aimedMod], isSkillCheck: true,
+      context: `Angriff: ${S.activeWeapon?.name || 'Waffe'}${S.measureTargetToken ? ' → ' + S.measureTargetToken.name : ''}`,
+      characterId: S.char?.id || CHAR_ID, characterName: S.char?.handle || S.char?.name || null,
+    });
+
+    const d10      = result.individualRolls[0]?.value ?? 1;
+    const isCrit   = result.isCritSuccess;
+    const isFumble = result.isCritFailure;
+    const bonusEnt = result.individualRolls.find(r => r.isCritBonus || r.isCritPenalty);
+    const bonus    = bonusEnt ? Math.abs(bonusEnt.value) : 0;
+    const total    = result.total;
+    _atkRollTotal  = total;
+
+    const dispMod = manualMod + aimedMod + autoSum;   // alle situativen Mods (autoSum inkl. Injury)
+    const dv  = _atkDv ?? 15;
     const hit = total >= dv;
-    showAtkDiceAnim(d10, bonus, ref, skill, mod, total, dv, hit, isCrit, isFumble, () => {
+
+    showAtkDiceAnim(d10, bonus, ref, skill, dispMod, total, dv, hit, isCrit, isFumble, () => {
       let html = '';
       if (isCrit)   html += '<div class="atk-badge-crit">✨ CRITICAL SUCCESS!</div>';
       if (isFumble) html += '<div class="atk-badge-miss">☠ CRITICAL FAILURE</div>';
       html += `d10: <b>${d10}</b>`;
       if (bonus) html += isCrit ? ` +${bonus}` : ` −${bonus}`;
-      html += ` + REF ${ref} + Skill ${skill}${mod ? (mod>0?` +${mod}`:` ${mod}`):''}`;
+      html += ` + REF ${ref} + Skill ${skill}${dispMod ? (dispMod>0?` +${dispMod}`:` ${dispMod}`):''}`;
+      if (aimed) html += ` <span style="color:#FFD700">· Aimed: ${aimed==='head'?'Kopf':aimed==='leg'?'Bein':'Item'}</span>`;
       html += ` = <b style="font-family:Audiowide;font-size:.9rem">${total}</b> vs DV <b>${dv}</b>`;
       html += hit
         ? `<div style="color:#22C55E;margin-top:.2rem;font-size:.7rem">✅ TREFFER (+${total-dv})</div>`
@@ -3868,25 +3974,32 @@ function buildPlayerPanel() {
     const count = m ? parseInt(m[1]) : 2, sides = m ? parseInt(m[2]) : 6;
     let rolls = [], total = 0;
     for (let i = 0; i < count; i++) { const r = Math.floor(Math.random()*sides)+1; rolls.push(r); total+=r; }
-    let mult = 1, critInjury = false;
+    let mult = 1;
     if (_autofireOn) {
       const maxMult = w?.dvType === 'assault_rifle' ? 4 : 3;
       const margin  = Math.max(0, (_atkRollTotal ?? 0) - (_atkDv ?? 15));
       mult = Math.min(Math.max(1, margin), maxMult);
       total = total * mult;
-      critInjury = rolls.filter(r => r === sides).length >= 2;
     }
+    // Critical Injury: 2+ Sechsen auf den Schadenswürfeln (Regel S.187, gilt immer)
+    const critInjury = rolls.filter(r => r === sides).length >= 2;
+    _critInjuryPending = critInjury;
+    _atkWeaponClass    = getWeaponClass(w);
     _dmgTotal = total;
     let html = `[${rolls.join('][')}]`;
     if (_autofireOn && mult > 1) html += ` × <b>${mult}</b>`;
     html += ` = <b style="color:#FF2D2D;font-family:Audiowide;font-size:.9rem">${total}</b> Schaden`;
+    if (_atkWeaponClass === 'melee_weapon' || _atkWeaponClass === 'martial_arts')
+      html += ` <span style="color:#888;font-size:.58rem">(½ SP)</span>`;
     if (critInjury) html += '<div class="atk-badge-injury">⚠ CRITICAL INJURY!</div>';
     const res = document.getElementById('dmgRollResult');
     res.innerHTML = html; res.style.display = '';
     if (critInjury) showMapToast('⚠ Critical Injury!', 'red');
 
-    // Auto-fill target SP
-    const tgtSP = S.measureTargetToken?.bodySP ?? 0;
+    // Auto-fill target SP (Head wenn Aimed Head, sonst Body)
+    const tgtSP = _atkAimed === 'head'
+      ? (S.measureTargetToken?.headSP ?? 0)
+      : (S.measureTargetToken?.bodySP ?? 0);
     document.getElementById('atkSpInput').value = tgtSP;
     document.getElementById('atkStep3').style.display = '';
     updateArmorCalc();
@@ -3919,39 +4032,40 @@ function buildPlayerPanel() {
     }
   });
 
-  // ── Armor calc (Step 3) ──────────────────────────────────────
+  // ── Armor calc (Step 3) — Melee-Halbierung + Aimed-Multiplier ──
   function updateArmorCalc() {
-    const sp  = parseInt(document.getElementById('atkSpInput').value) || 0;
-    const net = Math.max(0, (_dmgTotal ?? 0) - sp);
-    const newSp = Math.max(0, sp - 1);
-    document.getElementById('atkFinalDmg').textContent =
-      `${_dmgTotal ?? 0} − ${sp} SP = ${net} HP · SP sinkt auf ${newSp}`;
-    document.getElementById('atkApplyDmg').style.display = net > 0 ? '' : 'none';
+    const sp = parseInt(document.getElementById('atkSpInput').value) || 0;
+    const crackedSkull = _atkAimed === 'head' && tokenHasInjury(S.measureTargetToken, 'Cracked Skull');
+    const { through, spEff, spAfter } = computeDamageThrough(_dmgTotal ?? 0, sp,
+      { weaponClass: _atkWeaponClass, aimedShot: _atkAimed, crackedSkull });
+    let label = `${_dmgTotal ?? 0} − SP ${sp}`;
+    if (spEff !== sp) label += ` (½ → ${spEff})`;
+    if (_atkAimed === 'head') label += ` ×${crackedSkull ? 3 : 2}`;
+    label += ` = ${through} HP · SP → ${spAfter}`;
+    if (_critInjuryPending) label += ' · +5 Crit-Injury';
+    document.getElementById('atkFinalDmg').textContent = label;
+    document.getElementById('atkApplyDmg').style.display = through > 0 ? '' : 'none';
   }
   document.getElementById('atkSpInput')?.addEventListener('input', updateArmorCalc);
 
-  // ── Apply damage to target (Feature 8) ──────────────────────
+  // ── Apply damage to target (Feature 8 + Aimed + Crit-Injury) ────
   document.getElementById('atkApplyDmg')?.addEventListener('click', async () => {
     const sp  = parseInt(document.getElementById('atkSpInput').value) || 0;
-    const net = Math.max(0, (_dmgTotal ?? 0) - sp);
     const tgt = S.measureTargetToken;
     if (!tgt) { showMapToast('Kein Ziel gemessen', 'red'); return; }
+    const isHead = _atkAimed === 'head';
+    const crackedSkull = isHead && tokenHasInjury(tgt, 'Cracked Skull');
+    const { through, spAfter } = computeDamageThrough(_dmgTotal ?? 0, sp,
+      { weaponClass: _atkWeaponClass, aimedShot: _atkAimed, crackedSkull });
     const ok = await mapConfirm(
-      `${S.activeWeapon?.name || 'Angriff'} → ${tgt.name}:\n` +
-      `${_dmgTotal} − SP ${sp} = ${net} HP Schaden\n` +
-      `(Rüstung SP ${sp} → ${Math.max(0, sp-1)})`
+      `${S.activeWeapon?.name || 'Angriff'} → ${tgt.name}${_atkAimed ? ` (Aimed ${_atkAimed})` : ''}:\n` +
+      `${through} HP Schaden (SP ${sp} → ${spAfter})` +
+      (_critInjuryPending ? '\n⚠ Critical Injury (+5)' : '')
     );
     if (!ok) return;
-    const newHp = Math.max(0, (tgt.hp ?? tgt.maxHp ?? 0) - net);
-    tgt.hp = newHp;
-    if (tgt.bodySP != null) tgt.bodySP = Math.max(0, tgt.bodySP - 1);
-    const { patchCharacter, patchNpc } = await import('./assets/js/supabase.js');
-    if (tgt.type === 'char' && tgt.charId)
-      await patchCharacter(tgt.charId, { current_hp: newHp }).catch(()=>{});
-    else if (tgt.type === 'npc' && tgt.npcId)
-      await patchNpc(tgt.npcId, { hp: newHp }).catch(()=>{});
-    saveTokens(); markDirty();
-    showMapToast(`${net} HP → ${tgt.name}`, 'red');
+    await applyDamageToToken(tgt, through, {
+      isHead, spAfter, critInjury: _critInjuryPending, aimed: _atkAimed,
+    });
     document.getElementById('atkResetBtn').click();
   });
 
@@ -3962,27 +4076,21 @@ function buildPlayerPanel() {
       if (el) { el.style.display='none'; el.innerHTML=''; }
     });
     document.getElementById('atkApplyDmg').style.display = 'none';
+    const savedDmg = _dmgTotal ?? 0;          // vor dem Nullen sichern (Cone nutzt es)
+    const savedWC  = _atkWeaponClass;
     _atkRollTotal = null; _dmgTotal = null;
+    _atkAimed = null; _critInjuryPending = false; _atkWeaponClass = 'ranged';
+    const aimedSel = document.getElementById('atkAimed');
+    if (aimedSel) aimedSel.value = '';
 
     // Process queued shotgun cone targets
     if (S._shotgunConeTargets?.length) {
       const next = S._shotgunConeTargets.shift();
       S.measureTargetToken = next;
-      const sp  = next?.bodySP ?? 0;
-      const dmg = _dmgTotal ?? 0;
-      const net = Math.max(0, dmg - sp);
-      const ok  = await mapConfirm(`Shotgun Streuung → ${next.name}:\n${dmg} − SP ${sp} = ${net} HP`);
-      if (ok) {
-        next.hp = Math.max(0, (next.hp ?? next.maxHp ?? 0) - net);
-        if (next.bodySP != null) next.bodySP = Math.max(0, next.bodySP - 1);
-        const { patchCharacter, patchNpc } = await import('./assets/js/supabase.js');
-        if (next.type==='char' && next.charId)
-          await patchCharacter(next.charId, {current_hp: next.hp}).catch(()=>{});
-        else if (next.type==='npc' && next.npcId)
-          await patchNpc(next.npcId, {hp: next.hp}).catch(()=>{});
-        saveTokens(); markDirty();
-        showMapToast(`${net} HP → ${next.name}`, 'red');
-      }
+      const sp = next?.bodySP ?? 0;
+      const { through, spAfter } = computeDamageThrough(savedDmg, sp, { weaponClass: savedWC });
+      const ok = await mapConfirm(`Shotgun Streuung → ${next.name}:\n${through} HP (SP ${sp} → ${spAfter})`);
+      if (ok) await applyDamageToToken(next, through, { spAfter, critInjury: false });
     } else {
       S._shotgunConeTargets = null;
     }
