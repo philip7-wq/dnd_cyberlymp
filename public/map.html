@@ -4418,6 +4418,15 @@ function applyNpcToToken(n) {
   tok.maxHp = n.hp_max;
   if (n.critical_injuries !== undefined)
     tok.critInjuries = parseInjuries(n.critical_injuries);
+  // SP-Werte aus NPC-Daten übernehmen (gesetzt im DM-NPC-Editor)
+  if (n.body_sp != null) {
+    tok.bodySP    = n.body_sp;
+    tok.bodyMaxSP = Math.max(tok.bodyMaxSP ?? 0, n.body_sp);
+  }
+  if (n.head_sp != null) {
+    tok.headSP    = n.head_sp;
+    tok.headMaxSP = Math.max(tok.headMaxSP ?? 0, n.head_sp);
+  }
   saveTokens();
   markDirty();
 }
