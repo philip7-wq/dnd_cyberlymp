@@ -2673,11 +2673,11 @@ async function showDamageApplyModal(totalDamage) {
   confirmBtn.disabled = true;
 
   // Build target dropdown: erst NPCs aus der aktiven Kampfrunde, dann alle anderen
-  const fightNpcs = getFightNpcs();
-  // Falls keine Kampfrunde läuft, alle bekannten NPCs anzeigen
+  // Nur NPCs die vom DM auf sichtbar gestellt wurden anzeigen
+  const fightNpcs = getFightNpcs().filter(n => n.isVisibleToPlayers !== false);
   const visibleNpcs = fightNpcs.length > 0
     ? fightNpcs
-    : activeNpcs.filter(n => n.hp_current != null);  // alle mit HP = bekannte Gegner
+    : activeNpcs.filter(n => n.hp_current != null && n.is_visible_to_players);
   const playerOpts = allChars.map(c =>
     `<option value="char:${c.id}">${c.handle || c.name}</option>`).join('');
   const npcOpts = visibleNpcs.map(n =>
@@ -2743,7 +2743,7 @@ async function showDamageApplyModal(totalDamage) {
 
 async function showCritInjuryFlow() {
   activeNpcs = await getActiveNpcs();
-  const fightNpcs = getFightNpcs();
+  const fightNpcs = getFightNpcs().filter(n => n.isVisibleToPlayers !== false);
   critTarget = allChars.length === 1 && fightNpcs.length === 0 ? `char:${allChars[0].id}` : null;
 
   const playerOpts = allChars.map(c =>
@@ -3062,7 +3062,10 @@ function renderConditionBadges() {
   const wrap = document.getElementById('conditionBadges');
   if (!wrap) return;
   const conds = char.conditions || [];
-  wrap.innerHTML = conds.map(c => {
+  const swBadge = getSWPenalty() > 0
+    ? `<span class="cond-badge" style="border-color:#FF8C00;color:#FF8C00;font-weight:600" title="HP unter SW-Schwelle: −2 auf alle Rolls">⚠ SW −2</span>`
+    : '';
+  wrap.innerHTML = swBadge + conds.map(c => {
     const color  = COND_COLORS[c] || 'var(--text-muted)';
     const isMort = c === 'Mortally Wounded';
     return `<span class="cond-badge${isMort ? ' cond-mortally' : ''}" style="border-color:${color};color:${color}">${c}</span>`;

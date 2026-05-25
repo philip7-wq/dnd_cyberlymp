@@ -249,7 +249,11 @@
   border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 0 40px rgba(0,229,255,.3);
+  transition: border-color .3s, box-shadow .3s;
 }
+.atk-dice-d10.glow-green  { border-color: #00FF88; box-shadow: 0 0 50px rgba(0,255,136,.6), 0 0 100px rgba(0,255,136,.25); }
+.atk-dice-d10.glow-red    { border-color: #FF2D2D; box-shadow: 0 0 50px rgba(255,45,45,.7), 0 0 100px rgba(255,45,45,.3); }
+.atk-dice-d10.glow-orange { border-color: #FF8C00; box-shadow: 0 0 50px rgba(255,140,0,.65), 0 0 100px rgba(255,140,0,.25); }
 .atk-dice-num {
   font-family: 'Audiowide', sans-serif;
   font-size: 3rem; color: #00E5FF;
@@ -289,8 +293,11 @@
   background: #0f0f18; border: 1px solid #1e1e2a;
   border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,.88);
   z-index: 199; display: none; flex-direction: column; overflow: hidden;
+  transition: border-color .3s, box-shadow .3s;
 }
 .map-dice-popup.open { display: flex; }
+.map-dice-popup.glow-green { border-color: #00FF88; box-shadow: 0 0 28px rgba(0,255,136,.45), 0 12px 40px rgba(0,0,0,.88); }
+.map-dice-popup.glow-red   { border-color: #FF2D2D; box-shadow: 0 0 28px rgba(255,45,45,.55), 0 12px 40px rgba(0,0,0,.88); }
 .map-dice-popup-head {
   padding: .55rem .9rem;
   background: linear-gradient(90deg, #0c0c16 0%, #12121e 100%);

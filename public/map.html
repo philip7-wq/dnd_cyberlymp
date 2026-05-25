@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/map.css">
-  <link rel="stylesheet" href="assets/css/map-weapons.css">
+  <link rel="stylesheet" href="assets/css/map-weapons.css?v=2">
 </head>
 <body class="map-page">
 
@@ -372,12 +372,7 @@
 
     <!-- Player Panel (first = top of sidebar) -->
     <div id="playerPanel" style="display:none;flex-direction:column;overflow-y:auto;flex:1">
-      <!-- Populated in boot -->
-    </div>
-
-    <!-- NPC Controller Panel (DM playing as NPC) -->
-    <div id="npcControllerPanel" style="display:none;flex-direction:column;overflow-y:auto;flex:1">
-      <!-- Populated by buildNpcControllerPanel() -->
+      <!-- Populated in boot — also reused for NPC controller mode -->
     </div>
 
     <!-- DM Tool List -->
@@ -510,9 +505,10 @@ const IS_DM     = !CHAR_ID && (sessionStorage.getItem('dm_auth') === '1' || loca
 
 if (!IS_DM && !CHAR_ID) location.replace('index.html');
 
-// NPC Controller state (DM playing as a specific NPC)
+// NPC Controller state (DM playing as a specific NPC — reuses the player combat panel)
 let _npcController      = null;  // full NPC object from DB
 let _npcControllerToken = null;  // reference to the canvas token
+let _npcControlMode     = false; // true while DM controls an NPC via the player panel
 
 // ── Canvas ────────────────────────────────────────────────────
 const canvas = document.getElementById('mapCanvas');
@@ -1232,7 +1228,7 @@ function _renderRingZones(oCtx, cx, cy, dvType) {
 
 function drawRangeRings() {
   if (!S.showRangeZones || !S.activeWeapon) return;
-  const ownToken = IS_DM ? S.selectedToken : S.tokens.find(t => t.charId === CHAR_ID);
+  const ownToken = _npcControlMode ? _npcControllerToken : (IS_DM ? S.selectedToken : S.tokens.find(t => t.charId === CHAR_ID));
   if (!ownToken) return;
   const { x: cx, y: cy } = ownToken;
   const key = `${cx}|${cy}|${S.scale}|${S.ox}|${S.oy}|${S.activeWeapon.dvType}|${canvas.width}|${canvas.height}`;
@@ -1678,7 +1674,7 @@ function isInCone(px,py,cx,cy,facing,coneAngle,coneLen) {
 
 function drawShotgunCone() {
   if (!S.shotgunConeActive || !S.activeWeapon) return;
-  const ownToken = S.tokens.find(t => t.charId === CHAR_ID) || S.selectedToken;
+  const ownToken = (_npcControlMode ? _npcControllerToken : null) || S.tokens.find(t => t.charId === CHAR_ID) || S.selectedToken;
   if (!ownToken) return;
   const {x:cx, y:cy} = ownToken;
   const coneAngle = Math.PI/3;
@@ -1943,49 +1939,77 @@ document.getElementById('ctxPlayNpc').addEventListener('click', async e => {
 });
 
 // ── NPC Controller ────────────────────────────────────────────
+// Build a character-shaped object from an NPC row so the player combat
+// panel (buildPlayerPanel) can drive NPC attacks 1:1 like a real player.
+function npcAsChar(npc) {
+  return {
+    id: npc.id,
+    _isNpc: true,
+    handle: npc.name,
+    name: npc.name,
+    role: npc.role || 'NPC',
+    image_url: npc.image_url || null,
+    current_hp: npc.hp_current,
+    max_hp: npc.hp_max,
+    current_humanity: null,
+    max_humanity: null,
+    stats: npc.stats || {},
+    skills: {},
+    weapons: Array.isArray(npc.weapons) ? npc.weapons : [],
+    armor: {
+      head: npc.head_sp ? { name: 'Head', sp: npc.head_sp, max_sp: npc.head_sp } : null,
+      body: npc.body_sp ? { name: 'Body', sp: npc.body_sp, max_sp: npc.body_sp } : null,
+      shield: null,
+    },
+    conditions: npc.conditions || [],
+    buffs: npc.buffs || [],
+    critical_injuries: npc.critical_injuries || [],
+    cyberware: {},
+  };
+}
+
+// The token representing "me" as the shooter — own char token, or the controlled NPC.
+function getOwnToken() {
+  if (_npcControlMode) return _npcControllerToken;
+  return S.tokens.find(t => t.charId === CHAR_ID);
+}
+
 function setNpcController(npc, token) {
-  _npcController      = npc   || null;
-  _npcControllerToken = token || null;
-  const panel    = document.getElementById('npcControllerPanel');
   const toolList = document.getElementById('toolList');
   const toolSett = document.getElementById('toolSettings');
+  const right    = document.getElementById('rightSidebar');
   if (npc) {
-    toolList.style.display = 'none';
-    toolSett.style.display = 'none';
-    panel.style.display    = 'flex';
-    buildNpcControllerPanel();
-  } else {
-    panel.style.display    = 'none';
+    _npcController      = npc;
+    _npcControllerToken = token || null;
+    _npcControlMode     = true;
+    S.char       = npcAsChar(npc);
+    S.activeWeapon = null;
+    S.measureSourceToken = token || null;
+    // Become a "player": only select + measure tools, no DM sidebar
+    document.querySelectorAll('.tool-btn-row[data-tool]').forEach(b => {
+      b.style.display = ['select','measure'].includes(b.dataset.tool) ? '' : 'none';
+    });
+    document.querySelectorAll('.tool-group-head').forEach(h => h.style.display = 'none');
     toolList.style.display = '';
+    if (right) right.style.display = 'none';
+    setTool('measure');
+    buildPlayerPanel();
+  } else {
+    _npcController      = null;
+    _npcControllerToken = null;
+    _npcControlMode     = false;
+    S.char       = null;
+    S.activeWeapon = null;
+    document.getElementById('playerPanel').style.display = 'none';
+    // Restore full DM tool list + sidebar
+    document.querySelectorAll('.tool-btn-row[data-tool]').forEach(b => b.style.display = '');
+    document.querySelectorAll('.tool-group-head').forEach(h => h.style.display = '');
+    toolList.style.display = '';
+    toolSett.style.display = '';
+    if (right) right.style.display = '';
+    setTool('select');
   }
   markDirty();
-}
-
-function rollNpcD10() {
-  const r = Math.floor(Math.random() * 10) + 1;
-  let total = r, crit = null;
-  if (r === 10) { const x = Math.floor(Math.random() * 10) + 1; total += x; crit = `Crit +${x}`; }
-  if (r === 1)  { const x = Math.floor(Math.random() * 10) + 1; total -= x; crit = `Fumble −${x}`; }
-  return { d10: r, total, crit };
-}
-
-function rollNpcDmg(expr) {
-  const m = (expr || '').match(/^(\d+)d(\d+)([+-]\d+)?$/i);
-  if (!m) return { total: 0, rolls: [], expr };
-  const count = parseInt(m[1]), sides = parseInt(m[2]), mod = parseInt(m[3] || 0);
-  const rolls = Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
-  return { rolls, total: rolls.reduce((a, b) => a + b, 0) + mod, expr };
-}
-
-async function patchNpcControllerHp(delta) {
-  if (!_npcController) return;
-  const newHp = Math.max(0, Math.min(_npcController.hp_max || 9999, (_npcController.hp_current || 0) + delta));
-  _npcController.hp_current = newHp;
-  if (_npcControllerToken) { _npcControllerToken.hp = newHp; saveTokens(); }
-  markDirty();
-  const { patchNpc } = await import('./assets/js/supabase.js');
-  await patchNpc(_npcController.id, { hp_current: newHp }).catch(() => {});
-  buildNpcControllerPanel();
 }
 document.getElementById('ctxColor').addEventListener('click', async e => {
   e.stopPropagation();
@@ -2015,164 +2039,6 @@ document.getElementById('ctxGroup').addEventListener('click', async e => {
   t.group = group.trim() || null;
   saveTokens(); markDirty();
 });
-// ── NPC Controller Panel (build) ─────────────────────────────
-function buildNpcControllerPanel() {
-  const npc = _npcController;
-  if (!npc) return;
-  const panel = document.getElementById('npcControllerPanel');
-
-  const hp    = npc.hp_current ?? 0;
-  const maxHp = npc.hp_max ?? 0;
-  const hpPct = maxHp ? Math.min(100, Math.round(hp / maxHp * 100)) : 0;
-  const hpCol = hpPct > 50 ? '#00E5FF' : hpPct > 25 ? '#FFD700' : '#FF2D2D';
-  const headSp = npc.head_sp ?? 0;
-  const bodySp = npc.body_sp ?? 0;
-  const weapons = Array.isArray(npc.weapons) ? npc.weapons.filter(w => w.name) : [];
-
-  panel.innerHTML = `
-    <div class="player-map-portrait">
-      ${npc.image_url ? `<img src="${npc.image_url}" alt="">` : `<div class="avatar-fallback">👤</div>`}
-      <div>
-        <div class="player-map-pname">${npc.name || '—'}</div>
-        <div class="player-map-prole">${npc.role || 'NPC'}</div>
-      </div>
-      <button id="npcCtrlBackBtn" style="margin-left:auto;background:none;border:1px solid var(--border);
-        border-radius:4px;color:var(--text-muted);cursor:pointer;padding:.2rem .45rem;font-size:.7rem"
-        title="Zurück zur DM-Ansicht">🔙</button>
-    </div>
-
-    <div class="player-map-stats">
-      <div class="pmap-bar-row">
-        <span class="pmap-bar-label">HP</span>
-        <div class="pmap-bar-wrap"><div class="pmap-bar-fill" style="width:${hpPct}%;background:${hpCol}"></div></div>
-        <span class="pmap-bar-val">${hp}/${maxHp}</span>
-      </div>
-    </div>
-    <div style="display:flex;gap:.3rem;flex-wrap:wrap;padding:.3rem .6rem .4rem">
-      <button class="npc-hp-delta" data-d="-10" style="flex:1">−10</button>
-      <button class="npc-hp-delta" data-d="-5"  style="flex:1">−5</button>
-      <button class="npc-hp-delta" data-d="-1"  style="flex:1">−1</button>
-      <button class="npc-hp-delta" data-d="+1"  style="flex:1">+1</button>
-      <button class="npc-hp-delta" data-d="+5"  style="flex:1">+5</button>
-    </div>
-
-    <div class="player-map-section">
-      <div class="player-map-section-label">Armor SP</div>
-      <div style="display:flex;gap:.75rem;margin-top:.25rem">
-        <div style="flex:1;text-align:center;background:rgba(255,255,255,.05);border-radius:4px;padding:.4rem">
-          <div style="font-size:.58rem;color:var(--text-muted);letter-spacing:.08em">HEAD</div>
-          <div style="font-family:'Audiowide';font-size:1rem;color:#00E5FF">${headSp}</div>
-        </div>
-        <div style="flex:1;text-align:center;background:rgba(255,255,255,.05);border-radius:4px;padding:.4rem">
-          <div style="font-size:.58rem;color:var(--text-muted);letter-spacing:.08em">BODY</div>
-          <div style="font-family:'Audiowide';font-size:1rem;color:#00E5FF">${bodySp}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="weapon-selector-wrap">
-      <div id="npcWeaponPills" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem">
-        ${weapons.length
-          ? weapons.map((w, i) => `<button class="weapon-pill" type="button" data-nwi="${i}">${w.name || 'Waffe'}</button>`).join('')
-          : '<span style="font-size:.62rem;color:#555">Keine Waffen</span>'}
-      </div>
-      <div id="npcWeaponCard" style="display:none"></div>
-    </div>
-
-    <div id="npcCtrlResult" style="display:none;margin:.4rem .6rem;background:rgba(255,255,255,.06);
-      border-radius:6px;padding:.6rem;font-size:.8rem"></div>`;
-
-  // Back button
-  panel.querySelector('#npcCtrlBackBtn')?.addEventListener('click', () => setNpcController(null));
-
-  // HP delta buttons
-  panel.querySelectorAll('.npc-hp-delta').forEach(btn => {
-    btn.addEventListener('click', () => patchNpcControllerHp(parseInt(btn.dataset.d)));
-  });
-
-  // Weapon pills
-  let activeNwi = null;
-  panel.querySelectorAll('[data-nwi]').forEach(pill => {
-    pill.addEventListener('click', () => {
-      const i   = parseInt(pill.dataset.nwi);
-      const w   = weapons[i];
-      if (!w) return;
-      activeNwi = i;
-      panel.querySelectorAll('[data-nwi]').forEach(p => p.classList.toggle('active', p === pill));
-      showNpcWeaponCard(w);
-    });
-  });
-
-  function showNpcWeaponCard(w) {
-    const card = panel.querySelector('#npcWeaponCard');
-    const dmgExpr = w.damage || '?';
-    const s = npc.stats || {};
-    const defRef = s.REF ?? 5;
-    const dist = S.lastMeasuredDist ?? null;
-    const dvHint = dist !== null ? `(letzte Messung: ${dist.toFixed(0)} m)` : '';
-    card.style.display = '';
-    card.innerHTML = `
-      <div style="font-family:'Audiowide';font-size:.8rem;color:#00E5FF;margin-bottom:.4rem">${w.name}</div>
-      <div style="font-size:.68rem;color:var(--text-muted);margin-bottom:.6rem">DMG: <strong>${dmgExpr}</strong> ${dvHint}</div>
-
-      <div class="map-attack-step" style="margin-bottom:.6rem">
-        <div class="map-attack-step-label">⚡ Angriff</div>
-        <div class="map-attack-inputs">
-          <label class="map-attack-lbl">REF</label>
-          <input class="map-attack-inp" id="nciRef" type="number" value="${defRef}" style="width:46px">
-          <label class="map-attack-lbl">Skill</label>
-          <input class="map-attack-inp" id="nciSkill" type="number" value="4" style="width:46px">
-          <label class="map-attack-lbl">Mod</label>
-          <input class="map-attack-inp" id="nciMod" type="number" value="0" style="width:46px">
-        </div>
-        <div style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem">
-          <label class="map-attack-lbl">DV</label>
-          <input class="map-attack-inp" id="nciDv" type="number" placeholder="—" style="width:50px">
-          <button id="nciAttackBtn" class="pmap-roll-btn" style="flex:1">🎲 Angriff</button>
-        </div>
-      </div>
-
-      <div class="map-attack-step" id="nciDmgStep" style="display:none">
-        <div class="map-attack-step-label">💥 Schaden</div>
-        <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.4rem">${dmgExpr}</div>
-        <button id="nciDmgBtn" class="pmap-roll-btn" style="width:100%">💥 Würfeln</button>
-      </div>`;
-
-    card.querySelector('#nciAttackBtn').addEventListener('click', () => {
-      const ref   = parseInt(card.querySelector('#nciRef').value)   || 0;
-      const skill = parseInt(card.querySelector('#nciSkill').value) || 0;
-      const mod   = parseInt(card.querySelector('#nciMod').value)   || 0;
-      const dvRaw = card.querySelector('#nciDv').value;
-      const dv    = dvRaw === '' ? null : parseInt(dvRaw);
-
-      const { d10, total: d10Total, crit } = rollNpcD10();
-      const attackTotal = d10Total + ref + skill + mod;
-      const success     = dv !== null ? attackTotal >= dv : null;
-      const resultEl    = panel.querySelector('#nciDmgStep');
-
-      let html = `<div style="font-size:.72rem;color:var(--text-muted)">1d10(${d10}) + ${ref}+${skill}${mod>=0?'+':''}${mod}${crit?` <span style="color:#FFD700">${crit}</span>`:''}`;
-      if (dv !== null) html += ` vs DV ${dv}`;
-      html += `</div><div style="font-family:'Audiowide';font-size:1.2rem;color:${success===null?'#00E5FF':success?'#2ecc71':'#FF2D2D'}">${attackTotal}${success===true?' ✓ TRIFFT':success===false?' ✗ VERFEHLT':''}</div>`;
-      if (crit) html += `<div style="font-size:.65rem;color:#FFD700">${crit}</div>`;
-
-      showNpcResult(html);
-      if (success !== false) { resultEl.style.display = ''; }
-    });
-
-    card.querySelector('#nciDmgBtn').addEventListener('click', () => {
-      const { rolls, total, expr: ex } = rollNpcDmg(dmgExpr);
-      let html = `<div style="font-size:.72rem;color:var(--text-muted)">${ex} → [${rolls.join(', ')}]</div>`;
-      html += `<div style="font-family:'Audiowide';font-size:1.3rem;color:#FF2D2D">${total} DMG</div>`;
-      showNpcResult(html);
-    });
-  }
-
-  function showNpcResult(html) {
-    const el = panel.querySelector('#npcCtrlResult');
-    el.style.display = '';
-    el.innerHTML = html;
-  }
-}
 // ── DM damage roll (Feature 10) ──────────────────────────────
 document.getElementById('ctxDmgRoll')?.addEventListener('click', e => {
   e.stopPropagation();
@@ -2447,16 +2313,17 @@ canvas.addEventListener('mousedown', e => {
   } else if (S.tool==='measure') {
     const snapped = getSnapToken(wp);
     const pt = snapped ? {x: snapped.x, y: snapped.y} : wp;
+    // NPC controller: one-click measure — start always = controlled NPC, click = target
+    if (_npcControlMode && _npcControllerToken) {
+      S.measureStart = { x: _npcControllerToken.x, y: _npcControllerToken.y };
+      S.measureSourceToken = _npcControllerToken;
+      S.measureEnd = pt;
+      S.measureTargetToken = (snapped && snapped !== _npcControllerToken) ? snapped : null;
+      S.measuringActive = false;
+      markDirty();
+      return;
+    }
     if (!S.measuringActive) {
-      // NPC controller: auto-start measure from the controlled NPC's token
-      if (_npcControllerToken && !snapped) {
-        S.measureStart = { x: _npcControllerToken.x, y: _npcControllerToken.y };
-        S.measureSourceToken = _npcControllerToken;
-        S.measureEnd = pt; S.measuringActive = false;
-        S.measureTargetToken = snapped || null;
-        markDirty();
-        return;
-      }
       S.measureStart=pt; S.measureEnd=null; S.measuringActive=true;
       S.measureSourceToken=snapped||null;
       clearTimeout(S.measureTimer);
@@ -2708,7 +2575,9 @@ function isInputFocused() {
 document.addEventListener('keydown', e=>{
   if (e.code==='Space'&&e.target===document.body) { e.preventDefault(); S.spaceDown=true; setCursor('grab'); }
   if (IS_DM && !isInputFocused()) {
-    const map={'KeyV':'select','KeyM':'measure','KeyA':'aoe','KeyP':'pen','KeyR':'rect','KeyC':'circle','KeyD':'delete','KeyO':'cover','KeyU':'suppressive'};
+    const map = _npcControlMode
+      ? {'KeyV':'select','KeyM':'measure'}
+      : {'KeyV':'select','KeyM':'measure','KeyA':'aoe','KeyP':'pen','KeyR':'rect','KeyC':'circle','KeyD':'delete','KeyO':'cover','KeyU':'suppressive'};
     if (map[e.code]) setTool(map[e.code]);
   }
   if ((e.code==='Delete'||e.code==='Backspace')&&!isInputFocused()&&IS_DM) {
@@ -3571,22 +3440,26 @@ document.getElementById('fogHoverPopup')?.addEventListener('mouseenter', () => c
 document.getElementById('fogHoverPopup')?.addEventListener('mouseleave', () => hideFogHoverPopup(80));
 
 // ── Damage dice animation (reusable, module-level) ────────────
-function showDmgDiceAnim(total, label, onDone) {
+function showDmgDiceAnim(total, label, onDone, critInjury = false) {
   const overlay = document.getElementById('atkDiceOverlay');
   const numEl   = document.getElementById('atkDiceNum');
   const lblEl   = document.getElementById('atkDiceLabel');
+  const dieEl   = overlay?.querySelector('.atk-dice-d10');
   if (!overlay) { onDone(); return; }
   overlay.style.display = 'flex';
+  dieEl?.classList.remove('glow-green', 'glow-red', 'glow-orange');
   numEl.textContent = '?'; numEl.className = 'atk-dice-num rolling';
   lblEl.textContent = '';
   setTimeout(() => {
     numEl.textContent = total;
     numEl.className   = 'atk-dice-num';
     numEl.style.color = '#FF8C00';
+    if (critInjury) dieEl?.classList.add('glow-orange');
     lblEl.innerHTML   = `<span style="font-family:Audiowide,sans-serif;font-size:.72rem;color:#FF8C00">${label}</span>`;
   }, 480);
   setTimeout(() => {
     overlay.style.display = 'none';
+    dieEl?.classList.remove('glow-green', 'glow-red', 'glow-orange');
     numEl.style.color = '';
     onDone();
   }, 2100);
@@ -3604,7 +3477,7 @@ function showDmgDiceAnim(total, label, onDone) {
 
   function startCloseTimer() {
     clearTimeout(_closeTimer);
-    _closeTimer = setTimeout(() => popup.classList.remove('open'), 6000);
+    _closeTimer = setTimeout(() => { popup.classList.remove('open', 'glow-green', 'glow-red'); }, 6000);
   }
 
   fab.addEventListener('click', () => {
@@ -3612,13 +3485,13 @@ function showDmgDiceAnim(total, label, onDone) {
     if (popup.classList.contains('open')) startCloseTimer();
   });
   document.getElementById('mapDiceClose').addEventListener('click', () => {
-    popup.classList.remove('open'); clearTimeout(_closeTimer);
+    popup.classList.remove('open', 'glow-green', 'glow-red'); clearTimeout(_closeTimer);
   });
   popup.addEventListener('mouseenter', startCloseTimer);
   popup.addEventListener('input',      startCloseTimer);
   document.addEventListener('click', e => {
     if (popup.classList.contains('open') && !popup.contains(e.target) && e.target !== fab) {
-      popup.classList.remove('open'); clearTimeout(_closeTimer);
+      popup.classList.remove('open', 'glow-green', 'glow-red'); clearTimeout(_closeTimer);
     }
   }, true);
 
@@ -3642,11 +3515,14 @@ function showDmgDiceAnim(total, label, onDone) {
     if (!res) { showMapToast('Ungültige Formel', 'red'); return; }
     const { rolls, total, isCritS, isCritF } = res;
     // Animate
+    popup.classList.remove('glow-green', 'glow-red');
     numEl.className = 'map-dice-num spinning'; numEl.textContent = '?';
     detEl.textContent = '';
     setTimeout(() => {
       numEl.textContent = total;
       numEl.className   = 'map-dice-num pop' + (isCritS?' crit-s':isCritF?' crit-f':'');
+      if (isCritS) popup.classList.add('glow-green');
+      if (isCritF) popup.classList.add('glow-red');
       const detail = `[${rolls.join(', ')}]${res.bonus?((res.bonus>0?'+':'')+res.bonus):''}` +
         (isCritS ? ' 🎯 CRITICAL!' : isCritF ? ' 💀 FUMBLE!' : '');
       detEl.textContent = detail;
@@ -3830,11 +3706,12 @@ function buildPlayerPanel() {
 
   document.getElementById('playerPanel').innerHTML=`
     <div class="player-map-portrait">
-      ${c.image_url?`<img src="${c.image_url}" alt="">`:`<div class="avatar-fallback">⚡</div>`}
+      ${c.image_url?`<img src="${c.image_url}" alt="">`:`<div class="avatar-fallback">${_npcControlMode?'👤':'⚡'}</div>`}
       <div>
         <div class="player-map-pname">${c.handle||c.name||'—'}</div>
-        <div class="player-map-prole">${c.role||''}</div>
+        <div class="player-map-prole">${_npcControlMode?'🎮 NPC':(c.role||'')}</div>
       </div>
+      ${_npcControlMode?`<button id="npcCtrlBackBtn" title="Zurück zur DM-Ansicht" style="margin-left:auto;background:rgba(255,45,45,.15);border:2px solid var(--red);border-radius:6px;color:var(--red);cursor:pointer;padding:.5rem 1rem;font-size:.9rem;font-weight:700;box-shadow:0 0 12px rgba(255,45,45,.5),0 0 24px rgba(255,45,45,.2);letter-spacing:.05em;white-space:nowrap;animation:npcBackGlow 2s ease-in-out infinite">🔙 DM</button>`:''}
     </div>
     <div class="player-map-stats">
       <div class="pmap-bar-row">
@@ -3970,6 +3847,9 @@ function buildPlayerPanel() {
     ${buffHtml}`;
 
   document.getElementById('playerPanel').style.display='flex';
+
+  // NPC controller: back-to-DM button
+  document.getElementById('npcCtrlBackBtn')?.addEventListener('click', () => setNpcController(null));
 
   // ── Attack flow state ────────────────────────────────────────
   // _atkDv / _atkRollTotal / _dmgTotal / _autofireOn / _atkAimed / _atkWeaponClass / _critInjuryPending
@@ -4141,6 +4021,7 @@ function buildPlayerPanel() {
     const raw = S.activeWeapon?.rawIdx != null ? S.char?.weapons?.[S.activeWeapon.rawIdx] : null;
     if (!raw) return;
     raw.loaded_ammo = e.target.value;
+    if (_npcControlMode) return;
     const { patchCharacter } = await import('./assets/js/supabase.js');
     await patchCharacter(CHAR_ID, { weapons: S.char.weapons }).catch(()=>{});
   });
@@ -4170,9 +4051,10 @@ function buildPlayerPanel() {
     const rawW = S.char?.weapons?.[S.activeWeapon?.rawIdx];
     if (!rawW) return;
     rawW.ammo_current = rawW.magazine_max ?? rawW.ammo_current;
+    updateMwcMag();
+    if (_npcControlMode) { showMapToast('Waffe nachgeladen', 'cyan'); return; }
     const { patchCharacter } = await import('./assets/js/supabase.js');
     await patchCharacter(CHAR_ID, { weapons: S.char.weapons }).catch(()=>{});
-    updateMwcMag();
     showMapToast('Waffe nachgeladen', 'cyan');
   });
 
@@ -4181,13 +4063,17 @@ function buildPlayerPanel() {
     const overlay = document.getElementById('atkDiceOverlay');
     const numEl   = document.getElementById('atkDiceNum');
     const lblEl   = document.getElementById('atkDiceLabel');
+    const dieEl   = overlay?.querySelector('.atk-dice-d10');
     if (!overlay) { onDone(); return; }
     overlay.style.display = 'flex';
+    dieEl?.classList.remove('glow-green', 'glow-red', 'glow-orange');
     numEl.textContent = '?'; numEl.className = 'atk-dice-num rolling';
     lblEl.textContent = '';
     setTimeout(() => {
       numEl.textContent = d10;
       numEl.className = 'atk-dice-num ' + (isCrit ? 'crit' : isFumble ? 'fumble' : '');
+      if (isCrit)   dieEl?.classList.add('glow-green');
+      if (isFumble) dieEl?.classList.add('glow-red');
       const critStr = isCrit ? ` + ${bonus}🎯` : isFumble ? ` − ${bonus}💀` : '';
       lblEl.innerHTML =
         `d10: ${d10}${critStr} + REF ${ref} + Skill ${skill}${mod ? (mod>0?` +${mod}`:` ${mod}`):''}` +
@@ -4196,6 +4082,7 @@ function buildPlayerPanel() {
     }, 480);
     setTimeout(() => {
       overlay.style.display = 'none';
+      dieEl?.classList.remove('glow-green', 'glow-red', 'glow-orange');
       onDone();
     }, 2100);
   }
@@ -4270,7 +4157,7 @@ function buildPlayerPanel() {
       statVal: ref, skillVal: skill, actionType: 'ranged_attack',
       manualMods: [manualMod, aimedMod, precisionBonus], isSkillCheck: true,
       context: `Angriff: ${S.activeWeapon?.name || 'Waffe'}${S.measureTargetToken ? ' → ' + S.measureTargetToken.name : ''}`,
-      characterId: S.char?.id || CHAR_ID, characterName: S.char?.handle || S.char?.name || null,
+      characterId: _npcControlMode ? null : (S.char?.id || CHAR_ID), characterName: S.char?.handle || S.char?.name || null,
     });
 
     const d10      = result.individualRolls[0]?.value ?? 1;
@@ -4342,7 +4229,7 @@ function buildPlayerPanel() {
     // Ammo-Abzug sofort (nicht erst nach Animation)
     // Deduct ammo
     const rawW = S.char?.weapons?.[w?.rawIdx];
-    if (rawW) {
+    if (rawW && rawW.magazine_max != null && !_npcControlMode) {
       rawW.ammo_current = Math.max(0, (rawW.ammo_current ?? rawW.magazine_max ?? 0) - (_autofireOn ? 10 : 1));
       import('./assets/js/supabase.js').then(({ patchCharacter }) => {
         patchCharacter(CHAR_ID, { weapons: S.char.weapons }).catch(()=>{});
@@ -4352,7 +4239,7 @@ function buildPlayerPanel() {
 
     // Shotgun cone — queue additional targets (Feature 11)
     if (w?.isShotgun && S.shotgunConeActive) {
-      const ownToken = S.tokens.find(t => t.charId === CHAR_ID);
+      const ownToken = getOwnToken();
       if (ownToken) {
         const coneLen = 6*S.gridSize, coneAngle = Math.PI/3;
         const coneTargets = S.tokens.filter(t =>
@@ -4382,7 +4269,7 @@ function buildPlayerPanel() {
       document.getElementById('atkSpInput').value = tgtSP;
       document.getElementById('atkStep3').style.display = '';
       updateArmorCalc();
-    });
+    }, critInjury);
   });
 
   // ── Armor calc (Step 3) — Melee-Halbierung + Aimed-Multiplier ──
@@ -4871,9 +4758,10 @@ async function boot() {
       const n = payload.new; if (!n) return;
       applyNpcToToken(n);
       // Refresh NPC controller panel if this NPC is currently being played
-      if (_npcController?.id === n.id) {
+      if (_npcControlMode && _npcController?.id === n.id) {
         Object.assign(_npcController, n);
-        buildNpcControllerPanel();
+        S.char = npcAsChar(_npcController);
+        buildPlayerPanel();
       }
     });
 
