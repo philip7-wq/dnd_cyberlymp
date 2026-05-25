@@ -83,6 +83,7 @@ export async function mount(panel, character) {
 // GARAGE — eigene Family Vehicles
 // ============================================================
 async function renderGarage(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Family Garage</div>
@@ -151,6 +152,7 @@ function openVehicleForm(character, view, rank) {
 // MOTORPOOL — Reference per Rank
 // ============================================================
 function renderPool(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Family Motorpool</div>
@@ -189,6 +191,7 @@ function renderPool(view, character) {
 // UPGRADES Reference
 // ============================================================
 function renderUpgrades(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Vehicle Upgrades Katalog</div>
@@ -226,6 +229,7 @@ function renderUpgrades(view, character) {
 // DRIVE ACTIONS
 // ============================================================
 function renderDrive(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Drive / Pilot Actions</div>
@@ -253,10 +257,12 @@ function renderDrive(view, character) {
 }
 
 function openDriveRoll(character, action, motoRank) {
+  const stats = character.stats || {};
+  const defaultStat = stats[action.stat] ?? 6;
   const html = `
     <h3>${action.name}</h3>
     <div class="role-card-desc">${action.desc}</div>
-    <label>${action.stat}</label><input type="number" id="dr-stat" value="6">
+    <label>${action.stat}</label><input type="number" id="dr-stat" value="${defaultStat}">
     <label>${action.skill}</label><input type="number" id="dr-skill" value="5">
     <label>Moto Rank (auto)</label><input type="number" id="dr-moto" value="${motoRank}">
     <label>Modifier</label><input type="number" id="dr-mod" value="0">

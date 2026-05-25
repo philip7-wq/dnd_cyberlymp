@@ -69,6 +69,7 @@ export async function mount(panel, character) {
 }
 
 function renderDistribution(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   let state = getCAState(character);
 
@@ -157,6 +158,7 @@ function renderDistribution(view, character) {
 }
 
 function renderRolls(view, character) {
+  view.innerHTML = '';
   const state = getCAState(character);
 
   // Berechne aktuelle Bonis
@@ -203,11 +205,16 @@ function renderRolls(view, character) {
 
 function openSoloRoll(character, action, fumbleRecovery) {
   const isDamage = action.kind === 'damage';
+  const stats = character.stats || {};
+  const defaultStat = action.key === 'initiative' ? (stats.REF ?? 6)
+    : action.key === 'perception' ? (stats.INT ?? 6)
+    : action.key === 'melee' ? (stats.DEX ?? 6)
+    : (stats.REF ?? 6);
   const html = `
     <h3>${action.name}</h3>
     <div class="role-card-desc">${action.desc}</div>
     ${!isDamage ? `
-      <label>Stat</label><input type="number" id="r-stat" value="6">
+      <label>Stat</label><input type="number" id="r-stat" value="${defaultStat}">
       <label>Skill</label><input type="number" id="r-skill" value="6">
     ` : `
       <label>Weapon Damage Roll (manuell, z.B. 3d6=12)</label>

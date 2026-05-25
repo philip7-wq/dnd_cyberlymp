@@ -142,6 +142,7 @@ export async function mount(panel, character) {
 // NET CRAWL — Architecture Tracker
 // ============================================================
 async function renderNetCrawl(view, character) {
+  view.innerHTML = '';
   let arch = (await getInventory(character.id, 'architecture'))[0];
 
   if (!arch) {
@@ -244,6 +245,7 @@ File|Secret Docs|12"></textarea>
 // NET ACTIONS — Quick Rolls
 // ============================================================
 function renderActions(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">NET Actions</div>
     <div class="role-card-desc" style="margin-bottom:10px;">
@@ -266,7 +268,7 @@ function openNetActionFlow(character, action) {
   const html = `
     <h3>${action.name}</h3>
     <div class="role-card-desc">${action.desc}</div>
-    <label>Interface Rank</label><input type="number" id="na-rank" value="4">
+    <label>Interface Rank</label><input type="number" id="na-rank" value="${character.role_rank || 4}">
     <label>Modifier (z.B. +2 von Worm für Backdoor, +2 von See Ya für Pathfinder)</label>
     <input type="number" id="na-mod" value="0">
     <label>DV</label><input type="number" id="na-dv" placeholder="z.B. 8">
@@ -298,6 +300,7 @@ function openNetActionFlow(character, action) {
 // DECK / PROGRAMS — Player's loadout
 // ============================================================
 async function renderDeck(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Programme im Deck</div>
     <div class="role-card-desc" style="margin-bottom:10px;">
@@ -382,6 +385,7 @@ function openAddProgramFromList(character, view) {
 // PROGRAM REFERENCE — read-only Table
 // ============================================================
 function renderProgramReference(view) {
+  view.innerHTML = '';
   const block = (title, list, hasICEStats) => {
     const headers = hasICEStats
       ? '<th>Name</th><th>Cost</th><th>PER</th><th>SPD</th><th>ATK</th><th>DEF</th><th>REZ</th><th>Effect</th>'

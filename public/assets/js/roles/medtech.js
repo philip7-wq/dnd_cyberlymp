@@ -10,7 +10,7 @@ import {
   buildHeader, buildActionCard, buildInventoryItem, buildSubtabs,
   buildLog, openModal, pickTarget, performCheck, renderRollResult,
   getInventory, addInventoryItem, useInventoryItem, deleteInventoryItem,
-  updateInventoryItem, logAction, el
+  updateInventoryItem, logAction, fetchTarget, patchTarget, el
 } from './roles-core.js';
 
 // 5 offizielle Medtech Pharmaceuticals (Playbook pg. 150)
@@ -100,6 +100,7 @@ export async function mount(panel, character) {
 // SPECIALTIES — manuelles Tracking (1 Punkt pro Medicine-Rank)
 // ============================================================
 async function renderSpecialties(view, character) {
+  view.innerHTML = '';
   const items = await getInventory(character.id, 'specialty');
   let spec = items.find(i => i.meta?.kind === 'medicine');
   if (!spec) {
@@ -169,6 +170,7 @@ async function renderSpecialties(view, character) {
 // # Doses = Medical Tech Skill Level
 // ============================================================
 async function renderPharma(view, character) {
+  view.innerHTML = '';
   const specItems = await getInventory(character.id, 'specialty');
   const spec = specItems.find(i => i.meta?.kind === 'medicine');
   const pharmaPoints = spec?.meta?.pharma || 0;
@@ -198,10 +200,11 @@ async function renderPharma(view, character) {
 }
 
 function openBrewModal(character, recipe) {
+  const stats = character.stats || {};
   const html = `
     <h3>Brew: ${recipe.name}</h3>
     <div class="role-card-desc">${recipe.effect}</div>
-    <label>TECH</label><input type="number" id="cr-stat" value="6">
+    <label>TECH</label><input type="number" id="cr-stat" value="${stats.TECH ?? 6}">
     <label>Medical Tech Skill</label><input type="number" id="cr-skill" value="6">
     <label>Modifier</label><input type="number" id="cr-mod" value="0">
     <label>Anzahl Doses (= Medical Tech Skill)</label>
@@ -247,6 +250,7 @@ function openBrewModal(character, recipe) {
 // PATIENT — Apply Drugs & Treatments
 // ============================================================
 async function renderPatient(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Treatments</div>
     <div class="role-card-desc" style="margin-bottom:10px;">
@@ -284,6 +288,15 @@ async function renderPatient(view, character) {
       onUse: async () => {
         const target = await pickTarget();
         if (!target) return;
+        if (item.meta?.recipe === 'speedheal') {
+          const tgt = await fetchTarget(target, character.id);
+          if (tgt && (tgt.current_hp ?? 0) > 0) {
+            const s = tgt.stats || {};
+            const heal = (s.BODY || 0) + (s.WILL || 0);
+            const newHp = Math.min(tgt.max_hp ?? tgt.current_hp, (tgt.current_hp ?? 0) + heal);
+            await patchTarget(target, { current_hp: newHp }, character.id);
+          }
+        }
         await useInventoryItem(item.id, 1);
         await logAction(character.id, 'medtech', `Verabreicht: ${item.name}`, {
           target, summary: item.description
@@ -299,10 +312,11 @@ async function openTreatmentFlow(character, treatment) {
   const target = await pickTarget();
   if (!target) return;
 
+  const stats = character.stats || {};
   const html = `
     <h3>${treatment.name} → ${target.type === 'self' ? 'Selbst' : target.name}</h3>
     <div class="role-card-desc">${treatment.effect}</div>
-    <label>TECH</label><input type="number" id="tr-stat" value="6">
+    <label>TECH</label><input type="number" id="tr-stat" value="${stats.TECH ?? 6}">
     <label>${treatment.skill} Skill</label><input type="number" id="tr-skill" value="6">
     <label>Modifier (Tools, Conditions…)</label><input type="number" id="tr-mod" value="0">
     <div class="role-modal-actions">
@@ -321,6 +335,18 @@ async function openTreatmentFlow(character, treatment) {
         dv: treatment.dv
       });
       modal.querySelector('#tr-out').innerHTML = renderRollResult(roll);
+
+      if (roll.success) {
+        const tgt = await fetchTarget(target, character.id);
+        if (tgt) {
+          let heal = 0;
+          if (treatment.id === 'firstaid')  heal = 5;
+          if (treatment.id === 'paramedic') heal = Math.floor(Math.random() * 6) + 2;
+          const newHp = Math.min(tgt.max_hp ?? tgt.current_hp, (tgt.current_hp ?? 0) + heal);
+          await patchTarget(target, { current_hp: newHp }, character.id);
+        }
+      }
+
       await logAction(character.id, 'medtech', `${treatment.name} → ${target.type === 'self' ? 'self' : target.name}`, {
         target, roll, summary: roll.success ? treatment.effect : 'Treatment fehlgeschlagen'
       });
@@ -333,6 +359,7 @@ async function openTreatmentFlow(character, treatment) {
 // SURGERY — nur via Medicine Specialty Surgery
 // ============================================================
 async function renderSurgery(view, character) {
+  view.innerHTML = '';
   const specItems = await getInventory(character.id, 'specialty');
   const spec = specItems.find(i => i.meta?.kind === 'medicine');
   const surgeryPts = spec?.meta?.surgery || 0;
@@ -362,10 +389,11 @@ async function openSurgeryFlow(character, proc, defaultSkill) {
   const target = await pickTarget();
   if (!target) return;
 
+  const stats = character.stats || {};
   const html = `
     <h3>${proc.name} → ${target.type === 'self' ? 'Selbst' : target.name}</h3>
     <div class="role-card-desc">${proc.desc}</div>
-    <label>TECH</label><input type="number" id="sg-stat" value="6">
+    <label>TECH</label><input type="number" id="sg-stat" value="${stats.TECH ?? 6}">
     <label>Surgery Skill</label><input type="number" id="sg-skill" value="${defaultSkill}">
     <label>Modifier</label><input type="number" id="sg-mod" value="0">
     <label>Notes</label><textarea id="sg-notes"></textarea>
@@ -399,6 +427,7 @@ async function openSurgeryFlow(character, proc, defaultSkill) {
 // INVENTORY
 // ============================================================
 async function renderInventory(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Brewed Drugs</div>
     <div id="med-inv" class="role-inv"></div>
@@ -415,6 +444,15 @@ async function renderInventory(view, character) {
       onUse: async () => {
         const target = await pickTarget();
         if (!target) return;
+        if (item.meta?.recipe === 'speedheal') {
+          const tgt = await fetchTarget(target, character.id);
+          if (tgt && (tgt.current_hp ?? 0) > 0) {
+            const s = tgt.stats || {};
+            const heal = (s.BODY || 0) + (s.WILL || 0);
+            const newHp = Math.min(tgt.max_hp ?? tgt.current_hp, (tgt.current_hp ?? 0) + heal);
+            await patchTarget(target, { current_hp: newHp }, character.id);
+          }
+        }
         await useInventoryItem(item.id, 1);
         await logAction(character.id, 'medtech', `Verabreicht: ${item.name}`, {
           target, summary: item.description

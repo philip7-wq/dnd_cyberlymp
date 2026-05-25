@@ -75,6 +75,7 @@ export async function mount(panel, character) {
 // CREDIBILITY OVERVIEW
 // ============================================================
 function renderCredibility(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   const c = getCredibilityForRank(rank);
 
@@ -106,6 +107,7 @@ function renderCredibility(view, character) {
 // RUMORS — Passive + Active
 // ============================================================
 function renderRumors(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Rumors</div>
     <div class="role-card-desc" style="margin-bottom:10px;">
@@ -173,6 +175,7 @@ function openRumorFlow(character, tier) {
 // PUBLISH STORY — Believability Roll
 // ============================================================
 function renderPublish(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   const c = getCredibilityForRank(rank);
 
@@ -245,6 +248,7 @@ function openPublishFlow(character, view, cred) {
 }
 
 async function renderStories(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Veröffentlichte Stories</div>
     <div id="story-list" class="role-inv"></div>

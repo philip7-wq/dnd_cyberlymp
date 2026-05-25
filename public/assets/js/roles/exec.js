@@ -81,6 +81,7 @@ export async function mount(panel, character) {
 // TEAM MEMBERS
 // ============================================================
 async function renderTeam(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Dein Team</div>
     <div class="role-card-desc" style="margin-bottom:10px;">
@@ -249,6 +250,7 @@ async function openLoyaltySave(item, character) {
 // PERKS — Rank-basierte Corporate Vorteile
 // ============================================================
 function renderPerks(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   const perks = [
     { rank: 1, name: 'Businesswear Suit',   unlocked: rank >= 1,
@@ -326,6 +328,7 @@ function quickRoll(character, role, action) {
 // LOYALTY REFERENCE
 // ============================================================
 function renderLoyalty(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Loyalty System</div>
     <div class="role-card-desc" style="margin-bottom:10px;">

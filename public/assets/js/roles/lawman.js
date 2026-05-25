@@ -93,6 +93,7 @@ export async function mount(panel, character) {
 // CALL BACKUP — 1d10 ≤ Rank
 // ============================================================
 function renderBackup(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   const currentTier = getTierForRank(rank);
 
@@ -178,6 +179,7 @@ function openBackupCall(character, rank) {
 // BACKUP TIERS REFERENCE
 // ============================================================
 function renderTiers(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Alle Backup Tiers (Playbook-Stats)</div>
@@ -209,6 +211,7 @@ function renderTiers(view, character) {
 // AUTHORITY ROLLS
 // ============================================================
 function renderAuthority(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Authority & Investigation Checks</div>
     <div class="role-cards" id="au-cards"></div>

@@ -90,6 +90,7 @@ export async function mount(panel, character) {
 // STAGE — Charismatic Impact Roll
 // ============================================================
 function renderStage(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   const tier = getImpactTierForRank(rank);
 
@@ -193,6 +194,7 @@ function openImpactFlow(character, group, rank, effectDesc, mode) {
 // IMPACT TIERS Reference
 // ============================================================
 function renderTiers(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
 
   view.appendChild(el(`<div class="role-section">
@@ -225,6 +227,7 @@ function renderTiers(view, character) {
 // FANS
 // ============================================================
 async function renderFans(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Fan Network</div>
     <div class="role-card-desc" style="margin-bottom:10px;">
@@ -284,6 +287,7 @@ async function renderFans(view, character) {
 // SETLIST — eigene Songs/Speeches/Performances
 // ============================================================
 async function renderSongs(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Setlist / Performance History</div>
     <div class="role-card-desc">

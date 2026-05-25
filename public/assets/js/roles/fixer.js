@@ -82,6 +82,7 @@ export async function mount(panel, character) {
 // HAGGLE — COOL + Trading + Operator + 1d10 vs Target's same
 // ============================================================
 function renderHaggle(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   const info = getOperatorRankInfo(rank);
 
@@ -102,6 +103,7 @@ function renderHaggle(view, character) {
 }
 
 function openHaggleFlow(character, rank, info) {
+  const stats = character.stats || {};
   const html = `
     <h3>Haggle vs Target</h3>
     <div class="role-card-desc">Roll: COOL + Trading + Operator + 1d10</div>
@@ -109,7 +111,7 @@ function openHaggleFlow(character, rank, info) {
     <input id="hg-item" placeholder="z.B. Militech Crusher">
     <label>Standardpreis (€$)</label>
     <input type="number" id="hg-price" value="500">
-    <label>Dein COOL</label><input type="number" id="hg-cool" value="6">
+    <label>Dein COOL</label><input type="number" id="hg-cool" value="${stats.COOL ?? 6}">
     <label>Dein Trading Skill</label><input type="number" id="hg-trade" value="6">
     <label>Dein Operator Rank</label><input type="number" id="hg-op" value="${rank}">
     <hr style="border:0; border-top:1px solid var(--role-line); margin:12px 0;">
@@ -168,6 +170,7 @@ function openHaggleFlow(character, rank, info) {
 // REACH — was kann gefunden werden
 // ============================================================
 function renderReach(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Reach Levels — Was du beschaffen kannst</div>
@@ -197,6 +200,7 @@ function renderReach(view, character) {
 // GREASE — Sprachen/Kulturen
 // ============================================================
 function renderGrease(view, character) {
+  view.innerHTML = '';
   const rank = character.role_rank || 4;
   const info = getOperatorRankInfo(rank);
 
@@ -227,6 +231,7 @@ function renderGrease(view, character) {
 // CONTACTS
 // ============================================================
 async function renderContacts(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Kontakte / Connections</div>
     <div id="cn-list" class="role-inv"></div>

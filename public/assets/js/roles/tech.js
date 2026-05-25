@@ -82,6 +82,7 @@ export async function mount(panel, character) {
 // SPECIALTIES
 // ============================================================
 async function renderSpecialties(view, character) {
+  view.innerHTML = '';
   const items = await getInventory(character.id, 'specialty');
   let spec = items.find(i => i.meta?.kind === 'maker');
   if (!spec) {
@@ -138,6 +139,7 @@ async function renderSpecialties(view, character) {
 // WORKSHOP — Specialty Roll + Price-Category
 // ============================================================
 async function renderWorkshop(view, character) {
+  view.innerHTML = '';
   const items = await getInventory(character.id, 'specialty');
   const spec = items.find(i => i.meta?.kind === 'maker') || { meta: {} };
 
@@ -174,6 +176,7 @@ async function renderWorkshop(view, character) {
 }
 
 function openSpecModal(character, spec, defaultSpecRank, view) {
+  const stats = character.stats || {};
   const html = `
     <h3>${spec.name}</h3>
     <div class="role-card-desc">${spec.desc}</div>
@@ -183,7 +186,7 @@ function openSpecModal(character, spec, defaultSpecRank, view) {
     <select id="t-cat">
       ${PRICE_CATEGORIES.map(p => `<option value="${p.dv}|${p.name}|${p.time}">${p.name} (DV ${p.dv}, ${p.time})</option>`).join('')}
     </select>
-    <label>TECH</label><input type="number" id="t-stat" value="7">
+    <label>TECH</label><input type="number" id="t-stat" value="${stats.TECH ?? 6}">
     <label>Tech-Skill (Weaponstech, Cybertech, etc.)</label>
     <input type="number" id="t-skill" value="6">
     <label>${spec.name} Rank</label>
@@ -231,6 +234,7 @@ function openSpecModal(character, spec, defaultSpecRank, view) {
 }
 
 async function renderProjects(view, character) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Aktive & abgeschlossene Projekte</div>
     <div id="proj-list" class="role-inv"></div>
@@ -250,6 +254,7 @@ async function renderProjects(view, character) {
 }
 
 function renderUpgradeRef(view) {
+  view.innerHTML = '';
   view.appendChild(el(`<div class="role-section">
     <div class="role-section-title">Upgrade Expertise — Optionen</div>
     <div class="role-card-desc" style="margin-bottom:10px;">

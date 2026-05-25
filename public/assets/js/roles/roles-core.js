@@ -346,6 +346,27 @@ export async function updateInventoryItem(itemId, patch) {
   await supabase.from('role_inventory').update(patch).eq('id', itemId);
 }
 
+export async function fetchTarget(target, selfCharId) {
+  const id = target.type === 'self' ? selfCharId : target.id;
+  if (target.type === 'npc') {
+    const { data } = await supabase.from('npcs').select('id, hp_current, hp_max').eq('id', id).single();
+    return data ? { ...data, current_hp: data.hp_current, max_hp: data.hp_max } : null;
+  }
+  const { data } = await supabase.from('characters').select('id, current_hp, max_hp, stats').eq('id', id).single();
+  return data;
+}
+
+export async function patchTarget(target, patch, selfCharId) {
+  const id = target.type === 'self' ? selfCharId : target.id;
+  if (target.type === 'npc') {
+    const npcPatch = {};
+    if (patch.current_hp !== undefined) npcPatch.hp_current = patch.current_hp;
+    await supabase.from('npcs').update(npcPatch).eq('id', id);
+  } else {
+    await supabase.from('characters').update(patch).eq('id', id);
+  }
+}
+
 export async function getRecentActions(characterId, limit = 25) {
   const { data } = await supabase.from('role_actions').select('*').eq('character_id', characterId).order('created_at', { ascending: false }).limit(limit);
   return data || [];
