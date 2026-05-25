@@ -1981,8 +1981,15 @@ async function applyDamageToToken(tgt, through, opts = {}) {
     tgt.critInjuries = [...(tgt.critInjuries || []), ...injuriesAdded];
     patch.critical_injuries = JSON.stringify(tgt.critInjuries);
   }
-  if (tgt.type === 'char' && tgt.charId) { patch.current_hp = newHp; await patchCharacter(tgt.charId, patch).catch(() => {}); }
-  else if (tgt.type === 'npc' && tgt.npcId) { patch.hp_current = newHp; await patchNpc(tgt.npcId, patch).catch(() => {}); }
+  if (tgt.type === 'char' && tgt.charId) {
+    patch.current_hp = newHp;
+    await patchCharacter(tgt.charId, patch).catch(e => console.warn('[combat] patchCharacter:', e));
+  } else if (tgt.type === 'npc' && tgt.npcId) {
+    patch.hp_current = newHp;
+    await patchNpc(tgt.npcId, patch).catch(e => console.warn('[combat] patchNpc:', e));
+  } else {
+    console.warn('[combat] applyDamageToToken: unbekannter Typ oder fehlende ID', tgt.type, tgt);
+  }
 
   saveTokens(); markDirty(); redraw();
   let msg = `${hpDmg} HP → ${tgt.name}`;
@@ -3746,6 +3753,8 @@ function buildPlayerPanel() {
     S.shotgunConeActive = false;
     S.showRangeZones    = false;
     _ringsKey = '';
+    // Alten Combat-State löschen wenn Waffe gewechselt wird
+    _atkRollTotal = null; _dmgTotal = null; _critInjuryPending = false;
     const zoneBtn = document.getElementById('mapZoneToggleBtn');
     if (zoneBtn) zoneBtn.textContent = '👁 Zonen';
     const raw = weapons[i];
@@ -4057,28 +4066,43 @@ function buildPlayerPanel() {
     label += ` = ${through} HP · SP → ${spAfter}`;
     if (_critInjuryPending) label += ' · +5 Crit-Injury';
     document.getElementById('atkFinalDmg').textContent = label;
-    document.getElementById('atkApplyDmg').style.display = through > 0 ? '' : 'none';
+    // Button immer zeigen wenn Schaden gewürfelt — Armor kann Schaden komplett abfangen,
+    // aber der Spieler soll trotzdem bestätigen (SP abliert auch bei 0 Schaden).
+    const applyBtn = document.getElementById('atkApplyDmg');
+    if (applyBtn && _dmgTotal != null) {
+      const tgtName = S.measureTargetToken?.name;
+      applyBtn.textContent = `✅ Anwenden${tgtName ? ` → ${tgtName}` : ''}`;
+      applyBtn.style.display = '';
+    }
   }
   document.getElementById('atkSpInput')?.addEventListener('input', updateArmorCalc);
 
-  // ── Apply damage to target (Feature 8 + Aimed + Crit-Injury) ────
+  // ── Apply damage to target ────────────────────────────────────
   document.getElementById('atkApplyDmg')?.addEventListener('click', async () => {
     const sp  = parseInt(document.getElementById('atkSpInput').value) || 0;
     const tgt = S.measureTargetToken;
-    if (!tgt) { showMapToast('Kein Ziel gemessen', 'red'); return; }
-    const isHead = _atkAimed === 'head';
+    if (!tgt) { showMapToast('❌ Kein Ziel gemessen — Messtool benutzen', 'red'); return; }
+    if (_dmgTotal == null) { showMapToast('❌ Erst Schaden würfeln', 'red'); return; }
+    const isHead      = _atkAimed === 'head';
     const crackedSkull = isHead && tokenHasInjury(tgt, 'Cracked Skull');
-    const { through, spAfter } = computeDamageThrough(_dmgTotal ?? 0, sp,
+    const { through, spAfter } = computeDamageThrough(_dmgTotal, sp,
       { weaponClass: _atkWeaponClass, aimedShot: _atkAimed, crackedSkull });
     const ok = await mapConfirm(
-      `${S.activeWeapon?.name || 'Angriff'} → ${tgt.name}${_atkAimed ? ` (Aimed ${_atkAimed})` : ''}:\n` +
-      `${through} HP Schaden (SP ${sp} → ${spAfter})` +
-      (_critInjuryPending ? '\n⚠ Critical Injury (+5)' : '')
+      `${S.activeWeapon?.name || 'Angriff'} → ${tgt.name}${_atkAimed ? ` [Aimed ${_atkAimed}]` : ''}\n` +
+      `Ziel-Typ: ${tgt.type === 'npc' ? 'NPC' : 'Charakter'}\n` +
+      `${through} HP Schaden (SP ${sp}→${spAfter})` +
+      (_critInjuryPending ? '\n⚠ Critical Injury +5' : '')
     );
     if (!ok) return;
-    await applyDamageToToken(tgt, through, {
-      isHead, spAfter, critInjury: _critInjuryPending, aimed: _atkAimed,
-    });
+    try {
+      await applyDamageToToken(tgt, through, {
+        isHead, spAfter, critInjury: _critInjuryPending, aimed: _atkAimed,
+      });
+    } catch (err) {
+      console.error('[combat] applyDamageToToken failed:', err);
+      showMapToast(`Fehler: ${err.message || err}`, 'red');
+      return;
+    }
     document.getElementById('atkResetBtn').click();
   });
 
@@ -4109,9 +4133,10 @@ function buildPlayerPanel() {
     }
   });
 
-  // ── Kampf-State nach Panel-Rebuild wiederherstellen ──────────
-  // Wenn ein Realtime-Update den Panel rebuilt während ein Angriff läuft,
-  // die korrekten Steps wieder einblenden (State kommt von Modul-Vars).
+  // ── Kampf-State + Button-State nach Panel-Rebuild wiederherstellen ──
+  // Realtime-Updates rufen buildPlayerPanel() neu auf → Button wird disabled,
+  // Steps werden versteckt. Hier alles anhand der Modul-Vars wiederherstellen.
+  updateDvInfoBox();   // button.disabled basierend auf aktueller Messung
   if (_atkRollTotal !== null) {
     document.getElementById('atkRollResult').style.display = '';
     document.getElementById('atkStep2').style.display = '';
@@ -4119,7 +4144,12 @@ function buildPlayerPanel() {
   if (_dmgTotal !== null) {
     document.getElementById('dmgRollResult').style.display = '';
     document.getElementById('atkStep3').style.display = '';
-    updateArmorCalc();   // zeigt atkApplyDmg wenn through > 0
+    const tgtSPr = _atkAimed === 'head'
+      ? (S.measureTargetToken?.headSP ?? 0)
+      : (S.measureTargetToken?.bodySP ?? 0);
+    const spInR = document.getElementById('atkSpInput');
+    if (spInR) spInR.value = tgtSPr;
+    updateArmorCalc();
   }
 }
 
