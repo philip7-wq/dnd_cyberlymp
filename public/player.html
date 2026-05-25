@@ -2994,8 +2994,9 @@ function renderCombatPanel() {
 
   document.getElementById('combatCombatants').innerHTML = combatants.map((c, i) => {
     const isActive = i === idx;
-    const isMe     = !c.isNpc && c.id === char.id;
-    if (c.isNpc) {
+    const isEnemy  = c.isNpc || (_allCharsFull.length > 0 && !_allCharsFull.some(ch => ch.id === c.id));
+    const isMe     = !isEnemy && c.id === char.id;
+    if (isEnemy) {
       if (!c.isVisibleToPlayers) return '';
       return `<div class="combat-card combat-card--npc${isActive ? ' combat-card--active' : ''}">
         <div class="combat-card-portrait">
