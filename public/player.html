@@ -1048,27 +1048,28 @@ function renderSkills() {
     const effStat  = sk.stat === 'EMP'
       ? Math.min(rawStat, Math.floor((char.current_humanity ?? 0) / 10))
       : rawStat;
-    const statVal  = Math.max(0, effStat - armorPen);
-    const base     = statVal + (sk.lvl || 0) - swPen + injPen;
-    const expr     = base >= 0 ? `1d10+${base}` : `1d10${base}`;
+    const statVal      = Math.max(0, effStat - armorPen);
+    const ipLvl        = sk.ip_lvl ?? 0;
+    const base         = statVal + (sk.lvl || 0) + ipLvl - swPen + injPen;
+    const expr         = base >= 0 ? `1d10+${base}` : `1d10${base}`;
     const penParts = [];
     if (armorPen > 0)  penParts.push(`−${armorPen} Rüstung`);
     if (swPen > 0)     penParts.push('−2 SW');
     if (injPen < 0)    penParts.push(`${injPen} Injury`);
     const penBadge = penParts.length
       ? `<span class="skill-pen-badge" title="${penParts.join(', ')}">⚠</span>` : '';
-    const upData   = skillUpgradeLookup(sk.name);
-    const nextLvl  = (sk.lvl ?? 0) + 1;
-    const cost     = upData
-      ? (upData.ip_cost_by_next_level?.[String(nextLvl)] ?? (20 * (upData.ip_cost_multiplier ?? 1) * (sk.lvl ?? 1)))
-      : null;
-    const ip       = char.improvement_points ?? 0;
-    const canAfford = cost !== null ? (ip >= cost && nextLvl <= 10) : nextLvl <= 10;
-    const upgradeBtn = nextLvl <= 10
+    const upData       = skillUpgradeLookup(sk.name);
+    const nextIpLvl    = ipLvl + 1;
+    const nextTotalLvl = (sk.lvl || 0) + nextIpLvl;
+    const mult         = upData?.ip_cost_multiplier ?? 1;
+    const cost         = upData?.ip_cost_by_next_level?.[String(nextTotalLvl)] ?? (nextTotalLvl * 20 * mult);
+    const ip           = char.improvement_points ?? 0;
+    const canAfford    = ip >= cost && nextTotalLvl <= 10;
+    const upgradeBtn   = nextTotalLvl <= 10
       ? `<button class="skill-up-btn${canAfford ? '' : ' unaffordable'}"
-                 data-skill="${sk.name}" data-cost="${cost ?? 0}" data-nextlvl="${nextLvl}"
-                 title="${cost !== null ? (canAfford ? `${cost} IP → Lvl ${nextLvl}` : `${cost - ip} IP fehlen`) : `Lvl ${nextLvl} (IP unbekannt)`}">▲</button>`
-      : `<span class="skill-maxed" title="Max">—</span>`;
+                 data-skill="${sk.name}" data-cost="${cost}" data-nextlvl="${nextIpLvl}"
+                 title="${canAfford ? `${cost} IP → +1 IP (Total Lvl ${nextTotalLvl})` : `${cost - ip} IP fehlen`}">▲</button>`
+      : `<span class="skill-maxed" title="Max (Total ${(sk.lvl||0)+ipLvl})">—</span>`;
     // Role-based visual notes
     const roleKey = (char.role || '').toLowerCase();
     const roleRank = char.role_ability_rank ?? 0;
@@ -1095,9 +1096,9 @@ function renderSkills() {
     return `<div class="skill-row">
       <button class="skill-fav-btn${favs.has(sk.name) ? ' active' : ''}" data-fav="${sk.name}">★</button>
       <span class="skill-name">${sk.name}</span>
-      <span class="skill-stat">${sk.stat}</span>
+      <span class="skill-stat">${statVal}</span>
       <span class="skill-lvl">${sk.lvl ?? 0}</span>
-      <span class="skill-base">${base}${penBadge}${motoNote}${surgNote}${medTechNote}${techFieldNote}</span>
+      <span class="skill-base">${ipLvl}${penBadge}${motoNote}${surgNote}${medTechNote}${techFieldNote}</span>
       <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1" title="1d10+${base}">⚄</button>
       ${upgradeBtn}
     </div>`;
@@ -1121,7 +1122,8 @@ function renderSkills() {
   const warnHtml = warnings.length
     ? `<div class="skill-penalty-banner">${warnings.join(' &nbsp;·&nbsp; ')}</div>` : '';
 
-  let html = warnHtml + `<div class="skill-ip-banner">Verfügbare IP: <strong id="skillIpDisplay">${char.improvement_points ?? 0}</strong></div>`;
+  const _ip = char.improvement_points ?? 0;
+  let html = warnHtml + `<div class="skill-ip-banner">Verfügbare IP: <strong id="skillIpDisplay">${_ip}</strong></div>`;
 
   // Favorites section
   const favSkills = [...favs].map(name => {
@@ -1135,7 +1137,7 @@ function renderSkills() {
   }
 
   html += '<div class="skill-row" style="font-size:.62rem;color:var(--text-muted);border-bottom:1px solid var(--border);padding-bottom:.3rem;margin-bottom:.4rem">'
-    + '<span></span><span>Skill</span><span style="text-align:center">Stat</span><span style="text-align:center">LVL</span><span style="text-align:center">Base</span><span></span><span style="text-align:center">UP</span></div>';
+    + '<span></span><span>Skill</span><span style="text-align:center">Stat</span><span style="text-align:center">Base</span><span style="text-align:center">LVL</span><span></span><span style="text-align:center">UP</span></div>';
 
   const orderedCats = [...CAT_ORDER.filter(c => groups[c]), ...Object.keys(groups).filter(c => !CAT_ORDER.includes(c))];
   for (const cat of orderedCats) {
@@ -2030,11 +2032,61 @@ function renderLifepath() {
 
 // ── Role tab ──────────────────────────────────────────────────
 
-function renderRoleTab() {
+async function renderRoleTab() {
   const container = document.getElementById('tab-role');
   if (!container) return;
-  mountRoleInterface(container, { ...char, role_rank: char.role_ability_rank })
-    .catch(e => console.error('[roles]', e));
+  try {
+    await mountRoleInterface(container, { ...char, role_rank: char.role_ability_rank });
+
+    // Rang-Up-Button am unteren Ende des Role-Panels
+    if (char.role) {
+      const rank     = char.role_ability_rank ?? 0;
+      const nextRank = rank + 1;
+      const cost     = nextRank * 60;
+      const ip       = char.improvement_points ?? 0;
+      const ROLE_LABELS = {
+        solo:'Combat Awareness', netrunner:'Interface', tech:'Maker',
+        medtech:'Medicine', media:'Credibility', exec:'Teamwork',
+        lawman:'Backup', fixer:'Operator', nomad:'Moto', rockerboy:'Charismatic Impact',
+      };
+      const abilityName = ROLE_LABELS[(char.role||'').toLowerCase()] || 'Role Ability';
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'padding:.75rem 1rem 1rem; border-top:1px solid #1e1e2a; margin-top:.5rem;';
+      if (nextRank <= 10) {
+        const canAfford = ip >= cost;
+        wrap.innerHTML = `
+          <div style="font-size:.55rem;letter-spacing:.15em;color:#555;text-transform:uppercase;
+            font-family:Audiowide,sans-serif;margin-bottom:.45rem">${abilityName} — Rang aufleveln</div>
+          <button id="roleRankUpBtn" style="width:100%;padding:.5rem .75rem;font-family:Audiowide,sans-serif;
+            font-size:.72rem;letter-spacing:.05em;
+            background:${canAfford ? 'rgba(0,229,255,.08)' : 'rgba(60,60,60,.08)'};
+            border:1px solid ${canAfford ? '#00E5FF' : '#333'};
+            color:${canAfford ? '#00E5FF' : '#444'};border-radius:6px;
+            cursor:${canAfford ? 'pointer' : 'not-allowed'};transition:background .15s;"
+            ${!canAfford ? 'disabled' : ''}>
+            ▲ Rang ${rank} → ${nextRank} &nbsp;·&nbsp; ${cost} IP
+            ${!canAfford ? `<span style="font-size:.6rem;color:#FF2D2D;margin-left:.5rem">(${cost - ip} IP fehlen)</span>` : ''}
+          </button>`;
+        container.appendChild(wrap);
+        if (canAfford) {
+          wrap.querySelector('#roleRankUpBtn').addEventListener('click', async () => {
+            const newIp = ip - cost;
+            await patchCharacter(char.id, { improvement_points: newIp, role_ability_rank: nextRank });
+            char.improvement_points = newIp;
+            char.role_ability_rank  = nextRank;
+            const ipEl = document.getElementById('charIpValue');
+            if (ipEl) ipEl.textContent = newIp;
+            renderRoleTab();
+            renderSkills();
+          });
+        }
+      } else {
+        wrap.innerHTML = `<div style="font-size:.62rem;color:#555;text-align:center;font-family:Audiowide,sans-serif">
+          ${abilityName} — Max Rang erreicht</div>`;
+        container.appendChild(wrap);
+      }
+    }
+  } catch(e) { console.error('[roles]', e); }
 }
 
 function openRoleSettings() {
@@ -3117,12 +3169,13 @@ function showSkillCheckModal(expr, ctx) {
     ? Math.min(rawStatVal, Math.floor((char.current_humanity ?? 0) / 10))
     : rawStatVal;
   const lvl        = skData?.lvl ?? 0;
+  const ipLvl      = skData?.ip_lvl ?? 0;
   const statStr    = skData?.stat ?? '?';
   const armorPen   = skData?.stat === 'REF' ? getArmorRefPenalty() : 0;
   const swPen      = getSWPenalty();
   const injPen     = getInjurySkillPenalty(skillName);
   const statVal    = Math.max(0, effStatVal - armorPen);
-  const base       = statVal + lvl - swPen + injPen;
+  const base       = statVal + lvl + ipLvl - swPen + injPen;
 
   // Solo Combat Awareness — from localStorage (solo.js saves there)
   let soloBonus = 0;
@@ -3159,7 +3212,7 @@ function showSkillCheckModal(expr, ctx) {
   overlay.innerHTML = `
     <div class="skill-modal-box">
       <div class="skill-modal-title">${skillName} CHECK</div>
-      <div class="skill-modal-formula">1d10 + ${statStr} (${statVal}) + Lvl ${lvl}${soloBonusLabel}${penLabel} = <strong>1d10 + ${totalBase}</strong></div>
+      <div class="skill-modal-formula">1d10 + ${statStr} (${statVal}) + Base ${lvl}${ipLvl ? ` +${ipLvl} IP` : ''}${soloBonusLabel}${penLabel} = <strong>1d10 + ${totalBase}</strong></div>
       <div class="skill-modal-dv">
         <label>DV (optional):</label>
         <input type="number" id="skillDvInput" class="ctrl-input" placeholder="—" min="0" style="width:70px;margin-left:.5rem">
@@ -3235,24 +3288,33 @@ function setupSkillUpgrades() {
   document.body.addEventListener('click', async e => {
     const btn = e.target.closest('.skill-up-btn');
     if (!btn || btn.classList.contains('unaffordable')) return;
-    const skillName = btn.dataset.skill;
-    const cost      = parseInt(btn.dataset.cost);
-    const nextLvl   = parseInt(btn.dataset.nextlvl);
-    const newIp     = (char.improvement_points ?? 0) - cost;
-    const newSkills = JSON.parse(JSON.stringify(char.skills || {}));
-    if (newSkills[skillName]) newSkills[skillName] = { ...newSkills[skillName], lvl: nextLvl };
+    const cost       = parseInt(btn.dataset.cost);
+    const nextLvl    = parseInt(btn.dataset.nextlvl);
+    const newIp      = (char.improvement_points ?? 0) - cost;
+    const isRoleRank = !!btn.dataset.rolerank;
     try {
-      await patchCharacter(char.id, { improvement_points: newIp, skills: newSkills });
-      char.improvement_points = newIp;
-      char.skills = newSkills;
-      renderSkills();
+      if (isRoleRank) {
+        await patchCharacter(char.id, { improvement_points: newIp, role_ability_rank: nextLvl });
+        char.improvement_points = newIp;
+        char.role_ability_rank  = nextLvl;
+        renderSkills();
+        renderRoleTab();
+      } else {
+        const skillName = btn.dataset.skill;
+        const newSkills = JSON.parse(JSON.stringify(char.skills || {}));
+        if (newSkills[skillName]) newSkills[skillName] = { ...newSkills[skillName], ip_lvl: nextLvl };
+        await patchCharacter(char.id, { improvement_points: newIp, skills: newSkills });
+        char.improvement_points = newIp;
+        char.skills = newSkills;
+        renderSkills();
+        renderStats();
+      }
       const banner = document.getElementById('skillIpDisplay');
       if (banner) banner.textContent = newIp;
       const ipBadgeEl = document.getElementById('charIpValue');
       if (ipBadgeEl) ipBadgeEl.textContent = newIp;
-      renderStats();
     } catch (err) {
-      console.error('[player] skill upgrade failed:', err);
+      console.error('[player] upgrade failed:', err);
     }
   });
 }
