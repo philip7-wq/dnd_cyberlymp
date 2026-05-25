@@ -182,8 +182,10 @@ body.combat-active .char-sub {
   transition: border-color .12s, color .12s;
 }
 .roll-btn:hover        { border-color: var(--cyan); color: var(--cyan); }
-.roll-btn.dmg-btn      { border-color: #5a1818; color: #ff6666; font-size: .92rem; font-family: var(--font-display); padding: .4rem .9rem; width: auto; letter-spacing: .04em; }
-.roll-btn.dmg-btn:hover{ background: #1a0808; border-color: var(--red); color: var(--red); }
+.roll-btn.dmg-btn      { border-color: rgba(255,140,0,.45); color: #FF8C00; font-size: .92rem; font-family: var(--font-display); padding: .4rem .9rem; width: auto; letter-spacing: .04em; }
+.roll-btn.dmg-btn:hover{ background: rgba(255,140,0,.1); border-color: #FF8C00; color: #FF8C00; }
+.dice-result-num.dmg-orange { color: #FF8C00; text-shadow: 0 0 18px rgba(255,140,0,.55); }
+.roll-toast.dmg-orange      { border-color: #FF8C00; color: #FF8C00; }
 
 /* ── Weapons ── */
 .weapon-card {

@@ -218,15 +218,15 @@
 .atk-badge-injury {
   display: inline-block;
   padding: .15rem .5rem;
-  background: rgba(255,45,45,.15);
-  border: 1px solid #FF2D2D;
-  color: #FF2D2D;
+  background: rgba(255,140,0,.15);
+  border: 1px solid #FF8C00;
+  color: #FF8C00;
   border-radius: 4px;
   font-family: 'Audiowide', sans-serif;
   font-size: .6rem;
   letter-spacing: .08em;
   margin-top: .25rem;
-  animation: pulse-red .6s ease-in-out infinite alternate;
+  animation: pulse-orange .6s ease-in-out infinite alternate;
 }
 @keyframes pulse-gold {
   from { box-shadow: 0 0 4px #FFD70066; }
@@ -235,6 +235,10 @@
 @keyframes pulse-red {
   from { box-shadow: 0 0 4px #FF2D2D66; }
   to   { box-shadow: 0 0 12px #FF2D2DAA; }
+}
+@keyframes pulse-orange {
+  from { box-shadow: 0 0 4px #FF8C0066; }
+  to   { box-shadow: 0 0 12px #FF8C00AA; }
 }
 
 /* ── Attack dice overlay ──────────────────────────────────────── */

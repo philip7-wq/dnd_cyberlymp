@@ -2358,7 +2358,8 @@ async function doRoll(expression, opts = {}) {
   setTimeout(() => {
     numEl.className = 'dice-result-num pop'
       + (result.isCritSuccess ? ' crit-s' : '')
-      + (result.isCritFailure ? ' crit-f' : '');
+      + (result.isCritFailure ? ' crit-f' : '')
+      + (opts.isDamageRoll && !result.isCritSuccess && !result.isCritFailure ? ' dmg-orange' : '');
     numEl.textContent = result.total;
     numEl.addEventListener('animationend', () => numEl.classList.remove('pop'), { once: true });
 
@@ -2657,7 +2658,7 @@ async function showDamageApplyModal(totalDamage) {
     } catch (e) { console.warn('applyDamage failed:', e); }
     modal.hidden = true;
     const t = document.getElementById('rollToast');
-    if (t) { t.textContent = `${net} Schaden an ${targetName} angewendet`; t.className = 'roll-toast show'; setTimeout(() => t.classList.remove('show'), 2000); }
+    if (t) { t.textContent = `${net} Schaden an ${targetName} angewendet`; t.className = 'roll-toast dmg-orange show'; setTimeout(() => t.classList.remove('show'), 2000); }
   };
 
   document.getElementById('dmgApplyCancel').onclick = () => { modal.hidden = true; };

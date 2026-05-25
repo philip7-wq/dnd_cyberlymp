@@ -176,7 +176,7 @@
         <span style="font-size:.65rem;color:#888">SP des Ziels</span>
         <input id="dmSpInput" type="number" min="0" value="0" style="width:46px">
       </div>
-      <div id="dmFinalDmg" style="font-size:.72rem;color:#00E5FF;margin-bottom:.35rem"></div>
+      <div id="dmFinalDmg" style="font-size:.72rem;color:#FF8C00;margin-bottom:.35rem"></div>
       <button id="dmApplyBtn" class="atk-btn atk-btn-danger" style="margin-bottom:.3rem">✅ Anwenden</button>
     </div>
     <button id="dmRollClose" class="ts-btn" style="width:100%;font-size:.62rem">Abbrechen</button>
@@ -1986,6 +1986,9 @@ async function applyDamageToToken(tgt, through, opts = {}) {
     await patchCharacter(tgt.charId, patch).catch(e => console.warn('[combat] patchCharacter:', e));
   } else if (tgt.type === 'npc' && tgt.npcId) {
     patch.hp_current = newHp;
+    // SP-Ablation persistieren (sinkt nach jedem Treffer)
+    if (isHead && tgt.headSP != null) patch.head_sp = tgt.headSP;
+    else if (!isHead && tgt.bodySP != null) patch.body_sp = tgt.bodySP;
     await patchNpc(tgt.npcId, patch).catch(e => console.warn('[combat] patchNpc:', e));
   } else {
     console.warn('[combat] applyDamageToToken: unbekannter Typ oder fehlende ID', tgt.type, tgt);
@@ -2687,7 +2690,9 @@ function renderTokenPicker() {
       addToken({type:'npc',npcId:n.id,name:n.name,imageUrl:n.image_url||null,
         hp:n.hp_current,maxHp:n.hp_max,conditions:[],
         stats:{MOVE:n.stats?.MOVE??4,BODY:n.stats?.BODY??5,REF:n.stats?.REF??6},
-        armorPenalty:0,critInjuries:[],headSP:0,bodySP:0,headMaxSP:0,bodyMaxSP:0,
+        armorPenalty:0,critInjuries:[],
+        headSP:n.head_sp??0, bodySP:n.body_sp??0,
+        headMaxSP:n.head_sp??0, bodyMaxSP:n.body_sp??0,
         grapplePartner:null,humanShield:null,
       });
       flashAddedBanner(n.name);
@@ -3268,9 +3273,9 @@ function showDmgDiceAnim(total, label, onDone) {
   lblEl.textContent = '';
   setTimeout(() => {
     numEl.textContent = total;
-    numEl.className   = 'atk-dice-num fumble';   // rot = Schaden
-    numEl.style.color = '#FF2D2D';
-    lblEl.innerHTML   = `<span style="font-family:Audiowide,sans-serif;font-size:.72rem;color:#FF2D2D">${label}</span>`;
+    numEl.className   = 'atk-dice-num';
+    numEl.style.color = '#FF8C00';
+    lblEl.innerHTML   = `<span style="font-family:Audiowide,sans-serif;font-size:.72rem;color:#FF8C00">${label}</span>`;
   }, 480);
   setTimeout(() => {
     overlay.style.display = 'none';
@@ -3640,7 +3645,7 @@ function buildPlayerPanel() {
               <span>SP des Ziels</span>
               <input id="atkSpInput" type="number" min="0" value="0" style="width:46px">
             </div>
-            <div id="atkFinalDmg" style="font-size:.72rem;color:#00E5FF;margin:.25rem 0"></div>
+            <div id="atkFinalDmg" style="font-size:.72rem;color:#FF8C00;margin:.25rem 0"></div>
             <button id="atkApplyDmg" class="atk-btn atk-btn-danger" style="display:none">✅ Schaden anwenden</button>
             <button id="atkResetBtn" class="ts-btn" style="width:100%;margin-top:.3rem;font-size:.6rem">↺ Neuer Angriff</button>
           </div>
@@ -4004,7 +4009,7 @@ function buildPlayerPanel() {
     _dmgTotal = total;
     let html = `[${rolls.join('][')}]`;
     if (_autofireOn && mult > 1) html += ` × <b>${mult}</b>`;
-    html += ` = <b style="color:#FF2D2D;font-family:Audiowide;font-size:.9rem">${total}</b> Schaden`;
+    html += ` = <b style="color:#FF8C00;font-family:Audiowide;font-size:.9rem">${total}</b> Schaden`;
     if (_atkWeaponClass === 'melee_weapon' || _atkWeaponClass === 'martial_arts')
       html += ` <span style="color:#888;font-size:.58rem">(½ SP)</span>`;
     if (critInjury) html += '<div class="atk-badge-injury">⚠ CRITICAL INJURY!</div>';

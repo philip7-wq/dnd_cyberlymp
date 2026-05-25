@@ -381,6 +381,13 @@
           <span style="color:var(--text-muted)">/</span>
           <input id="npcHpMax" class="npc-field npc-field--hp" type="number" placeholder="Max HP" min="0">
         </div>
+        <div class="npc-hp-row" style="margin-top:.3rem">
+          <span style="font-size:.63rem;color:var(--text-muted);white-space:nowrap;padding-right:.3rem">Rüstung SP</span>
+          <input id="npcBodySp" class="npc-field npc-field--hp" type="number" placeholder="0" min="0" title="Body Armor SP">
+          <span style="font-size:.62rem;color:var(--text-muted)">Kp</span>
+          <input id="npcHeadSp" class="npc-field npc-field--hp" type="number" placeholder="0" min="0" title="Head Armor SP">
+          <span style="font-size:.62rem;color:var(--text-muted)">Ko</span>
+        </div>
         <details class="npc-stats-details">
           <summary>Stats (optional)</summary>
           <div class="npc-stats-grid" id="npcStatsGrid"></div>
@@ -1174,6 +1181,8 @@ function openNpcModal(npc = null) {
   document.getElementById('npcRole').value       = npc?.role || '';
   document.getElementById('npcHpCurrent').value  = npc?.hp_current ?? '';
   document.getElementById('npcHpMax').value      = npc?.hp_max ?? '';
+  document.getElementById('npcBodySp').value     = npc?.body_sp ?? '';
+  document.getElementById('npcHeadSp').value     = npc?.head_sp ?? '';
   document.getElementById('npcNotes').value       = npc?.notes || '';
   document.getElementById('npcGroupName').value   = npc?.group_name || '';
   document.getElementById('npcGroupColor').value  = npc?.group_color || '#FF2D2D';
@@ -1233,6 +1242,8 @@ async function saveNpcFromModal() {
     role:       document.getElementById('npcRole').value.trim() || null,
     hp_current: parseInt(document.getElementById('npcHpCurrent').value) || 0,
     hp_max:     parseInt(document.getElementById('npcHpMax').value) || 0,
+    body_sp:    parseInt(document.getElementById('npcBodySp').value) || 0,
+    head_sp:    parseInt(document.getElementById('npcHeadSp').value) || 0,
     notes:       document.getElementById('npcNotes').value.trim() || null,
     group_name:  document.getElementById('npcGroupName').value.trim() || null,
     group_color: document.getElementById('npcGroupColor').value || '#FF2D2D',
