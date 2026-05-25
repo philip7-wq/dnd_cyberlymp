@@ -1453,7 +1453,7 @@ function drawTokens() {
     ctx.restore();
 
     // SP badge (top-left of token circle) — bigger + dark bg
-    if (token.headSP || token.bodySP) {
+    if ((token.headSP || token.bodySP) && (IS_DM || token.type !== 'npc')) {
       ctx.save();
       const hLabel = token.headMaxSP ? `H:${token.headSP||0}/${token.headMaxSP}` : `H:${token.headSP||0}`;
       const bLabel = token.bodyMaxSP ? `B:${token.bodySP||0}/${token.bodyMaxSP}` : `B:${token.bodySP||0}`;

@@ -426,6 +426,7 @@ let _audioCtx      = null;
 let notesSaveTimer      = null;
 let chatUnread          = 0;
 let statsEditing        = false;
+let skillsEditing       = false;
 let activeNpcs          = [];
 let _tipPanel = null, _tipOverlay = null, _tipMap = new Map();
 let _diceAutoClose = null;
@@ -572,6 +573,10 @@ if (id) {
       const prevHp     = char.current_hp ?? 0;
       const prevBmJson = JSON.stringify(char.blackmarket_state);
       Object.assign(char, updated);
+      const _ipBadge = document.getElementById('charIpValue');
+      if (_ipBadge) _ipBadge.textContent = char.improvement_points ?? 0;
+      const _activeTab = document.querySelector('.tab-btn.active')?.dataset?.tab;
+      if (_activeTab === 'skills') renderSkills();
       renderConditionBadges();
       checkDeathSave();
       updateResDisplay();
@@ -653,6 +658,7 @@ function renderAll() {
   setupCritModal();
   setupSkillFavs();
   setupSkillUpgrades();
+  setupSkillBaseEdit();
   setupNotes();
   renderConditionBadges();
   renderBuffs();
@@ -1093,11 +1099,14 @@ function renderSkills() {
       ? (() => { const f = char.role_ability_data?.specialtyRanks?.field ?? 0;
           return f > 0 ? `<span class="skill-role-note" title="Maker Field Expertise">+${f}⚙</span>` : ''; })()
       : '';
+    const lvlSpan = skillsEditing
+      ? `<span class="skill-lvl" contenteditable="true" data-skill="${sk.name}" data-field="lvl" style="outline:1px solid var(--cyan);cursor:text;text-align:center">${sk.lvl ?? 0}</span>`
+      : `<span class="skill-lvl">${sk.lvl ?? 0}</span>`;
     return `<div class="skill-row">
       <button class="skill-fav-btn${favs.has(sk.name) ? ' active' : ''}" data-fav="${sk.name}">★</button>
       <span class="skill-name">${sk.name}</span>
       <span class="skill-stat">${statVal}</span>
-      <span class="skill-lvl">${sk.lvl ?? 0}</span>
+      ${lvlSpan}
       <span class="skill-base">${ipLvl}${penBadge}${motoNote}${surgNote}${medTechNote}${techFieldNote}</span>
       <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1" title="1d10+${base}">⚄</button>
       ${upgradeBtn}
@@ -1123,7 +1132,9 @@ function renderSkills() {
     ? `<div class="skill-penalty-banner">${warnings.join(' &nbsp;·&nbsp; ')}</div>` : '';
 
   const _ip = char.improvement_points ?? 0;
-  let html = warnHtml + `<div class="skill-ip-banner">Verfügbare IP: <strong id="skillIpDisplay">${_ip}</strong></div>`;
+  let html = warnHtml + `<div class="skill-ip-banner">Verfügbare IP: <strong id="skillIpDisplay">${_ip}</strong>
+    <button class="stats-edit-btn${skillsEditing ? ' active' : ''}" id="skillBaseEditBtn" style="margin-left:auto;font-size:.7rem;padding:.2rem .55rem">${skillsEditing ? '✓ Fertig' : '✎ Base'}</button>
+  </div>`;
 
   // Favorites section
   const favSkills = [...favs].map(name => {
@@ -1147,6 +1158,10 @@ function renderSkills() {
   }
 
   el.innerHTML = html;
+  document.getElementById('skillBaseEditBtn')?.addEventListener('click', () => {
+    skillsEditing = !skillsEditing;
+    renderSkills();
+  });
 }
 
 // ── Lazy migration: set magazine_max on existing weapons ──────
@@ -2666,7 +2681,7 @@ async function showDamageApplyModal(totalDamage) {
   const playerOpts = allChars.map(c =>
     `<option value="char:${c.id}">${c.handle || c.name}</option>`).join('');
   const npcOpts = visibleNpcs.map(n =>
-    `<option value="npc:${n.id}">${n.name}${n.hp_current != null ? ` (HP ${n.hp_current}/${n.hp_max})` : ''}</option>`).join('');
+    `<option value="npc:${n.id}">${n.name}</option>`).join('');
   select.innerHTML = `<option value="">— Ziel wählen —</option>`
     + (playerOpts ? `<optgroup label="── Spieler ──">${playerOpts}</optgroup>` : '')
     + (npcOpts   ? `<optgroup label="── NPCs ──">${npcOpts}</optgroup>` : '');
@@ -3317,6 +3332,25 @@ function setupSkillUpgrades() {
       console.error('[player] upgrade failed:', err);
     }
   });
+}
+
+// ── Skill Base inline edit ─────────────────────────────────────
+function setupSkillBaseEdit() {
+  document.getElementById('tab-skills').addEventListener('blur', async e => {
+    const span = e.target.closest('[data-field="lvl"][contenteditable]');
+    if (!span) return;
+    const skillName = span.dataset.skill;
+    const raw = parseInt(span.textContent.trim(), 10);
+    if (isNaN(raw)) { span.textContent = char.skills?.[skillName]?.lvl ?? 0; return; }
+    const clamped = Math.max(0, Math.min(10, raw));
+    span.textContent = clamped;
+    if (!char.skills?.[skillName]) return;
+    const newSkills = JSON.parse(JSON.stringify(char.skills));
+    newSkills[skillName].lvl = clamped;
+    char.skills = newSkills;
+    await patchCharacter(char.id, { skills: newSkills });
+    renderSkills();
+  }, true);
 }
 
 // ── Session Notes ─────────────────────────────────────────────

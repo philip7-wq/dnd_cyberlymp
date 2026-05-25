@@ -996,6 +996,7 @@ function buildCompactNpcCard(n) {
       <button class="npc-edit-btn" data-npc-id="${n.id}" title="Bearbeiten">✏</button>
       <button class="npc-visibility-btn${n.is_visible_to_players ? ' active' : ''}" data-npc-id="${n.id}" title="Sichtbar für Spieler">${n.is_visible_to_players ? '👁' : '🙈'}</button>
       <button class="npc-dice-btn" data-npc-id="${n.id}" title="Würfeln">🎲</button>
+      <button class="npc-play-btn" data-npc-id="${n.id}" title="NPC spielen">🎮</button>
     </div>
   </div>`;
 }
@@ -1091,6 +1092,11 @@ function renderNpcGrid() {
     btn.addEventListener('click', () => {
       const npc = _npcs.find(n => n.id === btn.dataset.npcId);
       if (npc) rollForNpc(npc);
+    });
+  });
+  grid.querySelectorAll('.npc-play-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      window.open(`/npc-sheet.html?npc_id=${btn.dataset.npcId}`, '_blank');
     });
   });
 

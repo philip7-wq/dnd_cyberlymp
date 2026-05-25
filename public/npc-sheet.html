@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NPC Sheet — LZRV Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Caveat&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/player.css">
+  <link rel="stylesheet" href="assets/css/roles.css">
+  <style>
+    body { max-width: 520px; margin: 0 auto; }
+    #loader { display:flex; align-items:center; justify-content:center; min-height:60vh;
+      font-family:'Audiowide',sans-serif; font-size:.85rem; color:var(--text-muted); }
+    .npc-header { display:flex; align-items:center; gap:1rem; padding:1rem 1.1rem;
+      background:var(--card-bg); border-bottom:1px solid var(--border); }
+    .npc-portrait { width:54px; height:54px; border-radius:50%; object-fit:cover;
+      border:2px solid var(--red); flex-shrink:0; }
+    .npc-portrait-placeholder { width:54px; height:54px; border-radius:50%; border:2px solid var(--border);
+      display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; }
+    .npc-header-name { font-family:'Audiowide',sans-serif; font-size:1rem; color:var(--red); }
+    .npc-header-role { font-size:.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; margin-top:.15rem; }
+    .npc-header-wound { font-family:'Audiowide',sans-serif; font-size:.7rem; margin-top:.3rem; }
+    .npc-header-hp { margin-left:auto; text-align:right; font-family:'Audiowide',sans-serif; flex-shrink:0; }
+    .npc-header-hp-val { font-size:1.6rem; color:var(--red); line-height:1; }
+    .npc-header-hp-max { font-size:.65rem; color:var(--text-muted); }
+    .tab-panel { padding:.5rem; }
+    .npc-empty { color:var(--text-muted); font-size:.8rem; padding:.75rem 0; }
+  </style>
+</head>
+<body>
+
+<div id="loader">Lade NPC…</div>
+
+<div id="npcApp" style="display:none">
+  <div class="npc-header" id="npcHeader"></div>
+
+  <div class="tabs" id="tabBar">
+    <button class="tab-btn active" data-tab="combat">⚔️ Combat</button>
+    <button class="tab-btn" data-tab="stats">📊 Stats</button>
+    <button class="tab-btn" data-tab="effects">✨ Effects</button>
+    <button class="tab-btn" data-tab="notes">📝 Notes</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-combat"></div>
+  <div class="tab-panel" id="tab-stats"></div>
+  <div class="tab-panel" id="tab-effects"></div>
+  <div class="tab-panel" id="tab-notes">
+    <div class="role-section">
+      <div class="role-section-title">Notizen</div>
+      <textarea id="npcNotesArea" style="width:100%;min-height:200px;background:var(--card-bg);
+        border:1px solid var(--border);border-radius:6px;color:var(--text);padding:.75rem;
+        font-family:inherit;font-size:.85rem;resize:vertical;box-sizing:border-box"
+        placeholder="Notizen zum NPC…"></textarea>
+      <div id="notesSaveStatus" style="font-size:.7rem;color:var(--text-muted);margin-top:.3rem"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase, patchNpc, subscribeNpcs } from './assets/js/supabase.js';
+import { openModal, performCheck, renderRollResult } from './assets/js/roles/roles-core.js';
+
+if (localStorage.getItem('dm_auth') !== '1' && sessionStorage.getItem('dm_auth') !== '1') {
+  location.replace('index.html');
+}
+
+const params = new URLSearchParams(location.search);
+const npcId = params.get('npc_id');
+if (!npcId) location.replace('index.html');
+
+let npc = null;
+
+async function boot() {
+  try {
+    const { data, error } = await supabase.from('npcs').select('*').eq('id', npcId).single();
+    if (error || !data) throw new Error(error?.message || 'NPC nicht gefunden');
+    npc = data;
+    document.title = `${npc.name} — LZRV Hub`;
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('npcApp').style.display = '';
+    renderAll();
+    setupTabs();
+    setupNotes();
+    subscribeNpcs(payload => {
+      if (payload.new?.id !== npcId) return;
+      Object.assign(npc, payload.new);
+      renderAll();
+    });
+  } catch(e) {
+    document.getElementById('loader').innerHTML =
+      `<span style="color:var(--red)">${e.message}</span>`;
+  }
+}
+
+function woundState(hp, maxHp) {
+  if (!maxHp || hp <= 0) return { label: 'ELIMINATED', color: 'var(--red)' };
+  if (hp <= Math.ceil(maxHp / 2)) return { label: 'SERIOUSLY WOUNDED', color: '#FFD700' };
+  return { label: 'HEALTHY', color: 'var(--cyan)' };
+}
+
+function renderAll() {
+  renderHeader();
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset?.tab ?? 'combat';
+  if (activeTab === 'combat')  renderCombat();
+  if (activeTab === 'stats')   renderStats();
+  if (activeTab === 'effects') renderEffects();
+}
+
+function renderHeader() {
+  const hp = npc.hp_current ?? 0;
+  const maxHp = npc.hp_max ?? 0;
+  const ws = woundState(hp, maxHp);
+  document.getElementById('npcHeader').innerHTML = `
+    ${npc.image_url
+      ? `<img class="npc-portrait" src="${escHtml(npc.image_url)}" alt="">`
+      : `<div class="npc-portrait-placeholder">👤</div>`}
+    <div style="min-width:0">
+      <div class="npc-header-name">${escHtml(npc.name)}</div>
+      ${npc.role ? `<div class="npc-header-role">${escHtml(npc.role)}</div>` : ''}
+      <div class="npc-header-wound" style="color:${ws.color}">${ws.label}</div>
+    </div>
+    <div class="npc-header-hp">
+      <div class="npc-header-hp-val">${hp}</div>
+      <div class="npc-header-hp-max">/ ${maxHp} HP</div>
+    </div>`;
+}
+
+function renderCombat() {
+  const el = document.getElementById('tab-combat');
+  const hp = npc.hp_current ?? 0;
+  const maxHp = npc.hp_max ?? 0;
+  const hpPct = maxHp ? Math.min(100, Math.round((hp / maxHp) * 100)) : 0;
+  const hpCol = hpPct > 50 ? 'var(--cyan)' : hpPct > 25 ? '#FFD700' : 'var(--red)';
+  const headSp = npc.head_sp ?? 0;
+  const bodySp = npc.body_sp ?? 0;
+  const weapons = Array.isArray(npc.weapons) ? npc.weapons.filter(w => w.name) : [];
+  const injuries = Array.isArray(npc.critical_injuries) ? npc.critical_injuries : [];
+
+  el.innerHTML = `
+  <div class="role-section">
+    <div class="role-section-title">HP</div>
+    <div style="background:rgba(255,255,255,.07);border-radius:4px;height:12px;overflow:hidden;margin-bottom:.6rem">
+      <div style="height:100%;width:${hpPct}%;background:${hpCol};transition:width .3s"></div>
+    </div>
+    <div class="role-row" style="gap:.4rem;flex-wrap:wrap">
+      <button class="role-dice-btn secondary" data-hp="-10">−10</button>
+      <button class="role-dice-btn secondary" data-hp="-5">−5</button>
+      <button class="role-dice-btn secondary" data-hp="-1">−1</button>
+      <button class="role-dice-btn secondary" data-hp="+1">+1</button>
+      <button class="role-dice-btn secondary" data-hp="+5">+5</button>
+      <button class="role-dice-btn secondary" id="npcHpCustomBtn">✎</button>
+    </div>
+  </div>
+
+  <div class="role-section">
+    <div class="role-section-title">Armor SP</div>
+    <div class="role-row" style="gap:.75rem">
+      <div style="flex:1;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:.65rem;text-align:center">
+        <div style="font-size:.6rem;color:var(--text-muted);letter-spacing:.1em;margin-bottom:.3rem">HEAD</div>
+        <div style="font-family:'Audiowide';font-size:1.25rem;color:var(--cyan)" id="headSpVal">${headSp}</div>
+        <div class="role-row" style="gap:.3rem;margin-top:.45rem;justify-content:center">
+          <button class="role-dice-btn secondary" style="padding:.15rem .45rem;font-size:.7rem" data-sp="head" data-d="-1">−</button>
+          <button class="role-dice-btn secondary" style="padding:.15rem .45rem;font-size:.7rem" data-sp="head" data-d="+1">+</button>
+        </div>
+      </div>
+      <div style="flex:1;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:.65rem;text-align:center">
+        <div style="font-size:.6rem;color:var(--text-muted);letter-spacing:.1em;margin-bottom:.3rem">BODY</div>
+        <div style="font-family:'Audiowide';font-size:1.25rem;color:var(--cyan)" id="bodySpVal">${bodySp}</div>
+        <div class="role-row" style="gap:.3rem;margin-top:.45rem;justify-content:center">
+          <button class="role-dice-btn secondary" style="padding:.15rem .45rem;font-size:.7rem" data-sp="body" data-d="-1">−</button>
+          <button class="role-dice-btn secondary" style="padding:.15rem .45rem;font-size:.7rem" data-sp="body" data-d="+1">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  ${weapons.length ? `
+  <div class="role-section">
+    <div class="role-section-title">Waffen</div>
+    <div class="role-cards">${weapons.map((w, i) => `
+      <div class="role-card" style="cursor:default">
+        <div class="role-card-name">${escHtml(w.name)}</div>
+        <div class="role-card-meta">${escHtml(w.damage || '—')}</div>
+        <div class="role-row" style="gap:.35rem;margin-top:.5rem">
+          <button class="role-dice-btn secondary" data-weapon="${i}" data-type="attack" style="font-size:.7rem;padding:.2rem .55rem">⚡ Attack</button>
+          <button class="role-dice-btn secondary" data-weapon="${i}" data-type="damage" style="font-size:.7rem;padding:.2rem .55rem">💥 Damage</button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  ${injuries.length ? `
+  <div class="role-section">
+    <div class="role-section-title">Critical Injuries</div>
+    ${injuries.map(inj => `
+      <div style="padding:.35rem 0;border-bottom:1px solid var(--role-line);color:var(--red);font-size:.82rem">
+        <strong>${escHtml(inj.name || String(inj))}</strong>${inj.effect ? ` — ${escHtml(inj.effect)}` : ''}
+      </div>`).join('')}
+  </div>` : ''}`;
+
+  // HP delta
+  el.querySelectorAll('[data-hp]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const delta = parseInt(btn.dataset.hp);
+      const newHp = Math.max(0, (maxHp ? Math.min(maxHp, hp + delta) : hp + delta));
+      await patchNpc(npcId, { hp_current: newHp });
+      npc.hp_current = newHp;
+      renderAll();
+    });
+  });
+
+  // HP custom modal
+  el.querySelector('#npcHpCustomBtn')?.addEventListener('click', () => {
+    openModal(`
+      <h3>HP setzen</h3>
+      <label>Neuer Wert (0–${maxHp || '∞'})</label>
+      <input type="number" id="hpCustomVal" value="${hp}" min="0"${maxHp ? ` max="${maxHp}"` : ''}>
+      <div class="role-modal-actions">
+        <button data-act="cancel">Abbrechen</button>
+        <button class="primary" data-act="ok">Setzen</button>
+      </div>`, (modal, close) => {
+      modal.querySelector('[data-act="cancel"]').addEventListener('click', close);
+      modal.querySelector('[data-act="ok"]').addEventListener('click', async () => {
+        const raw = parseInt(modal.querySelector('#hpCustomVal').value) || 0;
+        const val = Math.max(0, maxHp ? Math.min(maxHp, raw) : raw);
+        await patchNpc(npcId, { hp_current: val });
+        npc.hp_current = val;
+        close();
+        renderAll();
+      });
+    });
+  });
+
+  // SP buttons
+  el.querySelectorAll('[data-sp]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const slot = btn.dataset.sp;
+      const delta = parseInt(btn.dataset.d);
+      const field = slot === 'head' ? 'head_sp' : 'body_sp';
+      const newVal = Math.max(0, (npc[field] ?? 0) + delta);
+      await patchNpc(npcId, { [field]: newVal });
+      npc[field] = newVal;
+      renderCombat();
+    });
+  });
+
+  // Weapon rolls
+  el.querySelectorAll('[data-weapon]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const w = weapons[parseInt(btn.dataset.weapon)];
+      if (!w) return;
+      if (btn.dataset.type === 'damage') openDamageRoll(w);
+      else openAttackRoll(w);
+    });
+  });
+}
+
+function openAttackRoll(weapon) {
+  const s = npc.stats || {};
+  const html = `
+    <h3>Attack: ${escHtml(weapon.name)}</h3>
+    <label>Stat (REF)</label><input type="number" id="ar-stat" value="${s.REF ?? 5}">
+    <label>Weapon Skill</label><input type="number" id="ar-skill" value="4">
+    <label>Modifier</label><input type="number" id="ar-mod" value="0">
+    <label>DV (optional)</label><input type="number" id="ar-dv" value="">
+    <div class="role-modal-actions">
+      <button data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="roll">🎲 Roll</button>
+    </div>
+    <div id="ar-out" style="margin-top:12px"></div>`;
+  openModal(html, (modal, close) => {
+    modal.querySelector('[data-act="cancel"]').addEventListener('click', close);
+    modal.querySelector('[data-act="roll"]').addEventListener('click', () => {
+      const dvRaw = modal.querySelector('#ar-dv').value;
+      const result = performCheck({
+        stat:  +modal.querySelector('#ar-stat').value  || 0,
+        skill: +modal.querySelector('#ar-skill').value || 0,
+        mod:   +modal.querySelector('#ar-mod').value   || 0,
+        dv:    dvRaw === '' ? null : +dvRaw
+      });
+      modal.querySelector('#ar-out').innerHTML = renderRollResult(result);
+      setTimeout(close, 1800);
+    });
+  });
+}
+
+function openDamageRoll(weapon) {
+  const expr = (weapon.damage || '1d6').trim();
+  const match = expr.match(/^(\d+)d(\d+)([+-]\d+)?$/i);
+  let total = 0, parts = '';
+  if (match) {
+    const count = parseInt(match[1]);
+    const sides = parseInt(match[2]);
+    const mod   = parseInt(match[3] || 0);
+    const rolls = Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
+    total = rolls.reduce((a, b) => a + b, 0) + mod;
+    parts = `<span style="font-size:.72rem;color:var(--text-muted);margin-left:.5rem">[${rolls.join(', ')}${mod ? (mod > 0 ? `+${mod}` : mod) : ''}]</span>`;
+  } else {
+    total = 0; parts = `<span style="color:var(--text-muted);font-size:.75rem">Ausdruck: ${escHtml(expr)}</span>`;
+  }
+  openModal(`
+    <h3>Damage: ${escHtml(weapon.name)}</h3>
+    <div class="role-card-desc" style="margin-bottom:.5rem">${escHtml(expr)}</div>
+    <div class="role-dice-result">
+      <span class="dice-total">${total}</span>${parts}
+    </div>
+    <div class="role-modal-actions" style="margin-top:1rem">
+      <button data-act="close" class="primary">OK</button>
+    </div>`, (modal, close) => {
+    modal.querySelector('[data-act="close"]').addEventListener('click', close);
+  });
+}
+
+function renderStats() {
+  const STATS = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP'];
+  const s = npc.stats || {};
+  document.getElementById('tab-stats').innerHTML = `
+    <div class="role-section">
+      <div class="role-section-title">Attribute</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-top:.5rem">
+        ${STATS.map(k => `
+          <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:.6rem;text-align:center">
+            <div style="font-size:.58rem;color:var(--text-muted);letter-spacing:.1em;margin-bottom:.25rem">${k}</div>
+            <div style="font-family:'Audiowide';font-size:1.2rem;color:var(--cyan)">${s[k] ?? '—'}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderEffects() {
+  const conditions = Array.isArray(npc.conditions) ? npc.conditions : [];
+  const buffs = Array.isArray(npc.buffs) ? npc.buffs : [];
+  document.getElementById('tab-effects').innerHTML = `
+    <div class="role-section">
+      <div class="role-section-title">Conditions</div>
+      ${conditions.length
+        ? `<div class="role-row" style="flex-wrap:wrap;gap:.4rem;margin-top:.3rem">${conditions.map(c => `<span class="role-pill">${escHtml(c)}</span>`).join('')}</div>`
+        : `<div class="npc-empty">Keine aktiven Conditions.</div>`}
+    </div>
+    <div class="role-section">
+      <div class="role-section-title">Buffs / Active Effects</div>
+      ${buffs.length
+        ? buffs.map(b => `
+          <div class="role-card" style="cursor:default;margin-bottom:.4rem">
+            <div class="role-card-name">${escHtml(b.name || '?')}</div>
+            ${b.effect ? `<div class="role-card-desc">${escHtml(b.effect)}</div>` : ''}
+            ${b.duration_label ? `<div class="role-card-meta">Dauer: ${escHtml(b.duration_label)}</div>` : ''}
+          </div>`).join('')
+        : `<div class="npc-empty">Keine aktiven Buffs.</div>`}
+    </div>`;
+}
+
+function setupTabs() {
+  document.getElementById('tabBar').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    renderAll();
+  });
+}
+
+function setupNotes() {
+  const area = document.getElementById('npcNotesArea');
+  if (!area) return;
+  area.value = npc.notes || '';
+  const status = document.getElementById('notesSaveStatus');
+  let timer = null;
+  area.addEventListener('input', () => {
+    clearTimeout(timer);
+    if (status) status.textContent = '…';
+    timer = setTimeout(async () => {
+      await patchNpc(npcId, { notes: area.value });
+      if (status) { status.textContent = '✓ Gespeichert'; setTimeout(() => { status.textContent = ''; }, 2000); }
+    }, 1200);
+  });
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+boot();
+</script>
+</body>
+</html>
