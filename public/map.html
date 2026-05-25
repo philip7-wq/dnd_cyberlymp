@@ -1935,6 +1935,10 @@ document.getElementById('ctxDmgRoll')?.addEventListener('click', e => {
 let _dmRollTotal = 0;
 let _dmRollSides = 6, _dmRollCritInjury = false, _dmRollWeaponClass = 'ranged';
 
+// ── Player attack state — module-level damit Panel-Rebuilds (Realtime) den Combat-State nicht resetten ──
+let _atkDv = null, _atkRollTotal = null, _dmgTotal = null, _autofireOn = false;
+let _atkAimed = null, _atkWeaponClass = 'ranged', _critInjuryPending = false;
+
 // ── Injury-Helper ────────────────────────────────────────────────
 function tokenHasInjury(tok, name) {
   return (tok?.critInjuries || []).some(i => (i?.name || i) === name);
@@ -1980,7 +1984,7 @@ async function applyDamageToToken(tgt, through, opts = {}) {
   if (tgt.type === 'char' && tgt.charId) { patch.current_hp = newHp; await patchCharacter(tgt.charId, patch).catch(() => {}); }
   else if (tgt.type === 'npc' && tgt.npcId) { patch.hp_current = newHp; await patchNpc(tgt.npcId, patch).catch(() => {}); }
 
-  saveTokens(); markDirty();
+  saveTokens(); markDirty(); redraw();
   let msg = `${hpDmg} HP → ${tgt.name}`;
   if (injuriesAdded.length) msg += ` · ${injuriesAdded.map(i => i.name).join(', ')}`;
   showMapToast(msg, 'red');
@@ -3257,11 +3261,13 @@ function showDmgDiceAnim(total, label, onDone) {
   lblEl.textContent = '';
   setTimeout(() => {
     numEl.textContent = total;
-    numEl.className   = 'atk-dice-num';
-    lblEl.innerHTML   = `<span style="color:#FF2D2D;font-family:Audiowide,sans-serif">${label}</span>`;
+    numEl.className   = 'atk-dice-num fumble';   // rot = Schaden
+    numEl.style.color = '#FF2D2D';
+    lblEl.innerHTML   = `<span style="font-family:Audiowide,sans-serif;font-size:.72rem;color:#FF2D2D">${label}</span>`;
   }, 480);
   setTimeout(() => {
     overlay.style.display = 'none';
+    numEl.style.color = '';
     onDone();
   }, 2100);
 }
@@ -3646,8 +3652,8 @@ function buildPlayerPanel() {
   document.getElementById('playerPanel').style.display='flex';
 
   // ── Attack flow state ────────────────────────────────────────
-  let _atkDv = null, _atkRollTotal = null, _dmgTotal = null, _autofireOn = false;
-  let _atkAimed = null, _atkWeaponClass = 'ranged', _critInjuryPending = false;
+  // _atkDv / _atkRollTotal / _dmgTotal / _autofireOn / _atkAimed / _atkWeaponClass / _critInjuryPending
+  // → module-level (oben), damit Realtime-Panel-Rebuilds den Combat-State nicht resetten.
 
   function updateMwcMag() {
     const rawW = S.char?.weapons?.[S.activeWeapon?.rawIdx];
@@ -3993,18 +3999,7 @@ function buildPlayerPanel() {
     if (_atkWeaponClass === 'melee_weapon' || _atkWeaponClass === 'martial_arts')
       html += ` <span style="color:#888;font-size:.58rem">(½ SP)</span>`;
     if (critInjury) html += '<div class="atk-badge-injury">⚠ CRITICAL INJURY!</div>';
-    const res = document.getElementById('dmgRollResult');
-    res.innerHTML = html; res.style.display = '';
-    if (critInjury) showMapToast('⚠ Critical Injury!', 'red');
-
-    // Auto-fill target SP (Head wenn Aimed Head, sonst Body)
-    const tgtSP = _atkAimed === 'head'
-      ? (S.measureTargetToken?.headSP ?? 0)
-      : (S.measureTargetToken?.bodySP ?? 0);
-    document.getElementById('atkSpInput').value = tgtSP;
-    document.getElementById('atkStep3').style.display = '';
-    updateArmorCalc();
-
+    // Ammo-Abzug sofort (nicht erst nach Animation)
     // Deduct ammo
     const rawW = S.char?.weapons?.[w?.rawIdx];
     if (rawW) {
@@ -4031,6 +4026,23 @@ function buildPlayerPanel() {
         }
       }
     }
+
+    // Würfel-Animation → dann Step 3 aufdecken
+    let animLabel = `[${rolls.join('][')}]`;
+    if (_autofireOn && mult > 1) animLabel += ` × ${mult}`;
+    animLabel += ` = ${total} Schaden`;
+    if (critInjury) animLabel += '<br><span style="color:#FF8C42">⚠ CRITICAL INJURY!</span>';
+    showDmgDiceAnim(total, animLabel, () => {
+      const res = document.getElementById('dmgRollResult');
+      res.innerHTML = html; res.style.display = '';
+      if (critInjury) showMapToast('⚠ Critical Injury!', 'red');
+      const tgtSP = _atkAimed === 'head'
+        ? (S.measureTargetToken?.headSP ?? 0)
+        : (S.measureTargetToken?.bodySP ?? 0);
+      document.getElementById('atkSpInput').value = tgtSP;
+      document.getElementById('atkStep3').style.display = '';
+      updateArmorCalc();
+    });
   });
 
   // ── Armor calc (Step 3) — Melee-Halbierung + Aimed-Multiplier ──
@@ -4096,6 +4108,19 @@ function buildPlayerPanel() {
       S._shotgunConeTargets = null;
     }
   });
+
+  // ── Kampf-State nach Panel-Rebuild wiederherstellen ──────────
+  // Wenn ein Realtime-Update den Panel rebuilt während ein Angriff läuft,
+  // die korrekten Steps wieder einblenden (State kommt von Modul-Vars).
+  if (_atkRollTotal !== null) {
+    document.getElementById('atkRollResult').style.display = '';
+    document.getElementById('atkStep2').style.display = '';
+  }
+  if (_dmgTotal !== null) {
+    document.getElementById('dmgRollResult').style.display = '';
+    document.getElementById('atkStep3').style.display = '';
+    updateArmorCalc();   // zeigt atkApplyDmg wenn through > 0
+  }
 }
 
 function refreshPlayerPanel() {

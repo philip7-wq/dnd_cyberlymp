@@ -2594,11 +2594,16 @@ async function showDamageApplyModal(totalDamage) {
   calcRow.textContent = '';
   confirmBtn.disabled = true;
 
-  // Build target dropdown — only NPCs in active fight that DM made visible
-  const fightNpcs  = getFightNpcs();
+  // Build target dropdown: erst NPCs aus der aktiven Kampfrunde, dann alle anderen
+  const fightNpcs = getFightNpcs();
+  // Falls keine Kampfrunde läuft, alle bekannten NPCs anzeigen
+  const visibleNpcs = fightNpcs.length > 0
+    ? fightNpcs
+    : activeNpcs.filter(n => n.hp_current != null);  // alle mit HP = bekannte Gegner
   const playerOpts = allChars.map(c =>
     `<option value="char:${c.id}">${c.handle || c.name}</option>`).join('');
-  const npcOpts = fightNpcs.map(n => `<option value="npc:${n.id}">${n.name}</option>`).join('');
+  const npcOpts = visibleNpcs.map(n =>
+    `<option value="npc:${n.id}">${n.name}${n.hp_current != null ? ` (HP ${n.hp_current}/${n.hp_max})` : ''}</option>`).join('');
   select.innerHTML = `<option value="">— Ziel wählen —</option>`
     + (playerOpts ? `<optgroup label="── Spieler ──">${playerOpts}</optgroup>` : '')
     + (npcOpts   ? `<optgroup label="── NPCs ──">${npcOpts}</optgroup>` : '');
