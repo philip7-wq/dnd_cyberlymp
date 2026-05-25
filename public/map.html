@@ -4108,9 +4108,17 @@ function buildPlayerPanel() {
 
   // ── Reset + shotgun cone queue (Features 8 + 11) ─────────────
   document.getElementById('atkResetBtn')?.addEventListener('click', async () => {
-    ['atkRollResult','atkStep2','dmgRollResult','atkStep3'].forEach(id => {
+    // Nur Ergebnis-Texte leeren (atkRollResult / dmgRollResult).
+    // atkStep2 + atkStep3 NUR verstecken, NICHT innerHTML löschen —
+    // sie enthalten die statischen Buttons (Schaden würfeln / Anwenden),
+    // die sonst nach dem Reset fehlen würden.
+    ['atkRollResult','dmgRollResult'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.style.display='none'; el.innerHTML=''; }
+    });
+    ['atkStep2','atkStep3'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
     });
     document.getElementById('atkApplyDmg').style.display = 'none';
     const savedDmg = _dmgTotal ?? 0;          // vor dem Nullen sichern (Cone nutzt es)
