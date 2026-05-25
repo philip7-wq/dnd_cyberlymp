@@ -124,6 +124,8 @@ async function renderSpecialties(view, character) {
       b.addEventListener('click', async () => {
         const delta = +b.dataset.d;
         const cur = spec.meta[s.id] || 0;
+        const usedNow = (spec.meta.field||0) + (spec.meta.upgrade||0) + (spec.meta.fabrication||0) + (spec.meta.invention||0);
+        if (delta > 0 && usedNow >= totalPts) return;
         if (delta < 0 && cur <= 0) return;
         spec.meta[s.id] = cur + delta;
         await updateInventoryItem(spec.id, { meta: spec.meta });

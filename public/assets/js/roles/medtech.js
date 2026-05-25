@@ -65,6 +65,46 @@ const TREATMENTS = [
     effect: 'Behandelt alle Critical Injuries außer den schwersten. Bei Erfolg: 1d6+1 HP Heilung.' },
 ];
 
+// ── Drug-Effekt anwenden (Supabase-Patch auf Target) ────────────
+async function applyDrugEffect(item, target, character) {
+  const tgt = await fetchTarget(target, character.id);
+  if (!tgt) return;
+  const buffs = Array.isArray(tgt.buffs) ? [...tgt.buffs] : [];
+  const conds = Array.isArray(tgt.conditions) ? [...tgt.conditions] : [];
+  const recipe = item.meta?.recipe;
+
+  if (recipe === 'antibiotic') {
+    buffs.push({ id: crypto.randomUUID(), name: 'Antibiotic',
+      effect: '+2 HP/Tag für 1 Woche. Nur 1× gleichzeitig aktiv.',
+      duration_label: '7 Tage',
+      expires_at: new Date(Date.now() + 7*24*60*60*1000).toISOString() });
+    await patchTarget(target, { buffs }, character.id);
+  } else if (recipe === 'stim') {
+    buffs.push({ id: crypto.randomUUID(), name: 'Stim',
+      effect: 'Ignoriert Seriously Wounded Penalties für 1h.',
+      duration_label: '1h',
+      expires_at: new Date(Date.now() + 60*60*1000).toISOString(),
+      stat: 'SW_OVERRIDE', stat_bonus: 2 });
+    await patchTarget(target, { buffs }, character.id);
+  } else if (recipe === 'rapidetox') {
+    const cleaned = conds.filter(c => !['On Fire','Bleeding Out','Poisoned','Drugged'].includes(c));
+    buffs.push({ id: crypto.randomUUID(), name: 'Rapidetox',
+      effect: 'Drogen/Gift/Intoxikanten sofort bereinigt.',
+      duration_label: 'einmalig', expires_at: null });
+    await patchTarget(target, { conditions: cleaned, buffs }, character.id);
+  } else if (recipe === 'surge') {
+    const newConds = [...new Set([...conds, 'Surge Active'])];
+    await patchTarget(target, { conditions: newConds }, character.id);
+  } else if (recipe === 'speedheal') {
+    if ((tgt.current_hp ?? 0) > 0) {
+      const s = tgt.stats || {};
+      const heal = (s.BODY || 0) + (s.WILL || 0);
+      const newHp = Math.min(tgt.max_hp ?? tgt.current_hp, (tgt.current_hp ?? 0) + heal);
+      await patchTarget(target, { current_hp: newHp }, character.id);
+    }
+  }
+}
+
 export async function mount(panel, character) {
   panel.innerHTML = '';
   panel.appendChild(el(buildHeader('medtech', character)));
@@ -152,7 +192,9 @@ async function renderSpecialties(view, character) {
       b.addEventListener('click', async () => {
         const delta = parseInt(b.dataset.d, 10);
         const cur = spec.meta[s.key] || 0;
+        const usedNow = (spec.meta.surgery||0) + (spec.meta.pharma||0) + (spec.meta.cryo||0);
         if (delta > 0 && cur >= s.max) return;
+        if (delta > 0 && usedNow >= total) return;
         if (delta < 0 && cur <= 0) return;
         spec.meta[s.key] = cur + delta;
         await updateInventoryItem(spec.id, { meta: spec.meta });
@@ -288,15 +330,7 @@ async function renderPatient(view, character) {
       onUse: async () => {
         const target = await pickTarget();
         if (!target) return;
-        if (item.meta?.recipe === 'speedheal') {
-          const tgt = await fetchTarget(target, character.id);
-          if (tgt && (tgt.current_hp ?? 0) > 0) {
-            const s = tgt.stats || {};
-            const heal = (s.BODY || 0) + (s.WILL || 0);
-            const newHp = Math.min(tgt.max_hp ?? tgt.current_hp, (tgt.current_hp ?? 0) + heal);
-            await patchTarget(target, { current_hp: newHp }, character.id);
-          }
-        }
+        await applyDrugEffect(item, target, character);
         await useInventoryItem(item.id, 1);
         await logAction(character.id, 'medtech', `Verabreicht: ${item.name}`, {
           target, summary: item.description
@@ -312,10 +346,38 @@ async function openTreatmentFlow(character, treatment) {
   const target = await pickTarget();
   if (!target) return;
 
+  const tgt = await fetchTarget(target, character.id);
+  let injuries = [];
+  try { injuries = JSON.parse(tgt?.critical_injuries || '[]'); } catch {}
+
+  // Paramedic can only treat injuries where treatment includes "Paramedic" or "Quick Fix"
+  // Surgery-only injuries (treatment starts with "Surgery" only) require the Surgery procedure
+  const canParamedic = inj => {
+    const t = (inj.treatment || '').toLowerCase();
+    return t.includes('paramedic') || t.includes('quick fix');
+  };
+  const treatable = treatment.id === 'paramedic'
+    ? injuries.filter(canParamedic)
+    : injuries;  // First Aid shows no picker
+
   const stats = character.stats || {};
+  const injPickerHtml = treatment.id === 'paramedic' && treatable.length
+    ? `<label>Kritische Verletzung behandeln (optional)</label>
+       <select id="tr-inj-pick">
+         <option value="">— keine —</option>
+         ${treatable.map(inj => {
+           const origIdx = injuries.indexOf(inj);
+           return `<option value="${origIdx}">${inj.name || inj.effect || 'Injury'}</option>`;
+         }).join('')}
+       </select>`
+    : treatment.id === 'paramedic'
+      ? `<div style="font-size:11px;color:var(--role-muted);margin-bottom:6px;">${injuries.length ? 'Alle Verletzungen erfordern Surgery — Paramedic kann nicht helfen.' : 'Keine kritischen Verletzungen beim Ziel.'}</div>`
+      : '';
+
   const html = `
     <h3>${treatment.name} → ${target.type === 'self' ? 'Selbst' : target.name}</h3>
     <div class="role-card-desc">${treatment.effect}</div>
+    ${injPickerHtml}
     <label>TECH</label><input type="number" id="tr-stat" value="${stats.TECH ?? 6}">
     <label>${treatment.skill} Skill</label><input type="number" id="tr-skill" value="6">
     <label>Modifier (Tools, Conditions…)</label><input type="number" id="tr-mod" value="0">
@@ -336,15 +398,30 @@ async function openTreatmentFlow(character, treatment) {
       });
       modal.querySelector('#tr-out').innerHTML = renderRollResult(roll);
 
-      if (roll.success) {
-        const tgt = await fetchTarget(target, character.id);
-        if (tgt) {
-          let heal = 0;
-          if (treatment.id === 'firstaid')  heal = 5;
-          if (treatment.id === 'paramedic') heal = Math.floor(Math.random() * 6) + 2;
-          const newHp = Math.min(tgt.max_hp ?? tgt.current_hp, (tgt.current_hp ?? 0) + heal);
-          await patchTarget(target, { current_hp: newHp }, character.id);
+      if (roll.success && tgt) {
+        let heal = 0;
+        if (treatment.id === 'firstaid')  heal = 5;
+        if (treatment.id === 'paramedic') heal = Math.floor(Math.random() * 6) + 2;
+        const patch = { current_hp: Math.min(tgt.max_hp ?? tgt.current_hp, (tgt.current_hp ?? 0) + heal) };
+
+        const pickEl = modal.querySelector('#tr-inj-pick');
+        const pickIdx = pickEl ? parseInt(pickEl.value, 10) : NaN;
+        if (!isNaN(pickIdx)) {
+          const inj = injuries[pickIdx];
+          const t = (inj.treatment || '').toLowerCase();
+          const isPermanent = t.includes('paramedic') || t.includes('quick fix removes');
+          if (isPermanent) {
+            // Injury dauerhaft entfernen
+            const remaining = injuries.filter((_, i) => i !== pickIdx);
+            patch.critical_injuries = JSON.stringify(remaining);
+          } else {
+            // Quick Fix: Effekte für 1h suppressed, Injury bleibt im Array
+            const updated = [...injuries];
+            updated[pickIdx] = { ...inj, quick_fix_until: new Date(Date.now() + 3600000).toISOString() };
+            patch.critical_injuries = JSON.stringify(updated);
+          }
         }
+        await patchTarget(target, patch, character.id);
       }
 
       await logAction(character.id, 'medtech', `${treatment.name} → ${target.type === 'self' ? 'self' : target.name}`, {
@@ -389,10 +466,37 @@ async function openSurgeryFlow(character, proc, defaultSkill) {
   const target = await pickTarget();
   if (!target) return;
 
+  const tgt = await fetchTarget(target, character.id);
+  let injuries = [];
+  try { injuries = JSON.parse(tgt?.critical_injuries || '[]'); } catch {}
+
+  // For "Critical Injury treat (Severe)": show only Surgery-only injuries
+  // For other Surgery procedures (Cyberware etc.): show all injuries
+  const isCritProc = proc.name.toLowerCase().includes('critical');
+  const surgeryOnly = inj => {
+    const t = (inj.treatment || '').toLowerCase();
+    return t.startsWith('surgery') && !t.includes('paramedic');
+  };
+  const treatable = isCritProc ? injuries.filter(surgeryOnly) : injuries;
+
   const stats = character.stats || {};
+  const injPickerHtml = treatable.length
+    ? `<label>Kritische Verletzung behandeln (optional)</label>
+       <select id="sg-inj-pick">
+         <option value="">— keine —</option>
+         ${treatable.map(inj => {
+           const origIdx = injuries.indexOf(inj);
+           return `<option value="${origIdx}">${inj.name || inj.effect || 'Injury'}</option>`;
+         }).join('')}
+       </select>`
+    : isCritProc && injuries.length
+      ? `<div style="font-size:11px;color:var(--role-muted);margin-bottom:6px;">Keine Surgery-only Verletzungen — Paramedic-behandelbare Injuries bitte per Paramedic behandeln.</div>`
+      : `<div style="font-size:11px;color:var(--role-muted);margin-bottom:6px;">Keine kritischen Verletzungen beim Ziel.</div>`;
+
   const html = `
     <h3>${proc.name} → ${target.type === 'self' ? 'Selbst' : target.name}</h3>
     <div class="role-card-desc">${proc.desc}</div>
+    ${injPickerHtml}
     <label>TECH</label><input type="number" id="sg-stat" value="${stats.TECH ?? 6}">
     <label>Surgery Skill</label><input type="number" id="sg-skill" value="${defaultSkill}">
     <label>Modifier</label><input type="number" id="sg-mod" value="0">
@@ -413,6 +517,16 @@ async function openSurgeryFlow(character, proc, defaultSkill) {
         dv: proc.dv
       });
       modal.querySelector('#sg-out').innerHTML = renderRollResult(roll);
+
+      if (roll.success && injuries.length) {
+        const pickEl = modal.querySelector('#sg-inj-pick');
+        const pickIdx = pickEl ? parseInt(pickEl.value, 10) : NaN;
+        if (!isNaN(pickIdx)) {
+          const remaining = injuries.filter((_, i) => i !== pickIdx);
+          await patchTarget(target, { critical_injuries: JSON.stringify(remaining) }, character.id);
+        }
+      }
+
       await logAction(character.id, 'medtech', `Surgery: ${proc.name}`, {
         target, roll,
         summary: roll.success ? `✓ ${proc.desc}` : `✕ Komplikation — DM entscheidet`,
@@ -444,15 +558,7 @@ async function renderInventory(view, character) {
       onUse: async () => {
         const target = await pickTarget();
         if (!target) return;
-        if (item.meta?.recipe === 'speedheal') {
-          const tgt = await fetchTarget(target, character.id);
-          if (tgt && (tgt.current_hp ?? 0) > 0) {
-            const s = tgt.stats || {};
-            const heal = (s.BODY || 0) + (s.WILL || 0);
-            const newHp = Math.min(tgt.max_hp ?? tgt.current_hp, (tgt.current_hp ?? 0) + heal);
-            await patchTarget(target, { current_hp: newHp }, character.id);
-          }
-        }
+        await applyDrugEffect(item, target, character);
         await useInventoryItem(item.id, 1);
         await logAction(character.id, 'medtech', `Verabreicht: ${item.name}`, {
           target, summary: item.description

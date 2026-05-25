@@ -123,8 +123,16 @@ function openVehicleForm(character, view, rank) {
     </select>
     <label>Custom Name (wenn "Custom" gewählt)</label>
     <input id="ve-custom" placeholder="z.B. Yaiba Kusanagi CT-3X">
-    <label>Stats / Notizen (SDP, Armor, Speed, Mods)</label>
-    <textarea id="ve-stats" placeholder="z.B. SDP 30, Armor 8, MOVE 17, Bulletproof Glass"></textarea>
+    <label>SDP (Structural Damage Points / HP)</label>
+    <input type="number" id="ve-sdp" value="20" min="1">
+    <label>Armor SP</label>
+    <input type="number" id="ve-sp" value="0" min="0">
+    <label>MOVE (Geschwindigkeit)</label>
+    <input type="number" id="ve-move" value="6" min="1">
+    <label>Bild-URL (optional)</label>
+    <input id="ve-img" placeholder="https://…">
+    <label>Notizen (Mods, Upgrades…)</label>
+    <textarea id="ve-stats" placeholder="z.B. Bulletproof Glass, NOS, Machine Gun"></textarea>
     <div class="role-modal-actions">
       <button data-act="cancel">Abbrechen</button>
       <button class="primary" data-act="save">Speichern</button>
@@ -136,11 +144,17 @@ function openVehicleForm(character, view, rank) {
       const custom = modal.querySelector('#ve-custom').value.trim();
       const name = custom || picked;
       if (!name) return;
+      const sdp  = parseInt(modal.querySelector('#ve-sdp').value, 10)  || 20;
+      const sp   = parseInt(modal.querySelector('#ve-sp').value, 10)   || 0;
+      const move = parseInt(modal.querySelector('#ve-move').value, 10) || 6;
+      const imageUrl = modal.querySelector('#ve-img').value.trim() || null;
+      const notes    = modal.querySelector('#ve-stats').value.trim();
       await addInventoryItem(character.id, {
         category: 'vehicle', name,
-        description: modal.querySelector('#ve-stats').value || 'Stock Family Vehicle',
+        description: notes || 'Stock Family Vehicle',
         charges: 1, max_charges: 1,
-        meta: { from_motorpool: picked && !custom, acquired_at_rank: character.role_rank }
+        meta: { from_motorpool: !!(picked && !custom), acquired_at_rank: character.role_rank,
+                sdp, max_sdp: sdp, armor_sp: sp, move, image_url: imageUrl }
       });
       close();
       renderGarage(view, character);

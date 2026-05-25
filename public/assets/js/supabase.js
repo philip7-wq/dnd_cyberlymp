@@ -27,7 +27,7 @@ export async function saveCharacter(data) {
 export async function getCharacters() {
   const { data, error } = await supabase
     .from('characters')
-    .select('id, name, handle, role, current_hp, max_hp, image_url, current_humanity, max_humanity, current_luck, critical_injuries, conditions, mortally_wounded, stats, buffs, session_notes, improvement_points')
+    .select('id, name, handle, role, current_hp, max_hp, image_url, current_humanity, max_humanity, current_luck, critical_injuries, conditions, mortally_wounded, stats, buffs, session_notes, improvement_points, role_ability_data')
     .order('name');
   if (error) throw error;
   return data;

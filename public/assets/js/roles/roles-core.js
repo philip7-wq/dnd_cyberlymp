@@ -349,10 +349,12 @@ export async function updateInventoryItem(itemId, patch) {
 export async function fetchTarget(target, selfCharId) {
   const id = target.type === 'self' ? selfCharId : target.id;
   if (target.type === 'npc') {
-    const { data } = await supabase.from('npcs').select('id, hp_current, hp_max').eq('id', id).single();
+    const { data } = await supabase.from('npcs')
+      .select('id, hp_current, hp_max, critical_injuries').eq('id', id).single();
     return data ? { ...data, current_hp: data.hp_current, max_hp: data.hp_max } : null;
   }
-  const { data } = await supabase.from('characters').select('id, current_hp, max_hp, stats').eq('id', id).single();
+  const { data } = await supabase.from('characters')
+    .select('id, current_hp, max_hp, stats, critical_injuries, buffs, conditions').eq('id', id).single();
   return data;
 }
 

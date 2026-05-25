@@ -1953,6 +1953,18 @@ async function applyDamageToToken(tgt, through, opts = {}) {
   const { patchCharacter, patchNpc } = await import('./assets/js/supabase.js');
 
   let hpDmg = Math.max(0, through || 0);
+
+  // Solo Damage Deflection — reduziert ersten erlittenen Schaden pro Runde
+  if (tgt.type === 'char' && (tgt.role || '').toLowerCase() === 'solo') {
+    const ca = tgt.role_ability_data?.combatAwareness || {};
+    const defl = ca.deflection || 0;
+    const deflBonus = defl >= 10 ? 5 : defl >= 8 ? 4 : defl >= 6 ? 3 : defl >= 4 ? 2 : defl >= 2 ? 1 : 0;
+    if (deflBonus > 0 && hpDmg > 0) {
+      hpDmg = Math.max(0, hpDmg - deflBonus);
+      showMapToast(`${tgt.name}: Damage Deflection −${deflBonus}`, 'cyan');
+    }
+  }
+
   const injuriesAdded = [];
   const existing = (tgt.critInjuries || []).map(i => i?.name || i);
   const ciTable  = getCriticalInjuryTable();
@@ -2673,6 +2685,7 @@ function renderTokenPicker() {
         headMaxSP:c.armor?.head?.max_sp??c.armor?.head?.sp??0,
         bodyMaxSP:c.armor?.body?.max_sp??c.armor?.body?.sp??0,
         grapplePartner:null, humanShield:null,
+        role: c.role || null, role_ability_data: c.role_ability_data || null,
       });
       flashAddedBanner(c.handle||c.name);
     });
@@ -2699,7 +2712,7 @@ function renderTokenPicker() {
     });
   });
 
-  // Vehicle tab
+  // Vehicle tab — Generic vehicles
   const vg = document.getElementById('tokenPickerVehicle');
   vg.innerHTML = VEHICLES.map(v=>`
     <div class="token-pick-card" data-vname="${v.name}">
@@ -2719,6 +2732,44 @@ function renderTokenPicker() {
       flashAddedBanner(v.name);
     });
   });
+
+  // Nomad Family Vehicles from role_inventory
+  (async () => {
+    try {
+      const { supabase } = await import('./assets/js/supabase.js');
+      const { data: invItems } = await supabase
+        .from('role_inventory').select('*').eq('category', 'vehicle').order('name');
+      if (!invItems?.length) return;
+      const header = document.createElement('div');
+      header.style.cssText = 'grid-column:1/-1;font-size:.55rem;letter-spacing:.15em;color:#555;text-transform:uppercase;padding-top:.4rem;font-family:Audiowide,sans-serif;';
+      header.textContent = '— Nomad-Fahrzeuge —';
+      vg.appendChild(header);
+      invItems.forEach(item => {
+        const m = item.meta || {};
+        const sdp = m.sdp ?? 20; const move = m.move ?? 6;
+        const card = document.createElement('div');
+        card.className = 'token-pick-card';
+        card.innerHTML = m.image_url
+          ? `<img class="token-pick-avatar" src="${m.image_url}" alt="">`
+          : `<div class="token-pick-avatar" style="background:rgba(107,114,128,.2);font-size:1.4rem">🚗</div>`;
+        card.innerHTML += `<div class="token-pick-name">${item.name}</div>
+          <div style="font-size:.62rem;color:var(--text-muted)">SDP ${sdp} · SP ${m.armor_sp??0} · MOVE ${move}</div>`;
+        card.addEventListener('click', () => {
+          const nameAbbr = item.name.slice(0,3).toUpperCase();
+          addToken({type:'vehicle', name:item.name, label:nameAbbr,
+            imageUrl: m.image_url || null, color:'#E07A2C',
+            sdp, maxSdp:m.max_sdp??sdp, hp:sdp, maxHp:m.max_sdp??sdp,
+            bodySP: m.armor_sp??0, headSP:0,
+            move, stats:{MOVE:move}, conditions:[],
+            size_w:2, size_h:2, grapplePartner:null, humanShield:null,
+            roleInventoryId: item.id,
+          });
+          flashAddedBanner(item.name);
+        });
+        vg.appendChild(card);
+      });
+    } catch(e) { console.warn('Nomad-Vehicle fetch failed:', e); }
+  })();
 }
 
 function addToken(data) {
@@ -3948,10 +3999,19 @@ function buildPlayerPanel() {
     const aimedMod  = aimed ? -8 : 0;
     const shooter   = S.char || S.tokens.find(t => t.charId === CHAR_ID) || {};
 
+    // Solo Precision Attack Bonus aus localStorage
+    let precisionBonus = 0;
+    if ((S.char?.role || '').toLowerCase() === 'solo') {
+      let ca = {};
+      try { ca = JSON.parse(localStorage.getItem(`solo-ca-${S.char.id}`)) || {}; } catch {}
+      const prec = ca.precision || 0;
+      precisionBonus = prec >= 9 ? 3 : prec >= 6 ? 2 : prec >= 3 ? 1 : 0;
+    }
+
     // Universeller Roll-Wrapper: REF + Skill + manueller Mod + Aimed + Auto (Wound/Injury) → dice.js
     const { result, autoSum } = await rollWithModifiers(shooter, {
       statVal: ref, skillVal: skill, actionType: 'ranged_attack',
-      manualMods: [manualMod, aimedMod], isSkillCheck: true,
+      manualMods: [manualMod, aimedMod, precisionBonus], isSkillCheck: true,
       context: `Angriff: ${S.activeWeapon?.name || 'Waffe'}${S.measureTargetToken ? ' → ' + S.measureTargetToken.name : ''}`,
       characterId: S.char?.id || CHAR_ID, characterName: S.char?.handle || S.char?.name || null,
     });
@@ -3964,7 +4024,7 @@ function buildPlayerPanel() {
     const total    = result.total;
     _atkRollTotal  = total;
 
-    const dispMod = manualMod + aimedMod + autoSum;   // alle situativen Mods (autoSum inkl. Injury)
+    const dispMod = manualMod + aimedMod + autoSum + precisionBonus;   // alle situativen Mods
     const dv  = _atkDv ?? 15;
     const hit = total >= dv;
 
@@ -4006,9 +4066,18 @@ function buildPlayerPanel() {
     const critInjury = rolls.filter(r => r === sides).length >= 2;
     _critInjuryPending = critInjury;
     _atkWeaponClass    = getWeaponClass(w);
+    // Solo Spot Weakness Bonus — addiert vor Armor
+    let spotBonus = 0;
+    if ((S.char?.role || '').toLowerCase() === 'solo') {
+      let ca = {};
+      try { ca = JSON.parse(localStorage.getItem(`solo-ca-${S.char?.id}`)) || {}; } catch {}
+      spotBonus = ca.spotweak || 0;
+      if (spotBonus > 0) total += spotBonus;
+    }
     _dmgTotal = total;
     let html = `[${rolls.join('][')}]`;
     if (_autofireOn && mult > 1) html += ` × <b>${mult}</b>`;
+    if (spotBonus > 0) html += ` +${spotBonus} <span style="color:#FFD700;font-size:.6rem">Spot Weakness</span>`;
     html += ` = <b style="color:#FF8C00;font-family:Audiowide;font-size:.9rem">${total}</b> Schaden`;
     if (_atkWeaponClass === 'melee_weapon' || _atkWeaponClass === 'martial_arts')
       html += ` <span style="color:#888;font-size:.58rem">(½ SP)</span>`;

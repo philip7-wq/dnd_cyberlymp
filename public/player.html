@@ -824,10 +824,16 @@ function renderStats() {
     const rollExpr = rollMod >= 0 ? `1d10+${rollMod}` : `1d10${rollMod}`;
     const buffNote = buffBon !== 0
       ? `<div style="font-size:.52rem;color:var(--cyan);margin-top:.1rem">${buffBon >= 0 ? '+' : ''}${buffBon} Buff</div>` : '';
+    let penNote = '';
+    if (s === 'REF') {
+      const ap = getArmorRefPenalty();
+      if (ap > 0) penNote += `<div style="font-size:.52rem;color:#FF8C00;margin-top:.1rem">−${ap} Rüstung</div>`;
+    }
+    if (rollPen < 0) penNote += `<div style="font-size:.52rem;color:var(--red);margin-top:.1rem">${rollPen} Penalty</div>`;
     html += `<div class="stat-card" id="stat-card-${s}">
       <div class="stat-key">${s}</div>
       <div class="stat-val"${editAttr} data-stat="${s}" spellcheck="false">${displayVal}</div>
-      ${empNote}${buffNote}
+      ${empNote}${buffNote}${penNote}
       ${allStatsZero
         ? `<button class="stat-roll-btn" data-roll-stat="${s}" title="1d10 würfeln">⚄</button>`
         : `<button class="stat-dice-btn" data-stat="${s}" data-expr="${rollExpr}" title="${rollExpr}">🎲</button>`}
@@ -971,7 +977,11 @@ function getArmorRefPenalty() {
 }
 function getSWPenalty() {
   const sw = char?.seriously_wounded_threshold ?? 0;
-  return sw > 0 && (char?.current_hp ?? 0) < sw ? 2 : 0;
+  if (!sw || (char?.current_hp ?? 0) >= sw) return 0;
+  const hasStim = (char.buffs || []).some(b =>
+    b.name === 'Stim' && (!b.expires_at || new Date(b.expires_at) > new Date())
+  );
+  return hasStim ? 0 : 2;
 }
 
 function getEffectiveStat(statName) {
@@ -2802,6 +2812,8 @@ function setupCritModal() {
 
 // ── Critical Injuries tab ─────────────────────────────────────
 function renderCritInjuries() {
+  if (window._qfTimerHandle) { clearInterval(window._qfTimerHandle); window._qfTimerHandle = null; }
+
   const injuries = getInjuries();
   const badge    = document.getElementById('injuryBadge');
   if (badge) { badge.hidden = !injuries.length; badge.textContent = injuries.length || ''; }
@@ -2812,8 +2824,22 @@ function renderCritInjuries() {
     el.innerHTML = '<p class="empty-state">Keine aktiven Critical Injuries.</p>';
     return;
   }
-  el.innerHTML = injuries.map((inj, i) => `
-    <div class="injury-card">
+
+  const now = Date.now();
+  el.innerHTML = injuries.map((inj, i) => {
+    const isQF = inj.quick_fix_until && new Date(inj.quick_fix_until).getTime() > now;
+    if (isQF) {
+      return `<div class="injury-card" data-qf-until="${inj.quick_fix_until}" style="opacity:.4;border-color:#00E5FF44">
+        <div class="injury-header">
+          <span class="injury-name">${inj.name}</span>
+          <span class="injury-table">${inj.table === 'head' ? 'Head' : 'Body'}</span>
+        </div>
+        <div class="injury-effect" style="color:#888">${inj.effect}</div>
+        <div class="injury-meta" style="color:#00E5FF;font-size:.7rem">⏱ Quick Fix aktiv: <span class="qf-timer">…</span></div>
+        <div class="injury-meta"><span class="inj-key">Treatment</span>${inj.treatment || '—'}</div>
+      </div>`;
+    }
+    return `<div class="injury-card">
       <div class="injury-header">
         <span class="injury-name">${inj.name}</span>
         <span class="injury-table">${inj.table === 'head' ? 'Head' : 'Body'}</span>
@@ -2821,8 +2847,38 @@ function renderCritInjuries() {
       </div>
       <div class="injury-effect">${inj.effect}</div>
       <div class="injury-meta"><span class="inj-key">Quick Fix</span>${inj.quick_fix || '—'}</div>
-      <div class="injury-meta"><span class="inj-key">Treatment</span>${inj.treatment}</div>
-    </div>`).join('');
+      <div class="injury-meta"><span class="inj-key">Treatment</span>${inj.treatment || '—'}</div>
+    </div>`;
+  }).join('');
+
+  const qfCards = [...el.querySelectorAll('[data-qf-until]')];
+  if (qfCards.length) {
+    const tick = () => {
+      let anyActive = false;
+      qfCards.forEach(card => {
+        const remaining = new Date(card.dataset.qfUntil) - Date.now();
+        const timerEl = card.querySelector('.qf-timer');
+        if (!timerEl) return;
+        if (remaining <= 0) {
+          timerEl.textContent = '⚠ Abgelaufen';
+          clearInterval(window._qfTimerHandle);
+          window._qfTimerHandle = null;
+          renderCritInjuries();
+        } else {
+          anyActive = true;
+          const m = Math.floor(remaining / 60000);
+          const s = Math.floor((remaining % 60000) / 1000);
+          timerEl.textContent = `${m}m ${s}s`;
+        }
+      });
+      if (!anyActive && window._qfTimerHandle) {
+        clearInterval(window._qfTimerHandle);
+        window._qfTimerHandle = null;
+      }
+    };
+    tick();
+    window._qfTimerHandle = setInterval(tick, 1000);
+  }
 }
 
 async function removeInjury(idx) {
@@ -3068,12 +3124,27 @@ function showSkillCheckModal(expr, ctx) {
   const statVal    = Math.max(0, effStatVal - armorPen);
   const base       = statVal + lvl - swPen + injPen;
 
-  // Solo Combat Awareness — Initiative Reaction bonus
+  // Solo Combat Awareness — from localStorage (solo.js saves there)
   let soloBonus = 0;
   let soloBonusLabel = '';
-  if ((char.role || '').toLowerCase() === 'solo' && skillName.toLowerCase().includes('initiative')) {
-    soloBonus = char.role_ability_data?.combatAwareness?.initiative_reaction || 0;
-    if (soloBonus > 0) soloBonusLabel = ` + ${soloBonus} (Initiative Reaction)`;
+  if ((char.role || '').toLowerCase() === 'solo') {
+    let caState = {};
+    try { caState = JSON.parse(localStorage.getItem(`solo-ca-${char.id}`)) || {}; } catch {}
+    const RANGED = ['Handgun','Shoulder Arms','Heavy Weapons','Archery','Autofire'];
+    const MELEE  = ['Brawling','Martial Arts','Melee Weapon'];
+    if (RANGED.includes(skillName) || MELEE.includes(skillName)) {
+      const prec = caState.precision || 0;
+      const b = prec >= 9 ? 3 : prec >= 6 ? 2 : prec >= 3 ? 1 : 0;
+      if (b) { soloBonus += b; soloBonusLabel += ` +${b} (Precision Attack)`; }
+    }
+    if (skillName === 'Perception') {
+      const b = caState.threat || 0;
+      if (b) { soloBonus += b; soloBonusLabel += ` +${b} (Threat Detection)`; }
+    }
+    if (skillName.toLowerCase().includes('initiative')) {
+      const b = caState.initiative || 0;
+      if (b) { soloBonus += b; soloBonusLabel += ` +${b} (Initiative Reaction)`; }
+    }
   }
   const totalBase    = base + soloBonus;
   const adjustedExpr = totalBase >= 0 ? `1d10+${totalBase}` : `1d10${totalBase}`;

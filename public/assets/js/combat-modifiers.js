@@ -137,7 +137,12 @@ const _CATEGORY_FOR = {
 export function getInjuryPenaltyStruct(entity) {
   const out = { move: 0, allActions: 0, ranged: 0, melee: 0, perception: 0, social: 0 };
   if (!CI_BY_NAME) return out;
-  for (const name of getInjuryNames(entity)) {
+  const now = Date.now();
+  for (const inj of injuriesOf(entity)) {
+    // Quick Fix active → Effekte für 1h suppressed
+    if (inj.quick_fix_until && new Date(inj.quick_fix_until).getTime() > now) continue;
+    const name = typeof inj === 'string' ? inj : inj?.name;
+    if (!name) continue;
     const mod = CI_BY_NAME[name];
     if (!mod || !mod.value) continue;
     const seen = new Set();

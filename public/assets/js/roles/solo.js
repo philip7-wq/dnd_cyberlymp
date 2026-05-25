@@ -8,6 +8,7 @@ import {
   buildHeader, buildActionCard, buildSubtabs, buildLog, openModal,
   performCheck, renderRollResult, logAction, el
 } from './roles-core.js';
+import { supabase } from '../supabase.js';
 
 // Exakte Punktkosten aus Playbook
 const CA_ABILITIES = [
@@ -41,6 +42,10 @@ function getCAState(character) {
 }
 function saveCAState(character, state) {
   localStorage.setItem(`solo-ca-${character.id}`, JSON.stringify(state));
+  supabase.from('characters')
+    .update({ role_ability_data: { combatAwareness: state } })
+    .eq('id', character.id)
+    .then(() => {}).catch(console.warn);
 }
 
 export async function mount(panel, character) {
