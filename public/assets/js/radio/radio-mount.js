@@ -139,6 +139,15 @@ export function mountRadio(topNav, char, patchCharacter) {
   window.addEventListener('resize', () => { if (_drawerOpen) _openDrawer(); });
 }
 
+export function mountRadioDM(topNav) {
+  mountRadio(topNav, {
+    gear: [{ name: ITEM_NAME }],
+    radio_last_frequency: 88.0,
+    radio_volume: 0.7,
+    id: null,
+  }, () => Promise.resolve());
+}
+
 export function updateRadioOwnership(newGear) {
   if (!_hasRadio(newGear)) {
     if (_drawer) { powerOff(); _closeDrawer(); _drawer.remove(); _drawer = null; }

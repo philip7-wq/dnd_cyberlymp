@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="assets/css/dm.css?v=4">
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/sound.css">
+  <link rel="stylesheet" href="assets/css/radio.css?v=2">
 </head>
 <body>
 
@@ -522,6 +523,10 @@ async function boot() {
       `<div style="color:var(--red);font-size:.82rem">Fehler: ${e.message}</div>`;
     return;
   }
+
+  import('./assets/js/radio/radio-mount.js').then(({ mountRadioDM }) => {
+    mountRadioDM(document.querySelector('nav.nav'));
+  }).catch(() => {});
 
   renderGrid();
   renderRollLog();
