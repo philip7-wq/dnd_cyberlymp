@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="assets/css/player.css">
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/roles.css">
+  <link rel="stylesheet" href="assets/css/radio.css">
 </head>
 <body>
 
@@ -518,6 +519,9 @@ if (id) {
     clearTimeout(bootTimeout);
     renderAll();
     show();
+    import('./assets/js/radio/radio-mount.js').then(({ mountRadio }) => {
+      mountRadio(document.getElementById('topNav'), char, patchCharacter);
+    }).catch(() => {});
     initAgent({ characterId: id, characterName: char.handle || char.name || '?' }).catch(e => console.error('[agent]', e));
     // Notification nur nach User-Gesture anfragen
     document.addEventListener('click', () => requestNotifPermission(), { once: true });
@@ -603,6 +607,11 @@ if (id) {
       // Black Market: only react when the state actually changed, not on every HP update
       if (JSON.stringify(char.blackmarket_state) !== prevBmJson) {
         checkBlackmarket(char.blackmarket_state);
+      }
+      if (updated.gear !== undefined) {
+        import('./assets/js/radio/radio-mount.js').then(({ updateRadioOwnership }) => {
+          updateRadioOwnership(char.gear);
+        }).catch(() => {});
       }
     });
   } catch(e) {
