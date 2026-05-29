@@ -23,25 +23,41 @@ function _saveState(freq, vol) {
   }, 1000);
 }
 
-function _onStateUpdate({ ledState, lockedStation, frequency }) {
-  if (!_drawer) return;
-  const state = getState();
-  updateDisplay({
-    frequency: state.frequency,
-    ledState,
-    stationName: lockedStation?.name ?? '',
-    volume: state.volume,
-    powered: state.powered,
-  });
+function _updateButton(s) {
+  if (!_radioBtn) return;
+  const led  = _radioBtn.querySelector('.radio-btn-led');
+  const freq = _radioBtn.querySelector('.radio-btn-freq');
+  if (led)  led.className  = 'radio-btn-led led-' + (s.powered ? s.ledState : 'off');
+  if (freq) freq.textContent = s.frequency.toFixed(1);
+}
+
+function _refresh() {
+  const s = getState();
+  if (_drawer && _drawerOpen) {
+    updateDisplay({
+      frequency: s.frequency,
+      ledState: s.ledState,
+      stationName: s.lockedStation?.name ?? '',
+      volume: s.volume,
+      powered: s.powered,
+    });
+  }
+  _updateButton(s);
 }
 
 function _openDrawer() {
-  if (!_drawer) return;
+  if (!_drawer || !_radioBtn) return;
+  const r = _radioBtn.getBoundingClientRect();
+  const W = 320;
+  let left = r.left;
+  if (left + W > window.innerWidth - 12) left = window.innerWidth - 12 - W;
+  _drawer.style.top    = (r.bottom + 8) + 'px';
+  _drawer.style.left   = Math.max(12, left) + 'px';
+  _drawer.style.right  = 'auto';
+  _drawer.style.bottom = 'auto';
   _drawer.style.display = 'flex';
   _drawerOpen = true;
-  // Sync display with current engine state
-  const s = getState();
-  updateDisplay({ frequency: s.frequency, ledState: s.ledState, stationName: s.lockedStation?.name ?? '', volume: s.volume, powered: s.powered });
+  _refresh();
 }
 
 function _closeDrawer() {
@@ -56,23 +72,21 @@ export function mountRadio(topNav, char, patchCharacter) {
 
   if (!_hasRadio(char.gear)) return;
 
-  // Create topbar button before #navCash
+  // Topbar button: LED + 📻 + live frequency
   _radioBtn = document.createElement('button');
   _radioBtn.id = 'radioBtn';
   _radioBtn.type = 'button';
-  _radioBtn.className = 'btn btn-ghost';
+  _radioBtn.className = 'btn btn-ghost radio-topbar-btn';
   _radioBtn.style.fontSize = '.75rem';
-  _radioBtn.textContent = '📻 Radio';
-  const navCash = topNav.querySelector('#navCash');
-  topNav.insertBefore(_radioBtn, navCash);
+  _radioBtn.innerHTML = `<span class="radio-btn-led led-off"></span><span class="radio-btn-icon">📻</span><span class="radio-btn-freq">88.0</span>`;
+  topNav.insertBefore(_radioBtn, topNav.querySelector('#navCash'));
 
-  // Create drawer
+  // Drawer (positioned under the button on open)
   _drawer = document.createElement('div');
   _drawer.id = 'radioDrawer';
   _drawer.style.display = 'none';
   document.body.appendChild(_drawer);
 
-  // Build UI
   const initFreq = char.radio_last_frequency ?? 88.0;
   const initVol  = char.radio_volume ?? 0.7;
 
@@ -82,66 +96,52 @@ export function mountRadio(topNav, char, patchCharacter) {
       if (s.powered) {
         powerOff();
       } else {
-        await powerOn(parseFloat(document.getElementById('radioFreqNum')?.textContent) || initFreq, s.volume);
+        await powerOn(getState().frequency, getState().volume);
       }
+      _refresh();
     },
     onFreqChange: async freq => {
       await setFrequency(freq);
       const s = getState();
       _saveState(s.frequency, s.volume);
+      _refresh();
     },
     onVolumeChange: vol => {
       setVolume(vol);
       const s = getState();
-      _saveState(s.frequency, s.volume);
+      if (vol <= 0 && s.powered) powerOff();   // muting fully turns the radio off
+      _saveState(getState().frequency, vol);
+      _refresh();
     },
-    onSeekNext: async () => { await seekNext(); const s = getState(); _saveState(s.frequency, s.volume); },
-    onSeekPrev: async () => { await seekPrev(); const s = getState(); _saveState(s.frequency, s.volume); },
+    onSeekNext: async () => { await seekNext(); const s = getState(); _saveState(s.frequency, s.volume); _refresh(); },
+    onSeekPrev: async () => { await seekPrev(); const s = getState(); _saveState(s.frequency, s.volume); _refresh(); },
   });
 
-  // Initial display
-  updateDisplay({ frequency: initFreq, ledState: 'off', stationName: '', volume: initVol, powered: false });
-
-  // Volume slider initial value
-  const vol = document.getElementById('radioVolSlider');
-  if (vol) vol.value = initVol;
+  // Seed engine state (frequency + volume) without powering on
+  setFrequency(initFreq);
   setVolume(initVol);
 
-  // Wire engine → UI
-  onStateChange(_onStateUpdate);
+  updateDisplay({ frequency: initFreq, ledState: 'off', stationName: '', volume: initVol, powered: false });
+  _updateButton(getState());
 
-  // Toggle drawer on button click
-  _radioBtn.addEventListener('click', () => {
-    _drawerOpen ? _closeDrawer() : _openDrawer();
-  });
+  onStateChange(_refresh);
 
-  // Close button inside drawer
+  _radioBtn.addEventListener('click', () => { _drawerOpen ? _closeDrawer() : _openDrawer(); });
+
   document.addEventListener('click', e => {
-    if (e.target.id === 'radioCloseBtn') _closeDrawer();
+    if (e.target.closest && e.target.closest('#radioCloseBtn')) _closeDrawer();
   });
-
-  // Close when clicking outside
   document.addEventListener('click', e => {
     if (!_drawerOpen) return;
-    if (_drawer.contains(e.target) || e.target === _radioBtn) return;
+    if (_drawer.contains(e.target) || _radioBtn.contains(e.target)) return;
     _closeDrawer();
   });
+  window.addEventListener('resize', () => { if (_drawerOpen) _openDrawer(); });
 }
 
 export function updateRadioOwnership(newGear) {
   if (!_hasRadio(newGear)) {
-    if (_drawer) {
-      powerOff();
-      _closeDrawer();
-      _drawer.remove();
-      _drawer = null;
-    }
-    if (_radioBtn) {
-      _radioBtn.remove();
-      _radioBtn = null;
-    }
-  } else if (!_radioBtn) {
-    // Item was added while page is live — re-mount requires a reload in practice
-    // (edge case; user would normally buy item and it appears on next load)
+    if (_drawer) { powerOff(); _closeDrawer(); _drawer.remove(); _drawer = null; }
+    if (_radioBtn) { _radioBtn.remove(); _radioBtn = null; }
   }
 }

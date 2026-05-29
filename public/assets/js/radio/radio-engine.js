@@ -54,10 +54,9 @@ function _isNearPhantom(freq) {
 
 function _ledState(freq) {
   const dist = Math.abs(_nearestStation(freq).frequency - freq);
-  if (dist < LOCK_THRESHOLD) return 'green';
-  if (dist < NEAR_THRESHOLD) return 'yellow';
-  if (_isNearPhantom(freq)) return 'flicker';
-  return 'off';
+  if (dist < LOCK_THRESHOLD) return 'green';      // locked on a station
+  if (_isNearPhantom(freq)) return 'flicker';     // phantom freq → yellow flicker
+  return 'yellow';                                // powered but not tuned in
 }
 
 function _applyGains(freq, immediate = false) {
@@ -139,12 +138,18 @@ async function powerOn(freq, volume) {
   if (_ctx.state === 'suspended') await _ctx.resume();
 
   if (volume !== undefined) _volume = Math.max(0, Math.min(1, volume));
+  if (_volume <= 0) _volume = 0.5;   // never power on muted
   _masterGain.gain.value = _volume;
 
-  _powered = true;
-  _noiseAudio.play().catch(() => {});
-
   if (freq !== undefined) _frequency = Math.max(BAND.min, Math.min(BAND.max, freq));
+  _powered = true;
+  _emitState();   // LED + backlight on immediately
+
+  // brief delay so the power-on click is audible before audio kicks in
+  await new Promise(r => setTimeout(r, 1000));
+  if (!_powered) return;   // user powered off during the delay
+
+  _noiseAudio.play().catch(() => {});
   await setFrequency(_frequency);
 }
 

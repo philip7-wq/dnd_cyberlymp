@@ -1,49 +1,69 @@
 import { STATIONS, BAND } from './radio-config.js';
 
 const BAND_RANGE = BAND.max - BAND.min;
+const SWEEP = 270;          // total knob rotation arc in degrees
+const SWEEP_HALF = SWEEP / 2;
 
-// Converts frequency to knob rotation angle (-150° to +150°)
-function _freqToAngle(freq) {
-  return ((freq - BAND.min) / BAND_RANGE) * 300 - 150;
+function _freqPct(freq) { return ((freq - BAND.min) / BAND_RANGE) * 100; }
+function _tToAngle(t)   { return -SWEEP_HALF + t * SWEEP; }
+
+// Stationary tick ring around a knob (uniform 100×100 viewBox → no distortion)
+function _knobTicksSvg(count) {
+  const cx = 50, cy = 50, rOut = 47;
+  let m = '';
+  for (let i = 0; i < count; i++) {
+    const t = i / (count - 1);
+    const ang = (-SWEEP_HALF + t * SWEEP) * Math.PI / 180;
+    const major = (i % 4 === 0) || i === count - 1;
+    const rIn = major ? 38 : 42;
+    const x1 = cx + Math.sin(ang) * rOut, y1 = cy - Math.cos(ang) * rOut;
+    const x2 = cx + Math.sin(ang) * rIn,  y2 = cy - Math.cos(ang) * rIn;
+    m += `<line class="${major ? 'ktick-major' : 'ktick-minor'}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  }
+  return m;
 }
 
-// Converts strip X ratio (0–1) to frequency
-function _ratioToFreq(r) {
-  return BAND.min + r * BAND_RANGE;
+function _knobHtml(id, label) {
+  return `
+    <div class="radio-knob" data-knob="${id}">
+      <svg class="knob-ticks" viewBox="0 0 100 100">${_knobTicksSvg(21)}</svg>
+      <div class="knob-rotor" id="${id}Rotor" data-t="0">
+        <span class="knob-pointer"></span>
+        <span class="knob-grip"></span>
+      </div>
+      <div class="knob-center" id="${id}Center">—</div>
+      <div class="knob-label">${label}</div>
+    </div>`;
 }
 
-function _freqLabel(freq) {
-  return freq.toFixed(1);
-}
+export function buildUI(container, callbacks) {
+  const { onFreqChange, onVolumeChange, onPower, onSeekNext, onSeekPrev } = callbacks;
 
-export function buildUI(container, { onFreqChange, onVolumeChange, onPower, onSeekNext, onSeekPrev }) {
   container.innerHTML = `
     <div class="radio-head">
+      <span class="radio-head-grip"></span>
       <span class="radio-head-title">RADIO SCANNER</span>
       <button class="radio-close-btn" id="radioCloseBtn" type="button">✕</button>
     </div>
 
-    <div class="radio-display">
-      <div class="radio-display-left">
+    <div class="radio-screen" id="radioScreen">
+      <span class="radio-led led-off" id="radioLed"></span>
+      <div class="radio-screen-main">
         <span class="radio-freq-num" id="radioFreqNum">88.0</span>
         <span class="radio-mhz">MHz</span>
       </div>
-      <div class="radio-display-right">
-        <span class="radio-led led-off" id="radioLed"></span>
-        <span class="radio-station-name" id="radioStationName"></span>
-      </div>
+      <span class="radio-station-name" id="radioStationName"></span>
     </div>
 
-    <div class="radio-strip-wrap" id="radioStripWrap">
-      <svg class="radio-strip-svg" id="radioStripSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="radio-strip" id="radioStrip">
+      <div class="strip-ticks" id="radioStripTicks"></div>
+      <div class="strip-dots" id="radioStripDots"></div>
+      <span class="strip-needle" id="radioNeedle" style="left:0%"></span>
     </div>
 
-    <div class="radio-knob-wrap">
-      <svg class="radio-knob-svg" id="radioKnobSvg" viewBox="0 0 60 60" width="72" height="72">
-        <circle cx="30" cy="30" r="27" class="knob-body"/>
-        <circle cx="30" cy="30" r="26" class="knob-ring"/>
-        <circle cx="30" cy="8" r="3.5" class="knob-dot" id="radioKnobDot"/>
-      </svg>
+    <div class="radio-knobs">
+      ${_knobHtml('tune', 'TUNE')}
+      ${_knobHtml('vol', 'VOL')}
     </div>
 
     <div class="radio-controls">
@@ -51,164 +71,117 @@ export function buildUI(container, { onFreqChange, onVolumeChange, onPower, onSe
       <button class="radio-power-btn" id="radioPowerBtn" type="button">⏻ POWER</button>
       <button class="radio-ctrl-btn" id="radioSeekNext" type="button">SEEK ►</button>
     </div>
-
-    <div class="radio-volume-wrap">
-      <span class="radio-vol-label">VOL</span>
-      <input class="radio-vol-slider" id="radioVolSlider" type="range" min="0" max="1" step="0.01" value="0.7">
-    </div>
   `;
 
   _buildStrip(container);
-  _wireEvents(container, { onFreqChange, onVolumeChange, onPower, onSeekNext, onSeekPrev });
+
+  container.querySelector('#radioPowerBtn').addEventListener('click', onPower);
+  container.querySelector('#radioSeekNext').addEventListener('click', onSeekNext);
+  container.querySelector('#radioSeekPrev').addEventListener('click', onSeekPrev);
+
+  _makeKnob(container.querySelector('[data-knob="tune"]'),
+            t => onFreqChange(BAND.min + t * BAND_RANGE));
+  _makeKnob(container.querySelector('[data-knob="vol"]'),
+            t => onVolumeChange(t));
+
+  // Click/drag on the strip tunes directly
+  const strip = container.querySelector('#radioStrip');
+  let stripDrag = false;
+  const stripSet = e => {
+    const r = strip.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    onFreqChange(BAND.min + ratio * BAND_RANGE);
+  };
+  strip.addEventListener('mousedown', e => {
+    e.preventDefault(); stripDrag = true; stripSet(e);
+    const mv = ev => stripDrag && stripSet(ev);
+    const up = () => { stripDrag = false; window.removeEventListener('mousemove', mv); };
+    window.addEventListener('mousemove', mv);
+    window.addEventListener('mouseup', up, { once: true });
+  });
 }
 
 function _buildStrip(container) {
-  const svg = container.querySelector('#radioStripSvg');
-  const W = 280, H = 36;
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.setAttribute('width', '100%');
-  svg.setAttribute('height', H);
-
-  let markup = '';
-
-  // Tick marks: major (5 MHz), medium (1 MHz), minor (0.5 MHz)
-  for (let f = BAND.min; f <= BAND.max + 0.01; f += 0.5) {
-    const x = ((f - BAND.min) / BAND_RANGE) * W;
-    const isMajor = Math.abs(f % 5) < 0.01;
-    const isMedium = !isMajor && Math.abs(f % 1) < 0.01;
-    const h = isMajor ? 14 : isMedium ? 9 : 5;
-    const cls = isMajor ? 'strip-tick-major' : isMedium ? 'strip-tick-medium' : 'strip-tick-minor';
-    markup += `<line class="${cls}" x1="${x.toFixed(1)}" y1="${H - h}" x2="${x.toFixed(1)}" y2="${H}" />`;
-    if (isMajor) {
-      markup += `<text class="strip-freq-label" x="${x.toFixed(1)}" y="${H - 16}" text-anchor="middle">${f.toFixed(0)}</text>`;
-    }
+  let th = '';
+  for (let f = Math.ceil(BAND.min); f <= Math.floor(BAND.max); f++) {
+    const left = _freqPct(f);
+    const major = f % 5 === 0;
+    th += `<span class="strip-tick${major ? ' major' : ''}" style="left:${left}%"></span>`;
+    if (major) th += `<span class="strip-tick-label" style="left:${left}%">${f}</span>`;
   }
+  container.querySelector('#radioStripTicks').innerHTML = th;
 
-  // Station markers
+  let dh = '';
   for (const s of STATIONS) {
-    const x = ((s.frequency - BAND.min) / BAND_RANGE) * W;
-    markup += `<circle class="strip-station-dot" cx="${x.toFixed(1)}" cy="6" r="4" data-sid="${s.id}" />`;
+    dh += `<span class="strip-dot" style="left:${_freqPct(s.frequency)}%" title="${s.name}"></span>`;
   }
+  container.querySelector('#radioStripDots').innerHTML = dh;
+}
 
-  // Needle (current position)
-  markup += `<line class="strip-needle" id="radioNeedle" x1="0" y1="0" x2="0" y2="${H}" />`;
+function _makeKnob(knobEl, onChangeT) {
+  const rotor = knobEl.querySelector('.knob-rotor');
 
-  svg.innerHTML = markup;
+  const angleAt = e => {
+    const r = knobEl.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    return Math.atan2(e.clientX - cx, -(e.clientY - cy)) * 180 / Math.PI; // 0 at top, + clockwise
+  };
+
+  knobEl.addEventListener('mousedown', e => {
+    e.preventDefault();
+    const startAngle = angleAt(e);
+    const startT = parseFloat(rotor.dataset.t) || 0;
+    const mv = ev => {
+      let d = angleAt(ev) - startAngle;
+      if (d > 180) d -= 360; if (d < -180) d += 360;
+      onChangeT(Math.max(0, Math.min(1, startT + d / SWEEP)));
+    };
+    const up = () => window.removeEventListener('mousemove', mv);
+    window.addEventListener('mousemove', mv);
+    window.addEventListener('mouseup', up, { once: true });
+  });
+
+  knobEl.addEventListener('wheel', e => {
+    e.preventDefault();
+    const t = parseFloat(rotor.dataset.t) || 0;
+    onChangeT(Math.max(0, Math.min(1, t - Math.sign(e.deltaY) * 0.02)));
+  }, { passive: false });
 }
 
 export function updateDisplay({ frequency, ledState, stationName, volume, powered }) {
+  const screen = document.getElementById('radioScreen');
   const freqEl = document.getElementById('radioFreqNum');
   const ledEl  = document.getElementById('radioLed');
   const nameEl = document.getElementById('radioStationName');
-  const knob   = document.getElementById('radioKnobSvg');
   const needle = document.getElementById('radioNeedle');
   const pwrBtn = document.getElementById('radioPowerBtn');
+  if (!screen) return;
 
-  if (freqEl) freqEl.textContent = _freqLabel(frequency);
-
-  if (ledEl) {
-    ledEl.className = `radio-led led-${ledState}`;
-  }
+  screen.classList.toggle('backlit', !!powered);
+  if (freqEl) freqEl.textContent = frequency.toFixed(1);
+  if (ledEl)  ledEl.className = 'radio-led led-' + (powered ? ledState : 'off');
 
   if (nameEl) {
-    if (ledState === 'green' && stationName) {
-      nameEl.textContent = stationName;
-      nameEl.classList.add('visible');
-    } else {
-      nameEl.textContent = '';
-      nameEl.classList.remove('visible');
-    }
+    nameEl.textContent = (powered && ledState === 'green' && stationName) ? stationName : '';
+    nameEl.classList.toggle('visible', powered && ledState === 'green' && !!stationName);
   }
 
-  // Rotate knob
-  if (knob) {
-    const angle = _freqToAngle(frequency);
-    knob.style.transform = `rotate(${angle}deg)`;
+  if (needle) needle.style.left = _freqPct(frequency) + '%';
+
+  // Tune knob
+  const tuneRotor = document.getElementById('tuneRotor');
+  const tuneCenter = document.getElementById('tuneCenter');
+  const tT = (frequency - BAND.min) / BAND_RANGE;
+  if (tuneRotor) { tuneRotor.dataset.t = tT; tuneRotor.style.transform = `rotate(${_tToAngle(tT)}deg)`; }
+  if (tuneCenter) tuneCenter.textContent = frequency.toFixed(1);
+
+  // Volume knob
+  const volRotor = document.getElementById('volRotor');
+  const volCenter = document.getElementById('volCenter');
+  if (volume !== undefined) {
+    if (volRotor) { volRotor.dataset.t = volume; volRotor.style.transform = `rotate(${_tToAngle(volume)}deg)`; }
+    if (volCenter) volCenter.textContent = Math.round(volume * 100);
   }
 
-  // Move needle
-  if (needle) {
-    const stripWrap = document.getElementById('radioStripWrap');
-    const W = stripWrap ? stripWrap.clientWidth : 280;
-    const x = ((frequency - BAND.min) / BAND_RANGE) * W;
-    needle.setAttribute('x1', x.toFixed(1));
-    needle.setAttribute('x2', x.toFixed(1));
-  }
-
-  // Volume slider
-  const vol = document.getElementById('radioVolSlider');
-  if (vol && volume !== undefined) vol.value = volume;
-
-  // Power button state
-  if (pwrBtn) {
-    pwrBtn.classList.toggle('powered', !!powered);
-  }
-}
-
-function _wireEvents(container, { onFreqChange, onVolumeChange, onPower, onSeekNext, onSeekPrev }) {
-  container.querySelector('#radioPowerBtn')?.addEventListener('click', onPower);
-  container.querySelector('#radioSeekNext')?.addEventListener('click', onSeekNext);
-  container.querySelector('#radioSeekPrev')?.addEventListener('click', onSeekPrev);
-
-  const volSlider = container.querySelector('#radioVolSlider');
-  volSlider?.addEventListener('input', e => onVolumeChange(parseFloat(e.target.value)));
-
-  // Knob drag
-  const knob = container.querySelector('#radioKnobSvg');
-  let _knobDragStart = null;
-  let _knobDragFreq = null;
-
-  knob?.addEventListener('mousedown', e => {
-    e.preventDefault();
-    _knobDragStart = e.clientX;
-    _knobDragFreq = parseFloat(document.getElementById('radioFreqNum').textContent) || BAND.min;
-    document.addEventListener('mousemove', _onKnobDrag);
-    document.addEventListener('mouseup', _onKnobUp, { once: true });
-  });
-
-  function _onKnobDrag(e) {
-    if (_knobDragStart === null) return;
-    const delta = e.clientX - _knobDragStart;
-    const newFreq = Math.max(BAND.min, Math.min(BAND.max, _knobDragFreq + delta * 0.033));
-    onFreqChange(newFreq);
-  }
-
-  function _onKnobUp() {
-    _knobDragStart = null;
-    document.removeEventListener('mousemove', _onKnobDrag);
-  }
-
-  knob?.addEventListener('wheel', e => {
-    e.preventDefault();
-    const cur = parseFloat(document.getElementById('radioFreqNum').textContent) || BAND.min;
-    onFreqChange(Math.max(BAND.min, Math.min(BAND.max, cur - Math.sign(e.deltaY) * 0.1)));
-  }, { passive: false });
-
-  // Strip drag
-  const stripWrap = container.querySelector('#radioStripWrap');
-  let _stripDragging = false;
-
-  function _stripClick(e) {
-    const rect = stripWrap.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    onFreqChange(_ratioToFreq(ratio));
-  }
-
-  stripWrap?.addEventListener('mousedown', e => {
-    e.preventDefault();
-    _stripDragging = true;
-    _stripClick(e);
-    document.addEventListener('mousemove', _onStripDrag);
-    document.addEventListener('mouseup', _onStripUp, { once: true });
-  });
-
-  function _onStripDrag(e) {
-    if (!_stripDragging) return;
-    _stripClick(e);
-  }
-
-  function _onStripUp() {
-    _stripDragging = false;
-    document.removeEventListener('mousemove', _onStripDrag);
-  }
+  if (pwrBtn) pwrBtn.classList.toggle('powered', !!powered);
 }
