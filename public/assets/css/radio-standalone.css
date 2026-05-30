@@ -1,0 +1,661 @@
+/* ============================================================
+   Standalone Radio Page — "Mechanisches Relikt" (Cyberpunk Timepiece)
+   ------------------------------------------------------------
+   Eigener Scope, lädt KEIN radio.css. Override aller Klassen
+   die radio-ui.js #buildUI in #radioShell injiziert.
+   ============================================================ */
+
+:root {
+  --relic-brass:        #b08a3a;
+  --relic-brass-bright: #d4a854;
+  --relic-amber:        #FFB347;
+  --relic-amber-dim:    #c8852a;
+  --relic-gun:          #1c1d23;
+  --relic-gun-dark:     #0a0b10;
+  --relic-shell-hi:     #2a2620;
+  --relic-shell-lo:     #15110d;
+  --relic-shell-edge:   #3a3128;
+  --relic-screw:        #6a5a40;
+  --cyber-cyan:         #00FFD0;
+  --cyber-cyan-dim:     #0090a0;
+  --cyber-magenta:      #FF2D95;
+}
+
+/* ── Page Stage ──────────────────────────────────────────── */
+.radio-page {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(140% 100% at 50% 30%, #14101a 0%, #050307 65%, #000 100%);
+  overflow: hidden;
+  font-family: 'Audiowide', 'Inter', sans-serif;
+  color: #c8b890;
+  user-select: none;
+}
+
+.radio-bg-canvas {
+  position: fixed; inset: 0;
+  width: 100vw; height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(0.4px) saturate(1.1);
+}
+
+.radio-scanlines {
+  position: fixed; inset: 0; z-index: 5;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,0.22) 0 1px,
+    transparent     1px 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: .4;
+}
+
+.radio-vignette {
+  position: fixed; inset: 0; z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(130% 90% at 50% 50%, transparent 35%, rgba(0,0,0,.8) 100%);
+}
+
+.radio-hub-link {
+  position: fixed; top: 1rem; left: 1.4rem;
+  z-index: 20;
+  color: var(--relic-brass);
+  font-size: .68rem;
+  letter-spacing: .35em;
+  text-decoration: none;
+  opacity: .55;
+  transition: opacity .2s, color .2s, text-shadow .2s;
+  text-shadow: 0 0 6px transparent;
+}
+.radio-hub-link:hover {
+  opacity: 1;
+  color: var(--relic-amber);
+  text-shadow: 0 0 10px rgba(255,179,71,.5);
+}
+
+.radio-stage {
+  position: relative;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 2.5rem 1rem 3rem;
+  box-sizing: border-box;
+}
+
+/* ── Gehäuse ─────────────────────────────────────────────── */
+.radio-relic-shell {
+  position: relative;
+  width: min(580px, 94vw);
+  padding: 1.6rem 1.5rem 1.3rem;
+  border-radius: 14px;
+  border: 1px solid var(--relic-shell-edge);
+  background:
+    linear-gradient(180deg, var(--relic-shell-hi) 0%, var(--relic-shell-lo) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,200,120,.16),
+    inset 0 -2px 8px rgba(0,0,0,.7),
+    0 22px 60px rgba(0,0,0,.92),
+    0 0 0 1px rgba(255,179,71,.04);
+  isolation: isolate;
+}
+/* gebürstetes Metall + Patina-Vignette */
+.radio-relic-shell::before {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: .12;
+  background:
+    repeating-linear-gradient(92deg,
+      rgba(255,255,255,.35) 0 1px,
+      transparent 1px 3px),
+    radial-gradient(70% 50% at 18% 8%, rgba(255,255,255,.25), transparent 60%),
+    radial-gradient(60% 40% at 85% 95%, rgba(0,0,0,.6), transparent 70%);
+  mix-blend-mode: overlay;
+}
+.radio-relic-shell::after {
+  /* feine Nieten-Linie oben + unten als Detail */
+  content: '';
+  position: absolute; left: 14px; right: 14px;
+  top: 6px; height: 1px;
+  background: repeating-linear-gradient(90deg,
+    rgba(255,179,71,.18) 0 2px,
+    transparent 2px 8px);
+  pointer-events: none;
+}
+
+/* Schrauben in den Ecken */
+.relic-screw {
+  position: absolute;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #8a7440 0%, #4a3a20 60%, #1a1208 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,200,120,.4),
+    inset 0 -1px 1px rgba(0,0,0,.7),
+    0 1px 2px rgba(0,0,0,.8);
+  z-index: 2;
+}
+.relic-screw::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 8px; height: 1.5px;
+  background: rgba(0,0,0,.7);
+  transform: translate(-50%, -50%) rotate(35deg);
+  border-radius: 1px;
+  box-shadow: 0 0 0 .5px rgba(255,255,255,.04);
+}
+.relic-screw--tl { top: 8px;  left: 8px;  }
+.relic-screw--tr { top: 8px;  right: 8px; }
+.relic-screw--bl { bottom: 8px; left: 8px; }
+.relic-screw--br { bottom: 8px; right: 8px; }
+
+/* Gravierte Markenleiste oben */
+.relic-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  margin: -.4rem 0 1rem;
+  padding-bottom: .55rem;
+  border-bottom: 1px solid rgba(176,138,58,.18);
+  font-size: .52rem;
+  letter-spacing: .35em;
+  color: var(--relic-brass);
+  text-shadow: 0 0 8px rgba(176,138,58,.25), 0 1px 0 rgba(0,0,0,.8);
+  opacity: .85;
+}
+.relic-brand-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--relic-amber);
+  box-shadow: 0 0 6px var(--relic-amber), 0 0 14px rgba(255,179,71,.5);
+  animation: relic-brand-pulse 3.2s ease-in-out infinite;
+}
+@keyframes relic-brand-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .45; }
+}
+
+/* ── radio-ui.js HOST: Header verstecken ─────────────────── */
+.radio-ui-host .radio-head { display: none; }
+
+/* ── Screen (eingelassenes LCD mit Bernstein-Glow) ───────── */
+.radio-ui-host .radio-screen {
+  position: relative;
+  margin: 0 .2rem .8rem;
+  padding: .9rem 1rem .75rem;
+  border-radius: 6px;
+  background: #0a0805;
+  border: 1px solid #4a3a20;
+  box-shadow:
+    inset 0 0 24px rgba(0,0,0,.95),
+    inset 0 0 0 1px rgba(255,179,71,.06),
+    0 1px 0 rgba(255,200,120,.07);
+  overflow: hidden;
+  transition: background .45s, box-shadow .45s;
+}
+.radio-ui-host .radio-screen.backlit {
+  background: radial-gradient(130% 150% at 50% 0%, #3a2810 0%, #1a1208 60%, #0a0805 100%);
+  box-shadow:
+    inset 0 0 24px rgba(255,179,71,.3),
+    inset 0 0 0 1px rgba(255,179,71,.22),
+    0 0 24px rgba(255,179,71,.05);
+  animation: relic-warmup 1.4s ease-out;
+}
+@keyframes relic-warmup {
+  0%   { opacity: .25; filter: brightness(.3); }
+  18%  { opacity: 1;   filter: brightness(1.5); }
+  28%  { opacity: .55; filter: brightness(.65); }
+  44%  { opacity: 1;   filter: brightness(1.3); }
+  60%  { opacity: .85; filter: brightness(.9);  }
+  100% { opacity: 1;   filter: brightness(1);   }
+}
+/* feine Glasreflexion oben */
+.radio-ui-host .radio-screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.07) 0%, transparent 25%);
+}
+
+.radio-ui-host .radio-led {
+  position: absolute; top: 10px; left: 12px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  transition: background .2s, box-shadow .2s;
+}
+
+.radio-ui-host .radio-screen-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: .35rem;
+}
+.radio-ui-host .radio-freq-num {
+  font-family: 'Audiowide', monospace;
+  font-size: 2.1rem;
+  letter-spacing: .04em;
+  line-height: 1;
+  color: #4a3820;
+  font-variant-numeric: tabular-nums;
+  transition: color .45s, text-shadow .45s;
+}
+.radio-ui-host .radio-screen.backlit .radio-freq-num {
+  color: var(--relic-amber);
+  text-shadow:
+    0 0 18px rgba(255,179,71,.7),
+    0 0 36px rgba(255,179,71,.4),
+    0 1px 0 rgba(0,0,0,.6);
+}
+.radio-ui-host .radio-mhz {
+  font-size: .55rem;
+  letter-spacing: .12em;
+  color: #2a1d10;
+  transition: color .45s;
+}
+.radio-ui-host .radio-screen.backlit .radio-mhz {
+  color: #b07820;
+  text-shadow: 0 0 8px rgba(255,179,71,.4);
+}
+.radio-ui-host .radio-station-name {
+  display: block;
+  text-align: center;
+  margin-top: .35rem;
+  min-height: .85rem;
+  font-size: .58rem;
+  letter-spacing: .12em;
+  color: var(--relic-amber);
+  opacity: 0;
+  transition: opacity .35s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 8px rgba(255,179,71,.5);
+}
+.radio-ui-host .radio-station-name.visible { opacity: .9; }
+
+/* ── LED-Farben (Bernstein-Variante für Lock) ────────────── */
+.radio-ui-host .led-off    { background: #1a1208; box-shadow: none; }
+.radio-ui-host .led-green  {
+  background: var(--relic-amber);
+  box-shadow: 0 0 6px var(--relic-amber), 0 0 16px rgba(255,179,71,.6);
+}
+.radio-ui-host .led-yellow {
+  background: #6a5430;
+  box-shadow: 0 0 4px rgba(176,138,58,.4);
+}
+.radio-ui-host .led-flicker {
+  background: #6a5430;
+  animation: relic-led-flicker .17s ease-in-out infinite alternate;
+}
+@keyframes relic-led-flicker {
+  from { opacity: 1;  box-shadow: 0 0 5px rgba(176,138,58,.5); }
+  to   { opacity: .3; box-shadow: none; }
+}
+
+/* ── Frequency Strip (analoge Skala hinter Glas) ─────────── */
+.radio-ui-host .radio-strip {
+  position: relative;
+  height: 52px;
+  margin: .2rem .2rem .35rem;
+  cursor: crosshair;
+  background:
+    linear-gradient(180deg, #1a1410 0%, #0a0805 100%);
+  border: 1px solid #4a3a20;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 14px rgba(0,0,0,.85),
+    inset 0 1px 0 rgba(255,179,71,.06);
+  overflow: hidden;
+}
+.radio-ui-host .radio-strip::after {
+  /* Glasreflexion */
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.06) 0%, transparent 35%);
+}
+.radio-ui-host .strip-ticks,
+.radio-ui-host .strip-dots {
+  position: absolute; inset: 0;
+}
+.radio-ui-host .strip-tick {
+  position: absolute; bottom: 0;
+  width: 1px; height: 8px;
+  background: #5a4830;
+  transform: translateX(-50%);
+}
+.radio-ui-host .strip-tick.major {
+  height: 16px;
+  background: var(--relic-brass);
+  box-shadow: 0 0 4px rgba(176,138,58,.4);
+}
+.radio-ui-host .strip-tick-label {
+  position: absolute; bottom: 20px;
+  transform: translateX(-50%);
+  font-family: 'Audiowide', monospace;
+  font-size: .58rem;
+  color: var(--relic-brass);
+  letter-spacing: .04em;
+  text-shadow: 0 0 6px rgba(176,138,58,.4);
+}
+.radio-ui-host .strip-dot {
+  position: absolute; top: 4px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--relic-amber);
+  box-shadow: 0 0 6px var(--relic-amber), 0 0 14px rgba(255,179,71,.4);
+  transform: translateX(-50%);
+}
+.radio-ui-host .strip-needle {
+  position: absolute; top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg,
+    rgba(255,179,71,.0) 0%,
+    var(--relic-amber) 18%,
+    var(--relic-amber) 82%,
+    rgba(255,179,71,.0) 100%);
+  box-shadow: 0 0 6px var(--relic-amber), 0 0 14px rgba(255,179,71,.55);
+  transform: translateX(-50%);
+  pointer-events: none;
+  transition: left .12s ease;
+}
+
+/* ── Knobs (geriffelter Messing-Knob mit Trägheit) ───────── */
+.radio-ui-host .radio-knobs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  padding: .9rem .4rem .4rem;
+  margin: 0 .2rem .5rem;
+  border-top: 1px solid rgba(176,138,58,.18);
+}
+.radio-ui-host .radio-knob {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  padding: .25rem;
+}
+.radio-ui-host .knob-ticks {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+.radio-ui-host .ktick-major {
+  stroke: var(--relic-brass);
+  stroke-width: 1.4;
+}
+.radio-ui-host .ktick-minor {
+  stroke: #4a3820;
+  stroke-width: 1;
+}
+.radio-ui-host .knob-rotor {
+  position: absolute;
+  left: 14%; right: 14%; top: 14%; bottom: 14%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, #d4a854 0%, #8a6a28 35%, #4a3818 75%, #1a1208 100%);
+  border: 1px solid #1a1208;
+  cursor: grab;
+  box-shadow:
+    0 5px 12px rgba(0,0,0,.75),
+    inset 0 1px 0 rgba(255,200,120,.5),
+    inset 0 -2px 4px rgba(0,0,0,.5);
+  transition: transform .12s cubic-bezier(.4,1.4,.6,1);
+}
+.radio-ui-host .knob-rotor:active { cursor: grabbing; }
+.radio-ui-host .knob-rotor::before {
+  /* innerer Ring/Vertiefung */
+  content: '';
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #b08a3a 0%, #6e5320 70%, #2a1f0a 100%);
+  border: 1px solid rgba(0,0,0,.5);
+  box-shadow: inset 0 -1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,200,120,.3);
+}
+.radio-ui-host .knob-grip {
+  /* gerillter Rand via repeating-conic für Riffeln */
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(0,0,0,.55) 0 4deg,
+    rgba(255,200,120,.08) 4deg 8deg);
+  mask: radial-gradient(circle, transparent 64%, #000 64%, #000 100%);
+  -webkit-mask: radial-gradient(circle, transparent 64%, #000 64%, #000 100%);
+  pointer-events: none;
+}
+.radio-ui-host .knob-pointer {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  width: 3px;
+  height: 22%;
+  background: var(--relic-amber);
+  border-radius: 1.5px;
+  transform: translateX(-50%);
+  box-shadow:
+    0 0 6px rgba(255,179,71,.85),
+    0 0 14px rgba(255,179,71,.5),
+    0 1px 0 rgba(0,0,0,.6);
+  z-index: 2;
+}
+.radio-ui-host .knob-center {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Audiowide', monospace;
+  font-size: .6rem;
+  letter-spacing: .04em;
+  color: var(--relic-amber);
+  text-shadow: 0 0 6px rgba(255,179,71,.5), 0 1px 0 rgba(0,0,0,.7);
+  z-index: 3;
+  pointer-events: none;
+}
+.radio-ui-host .knob-label {
+  position: absolute;
+  bottom: -1.1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: .55rem;
+  letter-spacing: .35em;
+  color: var(--relic-brass);
+  text-shadow: 0 1px 0 rgba(0,0,0,.7);
+}
+
+/* ── Controls (mechanische Buttons) ──────────────────────── */
+.radio-ui-host .radio-controls {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: .6rem;
+  margin: 1.5rem .2rem .2rem;
+  padding-top: .9rem;
+  border-top: 1px solid rgba(176,138,58,.18);
+}
+.radio-ui-host .radio-ctrl-btn,
+.radio-ui-host .radio-power-btn {
+  position: relative;
+  font-family: 'Audiowide', sans-serif;
+  font-size: .62rem;
+  letter-spacing: .25em;
+  color: var(--relic-brass);
+  background:
+    linear-gradient(180deg, #2a221a 0%, #15110b 100%);
+  border: 1px solid #4a3a20;
+  border-radius: 4px;
+  padding: .55rem .4rem;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255,200,120,.18),
+    inset 0 -2px 4px rgba(0,0,0,.5),
+    0 2px 6px rgba(0,0,0,.6);
+  transition: color .15s, border-color .15s, box-shadow .15s, background .15s;
+}
+.radio-ui-host .radio-ctrl-btn:hover,
+.radio-ui-host .radio-power-btn:hover {
+  color: var(--relic-amber);
+  border-color: var(--relic-amber-dim);
+  text-shadow: 0 0 8px rgba(255,179,71,.4);
+}
+.radio-ui-host .radio-ctrl-btn:active,
+.radio-ui-host .radio-power-btn:active {
+  box-shadow:
+    inset 0 2px 5px rgba(0,0,0,.7),
+    inset 0 -1px 0 rgba(255,200,120,.06);
+  transform: translateY(1px);
+}
+.radio-ui-host .radio-power-btn.powered {
+  color: var(--relic-amber);
+  border-color: var(--relic-amber);
+  text-shadow: 0 0 10px rgba(255,179,71,.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255,200,120,.3),
+    inset 0 -2px 4px rgba(0,0,0,.5),
+    0 0 16px rgba(255,179,71,.25);
+}
+
+/* ── Oszilloskop (eingelassen, hinter Glas) ──────────────── */
+.radio-scope {
+  position: relative;
+  margin: .9rem .2rem .2rem;
+  height: 92px;
+  border-radius: 6px;
+  background: #050a08;
+  border: 1px solid #1a3a30;
+  box-shadow:
+    inset 0 0 20px rgba(0,255,208,.07),
+    inset 0 0 0 1px rgba(0,255,208,.04),
+    0 1px 0 rgba(0,255,208,.04);
+  overflow: hidden;
+}
+.radio-scope canvas {
+  width: 100%; height: 100%;
+  display: block;
+}
+.radio-scope-grid {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,255,208,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,208,.07) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: center center;
+  opacity: .6;
+}
+.radio-scope-glass {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05) 0%, transparent 30%),
+    radial-gradient(80% 60% at 50% 30%, transparent 40%, rgba(0,0,0,.35) 100%);
+}
+.radio-scope-label {
+  position: absolute; top: 5px; left: 8px;
+  font-size: .5rem;
+  letter-spacing: .3em;
+  color: var(--cyber-cyan);
+  text-shadow: 0 0 6px rgba(0,255,208,.6);
+  opacity: .6;
+  z-index: 2;
+}
+
+/* ── Mechanische Toggle-Schalter ─────────────────────────── */
+.radio-toggles {
+  display: flex;
+  gap: 2.5rem;
+  justify-content: center;
+  margin: 1.1rem .2rem 0;
+  padding: .9rem 0 .2rem;
+  border-top: 1px solid rgba(176,138,58,.18);
+}
+.relic-toggle {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .45rem;
+  cursor: pointer;
+  user-select: none;
+}
+.relic-toggle-housing {
+  position: relative;
+  width: 26px;
+  height: 44px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #1a1208 0%, #0a0805 100%);
+  border: 1px solid #2a1f0a;
+  box-shadow:
+    inset 0 0 8px rgba(0,0,0,.85),
+    inset 0 1px 0 rgba(255,200,120,.08),
+    0 1px 2px rgba(0,0,0,.6);
+}
+.relic-toggle-housing input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.relic-toggle-stem {
+  position: absolute;
+  left: 50%;
+  width: 14px;
+  height: 18px;
+  border-radius: 2.5px;
+  background:
+    linear-gradient(180deg, var(--relic-brass-bright) 0%, var(--relic-brass) 50%, #6e5320 100%);
+  border: 1px solid #1a1208;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,.7),
+    inset 0 1px 0 rgba(255,220,160,.45),
+    inset 0 -1px 1px rgba(0,0,0,.4);
+  transform: translateX(-50%);
+  transition: top .18s cubic-bezier(.4, 1.6, .6, 1);
+  top: 22px; /* off */
+}
+.relic-toggle-housing input:checked ~ .relic-toggle-stem {
+  top: 3px;
+}
+.relic-toggle-led {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #1a1208;
+  border: 1px solid rgba(0,0,0,.6);
+  transition: background .15s, box-shadow .15s;
+}
+.relic-toggle:has(input:checked) .relic-toggle-led {
+  background: var(--cyber-cyan);
+  box-shadow:
+    0 0 7px var(--cyber-cyan),
+    0 0 16px rgba(0,255,208,.55);
+}
+.relic-toggle-label {
+  font-size: .55rem;
+  letter-spacing: .3em;
+  color: #8a6830;
+  text-shadow: 0 1px 0 rgba(0,0,0,.7);
+  transition: color .15s, text-shadow .15s;
+}
+.relic-toggle:hover .relic-toggle-label {
+  color: var(--relic-amber);
+  text-shadow: 0 0 8px rgba(255,179,71,.4);
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .radio-relic-shell { padding: 1.2rem 1rem 1rem; }
+  .radio-ui-host .radio-freq-num { font-size: 1.7rem; }
+  .radio-toggles { gap: 1.5rem; }
+  .radio-scope { height: 70px; }
+}

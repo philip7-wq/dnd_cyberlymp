@@ -15,6 +15,7 @@ let _ctx = null;
 let _masterGain = null;
 let _stationGain = null;
 let _noiseGain = null;
+let _analyser = null;
 
 let _powered = false;
 let _frequency = 88.0;
@@ -202,4 +203,16 @@ function getState() {
   };
 }
 
-export { powerOn, powerOff, setFrequency, seekNext, seekPrev, setVolume, onStateChange, getState };
+function attachAnalyser({ fftSize = 2048, smoothingTimeConstant = 0.8 } = {}) {
+  if (_analyser) return _analyser;
+  if (!_ctx) _initContext();
+  _analyser = _ctx.createAnalyser();
+  _analyser.fftSize = fftSize;
+  _analyser.smoothingTimeConstant = smoothingTimeConstant;
+  try { _masterGain.disconnect(_ctx.destination); } catch {}
+  _masterGain.connect(_analyser);
+  _analyser.connect(_ctx.destination);
+  return _analyser;
+}
+
+export { powerOn, powerOff, setFrequency, seekNext, seekPrev, setVolume, onStateChange, getState, attachAnalyser };

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RADIO — LZRV Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/radio-standalone.css?v=1">
+</head>
+<body class="radio-page">
+
+<canvas id="bgVisualizer" class="radio-bg-canvas"></canvas>
+<div class="radio-scanlines"></div>
+<div class="radio-vignette"></div>
+
+<a href="index.html" class="radio-hub-link">← HUB</a>
+
+<main class="radio-stage">
+  <div class="radio-relic-shell">
+    <span class="relic-screw relic-screw--tl"></span>
+    <span class="relic-screw relic-screw--tr"></span>
+    <span class="relic-screw relic-screw--bl"></span>
+    <span class="relic-screw relic-screw--br"></span>
+
+    <div class="relic-brand">
+      <span class="relic-brand-dot"></span>
+      <span class="relic-brand-name">LZRV · RELIC SERIES MK-IV</span>
+    </div>
+
+    <div id="radioShell" class="radio-ui-host"></div>
+
+    <div class="radio-scope">
+      <span class="radio-scope-label">OSC</span>
+      <canvas id="waveformCanvas"></canvas>
+      <div class="radio-scope-grid"></div>
+      <div class="radio-scope-glass"></div>
+    </div>
+
+    <div class="radio-toggles">
+      <label class="relic-toggle" data-toggle="wave">
+        <span class="relic-toggle-housing">
+          <input type="checkbox" id="toggleWave" checked>
+          <span class="relic-toggle-stem"></span>
+        </span>
+        <span class="relic-toggle-led"></span>
+        <span class="relic-toggle-label">WAVE</span>
+      </label>
+      <label class="relic-toggle" data-toggle="viz">
+        <span class="relic-toggle-housing">
+          <input type="checkbox" id="toggleViz" checked>
+          <span class="relic-toggle-stem"></span>
+        </span>
+        <span class="relic-toggle-led"></span>
+        <span class="relic-toggle-label">VISUALIZER</span>
+      </label>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import { mountStandaloneRadio } from './assets/js/radio/radio-standalone-mount.js';
+  import {
+    initVisualizer,
+    setWaveformVisible,
+    setVisualizerVisible,
+    isWaveformOn,
+    isVisualizerOn,
+  } from './assets/js/radio/radio-visualizer.js';
+
+  mountStandaloneRadio(document.getElementById('radioShell'));
+
+  initVisualizer({
+    waveformCanvas: document.getElementById('waveformCanvas'),
+    bgCanvas:       document.getElementById('bgVisualizer'),
+  });
+
+  const wt = document.getElementById('toggleWave');
+  const vt = document.getElementById('toggleViz');
+  wt.checked = isWaveformOn();
+  vt.checked = isVisualizerOn();
+  wt.addEventListener('change', e => setWaveformVisible(e.target.checked));
+  vt.addEventListener('change', e => setVisualizerVisible(e.target.checked));
+</script>
+
+</body>
+</html>
