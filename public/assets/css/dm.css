@@ -398,13 +398,48 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .combat-actions { display: flex; gap: .4rem; flex-shrink: 0; }
 
 /* ── Combat Setup Panel ── */
-.combat-setup-panel { padding: .75rem 1rem; background: var(--bg-card); border-bottom: 1px solid var(--border); }
-.combat-setup-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: .75rem; }
+.combat-setup-panel {
+  padding: .75rem 1rem .6rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  position: relative;
+}
+.combat-setup-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: .75rem; align-items: start; }
 .combat-setup-head { font-size: .6rem; text-transform: uppercase; letter-spacing: .14em; color: var(--text-muted); margin-bottom: .4rem; border-bottom: 1px solid var(--border); padding-bottom: .2rem; }
+#combatPlayerList,
+#combatNpcDbList,
+#combatNpcList,
+#combatInitiativeList {
+  max-height: 38vh;
+  overflow-y: auto;
+  padding-right: .35rem;
+  scrollbar-width: thin;
+}
+#combatPlayerList::-webkit-scrollbar,
+#combatNpcDbList::-webkit-scrollbar,
+#combatNpcList::-webkit-scrollbar,
+#combatInitiativeList::-webkit-scrollbar,
+.combat-setup-panel::-webkit-scrollbar { width: 6px; }
+#combatPlayerList::-webkit-scrollbar-thumb,
+#combatNpcDbList::-webkit-scrollbar-thumb,
+#combatNpcList::-webkit-scrollbar-thumb,
+#combatInitiativeList::-webkit-scrollbar-thumb,
+.combat-setup-panel::-webkit-scrollbar-thumb { background: rgba(255,45,45,.35); border-radius: 3px; }
 .combat-setup-check { display: flex; align-items: center; gap: .4rem; font-size: .78rem; padding: .2rem 0; cursor: pointer; }
 .combat-init-small { font-size: .65rem; color: var(--text-muted); }
 .combat-npc-item { display: flex; align-items: center; gap: .4rem; font-size: .75rem; padding: .15rem 0; color: var(--text-muted); }
-.combat-setup-footer { display: flex; gap: .5rem; align-items: center; border-top: 1px solid var(--border); padding-top: .6rem; }
+.combat-setup-footer {
+  display: flex; gap: .5rem; align-items: center;
+  border-top: 1px solid var(--border);
+  padding: .6rem 0 0;
+  position: sticky;
+  bottom: -.6rem;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, var(--bg-card) 18%, var(--bg-card) 100%);
+  z-index: 2;
+}
 
 /* ── Conditions on DM Cards ── */
 .dm-card-conditions { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .25rem; }

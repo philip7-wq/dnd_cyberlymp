@@ -406,22 +406,35 @@ async function openTreatmentFlow(character, treatment) {
 
         const pickEl = modal.querySelector('#tr-inj-pick');
         const pickIdx = pickEl ? parseInt(pickEl.value, 10) : NaN;
+        let quickfixToAdd = null;
         if (!isNaN(pickIdx)) {
           const inj = injuries[pickIdx];
           const t = (inj.treatment || '').toLowerCase();
           const isPermanent = t.includes('paramedic') || t.includes('quick fix removes');
           if (isPermanent) {
-            // Injury dauerhaft entfernen
             const remaining = injuries.filter((_, i) => i !== pickIdx);
             patch.critical_injuries = JSON.stringify(remaining);
           } else {
-            // Quick Fix: Effekte für 1h suppressed, Injury bleibt im Array
-            const updated = [...injuries];
-            updated[pickIdx] = { ...inj, quick_fix_until: new Date(Date.now() + 3600000).toISOString() };
-            patch.critical_injuries = JSON.stringify(updated);
+            // Quick Fix → character_effects-Row, Injury bleibt im Array
+            const gt = await import('../game-time.js').catch(() => null);
+            const nowIg = gt ? gt.getCurrentIngameTime() : new Date();
+            quickfixToAdd = {
+              effect_type: 'quickfix',
+              source: `critical_injury:${inj.name}`,
+              display_name: `Quickfix: ${inj.name}`,
+              description: 'Wirkt bis Long Rest oder 24 IG-Stunden',
+              started_at_ingame: nowIg.toISOString(),
+              expires_at_ingame: new Date(nowIg.getTime() + 24*60*60*1000).toISOString(),
+              ends_on_long_rest: true,
+              meta: { covered_injury_name: inj.name },
+            };
           }
         }
         await patchTarget(target, patch, character.id);
+        if (quickfixToAdd && tgt) {
+          const sb = await import('../supabase.js').catch(() => null);
+          if (sb) await sb.addCharacterEffect({ ...quickfixToAdd, character_id: tgt.id }).catch(() => {});
+        }
       }
 
       await logAction(character.id, 'medtech', `${treatment.name} → ${target.type === 'self' ? 'self' : target.name}`, {

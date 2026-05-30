@@ -206,3 +206,57 @@ ALTER TABLE room_items ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon all room_items" ON room_items;
 CREATE POLICY "anon all room_items" ON room_items FOR ALL USING (true) WITH CHECK (true);
 ALTER PUBLICATION supabase_realtime ADD TABLE room_items;
+
+-- ============================================================
+-- MIGRATION — In-Game Time & Effect System (manuell ausführen)
+-- ============================================================
+
+-- game_state singleton (id = 1)
+CREATE TABLE IF NOT EXISTS game_state (
+  id int PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  current_ingame_time timestamptz NOT NULL DEFAULT '2045-09-15 08:00:00+00',
+  mode text NOT NULL DEFAULT 'running'
+    CHECK (mode IN ('running','paused','combat','long_rest')),
+  last_resume_real timestamptz,
+  combat_started_at_ingame timestamptz,
+  combat_round int DEFAULT 0,
+  long_rest_initiator_character_id uuid,
+  long_rest_started_real timestamptz,
+  long_rest_ends_real timestamptz,
+  updated_at timestamptz DEFAULT now()
+);
+INSERT INTO game_state (id, last_resume_real) VALUES (1, now()) ON CONFLICT DO NOTHING;
+ALTER TABLE game_state ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon all game_state" ON game_state;
+CREATE POLICY "anon all game_state" ON game_state FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON public.game_state TO anon, authenticated, service_role;
+ALTER PUBLICATION supabase_realtime ADD TABLE game_state;
+
+-- character_effects — alle temporären Effekte (quickfix, drug, buff, debuff, crafting, custom)
+CREATE TABLE IF NOT EXISTS character_effects (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  character_id uuid NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  effect_type text NOT NULL,
+  source text NOT NULL,
+  display_name text NOT NULL,
+  description text,
+  started_at_ingame timestamptz NOT NULL,
+  expires_at_ingame timestamptz,
+  ends_on_long_rest boolean DEFAULT false,
+  meta jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_char_effects_char ON character_effects(character_id);
+CREATE INDEX IF NOT EXISTS idx_char_effects_expires ON character_effects(expires_at_ingame)
+  WHERE expires_at_ingame IS NOT NULL;
+ALTER TABLE character_effects ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon all character_effects" ON character_effects;
+CREATE POLICY "anon all character_effects" ON character_effects FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON public.character_effects TO anon, authenticated, service_role;
+ALTER PUBLICATION supabase_realtime ADD TABLE character_effects;
+
+-- characters Anker-Spalten für Long-Rest-Tracking & Lazy-Eval-Heilung
+ALTER TABLE characters ADD COLUMN IF NOT EXISTS
+  last_long_rest_at_ingame timestamptz DEFAULT '2045-09-15 08:00:00+00';
+ALTER TABLE characters ADD COLUMN IF NOT EXISTS
+  last_hp_tick_at_ingame timestamptz DEFAULT '2045-09-15 08:00:00+00';

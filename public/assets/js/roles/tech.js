@@ -221,11 +221,35 @@ function openSpecModal(character, spec, defaultSpecRank, view) {
       });
 
       if (roll.success) {
-        await addInventoryItem(character.id, {
+        const inv = await addInventoryItem(character.id, {
           category: 'project', name, description: `${spec.name} · ${catName} (DV ${dv}) · ${timeStr}\n${desc}`,
           charges: 1, max_charges: 1,
           meta: { specialty: spec.id, dv, category: catName, time: timeStr }
         });
+        // Build-Timer als character_effects-Row → Player Sheet zeigt Countdown + Pickup
+        try {
+          const [gt, sb] = await Promise.all([
+            import('../game-time.js'), import('../supabase.js'),
+          ]);
+          const now = gt.getCurrentIngameTime();
+          const buildMs = gt.parseBuildTimeToIngameMs(timeStr) || 0;
+          if (buildMs > 0) {
+            await sb.addCharacterEffect({
+              character_id: character.id,
+              effect_type: 'crafting',
+              source: `tech:${spec.id}:${name}`,
+              display_name: `Crafting: ${name}`,
+              description: `${catName} · DV ${dv} · ${timeStr}`,
+              started_at_ingame: now.toISOString(),
+              expires_at_ingame: new Date(now.getTime() + buildMs).toISOString(),
+              ends_on_long_rest: false,
+              meta: {
+                project_specialty: spec.id, project_category: catName,
+                item_name: name, project_inventory_id: inv?.id || null,
+              },
+            });
+          }
+        } catch (e) { console.warn('[tech build-timer]', e); }
       }
       await logAction(character.id, 'tech', `${spec.name}: ${name}`, {
         roll, summary: roll.success ? `✓ Project erstellt (${catName})` : '✕ Failure'

@@ -379,6 +379,78 @@ export async function patchCash(id, newCash, delta, reason, existingLog) {
   return log;
 }
 
+// ── Game State (In-Game Time) ─────────────────────────────────
+
+export async function getGameState() {
+  const { data, error } = await supabase
+    .from('game_state').select('*').eq('id', 1).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** Patch the singleton game_state row. Uses raw fetch to dodge return=representation. */
+export async function patchGameState(patch) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/game_state?id=eq.1`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }),
+    }
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(body.message || `HTTP ${res.status}`), body);
+  }
+}
+
+export function subscribeGameState(callback) {
+  return supabase.channel('game-state-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state' }, callback)
+    .subscribe();
+}
+
+// ── Character Effects ─────────────────────────────────────────
+
+export async function getCharacterEffects(characterId = null) {
+  let q = supabase.from('character_effects').select('*').order('started_at_ingame', { ascending: true });
+  if (characterId) q = q.eq('character_id', characterId);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addCharacterEffect(row) {
+  const { data, error } = await supabase.from('character_effects').insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function removeCharacterEffect(id) {
+  const { error } = await supabase.from('character_effects').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function removeCharacterEffectsBy({ characterId = null, endsOnLongRest = null, expiresBefore = null }) {
+  let q = supabase.from('character_effects').delete();
+  if (characterId)      q = q.eq('character_id', characterId);
+  if (endsOnLongRest)   q = q.eq('ends_on_long_rest', endsOnLongRest);
+  if (expiresBefore)    q = q.not('expires_at_ingame', 'is', null).lt('expires_at_ingame', expiresBefore);
+  const { error } = await q;
+  if (error) throw error;
+}
+
+export function subscribeCharacterEffects(callback) {
+  return supabase.channel('character-effects-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'character_effects' }, callback)
+    .subscribe();
+}
+
 // ── Room Items ────────────────────────────────────────────────
 
 export async function getRoomItems() {

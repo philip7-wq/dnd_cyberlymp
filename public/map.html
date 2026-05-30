@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/map.css">
   <link rel="stylesheet" href="assets/css/map-weapons.css?v=2">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=2">
 </head>
 <body class="map-page">
 
@@ -3290,6 +3291,10 @@ async function doNextTurn() {
 
   await saveCombatDb({...S.combatSession, current_turn_index:newIdx, round:newRound});
 
+  if (newRound !== (S.combatSession.round ?? 1)) {
+    import('./assets/js/game-time.js').then(({ advanceCombatRound }) => advanceCombatRound().catch(() => {})).catch(() => {});
+  }
+
   const nextName = combatants[newIdx]?.name || '?';
   const msg = fireToasts.length
     ? `Runde ${newRound} — ${nextName} ist dran\n${fireToasts.join(' · ')}`
@@ -4153,9 +4158,12 @@ function buildPlayerPanel() {
     }
 
     // Universeller Roll-Wrapper: REF + Skill + manueller Mod + Aimed + Auto (Wound/Injury) → dice.js
+    const _gtMod = await import('./assets/js/game-time.js').catch(() => null);
+    const _now = _gtMod ? _gtMod.getCurrentIngameTime() : null;
     const { result, autoSum } = await rollWithModifiers(shooter, {
       statVal: ref, skillVal: skill, actionType: 'ranged_attack',
       manualMods: [manualMod, aimedMod, precisionBonus], isSkillCheck: true,
+      now: _now,
       context: `Angriff: ${S.activeWeapon?.name || 'Waffe'}${S.measureTargetToken ? ' → ' + S.measureTargetToken.name : ''}`,
       characterId: _npcControlMode ? null : (S.char?.id || CHAR_ID), characterName: S.char?.handle || S.char?.name || null,
     });
@@ -4773,6 +4781,12 @@ async function boot() {
       });
     }
     _combatChannel.subscribe();
+
+    // Game-Time: read-only Top-Bar
+    import('./assets/js/ui/topbar.js').then(async ({ mountTopbar }) => {
+      const bar = await mountTopbar({ isDm: false });
+      if (S.char) bar.attachCharacter(S.char);
+    }).catch(e => console.warn('[game-time]', e));
 
     window.addEventListener('resize',resizeCanvas);
   } catch(e) {

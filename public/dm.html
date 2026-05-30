@@ -8,10 +8,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css?v=2">
-  <link rel="stylesheet" href="assets/css/dm.css?v=4">
+  <link rel="stylesheet" href="assets/css/dm.css?v=5">
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/sound.css">
   <link rel="stylesheet" href="assets/css/radio.css?v=2">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=2">
 </head>
 <body>
 
@@ -528,6 +529,19 @@ async function boot() {
     mountRadioDM(document.querySelector('nav.nav'));
   }).catch(() => {});
 
+  // Game-Time: Top-Bar + DM Time Dial
+  Promise.all([
+    import('./assets/js/ui/topbar.js'),
+    import('./assets/js/ui/dm-time-dial.js'),
+    import('./assets/js/game-time.js'),
+  ]).then(async ([topbarMod, dialMod, gtMod]) => {
+    await gtMod.initGameTime();
+    const dial = await dialMod.mountDmTimeDial();
+    await topbarMod.mountTopbar({ isDm: true, onSettingsClick: () => dial.open() });
+    // Auto-Combat-Mode-Sync (single writer)
+    gtMod.onGameStateChange(() => { /* re-render hook noop; combat sync runs in subscribeCombat */ });
+  }).catch(e => console.warn('[game-time]', e));
+
   renderGrid();
   renderRollLog();
   renderAllCombatBars();
@@ -545,6 +559,18 @@ async function boot() {
     combatSession = Object.values(combatSessions).at(-1) ?? null;
     renderAllCombatBars();
     updateDmTimer(cs.timer ?? null);
+
+    // Auto-Sync Game-Time-Mode mit combat_sessions (DM ist single writer)
+    import('./assets/js/game-time.js').then(({ getCachedGameState, startCombat, endCombat }) => {
+      const gs = getCachedGameState();
+      if (!gs) return;
+      const anyActive = Object.values(combatSessions).some(s => s.is_active);
+      if (anyActive && gs.mode !== 'combat' && gs.mode !== 'long_rest') {
+        startCombat().catch(console.warn);
+      } else if (!anyActive && gs.mode === 'combat') {
+        endCombat().catch(console.warn);
+      }
+    }).catch(() => {});
   });
 
   // Delegated click on grid: open detail OR delete char
@@ -1785,7 +1811,9 @@ function setupLeftPanel() {
     const max = openChar.max_hp ?? 0;
     const pct = max ? Math.round(val / max * 100) : 0;
     const barColor = pct > 50 ? 'var(--cyan)' : pct > 20 ? '#FFD600' : 'var(--red)';
-    await ctrlPatch({ current_hp: val }, 'dmLeftHpMsg', `HP → ${val}`);
+    const _gt = await import('./assets/js/game-time.js').catch(() => null);
+    const _nowIso = _gt ? _gt.getCurrentIngameTime().toISOString() : new Date().toISOString();
+    await ctrlPatch({ current_hp: val, last_hp_tick_at_ingame: _nowIso }, 'dmLeftHpMsg', `HP → ${val}`);
     const fill = leftEl.querySelector('.dm-left-hp-fill');
     if (fill) { fill.style.width = pct + '%'; fill.style.background = barColor; }
     const label = leftEl.querySelector('.dm-left-hp-label');
@@ -2501,8 +2529,11 @@ function showNpcResult(total, dice, mod, hasCrit) {
   document.getElementById('ctrlNpcApply').addEventListener('click', async () => {
     const sp    = parseInt(document.getElementById('ctrlNpcSp').value) || 0;
     const dmg   = Math.max(0, total - sp);
-    const newHp = Math.max(0, (openChar.current_hp ?? 0) - dmg);
-    const patch = { current_hp: newHp };
+    const _gt = await import('./assets/js/game-time.js').catch(() => null);
+    const _nowIso = _gt ? _gt.getCurrentIngameTime().toISOString() : new Date().toISOString();
+    const evalHp = _gt ? _gt.getEffectiveHp(openChar) : (openChar.current_hp ?? 0);
+    const newHp = Math.max(0, evalHp - dmg);
+    const patch = { current_hp: newHp, last_hp_tick_at_ingame: _nowIso };
     if (newHp === 0) patch.mortally_wounded = true;
     await ctrlPatch(patch, 'ctrlNpcMsg',
       `${dmg} Schaden → HP ${newHp}${newHp === 0 ? ' ⚠ MORTALLY WOUNDED' : ''}`);
@@ -2612,9 +2643,12 @@ function showInjuryResult(inj, rollVal, table) {
 async function applyInjury(inj, table) {
   const injuries = parseInjuries(openChar.critical_injuries);
   injuries.push({ ...inj, table });
-  const newHp = Math.max(0, (openChar.current_hp ?? 0) - 5);
+  const _gt = await import('./assets/js/game-time.js').catch(() => null);
+  const _nowIso = _gt ? _gt.getCurrentIngameTime().toISOString() : new Date().toISOString();
+  const evalHp = _gt ? _gt.getEffectiveHp(openChar) : (openChar.current_hp ?? 0);
+  const newHp = Math.max(0, evalHp - 5);
   await ctrlPatch(
-    { critical_injuries: JSON.stringify(injuries), current_hp: newHp },
+    { critical_injuries: JSON.stringify(injuries), current_hp: newHp, last_hp_tick_at_ingame: _nowIso },
     'ctrlInjMsg', `${inj.name} hinzugefügt, −5 HP`
   );
   // Re-render injury list
@@ -2822,8 +2856,11 @@ function openNpcQuickModal(total) {
     const dmg = Math.max(0, total - sp);
     const target = chars.find(c => c.id === targetId);
     if (!target) return;
-    const newHp = Math.max(0, (target.current_hp ?? 0) - dmg);
-    const patch = { current_hp: newHp };
+    const _gt = await import('./assets/js/game-time.js').catch(() => null);
+    const _nowIso = _gt ? _gt.getCurrentIngameTime().toISOString() : new Date().toISOString();
+    const evalHp = _gt ? _gt.getEffectiveHp(target) : (target.current_hp ?? 0);
+    const newHp = Math.max(0, evalHp - dmg);
+    const patch = { current_hp: newHp, last_hp_tick_at_ingame: _nowIso };
     if (newHp === 0) {
       const conds = [...(target.conditions || [])];
       if (!conds.includes('Mortally Wounded')) conds.push('Mortally Wounded');
@@ -2918,6 +2955,9 @@ document.addEventListener('click', async e => {
     const nextIdx = (session.current_turn_index + 1) % combatants.length;
     const newRound = nextIdx === 0 ? session.round + 1 : session.round;
     await saveCombat({ ...session, current_turn_index: nextIdx, round: newRound });
+    if (newRound !== session.round) {
+      import('./assets/js/game-time.js').then(({ advanceCombatRound }) => advanceCombatRound().catch(() => {})).catch(() => {});
+    }
     return;
   }
   // Setup (edit existing combat)

@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/roles.css">
   <link rel="stylesheet" href="assets/css/radio.css?v=2">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=2">
 </head>
 <body>
 
@@ -180,8 +181,14 @@
       <div class="buff-bar-label">BUFFS</div>
       <div class="buff-list" id="buffList"></div>
     </div>
+    <!-- Effect Bar (character_effects) -->
+    <div class="buff-bar" id="effectBar" style="display:none">
+      <div class="buff-bar-label">EFFECTS</div>
+      <div class="buff-list" id="effectList"></div>
+    </div>
     <div class="condition-badges" id="conditionBadges"></div>
     <button class="death-save-btn" id="deathSaveBtn" style="display:none">☠ DEATH SAVE</button>
+    <button class="btn btn-ghost" id="longRestBtn" type="button" style="font-size:.7rem;margin-top:.3rem;border-color:rgba(0,182,255,.35);color:#00B6FF">🌙 Long Rest</button>
   </div>
   <div class="char-ip-badge" id="charIpBadge">
     <div class="char-ip-label">IP</div>
@@ -522,6 +529,9 @@ if (id) {
     import('./assets/js/radio/radio-mount.js').then(({ mountRadio }) => {
       mountRadio(document.getElementById('topNav'), char, patchCharacter);
     }).catch(() => {});
+
+    // Game-Time top-bar + Long-Rest overlay + Effects panel
+    initGameTimeIntegration().catch(e => console.warn('[game-time]', e));
     initAgent({ characterId: id, characterName: char.handle || char.name || '?' }).catch(e => console.error('[agent]', e));
     // Notification nur nach User-Gesture anfragen
     document.addEventListener('click', () => requestNotifPermission(), { once: true });
@@ -646,6 +656,174 @@ function show() {
   document.getElementById('diceFab').style.display = '';
 }
 
+// ── Game-Time Integration (top-bar + long rest + effects) ─────
+let _gtTopbarApi = null;
+let _gtRestOverlay = null;
+let _gtRestCountdown = null;
+let _gtEffectsCache = [];
+
+async function initGameTimeIntegration() {
+  const [{ mountTopbar }, gt, sb] = await Promise.all([
+    import('./assets/js/ui/topbar.js'),
+    import('./assets/js/game-time.js'),
+    import('./assets/js/supabase.js'),
+  ]);
+  await gt.initGameTime();
+  window.__gameTime = gt;                       // expose early so renderers can use lazy-eval
+  _gtTopbarApi = await mountTopbar({ isDm: false });
+  _gtTopbarApi.attachCharacter(char);
+  renderHeader();   // re-render with lazy HP
+
+  // Long Rest button
+  const restBtn = document.getElementById('longRestBtn');
+  restBtn?.addEventListener('click', async () => {
+    const ok = await _showLongRestConfirm();
+    if (!ok) return;
+    try { await gt.startLongRest(char.id); } catch (e) { alert('Fehler: ' + e.message); }
+  });
+
+  // Subscribe game state — show/hide rest overlay + re-render HP
+  gt.onGameStateChange(state => {
+    if (!state) return;
+    if (state.mode === 'long_rest') _showRestOverlay(state);
+    else _hideRestOverlay();
+    renderHeader();   // HP lazy-eval refresh
+  });
+
+  // Effects: initial load + realtime
+  try {
+    _gtEffectsCache = await sb.getCharacterEffects(char.id);
+  } catch { _gtEffectsCache = []; }
+  window.__myEffects = () => _gtEffectsCache;
+  renderCharacterEffects();
+  renderCritInjuries?.();
+  sb.subscribeCharacterEffects(p => {
+    const row = p.new || p.old;
+    if (!row || row.character_id !== char.id) return;
+    if (p.eventType === 'INSERT') _gtEffectsCache.push(p.new);
+    else if (p.eventType === 'UPDATE') _gtEffectsCache = _gtEffectsCache.map(e => e.id === p.new.id ? p.new : e);
+    else if (p.eventType === 'DELETE') _gtEffectsCache = _gtEffectsCache.filter(e => e.id !== p.old.id);
+    renderCharacterEffects();
+    renderCritInjuries?.();   // Quickfix changed → re-render injuries
+  });
+
+  // 60s ticker for countdowns
+  setInterval(() => {
+    renderCharacterEffects();
+    renderHeader();
+  }, 60_000);
+
+}
+
+function _showLongRestConfirm() {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'gt-confirm-overlay';
+    overlay.innerHTML = `
+      <div class="gt-confirm-box">
+        <div class="gt-confirm-icon">🌙</div>
+        <div class="gt-confirm-title">LONG REST</div>
+        <div class="gt-confirm-body">
+          8 Stunden Schlaf vorspulen?<br>
+          <span class="gt-confirm-sub">+8 HP (1/h passiv) · Schlafentzug reset · Quickfix-Effekte enden</span>
+        </div>
+        <div class="gt-confirm-actions">
+          <button type="button" class="gt-btn" data-act="cancel">Abbrechen</button>
+          <button type="button" class="gt-btn gt-success" data-act="ok">🌙 Schlafen</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const done = (val) => { overlay.remove(); resolve(val); };
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) done(false);
+      const act = e.target.closest?.('[data-act]')?.dataset.act;
+      if (act === 'ok')     done(true);
+      if (act === 'cancel') done(false);
+    });
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { document.removeEventListener('keydown', esc); done(false); }
+      if (e.key === 'Enter')  { document.removeEventListener('keydown', esc); done(true);  }
+    });
+  });
+}
+
+function _showRestOverlay(state) {
+  if (!_gtRestOverlay) {
+    _gtRestOverlay = document.createElement('div');
+    _gtRestOverlay.className = 'gt-rest-overlay';
+    _gtRestOverlay.innerHTML = `
+      <div class="gt-moon">🌙</div>
+      <div class="gt-rest-title">RESTING</div>
+      <div class="gt-rest-sub">8 hours of in-game sleep</div>
+      <div class="gt-rest-count" id="gtRestCount">5</div>
+    `;
+    document.body.appendChild(_gtRestOverlay);
+  }
+  _gtRestOverlay.hidden = false;
+  // Countdown vom long_rest_ends_real basieren
+  const endsAt = state.long_rest_ends_real ? new Date(state.long_rest_ends_real).getTime() : Date.now() + 5000;
+  if (_gtRestCountdown) clearInterval(_gtRestCountdown);
+  const update = () => {
+    const left = Math.max(0, endsAt - Date.now());
+    const sec = Math.ceil(left / 1000);
+    const el = document.getElementById('gtRestCount');
+    if (el) el.textContent = sec.toString();
+  };
+  update();
+  _gtRestCountdown = setInterval(update, 200);
+}
+function _hideRestOverlay() {
+  if (_gtRestCountdown) { clearInterval(_gtRestCountdown); _gtRestCountdown = null; }
+  if (_gtRestOverlay) _gtRestOverlay.hidden = true;
+}
+
+// Render the EFFECTS bar — countdown chips
+function renderCharacterEffects() {
+  const bar = document.getElementById('effectBar');
+  const list = document.getElementById('effectList');
+  if (!bar || !list) return;
+  const gt = window.__gameTime;
+  if (!gt || !_gtEffectsCache.length) { bar.style.display = 'none'; list.innerHTML = ''; return; }
+  bar.style.display = '';
+  const now = gt.getCurrentIngameTime();
+  list.innerHTML = _gtEffectsCache.map(e => {
+    const expiresAt = e.expires_at_ingame ? new Date(e.expires_at_ingame).getTime() : null;
+    const remaining = expiresAt ? expiresAt - now.getTime() : null;
+    const ready = remaining !== null && remaining <= 0;
+    let suffix;
+    if (remaining === null) suffix = '∞';
+    else if (ready) suffix = (e.effect_type === 'crafting' || e.effect_type === 'brew_timer' || e.effect_type === 'surgery_timer')
+      ? '<span class="buff-chip-ready" style="color:#00FF88">READY</span>'
+      : 'ending';
+    else suffix = gt.formatDuration(remaining);
+    const pickup = ready && e.effect_type === 'crafting' ? `<button class="buff-chip-pickup" data-effect-id="${e.id}" style="background:rgba(0,255,136,.1);border:1px solid #00FF88;color:#00FF88;border-radius:3px;padding:0 5px;margin-left:4px;cursor:pointer;font-size:.55rem">PICKUP</button>` : '';
+    return `<div class="buff-chip" data-effect-id="${e.id}" title="${(e.description || '').replace(/"/g, '&quot;')}">
+      <span class="buff-chip-name">${e.display_name}</span>
+      <span class="buff-chip-timer">${suffix}</span>
+      ${pickup}
+    </div>`;
+  }).join('');
+
+  // Pickup wiring
+  list.querySelectorAll('.buff-chip-pickup').forEach(btn => {
+    btn.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      const id = btn.dataset.effectId;
+      const eff = _gtEffectsCache.find(e => e.id === id);
+      if (!eff) return;
+      const sb = await import('./assets/js/supabase.js');
+      // Crafted item → push into char.gear as a simple entry
+      const itemName = eff?.meta?.item_name || eff.display_name.replace(/^Crafting:\s*/, '');
+      char.gear = Array.isArray(char.gear) ? char.gear : [];
+      char.gear.push({ name: itemName, notes: 'Selbst gefertigt', custom: true });
+      try {
+        await patchCharacter(char.id, { gear: char.gear });
+        await sb.removeCharacterEffect(id);
+      } catch (e) { alert('Pickup-Fehler: ' + e.message); }
+    });
+  });
+}
+
 // ── Master render ─────────────────────────────────────────────
 function renderAll() {
   renderHeader();
@@ -713,7 +891,9 @@ function getPsychosisStatus(humanity) {
 }
 
 function updateResDisplay() {
-  const hp    = char.current_hp    || 0;
+  // Lazy-eval natürliche Heilung
+  const gt = window.__gameTime;
+  const hp    = gt ? gt.getEffectiveHp(char) : (char.current_hp || 0);
   const maxHp = char.max_hp        || 0;
   const hum   = char.current_humanity || 0;
   const maxHum= char.max_humanity  || 0;
@@ -1023,7 +1203,7 @@ function getBuffStatBonus(statName) {
 }
 
 function getInjuryPenalties() {
-  return getInjuryPenaltyStruct(char);   // Engine ist Single Source of Truth (inkl. Crushed Fingers etc.)
+  return getInjuryPenaltyStruct(char, window.__myEffects ? window.__myEffects() : null);
 }
 
 function getInjurySkillPenalty(skillName) {
@@ -2400,11 +2580,13 @@ function rollStat(statName, expr) {
   const effVal  = getEffectiveStat(statName);
   const buffBon = getBuffStatBonus(statName);
   const pen     = getStatRollPenalty(statName);
-  const mod     = effVal + buffBon + pen;
+  const sleep   = (window.__gameTime?.getSleepDeprivationModifier(char) ?? { value: 0, label: null });
+  const mod     = effVal + buffBon + pen + sleep.value;
   const parts   = [];
   if (pen < 0)     parts.push(`${pen} Injuries/SW`);
   if (buffBon > 0) parts.push(`+${buffBon} Buff`);
   if (buffBon < 0) parts.push(`${buffBon} Buff`);
+  if (sleep.value) parts.push(`${sleep.value} ${sleep.label}`);
   const context = `${statName} Check${parts.length ? ` (${parts.join(', ')})` : ''}`;
   const expression = expr || (mod >= 0 ? `1d10+${mod}` : `1d10${mod}`);
   doRoll(expression, { context, isSkillCheck: true });
@@ -2738,8 +2920,11 @@ async function showDamageApplyModal(totalDamage) {
         if (npc) npc.hp_current = newHp;
       } else {
         const tchar = _allCharsFull.find(c => c.id === targetId);
-        const newHp = Math.max(0, (tchar?.current_hp ?? 0) - net);
-        await patchCharacter(targetId, { current_hp: newHp });
+        const gt = window.__gameTime;
+        const now = gt ? gt.getCurrentIngameTime() : new Date();
+        const evalHp = gt ? gt.getEffectiveHp(tchar) : (tchar?.current_hp ?? 0);
+        const newHp = Math.max(0, evalHp - net);
+        await patchCharacter(targetId, { current_hp: newHp, last_hp_tick_at_ingame: now.toISOString() });
       }
     } catch (e) { console.warn('applyDamage failed:', e); }
     modal.hidden = true;
@@ -2865,8 +3050,11 @@ async function applyInjury(injury, table) {
       const target   = await getCharacter(targetId);
       const injuries = JSON.parse(target.critical_injuries || '[]');
       injuries.push({ ...injury, table });
-      const newHp = Math.max(0, (target.current_hp ?? 0) - 5);
-      const patch = { critical_injuries: JSON.stringify(injuries), current_hp: newHp };
+      const gt = window.__gameTime;
+      const now = gt ? gt.getCurrentIngameTime() : new Date();
+      const evalHp = gt ? gt.getEffectiveHp(target) : (target.current_hp ?? 0);
+      const newHp = Math.max(0, evalHp - 5);
+      const patch = { critical_injuries: JSON.stringify(injuries), current_hp: newHp, last_hp_tick_at_ingame: now.toISOString() };
       if (newHp === 0) patch.mortally_wounded = true;
       await patchCharacter(targetId, patch);
       logRoll({ characterId: char.id, characterName: char.handle || char.name,
@@ -2901,17 +3089,27 @@ function renderCritInjuries() {
     return;
   }
 
-  const now = Date.now();
+  // Quickfix-Effekte aus character_effects (Source of Truth)
+  const effects = window.__myEffects ? window.__myEffects() : [];
+  const gt = window.__gameTime;
+  const nowIngame = gt ? gt.getCurrentIngameTime() : new Date();
+  const quickfixByName = {};
+  for (const e of effects) {
+    if (e?.effect_type === 'quickfix' && e?.meta?.covered_injury_name) {
+      quickfixByName[e.meta.covered_injury_name] = e;
+    }
+  }
   el.innerHTML = injuries.map((inj, i) => {
-    const isQF = inj.quick_fix_until && new Date(inj.quick_fix_until).getTime() > now;
-    if (isQF) {
-      return `<div class="injury-card" data-qf-until="${inj.quick_fix_until}" style="opacity:.4;border-color:#00E5FF44">
+    const qfEffect = quickfixByName[inj.name];
+    if (qfEffect && qfEffect.expires_at_ingame && new Date(qfEffect.expires_at_ingame) > nowIngame) {
+      const remainingMs = new Date(qfEffect.expires_at_ingame) - nowIngame;
+      return `<div class="injury-card" style="opacity:.4;border-color:#00E5FF44">
         <div class="injury-header">
           <span class="injury-name">${inj.name}</span>
           <span class="injury-table">${inj.table === 'head' ? 'Head' : 'Body'}</span>
         </div>
         <div class="injury-effect" style="color:#888">${inj.effect}</div>
-        <div class="injury-meta" style="color:#00E5FF;font-size:.7rem">⏱ Quick Fix aktiv: <span class="qf-timer">…</span></div>
+        <div class="injury-meta" style="color:#00E5FF;font-size:.7rem">⏱ Quick Fix aktiv: ${gt ? gt.formatDuration(remainingMs) : '…'}</div>
         <div class="injury-meta"><span class="inj-key">Treatment</span>${inj.treatment || '—'}</div>
       </div>`;
     }

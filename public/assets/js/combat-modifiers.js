@@ -92,15 +92,31 @@ function appliesToAction(mod, actionType) {
   return !!(sc && a.includes(sc));
 }
 
-export function getActiveModifiers(entity, actionType) {
+export function getActiveModifiers(entity, actionType, opts = {}) {
   if (!DATA) return [];
   const ctx = ctxOf(entity);
-  return DATA.modifiers.filter(m =>
+  const mods = DATA.modifiers.filter(m =>
     m.category !== 'critical_injury' &&
     m.trigger === 'automatic' &&
     appliesToAction(m, actionType) &&
     evaluateCondition(m.condition, ctx)
   );
+  // Sleep deprivation (virtual, in-game-time based)
+  const now = opts.now;
+  if (now && entity?.last_long_rest_at_ingame) {
+    const lastRest = new Date(entity.last_long_rest_at_ingame);
+    const nowDate  = (now instanceof Date) ? now : new Date(now);
+    const hoursAwake = (nowDate.getTime() - lastRest.getTime()) / (3600 * 1000);
+    let sleep = null;
+    if (hoursAwake >= 48) sleep = { value: -4, label: 'Erschöpft (48h+ wach)' };
+    else if (hoursAwake >= 36) sleep = { value: -2, label: 'Sehr müde (36h+ wach)' };
+    else if (hoursAwake >= 24) sleep = { value: -1, label: 'Müde (24h+ wach)' };
+    if (sleep) mods.push({
+      id: 'sleep_deprivation', name: sleep.label, value: sleep.value,
+      category: 'debuff', virtual: true, applies_to: ['all_actions'], trigger: 'automatic',
+    });
+  }
+  return mods;
 }
 
 export function sumModifiers(mods) {
@@ -134,15 +150,22 @@ const _CATEGORY_FOR = {
 
 // {move, allActions, ranged, melee, perception, social} — Drop-in für
 // player.html getInjuryPenalties().
-export function getInjuryPenaltyStruct(entity) {
+export function getInjuryPenaltyStruct(entity, activeEffects = null) {
   const out = { move: 0, allActions: 0, ranged: 0, melee: 0, perception: 0, social: 0 };
   if (!CI_BY_NAME) return out;
-  const now = Date.now();
+  // Effekte-Quelle: explizit übergeben (z.B. window.__myEffects()) oder fallback auf entity.character_effects
+  const effects = Array.isArray(activeEffects)
+    ? activeEffects
+    : (Array.isArray(entity?.character_effects) ? entity.character_effects : []);
+  const quickfixedNames = new Set(
+    effects.filter(e => e?.effect_type === 'quickfix')
+           .map(e => e?.meta?.covered_injury_name)
+           .filter(Boolean)
+  );
   for (const inj of injuriesOf(entity)) {
-    // Quick Fix active → Effekte für 1h suppressed
-    if (inj.quick_fix_until && new Date(inj.quick_fix_until).getTime() > now) continue;
     const name = typeof inj === 'string' ? inj : inj?.name;
     if (!name) continue;
+    if (quickfixedNames.has(name)) continue;     // durch Quickfix-Effekt maskiert
     const mod = CI_BY_NAME[name];
     if (!mod || !mod.value) continue;
     const seen = new Set();
@@ -155,10 +178,19 @@ export function getInjuryPenaltyStruct(entity) {
 }
 
 // Summe der Injury-Modifier für einen konkreten Action-Typ (für Attack-Rolls).
-export function getInjuryModifierSum(entity, actionType) {
+export function getInjuryModifierSum(entity, actionType, activeEffects = null) {
   if (!CI_BY_NAME) return 0;
+  const effects = Array.isArray(activeEffects)
+    ? activeEffects
+    : (Array.isArray(entity?.character_effects) ? entity.character_effects : []);
+  const quickfixedNames = new Set(
+    effects.filter(e => e?.effect_type === 'quickfix')
+           .map(e => e?.meta?.covered_injury_name)
+           .filter(Boolean)
+  );
   let sum = 0;
   for (const name of getInjuryNames(entity)) {
+    if (quickfixedNames.has(name)) continue;
     const mod = CI_BY_NAME[name];
     if (!mod || !mod.value) continue;
     if (appliesToAction(mod, actionType)) sum += mod.value;
@@ -243,8 +275,8 @@ export async function rollWithModifiers(entity, opts = {}) {
     context = null, characterId = null, characterName = null,
   } = opts;
 
-  const autoMods   = getActiveModifiers(entity, actionType);
-  const injurySum  = getInjuryModifierSum(entity, actionType);
+  const autoMods   = getActiveModifiers(entity, actionType, { now: opts.now });
+  const injurySum  = getInjuryModifierSum(entity, actionType, opts.activeEffects);
   const autoSum    = sumModifiers(autoMods) + injurySum;
   const manualSum  = (manualMods || []).reduce((s, m) => s + (typeof m === 'number' ? m : (m.value || 0)), 0);
   const base       = (statVal || 0) + (skillVal || 0) + autoSum + manualSum;
