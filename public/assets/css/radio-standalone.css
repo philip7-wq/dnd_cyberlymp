@@ -33,12 +33,90 @@
   user-select: none;
 }
 
+/* ── Diffuse Cityscape (page background) ─────────────────── */
+.radio-cityscape {
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.radio-cityscape-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  mix-blend-mode: screen;
+  opacity: .55;
+  will-change: transform;
+}
+.radio-cityscape-glow--a {
+  width: 70vw; height: 55vh;
+  left: -10vw; bottom: -10vh;
+  background: radial-gradient(closest-side, rgba(255, 45, 149, .85), rgba(255, 45, 149, 0));
+  animation: cityscape-drift-a 32s ease-in-out infinite alternate;
+}
+.radio-cityscape-glow--b {
+  width: 65vw; height: 50vh;
+  right: -15vw; bottom: -5vh;
+  background: radial-gradient(closest-side, rgba(0, 200, 255, .75), rgba(0, 200, 255, 0));
+  animation: cityscape-drift-b 26s ease-in-out infinite alternate;
+}
+.radio-cityscape-glow--c {
+  width: 55vw; height: 45vh;
+  left: 22vw; bottom: 8vh;
+  background: radial-gradient(closest-side, rgba(178, 90, 255, .7), rgba(178, 90, 255, 0));
+  animation: cityscape-drift-c 38s ease-in-out infinite alternate;
+}
+@keyframes cityscape-drift-a {
+  0%   { transform: translate(0, 0)       scale(1);    }
+  50%  { transform: translate(8vw, -4vh)  scale(1.08); }
+  100% { transform: translate(-4vw, 2vh)  scale(.96);  }
+}
+@keyframes cityscape-drift-b {
+  0%   { transform: translate(0, 0)       scale(1);    }
+  50%  { transform: translate(-10vw, -3vh) scale(1.1); }
+  100% { transform: translate(5vw, 4vh)   scale(.94);  }
+}
+@keyframes cityscape-drift-c {
+  0%   { transform: translate(0, 0)       scale(1);    }
+  50%  { transform: translate(-6vw, -6vh) scale(1.12); }
+  100% { transform: translate(7vw, 3vh)   scale(.92);  }
+}
+
+/* Skyline silhouette — uneven building tops as a horizon hint */
+.radio-cityscape-skyline {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 30vh;
+  background-color: rgba(0, 0, 0, .55);
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 240' preserveAspectRatio='none'><path fill='black' d='M0,240 L0,170 L30,170 L30,140 L55,140 L55,110 L80,110 L80,150 L110,150 L110,90 L120,90 L120,70 L140,70 L140,90 L170,90 L170,130 L200,130 L200,100 L230,100 L230,160 L260,160 L260,80 L275,80 L275,60 L290,60 L290,80 L320,80 L320,120 L350,120 L350,150 L380,150 L380,100 L410,100 L410,130 L440,130 L440,70 L455,70 L455,50 L470,50 L470,70 L500,70 L500,110 L530,110 L530,90 L560,90 L560,140 L590,140 L590,80 L615,80 L615,55 L640,55 L640,90 L670,90 L670,130 L700,130 L700,100 L730,100 L730,160 L760,160 L760,90 L785,90 L785,60 L810,60 L810,100 L840,100 L840,140 L870,140 L870,80 L895,80 L895,55 L915,55 L915,80 L945,80 L945,120 L975,120 L975,150 L1005,150 L1005,100 L1035,100 L1035,130 L1065,130 L1065,80 L1090,80 L1090,60 L1115,60 L1115,90 L1145,90 L1145,140 L1175,140 L1175,170 L1200,170 L1200,240 Z'/></svg>");
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 240' preserveAspectRatio='none'><path fill='black' d='M0,240 L0,170 L30,170 L30,140 L55,140 L55,110 L80,110 L80,150 L110,150 L110,90 L120,90 L120,70 L140,70 L140,90 L170,90 L170,130 L200,130 L200,100 L230,100 L230,160 L260,160 L260,80 L275,80 L275,60 L290,60 L290,80 L320,80 L320,120 L350,120 L350,150 L380,150 L380,100 L410,100 L410,130 L440,130 L440,70 L455,70 L455,50 L470,50 L470,70 L500,70 L500,110 L530,110 L530,90 L560,90 L560,140 L590,140 L590,80 L615,80 L615,55 L640,55 L640,90 L670,90 L670,130 L700,130 L700,100 L730,100 L730,160 L760,160 L760,90 L785,90 L785,60 L810,60 L810,100 L840,100 L840,140 L870,140 L870,80 L895,80 L895,55 L915,55 L915,80 L945,80 L945,120 L975,120 L975,150 L1005,150 L1005,100 L1035,100 L1035,130 L1065,130 L1065,80 L1090,80 L1090,60 L1115,60 L1115,90 L1145,90 L1145,140 L1175,140 L1175,170 L1200,170 L1200,240 Z'/></svg>");
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* Atmospheric haze covering the lower 40% — softens skyline + binds glows */
+.radio-cityscape-haze {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 60vh;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(20, 6, 30, .15) 30%,
+    rgba(10, 4, 20, .55) 70%,
+    rgba(0, 0, 0, .85) 100%
+  );
+}
+
 .radio-bg-canvas {
   position: fixed; inset: 0;
   width: 100vw; height: 100vh;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
   filter: blur(0.4px) saturate(1.1);
+  mix-blend-mode: screen;
 }
 
 .radio-scanlines {

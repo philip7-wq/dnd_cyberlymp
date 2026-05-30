@@ -93,13 +93,15 @@ function _drawWaveform() {
   ctx.beginPath();
 
   const slice = w / _waveData.length;
+  const center = h / 2;
+  const damp = 0.35;   // tame the amplitude — full-canvas swing was too aggressive
   for (let i = 0; i < _waveData.length; i++) {
     let v = _waveData[i] / 128.0;
     if (idle) {
       const t = (i / _waveData.length) * Math.PI * 6;
       v = 1.0 + Math.sin(t + _idlePhase) * 0.04 * (1 + Math.sin(_idlePhase * 0.5) * 0.5);
     }
-    const y = (v * h) / 2;
+    const y = center + (v - 1) * center * damp;
     const x = i * slice;
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   }
@@ -113,11 +115,16 @@ function _drawBars() {
   ctx.clearRect(0, 0, w, h);
 
   const bars = 64;
-  const step = Math.max(1, Math.floor(_freqData.length / bars));
   const barW = w / bars;
   const mid = h / 2;
   const ampAvg = _avgAmplitude(_waveData);
   const idle = ampAvg < 0.01;
+
+  // Logarithmic frequency mapping so the full spectrum (not just bass)
+  // is spread across all bars — otherwise right-side bars stay near zero.
+  const minBin = 2;
+  const maxBin = Math.max(minBin + 1, Math.floor(_freqData.length * 0.55));
+  const logRatio = Math.log(maxBin / minBin);
 
   for (let i = 0; i < bars; i++) {
     let amp;
@@ -126,7 +133,15 @@ function _drawBars() {
       const wave = Math.sin(_idlePhase + i * 0.18);
       amp = 0.04 + (wave * 0.5 + 0.5) * 0.06 * breathe;
     } else {
-      amp = _freqData[i * step] / 255;
+      const t = i / (bars - 1);
+      const binIdx = Math.floor(minBin * Math.exp(logRatio * t));
+      const lo = Math.max(0, binIdx - 1);
+      const hi = Math.min(_freqData.length - 1, binIdx + 1);
+      let sum = 0, cnt = 0;
+      for (let b = lo; b <= hi; b++) { sum += _freqData[b]; cnt++; }
+      amp = (sum / cnt) / 255;
+      // Slight high-end boost — treble naturally sits lower in dB
+      amp = Math.min(1, amp * (1 + t * 0.6));
     }
 
     const barH = amp * h * 0.5;
