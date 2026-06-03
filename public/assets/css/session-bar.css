@@ -1,0 +1,312 @@
+/* ============================================================
+   Session Bar — fixed, oberhalb der Game-Time-Top-Bar
+   ============================================================ */
+
+.session-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 32px;
+  z-index: 1200;
+  background: #14141a;
+  border-bottom: 1px solid #25252e;
+  color: #6a6a78;
+  font-family: var(--font-display, 'Audiowide', monospace);
+  font-size: .68rem;
+  letter-spacing: .15em;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  transition: background .25s, color .25s, border-color .25s;
+}
+.session-bar.is-active {
+  background: linear-gradient(180deg, #2a0e15 0%, #1a0a10 100%);
+  border-bottom-color: #5a1d28;
+  color: #ffb5b5;
+}
+.session-bar.is-active.is-dm { color: #ffd4d4; }
+
+.session-bar-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  padding: 0 1rem;
+}
+
+.session-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #3a3a44;
+  flex-shrink: 0;
+  transition: background .25s, box-shadow .25s;
+}
+.session-bar.is-active .session-dot {
+  background: var(--red, #ff2d2d);
+  box-shadow: 0 0 8px var(--red, #ff2d2d), 0 0 16px rgba(255,45,45,.4);
+  animation: session-dot-pulse 1.8s ease-in-out infinite;
+}
+@keyframes session-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .4; }
+}
+
+.session-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.session-bar.is-dm.is-active .session-name {
+  cursor: text;
+  border-bottom: 1px dashed transparent;
+  transition: border-color .15s;
+}
+.session-bar.is-dm.is-active .session-name:hover {
+  border-bottom-color: rgba(255,255,255,.25);
+}
+.session-name.editing {
+  outline: 1px solid var(--cyan, #00e5ff);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.session-timer {
+  font-family: var(--font-display, 'Audiowide', monospace);
+  font-size: .72rem;
+  letter-spacing: .12em;
+  color: inherit;
+  opacity: .85;
+  flex-shrink: 0;
+  min-width: 80px;
+  text-align: right;
+}
+
+.session-btn {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.15);
+  color: inherit;
+  font-family: inherit;
+  font-size: .62rem;
+  letter-spacing: .15em;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+  flex-shrink: 0;
+}
+.session-btn:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3); }
+.session-btn-start { color: #88ff99; border-color: rgba(136,255,153,.35); }
+.session-btn-start:hover { background: rgba(136,255,153,.15); color: #aaffbb; }
+.session-btn-stop { color: #ff8888; border-color: rgba(255,136,136,.35); }
+.session-btn-stop:hover { background: rgba(255,136,136,.18); color: #ffaaaa; }
+.session-btn-log { padding: 4px 8px; font-size: .8rem; letter-spacing: 0; }
+
+/* Topbar sitzt 32px tiefer wenn Session-Bar aktiv */
+body.has-session-bar.gt-has-topbar { padding-top: 68px; }
+body.has-session-bar .gt-topbar { top: 32px; }
+body.has-session-bar:not(.gt-has-topbar) { padding-top: 32px; }
+
+/* ── Player-Popup beim Session-Start ─────────────────────── */
+
+.session-popup-overlay {
+  position: fixed; inset: 0;
+  z-index: 8950;
+  background: rgba(0,0,0,.82);
+  display: flex; align-items: center; justify-content: center;
+  animation: session-popup-fade .25s ease-out;
+}
+@keyframes session-popup-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.session-popup-box {
+  width: min(380px, 90vw);
+  background: linear-gradient(180deg, #1e1118 0%, #120a0e 100%);
+  border: 1px solid #4a2030;
+  border-radius: 6px;
+  padding: 1.5rem 1.4rem 1.3rem;
+  box-shadow:
+    0 0 0 1px rgba(255,45,45,.15),
+    0 18px 50px rgba(0,0,0,.85),
+    inset 0 1px 0 rgba(255,90,90,.18);
+  animation: session-popup-rise .3s ease-out;
+}
+@keyframes session-popup-rise {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.session-popup-title {
+  font-family: var(--font-display, 'Audiowide', monospace);
+  font-size: .7rem;
+  letter-spacing: .35em;
+  color: var(--red, #ff2d2d);
+  margin-bottom: .4rem;
+}
+.session-popup-name {
+  font-family: var(--font-display, 'Audiowide', monospace);
+  font-size: 1.05rem;
+  color: #fff;
+  margin-bottom: .9rem;
+  letter-spacing: .04em;
+}
+.session-popup-desc {
+  color: #a8a8b4;
+  font-size: .88rem;
+  line-height: 1.4;
+  margin-bottom: 1.3rem;
+}
+.session-popup-btns {
+  display: flex; gap: .6rem;
+}
+.session-popup-btn {
+  flex: 1 1 50%;
+  padding: .7rem .8rem;
+  border: 1px solid;
+  border-radius: 4px;
+  background: transparent;
+  font-family: var(--font-display, 'Audiowide', monospace);
+  font-size: .72rem;
+  letter-spacing: .12em;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.session-popup-btn.join {
+  border-color: var(--red, #ff2d2d);
+  color: var(--red, #ff2d2d);
+}
+.session-popup-btn.join:hover {
+  background: var(--red, #ff2d2d);
+  color: #fff;
+}
+.session-popup-btn.decline {
+  border-color: #4a4a55;
+  color: #9090a0;
+}
+.session-popup-btn.decline:hover {
+  background: #2a2a35;
+  color: #c0c0d0;
+}
+
+/* ── Toast bei Session-Ende ──────────────────────────────── */
+
+.session-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  z-index: 8800;
+  padding: .55rem 1.1rem;
+  background: rgba(20,8,12,.95);
+  border: 1px solid rgba(255,45,45,.45);
+  border-radius: 3px;
+  color: #ffd0d0;
+  font-family: var(--font-display, 'Audiowide', monospace);
+  font-size: .7rem;
+  letter-spacing: .18em;
+  opacity: 0;
+  transition: opacity .25s, transform .25s;
+}
+.session-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── DM Log Modal ────────────────────────────────────────── */
+
+.session-log-overlay {
+  position: fixed; inset: 0;
+  z-index: 8700;
+  background: rgba(0,0,0,.75);
+  display: flex; align-items: center; justify-content: center;
+}
+.session-log-box {
+  width: min(720px, 92vw);
+  max-height: 80vh;
+  background: #14141a;
+  border: 1px solid #2a2a35;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.session-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .8rem 1.1rem;
+  border-bottom: 1px solid #2a2a35;
+  background: #1a1a22;
+}
+.session-log-title {
+  font-family: var(--font-display, 'Audiowide', monospace);
+  font-size: .85rem;
+  letter-spacing: .18em;
+  color: #fff;
+}
+.session-log-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.session-log-close:hover { color: #fff; }
+.session-log-list {
+  overflow-y: auto;
+  padding: .5rem 0;
+}
+.session-log-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: #6a6a78;
+  font-size: .85rem;
+}
+.session-log-row {
+  padding: .7rem 1.1rem;
+  border-bottom: 1px solid #1f1f28;
+}
+.session-log-row:last-child { border-bottom: none; }
+.sl-row-head {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: .4rem;
+}
+.sl-name {
+  font-family: var(--font-display, 'Audiowide', monospace);
+  font-size: .82rem;
+  letter-spacing: .08em;
+  color: #fff;
+  flex: 1 1 auto;
+}
+.sl-date {
+  color: #888;
+  font-size: .72rem;
+}
+.sl-dur {
+  color: var(--cyan, #00e5ff);
+  font-size: .72rem;
+  letter-spacing: .1em;
+  font-family: var(--font-display, 'Audiowide', monospace);
+}
+.sl-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+.sl-part {
+  font-size: .68rem;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: #1f1f28;
+  color: #aaa;
+}
+.sl-part-joined  { background: rgba(0,255,136,.12); color: #88ffaa; }
+.sl-part-declined { background: rgba(255,45,45,.12); color: #ff8888; }
+.sl-part-timeout { background: rgba(255,170,0,.10); color: #ffcc77; }
+.sl-empty { color: #555; font-size: .7rem; font-style: italic; }

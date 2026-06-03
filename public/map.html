@@ -634,9 +634,20 @@ const VEHICLES = [
 function sw(sx, sy) { return { x:(sx-S.ox)/S.scale, y:(sy-S.oy)/S.scale }; }
 function snapGrid(v) { return S.snapToGrid && S.gridSize ? Math.round(v/S.gridSize)*S.gridSize : v; }
 
+// Layer-Rank: vehicle/object/custom unten (1), npc darüber (2), char ganz oben (3),
+// selektierter Token immer ganz oben (4). Konsistent mit drawTokens-Sortierung.
+function _tokenLayerRank(t) {
+  if (S.selectedToken?.id === t.id) return 4;
+  if (t.type === 'char') return 3;
+  if (t.type === 'npc')  return 2;
+  return 1;
+}
+
 function hitToken(wx, wy) {
-  for (let i = S.tokens.length-1; i>=0; i--) {
-    const t = S.tokens[i];
+  // Höhere Layer (char/npc) zuerst prüfen, damit ein Player-Token über einem
+  // großen Vehicle-Token weiterhin anklickbar bleibt.
+  const sorted = [...S.tokens].sort((a, b) => _tokenLayerRank(b) - _tokenLayerRank(a));
+  for (const t of sorted) {
     if (t.type === 'vehicle') {
       const vw = (t.size_w || 2) * S.gridSize, vh = (t.size_h || 2) * S.gridSize;
       if (wx >= t.x-vw/2 && wx <= t.x+vw/2 && wy >= t.y-vh/2 && wy <= t.y+vh/2) return t;
@@ -648,8 +659,8 @@ function hitToken(wx, wy) {
 }
 function getSnapToken(wp) {
   const snapPx = S.gridSize * 0.5 + 12 / S.scale;
-  for (let i = S.tokens.length - 1; i >= 0; i--) {
-    const t = S.tokens[i];
+  const sorted = [...S.tokens].sort((a, b) => _tokenLayerRank(b) - _tokenLayerRank(a));
+  for (const t of sorted) {
     if (t.type === 'vehicle') {
       const hw = (t.size_w||2)*S.gridSize/2, hh = (t.size_h||2)*S.gridSize/2;
       if (Math.abs(wp.x-t.x) <= hw && Math.abs(wp.y-t.y) <= hh) return t;
@@ -1135,28 +1146,33 @@ function drawActiveShape() {
 }
 
 function drawMoveRange() {
-  if (!S.selectedToken) return;
-  const t = S.selectedToken;
+  // Move-Zone wird NUR während eines aktiven Drags angezeigt und bleibt am
+  // Ursprung stehen — der Token darf nicht über die MOVE-Grenze hinaus
+  // gezogen werden (Clamp passiert in mousemove).
+  if (!S.dragging || !S.dragOrigin) return;
+  const t = S.selectedToken || S.dragging.token;
+  if (!t) return;
   const move = getEffectiveMove(t);
   const r1 = move * S.gridSize;
   const r2 = move * 2 * S.gridSize;
   const isOwn = !IS_DM && t.charId === CHAR_ID;
   const color = isOwn ? '#00FF88' : (t.type==='npc' ? '#FF2D2D' : '#00E5FF');
+  const cx = S.dragOrigin.x, cy = S.dragOrigin.y;
   ctx.save();
   [r2,r1].forEach((r, i) => {
     ctx.strokeStyle = hexToRgba(color, i===1 ? .6 : .3);
     ctx.fillStyle   = hexToRgba(color, i===1 ? .04 : .02);
     ctx.lineWidth   = 1.2/S.scale;
     ctx.setLineDash(i===0 ? [6/S.scale,4/S.scale] : []);
-    ctx.beginPath(); ctx.arc(t.x, t.y, r, 0, Math.PI*2);
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
     ctx.fill(); ctx.stroke();
     ctx.setLineDash([]);
   });
   ctx.fillStyle=hexToRgba(color,.9); ctx.font=`bold ${12/S.scale}px Audiowide`;
   ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
   ctx.textAlign='center'; ctx.textBaseline='top';
-  ctx.fillText(`MOVE ${move}m`, t.x, t.y+r1+4/S.scale);
-  ctx.fillText(`RUN ${move*2}m`, t.x, t.y+r2+4/S.scale);
+  ctx.fillText(`MOVE ${move}m`, cx, cy+r1+4/S.scale);
+  ctx.fillText(`RUN ${move*2}m`, cx, cy+r2+4/S.scale);
   ctx.shadowBlur=0;
   ctx.restore();
 }
@@ -1284,7 +1300,10 @@ function drawTokens() {
   const nextIdx = combatants.length > 1 ? (idx+1) % combatants.length : -1;
   const nextCombatant = nextIdx >= 0 ? combatants[nextIdx] : null;
 
-  for (const token of S.tokens) {
+  // Z-Order: vehicle/object/custom unten, npc darüber, char ganz oben (selected on top of all),
+  // sodass Charaktere immer über großen Objekt-Tokens stehen und anklickbar bleiben.
+  const _sortedTokens = [...S.tokens].sort((a, b) => _tokenLayerRank(a) - _tokenLayerRank(b));
+  for (const token of _sortedTokens) {
     const isVehicle = token.type === 'vehicle';
     const r  = S.gridSize * 0.44;
     const cx = token.x, cy = token.y;
@@ -2371,8 +2390,24 @@ canvas.addEventListener('mousemove', e => {
   }
   if (S.dragging) {
     const t=S.dragging.token;
-    t.x=snapGrid(S.dragging.tx0+(wp.x-S.dragging.wx0));
-    t.y=snapGrid(S.dragging.ty0+(wp.y-S.dragging.wy0));
+    let nx = S.dragging.tx0 + (wp.x - S.dragging.wx0);
+    let ny = S.dragging.ty0 + (wp.y - S.dragging.wy0);
+    // Harte MOVE-Grenze: Player darf eigenen Char nur bis MOVE×Grid vom
+    // Ursprung weg ziehen — Token snappt am Rand der gelben Zone.
+    // DM und Vehicles bleiben frei beweglich.
+    if (!IS_DM && t.type === 'char' && t.charId === CHAR_ID && S.dragOrigin) {
+      const ox = S.dragOrigin.x, oy = S.dragOrigin.y;
+      const dx = nx - ox, dy = ny - oy;
+      const dist = Math.hypot(dx, dy);
+      const maxPx = getEffectiveMove(t) * S.gridSize;
+      if (dist > maxPx && dist > 0) {
+        const k = maxPx / dist;
+        nx = ox + dx * k;
+        ny = oy + dy * k;
+      }
+    }
+    t.x = snapGrid(nx);
+    t.y = snapGrid(ny);
     markDirty(); return;
   }
   if (S.tool==='measure'&&S.measuringActive) { S.measureEnd=wp; markDirty(); return; }
@@ -2426,12 +2461,9 @@ canvas.addEventListener('mouseup', e => {
   if (S.dragging) {
     S.localDragging=false;
     const t=S.dragging.token;
-    if (S.dragOrigin) {
-      const mv=getEffectiveMove(t);
-      const maxPx=mv*2*S.gridSize;
-      const dist=Math.hypot(t.x-S.dragOrigin.x, t.y-S.dragOrigin.y);
-      if (dist>maxPx && !IS_DM) { t.x=S.dragOrigin.x; t.y=S.dragOrigin.y; }
-    }
+    // Hinweis: die alte mouseup-Reset-Logik (RUN-Distanz prüfen, sonst auf
+    // dragOrigin zurücksetzen) ist entfallen — Live-Clamp im mousemove
+    // hält den Token jetzt schon auf MOVE×1 begrenzt.
     // Vehicle ram check
     if (t.type==='vehicle' && IS_DM) {
       const r=S.gridSize*0.44;
@@ -4619,6 +4651,8 @@ function applyCharToToken(ch) {
   tok.conditions  = ch.conditions || [];
   tok.death_state = ch.death_state || false;
   tok.critInjuries = parseInjuries(ch.critical_injuries);
+  // Name-Sync: vom Player-Sheet editierter Name auf das Map-Token spiegeln
+  if (ch.name && tok.name !== ch.name) tok.name = ch.name;
   // Armor SP (only overwrite if the payload actually has armor)
   if (ch.armor !== undefined) {
     tok.headSP    = ch.armor?.head?.sp    ?? tok.headSP    ?? 0;

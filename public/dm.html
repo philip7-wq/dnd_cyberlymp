@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="assets/css/sound.css">
   <link rel="stylesheet" href="assets/css/radio.css?v=2">
   <link rel="stylesheet" href="assets/css/topbar.css?v=2">
+  <link rel="stylesheet" href="assets/css/session-bar.css?v=1">
 </head>
 <body>
 
@@ -529,13 +530,15 @@ async function boot() {
     mountRadioDM(document.querySelector('nav.nav'));
   }).catch(() => {});
 
-  // Game-Time: Top-Bar + DM Time Dial
+  // Game-Time: Top-Bar + DM Time Dial + Session Bar
   Promise.all([
     import('./assets/js/ui/topbar.js'),
     import('./assets/js/ui/dm-time-dial.js'),
     import('./assets/js/game-time.js'),
-  ]).then(async ([topbarMod, dialMod, gtMod]) => {
+    import('./assets/js/ui/session-bar.js'),
+  ]).then(async ([topbarMod, dialMod, gtMod, sessionBarMod]) => {
     await gtMod.initGameTime();
+    await sessionBarMod.mountSessionBar({ isDm: true });
     const dial = await dialMod.mountDmTimeDial();
     await topbarMod.mountTopbar({ isDm: true, onSettingsClick: () => dial.open() });
     // Auto-Combat-Mode-Sync (single writer)

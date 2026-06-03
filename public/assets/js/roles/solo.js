@@ -248,7 +248,8 @@ function openSoloRoll(character, action, fumbleRecovery) {
         stat: +modal.querySelector('#r-stat').value || 0,
         skill: +modal.querySelector('#r-skill').value || 0,
         mod: +modal.querySelector('#r-mod').value || 0,
-        dv: dvRaw === '' ? null : +dvRaw
+        dv: dvRaw === '' ? null : +dvRaw,
+        entity: character,
       });
       // Fumble Recovery: re-treat the natural 1 as just 1 (kein subtract)
       let note = '';

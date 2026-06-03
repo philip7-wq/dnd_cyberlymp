@@ -12,6 +12,7 @@ import {
   getInventory, addInventoryItem, useInventoryItem, deleteInventoryItem,
   updateInventoryItem, logAction, fetchTarget, patchTarget, el
 } from './roles-core.js';
+import { applyTimedEffect } from '../game-time.js';
 
 // 5 offizielle Medtech Pharmaceuticals (Playbook pg. 150)
 // Brewing: DV13 Medical Tech (TECH+MedTech+1d10), 200eb pro Batch,
@@ -66,35 +67,83 @@ const TREATMENTS = [
 ];
 
 // ── Drug-Effekt anwenden (Supabase-Patch auf Target) ────────────
+// Timed Effekte laufen über character_effects + expires_at_ingame (IG-Zeit),
+// damit sie sich konsistent mit dem Time-System verhalten und automatisch
+// per cleanupExpiredEffects() ablaufen. NPCs haben kein character_effects-
+// Schema → für NPC-Targets fallen wir auf die alte buffs[]-Liste zurück.
 async function applyDrugEffect(item, target, character) {
   const tgt = await fetchTarget(target, character.id);
   if (!tgt) return;
   const buffs = Array.isArray(tgt.buffs) ? [...tgt.buffs] : [];
   const conds = Array.isArray(tgt.conditions) ? [...tgt.conditions] : [];
   const recipe = item.meta?.recipe;
+  const isNpc = target.type === 'npc';
+  const targetCharId = target.type === 'self' ? character.id : (target.type === 'player' ? target.id : null);
 
   if (recipe === 'antibiotic') {
-    buffs.push({ id: crypto.randomUUID(), name: 'Antibiotic',
-      effect: '+2 HP/Tag für 1 Woche. Nur 1× gleichzeitig aktiv.',
-      duration_label: '7 Tage',
-      expires_at: new Date(Date.now() + 7*24*60*60*1000).toISOString() });
-    await patchTarget(target, { buffs }, character.id);
+    if (!isNpc && targetCharId) {
+      await applyTimedEffect({
+        characterId: targetCharId,
+        effectType: 'drug',
+        source: 'medtech:antibiotic',
+        displayName: 'Antibiotika',
+        description: '+2 HP/Tag für 1 Woche. Nur 1× gleichzeitig aktiv.',
+        durationStr: '7 days',
+        meta: { drug: 'antibiotic', hp_per_day_bonus: 2 },
+      });
+    } else {
+      buffs.push({ id: crypto.randomUUID(), name: 'Antibiotic',
+        effect: '+2 HP/Tag für 1 Woche. Nur 1× gleichzeitig aktiv.',
+        duration_label: '7 Tage' });
+      await patchTarget(target, { buffs }, character.id);
+    }
   } else if (recipe === 'stim') {
-    buffs.push({ id: crypto.randomUUID(), name: 'Stim',
-      effect: 'Ignoriert Seriously Wounded Penalties für 1h.',
-      duration_label: '1h',
-      expires_at: new Date(Date.now() + 60*60*1000).toISOString(),
-      stat: 'SW_OVERRIDE', stat_bonus: 2 });
-    await patchTarget(target, { buffs }, character.id);
+    if (!isNpc && targetCharId) {
+      await applyTimedEffect({
+        characterId: targetCharId,
+        effectType: 'drug',
+        source: 'medtech:stim',
+        displayName: 'Stim',
+        description: 'Ignoriert Seriously Wounded Penalties für 1h.',
+        durationStr: '1h',
+        meta: { drug: 'stim', stat: 'SW_OVERRIDE', stat_bonus: 2 },
+      });
+    } else {
+      buffs.push({ id: crypto.randomUUID(), name: 'Stim',
+        effect: 'Ignoriert Seriously Wounded Penalties für 1h.',
+        duration_label: '1h',
+        stat: 'SW_OVERRIDE', stat_bonus: 2 });
+      await patchTarget(target, { buffs }, character.id);
+    }
   } else if (recipe === 'rapidetox') {
     const cleaned = conds.filter(c => !['On Fire','Bleeding Out','Poisoned','Drugged'].includes(c));
-    buffs.push({ id: crypto.randomUUID(), name: 'Rapidetox',
-      effect: 'Drogen/Gift/Intoxikanten sofort bereinigt.',
-      duration_label: 'einmalig', expires_at: null });
-    await patchTarget(target, { conditions: cleaned, buffs }, character.id);
+    await patchTarget(target, { conditions: cleaned }, character.id);
+    if (!isNpc && targetCharId) {
+      await applyTimedEffect({
+        characterId: targetCharId,
+        effectType: 'drug',
+        source: 'medtech:rapidetox',
+        displayName: 'Rapidetox',
+        description: 'Drogen/Gift/Intoxikanten sofort bereinigt.',
+        durationStr: null,
+        meta: { drug: 'rapidetox' },
+      });
+    }
   } else if (recipe === 'surge') {
-    const newConds = [...new Set([...conds, 'Surge Active'])];
-    await patchTarget(target, { conditions: newConds }, character.id);
+    if (!isNpc && targetCharId) {
+      await applyTimedEffect({
+        characterId: targetCharId,
+        effectType: 'debuff',
+        source: 'medtech:surge',
+        displayName: 'Surge Active',
+        description: 'Combat-Boost mit Drogen-Penalty (Cyberpunk RED, pg. 152).',
+        durationStr: '1h',
+        meta: { drug: 'surge' },
+      });
+    } else {
+      const newConds = [...new Set([...conds, 'Surge Active'])];
+      await patchTarget(target, { conditions: newConds }, character.id);
+    }
   } else if (recipe === 'speedheal') {
     if ((tgt.current_hp ?? 0) > 0) {
       const s = tgt.stats || {};
@@ -264,7 +313,8 @@ function openBrewModal(character, recipe) {
         stat: +modal.querySelector('#cr-stat').value || 0,
         skill: +modal.querySelector('#cr-skill').value || 0,
         mod: +modal.querySelector('#cr-mod').value || 0,
-        dv: 13
+        dv: 13,
+        entity: character,
       });
       modal.querySelector('#cr-out').innerHTML = renderRollResult(roll);
 
@@ -394,7 +444,8 @@ async function openTreatmentFlow(character, treatment) {
         stat: +modal.querySelector('#tr-stat').value || 0,
         skill: +modal.querySelector('#tr-skill').value || 0,
         mod: +modal.querySelector('#tr-mod').value || 0,
-        dv: treatment.dv
+        dv: treatment.dv,
+        entity: character,
       });
       modal.querySelector('#tr-out').innerHTML = renderRollResult(roll);
 
@@ -527,7 +578,8 @@ async function openSurgeryFlow(character, proc, defaultSkill) {
         stat: +modal.querySelector('#sg-stat').value || 0,
         skill: +modal.querySelector('#sg-skill').value || 0,
         mod: +modal.querySelector('#sg-mod').value || 0,
-        dv: proc.dv
+        dv: proc.dv,
+        entity: character,
       });
       modal.querySelector('#sg-out').innerHTML = renderRollResult(roll);
 

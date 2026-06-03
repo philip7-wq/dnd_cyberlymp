@@ -293,7 +293,8 @@ function openDriveRoll(character, action, motoRank) {
         stat: +modal.querySelector('#dr-stat').value || 0,
         skill: (+modal.querySelector('#dr-skill').value || 0) + (+modal.querySelector('#dr-moto').value || 0),
         mod: +modal.querySelector('#dr-mod').value || 0,
-        dv: +modal.querySelector('#dr-dv').value
+        dv: +modal.querySelector('#dr-dv').value,
+        entity: character,
       });
       modal.querySelector('#dr-out').innerHTML = renderRollResult(roll);
       await logAction(character.id, 'nomad', action.name, { roll, summary: action.desc });

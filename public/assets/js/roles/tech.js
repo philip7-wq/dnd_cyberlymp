@@ -212,7 +212,8 @@ function openSpecModal(character, spec, defaultSpecRank, view) {
         stat:  +modal.querySelector('#t-stat').value || 0,
         skill: (+modal.querySelector('#t-skill').value || 0) + (+modal.querySelector('#t-spec').value || 0),
         mod:   +modal.querySelector('#t-mod').value || 0,
-        dv
+        dv,
+        entity: character,
       });
       modal.querySelector('#t-out').innerHTML = renderRollResult(roll, {
         note: roll.success

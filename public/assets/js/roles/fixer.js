@@ -131,7 +131,7 @@ function openHaggleFlow(character, rank, info) {
       const tgtBase = +modal.querySelector('#hg-tgt').value || 0;
 
       // Mein Roll
-      const myRoll = performCheck({ stat: cool, skill: trade + op, mod: 0, dv: null });
+      const myRoll = performCheck({ stat: cool, skill: trade + op, mod: 0, dv: null, entity: character });
       // Target Roll (1d10 + base)
       const tgtD = 1 + Math.floor(Math.random() * 10);
       let tgtFinal = tgtD;

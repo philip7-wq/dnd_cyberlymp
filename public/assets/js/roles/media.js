@@ -160,7 +160,8 @@ function openRumorFlow(character, tier) {
         stat:  +modal.querySelector('#ru-stat').value || 0,
         skill: +modal.querySelector('#ru-skill').value || 0,
         mod:   +modal.querySelector('#ru-mod').value || 0,
-        dv:    tier.active
+        dv:    tier.active,
+        entity: character,
       });
       modal.querySelector('#ru-out').innerHTML = renderRollResult(roll);
       await logAction(character.id, 'media', `Rumor-Hunt: ${tier.name}`, {

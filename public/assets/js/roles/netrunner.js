@@ -285,7 +285,8 @@ function openNetActionFlow(character, action) {
         rank: +modal.querySelector('#na-rank').value || 0,
         mod:  +modal.querySelector('#na-mod').value || 0,
         dv:   dvRaw === '' ? null : +dvRaw,
-        label: 'Interface'
+        label: 'Interface',
+        entity: character,
       });
       modal.querySelector('#na-out').innerHTML = renderRollResult(roll);
       await logAction(character.id, 'netrunner', action.name, {

@@ -164,7 +164,8 @@ function openImpactFlow(character, group, rank, effectDesc, mode) {
         rank: +modal.querySelector('#im-rank').value || 0,
         mod:  +modal.querySelector('#im-mod').value || 0,
         dv:   group.dv,
-        label: 'Charismatic Impact'
+        label: 'Charismatic Impact',
+        entity: character,
       });
       modal.querySelector('#im-out').innerHTML = renderRollResult(roll, {
         note: roll.success

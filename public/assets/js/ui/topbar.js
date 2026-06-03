@@ -7,6 +7,7 @@
 import {
   initGameTime, getCachedGameState, getCurrentIngameTime,
   formatIngameTime, getSleepDeprivationModifier, onGameStateChange,
+  cleanupExpiredEffects,
 } from '../game-time.js';
 
 const MODE_LABEL = {
@@ -66,6 +67,7 @@ function _publicApi() {
   };
 }
 
+let _lastEffectCleanup = 0;
 function _startTick() {
   if (_tickTimer) clearInterval(_tickTimer);
   _tickTimer = setInterval(() => {
@@ -75,6 +77,13 @@ function _startTick() {
     const timeEl = document.getElementById('gtTime');
     if (timeEl) timeEl.textContent = formatIngameTime(t);
     _renderSleep();
+    // Effekt-Auto-Cleanup: einmal pro Minute reicht; DELETE ist idempotent,
+    // race-condition mit anderen Clients ist unkritisch.
+    const nowMs = Date.now();
+    if (nowMs - _lastEffectCleanup > 60_000) {
+      _lastEffectCleanup = nowMs;
+      cleanupExpiredEffects(t).catch(() => {});
+    }
   }, 250);
 }
 

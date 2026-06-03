@@ -315,7 +315,8 @@ function quickRoll(character, role, action) {
         stat: +modal.querySelector('#q-stat').value || 0,
         skill: +modal.querySelector('#q-skill').value || 0,
         mod: +modal.querySelector('#q-mod').value || 0,
-        dv: +modal.querySelector('#q-dv').value
+        dv: +modal.querySelector('#q-dv').value,
+        entity: character,
       });
       modal.querySelector('#q-out').innerHTML = renderRollResult(roll);
       await logAction(character.id, role, action.name, { roll, summary: action.desc });

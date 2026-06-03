@@ -13,6 +13,7 @@ import {
   subscribeGameState as _subscribeGameStateRaw,
   patchCharacter,
   getCharacters,
+  addCharacterEffect,
   removeCharacterEffectsBy,
   supabase,
 } from './supabase.js';
@@ -283,6 +284,29 @@ export async function cleanupExpiredEffects(currentTime = getCurrentIngameTime()
   try {
     await removeCharacterEffectsBy({ expiresBefore: currentTime.toISOString() });
   } catch (e) { console.warn('cleanupExpiredEffects:', e); }
+}
+
+/**
+ * Zentraler Helper: timed Effekt anlegen, der über IG-Zeit abläuft.
+ * durationStr: "1h" | "1 day" | "7 days" | "1 week" — wird via parseBuildTimeToIngameMs
+ * in IG-Millisekunden umgerechnet. null/leer = unbegrenzt (kein expires_at_ingame).
+ */
+export async function applyTimedEffect({
+  characterId, effectType, source, displayName, description = null,
+  durationStr = null, endsOnLongRest = false, meta = {},
+}) {
+  const now = getCurrentIngameTime();
+  const ms  = durationStr ? parseBuildTimeToIngameMs(durationStr) : 0;
+  const expires = ms > 0 ? new Date(now.getTime() + ms) : null;
+  return addCharacterEffect({
+    character_id: characterId,
+    effect_type: effectType,
+    source, display_name: displayName, description,
+    started_at_ingame: now.toISOString(),
+    expires_at_ingame: expires ? expires.toISOString() : null,
+    ends_on_long_rest: endsOnLongRest,
+    meta,
+  });
 }
 
 // ── Build-Time-Parser ────────────────────────────────────────

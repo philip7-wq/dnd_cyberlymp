@@ -237,3 +237,11 @@ alter publication supabase_realtime add table agent_threads;
 alter publication supabase_realtime add table agent_messages;
 alter publication supabase_realtime add table agent_calls;
 alter publication supabase_realtime add table agent_transfers;
+
+-- ============================================================
+-- Group Calls — Punkt 4: iCHOOM Gruppen-Anruf
+-- ============================================================
+alter table agent_calls add column if not exists group_id uuid;
+alter table agent_calls add column if not exists started_at_ingame timestamptz;
+create index if not exists idx_agent_calls_group_id on agent_calls (group_id);
+

@@ -397,11 +397,13 @@ window.addEventListener('agent:message', async (e) => {
 // ============================================================
 function renderCallJackApp() {
   const v = document.getElementById('app-calljack');
+  const isDmMode = agentState.mode === 'dm';
   v.innerHTML = `
     <div class="agent-app-header">
       <span class="agent-back" data-back>‹</span>
       <span class="agent-app-title">CallJack</span>
       <span class="agent-app-action" id="cj-new">+ Anruf</span>
+      ${isDmMode ? '<span class="agent-app-action" id="cj-group" style="margin-left:.5rem;">👥 Gruppe</span>' : ''}
     </div>
     <div class="agent-list" id="cj-list"></div>
     <div class="agent-call-active hidden" id="cj-active">
@@ -417,6 +419,85 @@ function renderCallJackApp() {
   v.querySelector('[data-back]').addEventListener('click', () => showApp('home'));
   v.querySelector('#cj-new').addEventListener('click', openCallContactPicker);
   v.querySelector('#cj-hangup').addEventListener('click', hangupCall);
+  if (isDmMode) v.querySelector('#cj-group').addEventListener('click', openGroupCallPicker);
+  refreshCallHistory();
+}
+
+// ── Group Call (DM only) ────────────────────────────────────
+function openGroupCallPicker() {
+  const modal = document.createElement('div');
+  modal.className = 'agent-modal';
+  modal.innerHTML = `
+    <div class="agent-modal-body" style="max-height:80%; overflow-y:auto;">
+      <h3>Gruppen-Anruf starten</h3>
+      <p style="font-size:.8rem; color:var(--agent-muted, #888); margin: 0 0 .8rem 0;">
+        Teilnehmer auswählen — alle bekommen gleichzeitig einen Anruf.
+      </p>
+      <div id="cj-group-list"></div>
+      <div class="agent-modal-actions" style="margin-top:.8rem;">
+        <button data-act="cancel">Abbrechen</button>
+        <button class="primary" data-act="start" id="cj-group-start" disabled>Anruf starten</button>
+      </div>
+    </div>`;
+  document.getElementById('agent-app-container').appendChild(modal);
+
+  const list = modal.querySelector('#cj-group-list');
+  list.innerHTML = agentState.contacts.map(c => {
+    const id = c.contact_player_id || c.contact_npc_id;
+    return `
+      <label class="agent-list-item" style="cursor:pointer;">
+        <input type="checkbox" class="cj-group-check" data-type="${c.contact_type}" data-ref="${id}" data-name="${(c.display_name || '').replace(/"/g,'&quot;')}" data-avatar="${c.avatar_url || ''}" style="width:18px; height:18px; margin-right:.6rem;">
+        <div class="agent-avatar" ${c.avatar_url ? `style="background-image:url(${c.avatar_url})"` : ''}>${c.avatar_url ? '' : (c.display_name || '?').slice(0,1).toUpperCase()}</div>
+        <div class="agent-list-body"><div class="agent-list-name">${c.display_name}</div></div>
+      </label>
+    `;
+  }).join('') || '<div class="agent-empty">Keine Kontakte.</div>';
+
+  const startBtn = modal.querySelector('#cj-group-start');
+  const checks = modal.querySelectorAll('.cj-group-check');
+  const updateBtn = () => {
+    const n = Array.from(checks).filter(c => c.checked).length;
+    startBtn.disabled = n < 2;
+    startBtn.textContent = n >= 2 ? `Anruf starten (${n})` : 'Anruf starten';
+  };
+  checks.forEach(c => c.addEventListener('change', updateBtn));
+
+  modal.addEventListener('click', e => {
+    if (e.target.dataset?.act === 'cancel') modal.remove();
+  });
+  startBtn.addEventListener('click', async () => {
+    const targets = Array.from(checks).filter(c => c.checked).map(c => ({
+      type: c.dataset.type, id: c.dataset.ref, name: c.dataset.name, avatar: c.dataset.avatar,
+    }));
+    modal.remove();
+    await startGroupCall(targets);
+  });
+}
+
+async function startGroupCall(targets) {
+  if (!targets.length) return;
+  const me = getActiveIdentity();
+  const groupId = (crypto.randomUUID && crypto.randomUUID()) ||
+    Date.now().toString(36) + Math.random().toString(36).slice(2);
+  let nowIngame = null;
+  try {
+    const gt = await import('../game-time.js');
+    nowIngame = gt.getCurrentIngameTime?.()?.toISOString?.() || null;
+  } catch {}
+
+  const rows = targets.map(t => ({
+    caller_type: me.type, caller_id: me.id,
+    callee_type: t.type, callee_id: t.id,
+    status: 'ringing',
+    group_id: groupId,
+    started_at_ingame: nowIngame,
+  }));
+  const { error } = await supabase.from('agent_calls').insert(rows);
+  if (error) {
+    alert('Gruppen-Anruf fehlgeschlagen: ' + (error.message || error));
+    return;
+  }
+  // DM sieht keinen Ringing-Screen (er wartet auf Annahme) — Hint per Toast
   refreshCallHistory();
 }
 
@@ -590,12 +671,16 @@ window.addEventListener('agent:incoming-call', async (e) => {
   const ov = document.getElementById('agent-incoming-call');
   if (!ov) return;
   ov.classList.add('show');
-  document.getElementById('incoming-name').textContent = name;
+  const isGroup = !!call.group_id;
+  const nameEl = document.getElementById('incoming-name');
+  nameEl.textContent = isGroup ? `${name} · GRUPPEN-ANRUF` : name;
+  const labelEl = ov.querySelector('.label');
+  if (labelEl) labelEl.textContent = isGroup ? 'Eingehender Gruppen-Anruf' : 'Eingehender Anruf';
   const av = document.getElementById('incoming-avatar');
   if (avatar) { av.style.backgroundImage = `url(${avatar})`; av.textContent = ''; }
   else { av.style.backgroundImage = ''; av.textContent = name.slice(0,1).toUpperCase(); }
 
-  agentState.inCall = { ...call, otherName: name, otherAvatar: avatar, mode: 'incoming' };
+  agentState.inCall = { ...call, otherName: name, otherAvatar: avatar, mode: 'incoming', isGroup };
   playSound('ringtone', { loop: true, volume: 0.6 });
 
   // Auto-miss after 25s

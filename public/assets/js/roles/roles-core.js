@@ -4,6 +4,7 @@
 // ============================================================
 
 import { supabase } from '../supabase.js';
+import { getSleepDeprivationModifier } from '../game-time.js';
 
 export const ROLE_META = {
   solo:      { name: 'Solo',      ability: 'Combat Awareness',   glyph: 'SLO', accent: '#FF2D2D',
@@ -47,25 +48,32 @@ export function rollD10() {
 }
 
 // Standard Check: STAT + Skill + 1d10 vs DV
-export function performCheck({ stat = 0, skill = 0, mod = 0, dv = null }) {
+// entity (optional): Charakter-Objekt — wenn gegeben, wird der Schlafentzug-Malus
+// automatisch addiert (Müde -1 / Sehr müde -2 / Erschöpft -4, basierend auf
+// last_long_rest_at_ingame). Gilt für ALLE Skill- und Combat-Checks.
+export function performCheck({ stat = 0, skill = 0, mod = 0, dv = null, entity = null }) {
   const d = rollD10();
-  const total = d.final + stat + skill + mod;
+  const sleep = entity ? getSleepDeprivationModifier(entity) : { value: 0, label: null };
+  const sleepMod = sleep.value || 0;
+  const total = d.final + stat + skill + mod + sleepMod;
   const success = dv === null ? null : total >= dv;
   return {
     d10: d.base, base: d.base, crit: d.crit, fumble: d.fumble,
-    stat, skill, mod, total, dv, success
+    stat, skill, mod, sleepMod, sleepLabel: sleep.label, total, dv, success
   };
 }
 
 // Role Ability Check: nur Role Ability Rank + 1d10 vs DV
 // (z.B. Charismatic Impact, NET Actions wie Backdoor)
-export function performAbilityCheck({ rank = 0, mod = 0, dv = null, label = 'Ability' }) {
+export function performAbilityCheck({ rank = 0, mod = 0, dv = null, label = 'Ability', entity = null }) {
   const d = rollD10();
-  const total = d.final + rank + mod;
+  const sleep = entity ? getSleepDeprivationModifier(entity) : { value: 0, label: null };
+  const sleepMod = sleep.value || 0;
+  const total = d.final + rank + mod + sleepMod;
   const success = dv === null ? null : total >= dv;
   return {
     d10: d.base, base: d.base, crit: d.crit, fumble: d.fumble,
-    rank, mod, total, dv, success, _label: label
+    rank, mod, sleepMod, sleepLabel: sleep.label, total, dv, success, _label: label
   };
 }
 
@@ -88,14 +96,16 @@ export function renderRollResult(roll, opts = {}) {
   const extras = [
     roll.crit   ? `<span class="dice-crit">crit +${roll.crit}</span>` : '',
     roll.fumble ? `<span class="dice-fumble">fumble -${roll.fumble}</span>` : '',
+    roll.sleepMod ? `<span class="dice-fumble">${roll.sleepLabel || 'Schlafentzug'} ${roll.sleepMod}</span>` : '',
   ].filter(Boolean).join(' · ');
 
   // Ability-only formula
+  const sleepPart = roll.sleepMod ? ` ${roll.sleepMod} Sleep` : '';
   let formula;
   if (roll.rank !== undefined) {
-    formula = `1d10[${roll.base}] + ${roll._label || 'Rank'}[${roll.rank}]${roll.mod ? (roll.mod > 0 ? ' + ' : ' ') + 'MOD[' + roll.mod + ']' : ''} = ${roll.total}`;
+    formula = `1d10[${roll.base}] + ${roll._label || 'Rank'}[${roll.rank}]${roll.mod ? (roll.mod > 0 ? ' + ' : ' ') + 'MOD[' + roll.mod + ']' : ''}${sleepPart} = ${roll.total}`;
   } else {
-    formula = `1d10[${roll.base}]${roll.stat ? ' + STAT[' + roll.stat + ']' : ''}${roll.skill ? ' + SKILL[' + roll.skill + ']' : ''}${roll.mod ? (roll.mod > 0 ? ' + ' : ' ') + 'MOD[' + roll.mod + ']' : ''} = ${roll.total}`;
+    formula = `1d10[${roll.base}]${roll.stat ? ' + STAT[' + roll.stat + ']' : ''}${roll.skill ? ' + SKILL[' + roll.skill + ']' : ''}${roll.mod ? (roll.mod > 0 ? ' + ' : ' ') + 'MOD[' + roll.mod + ']' : ''}${sleepPart} = ${roll.total}`;
   }
 
   return `
@@ -141,7 +151,7 @@ export function buildHeader(roleKey, character) {
 }
 
 // STAT+Skill Dice Box (standard checks)
-export function buildDiceBox({ label = 'Check', stat = 0, skill = 0, mod = 0, dv = '', onRoll }) {
+export function buildDiceBox({ label = 'Check', stat = 0, skill = 0, mod = 0, dv = '', entity = null, onRoll }) {
   const html = `
     <div class="role-dice">
       <div class="role-section-title">${label}</div>
@@ -161,7 +171,8 @@ export function buildDiceBox({ label = 'Check', stat = 0, skill = 0, mod = 0, dv
     const dvRaw = node.querySelector('[data-k="dv"]').value.trim();
     const roll = performCheck({
       stat: get('stat'), skill: get('skill'), mod: get('mod'),
-      dv: dvRaw === '' ? null : parseInt(dvRaw, 10)
+      dv: dvRaw === '' ? null : parseInt(dvRaw, 10),
+      entity
     });
     node.querySelector('[data-result]').innerHTML = renderRollResult(roll);
     onRoll?.(roll);
@@ -170,7 +181,7 @@ export function buildDiceBox({ label = 'Check', stat = 0, skill = 0, mod = 0, dv
 }
 
 // Ability-only Dice Box (Charismatic Impact, NET Actions, Operator)
-export function buildAbilityDiceBox({ label = 'Ability Check', rankLabel = 'Rank', rank = 0, mod = 0, dv = '', onRoll }) {
+export function buildAbilityDiceBox({ label = 'Ability Check', rankLabel = 'Rank', rank = 0, mod = 0, dv = '', entity = null, onRoll }) {
   const html = `
     <div class="role-dice">
       <div class="role-section-title">${label}</div>
@@ -190,7 +201,8 @@ export function buildAbilityDiceBox({ label = 'Ability Check', rankLabel = 'Rank
     const roll = performAbilityCheck({
       rank: get('rank'), mod: get('mod'),
       dv: dvRaw === '' ? null : parseInt(dvRaw, 10),
-      label: rankLabel
+      label: rankLabel,
+      entity
     });
     node.querySelector('[data-result]').innerHTML = renderRollResult(roll);
     onRoll?.(roll);

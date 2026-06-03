@@ -260,3 +260,21 @@ ALTER TABLE characters ADD COLUMN IF NOT EXISTS
   last_long_rest_at_ingame timestamptz DEFAULT '2045-09-15 08:00:00+00';
 ALTER TABLE characters ADD COLUMN IF NOT EXISTS
   last_hp_tick_at_ingame timestamptz DEFAULT '2045-09-15 08:00:00+00';
+
+-- session_log — DM-Session-Leiste: Start/Stop + Teilnehmer-Tracking
+CREATE TABLE IF NOT EXISTS session_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_name text,
+  started_at timestamptz NOT NULL DEFAULT now(),
+  ended_at timestamptz,
+  participants jsonb NOT NULL DEFAULT '[]'::jsonb,
+  -- participants Schema: [{ character_id, name, joined_at, response: 'joined'|'declined'|'timeout' }]
+  created_by uuid REFERENCES characters(id),
+  notes text
+);
+CREATE INDEX IF NOT EXISTS idx_session_log_started_at ON session_log (started_at DESC);
+ALTER TABLE session_log ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon all session_log" ON session_log;
+CREATE POLICY "anon all session_log" ON session_log FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON public.session_log TO anon, authenticated, service_role;
+ALTER PUBLICATION supabase_realtime ADD TABLE session_log;

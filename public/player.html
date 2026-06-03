@@ -8,11 +8,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Caveat&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css">
-  <link rel="stylesheet" href="assets/css/player.css">
+  <link rel="stylesheet" href="assets/css/player.css?v=2">
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/roles.css">
   <link rel="stylesheet" href="assets/css/radio.css?v=2">
   <link rel="stylesheet" href="assets/css/topbar.css?v=2">
+  <link rel="stylesheet" href="assets/css/session-bar.css?v=1">
 </head>
 <body>
 
@@ -136,7 +137,10 @@
 <header class="char-header" id="charHeader" style="display:none">
   <img id="charPortrait" class="char-portrait" src="" alt="Portrait">
   <div class="char-info">
-    <div class="char-name" id="charName">—</div>
+    <div class="char-name-row">
+      <div class="char-name" id="charName" data-editing="false">—</div>
+      <button class="char-name-edit" id="charNameEditBtn" type="button" title="Name bearbeiten" aria-label="Name bearbeiten">✎</button>
+    </div>
     <div class="char-sub" id="charSub">—</div>
     <div class="res-rows">
       <!-- HP -->
@@ -663,13 +667,15 @@ let _gtRestCountdown = null;
 let _gtEffectsCache = [];
 
 async function initGameTimeIntegration() {
-  const [{ mountTopbar }, gt, sb] = await Promise.all([
+  const [{ mountTopbar }, gt, sb, { mountSessionBar }] = await Promise.all([
     import('./assets/js/ui/topbar.js'),
     import('./assets/js/game-time.js'),
     import('./assets/js/supabase.js'),
+    import('./assets/js/ui/session-bar.js'),
   ]);
   await gt.initGameTime();
   window.__gameTime = gt;                       // expose early so renderers can use lazy-eval
+  await mountSessionBar({ isDm: false, characterId: char.id, characterName: char.name });
   _gtTopbarApi = await mountTopbar({ isDm: false });
   _gtTopbarApi.attachCharacter(char);
   renderHeader();   // re-render with lazy HP
@@ -857,10 +863,19 @@ function renderAll() {
 }
 
 // ── Header ────────────────────────────────────────────────────
+let _nameEditingWired = false;
 function renderHeader() {
   document.title = `${char.name} — LZRV Hub`;
   document.getElementById('navName').textContent = char.name;
-  document.getElementById('charName').textContent = char.name || '—';
+  const nameEl = document.getElementById('charName');
+  // Während aktivem Edit nicht überschreiben (sonst Verlust der Eingabe bei Realtime-Updates)
+  if (nameEl && nameEl.dataset.editing !== 'true') {
+    nameEl.textContent = char.name || '—';
+  }
+  if (!_nameEditingWired) {
+    setupNameEditing();
+    _nameEditingWired = true;
+  }
 
   const sub = [char.role, char.handle && char.handle !== char.name ? char.handle : null,
                char.player_name ? `(${char.player_name})` : null]
@@ -1066,6 +1081,62 @@ async function setStatValue(stat, value) {
   if (el && parseInt(el.textContent, 10) !== clamped) el.textContent = clamped;
   renderSkills();
   await patchCharacter(char.id, { stats: { ...char.stats } });
+}
+
+function setupNameEditing() {
+  const el = document.getElementById('charName');
+  const btn = document.getElementById('charNameEditBtn');
+  if (!el || !btn) return;
+
+  const stopEdit = (revert = false) => {
+    if (el.dataset.editing !== 'true') return;
+    el.dataset.editing = 'false';
+    el.contentEditable = 'false';
+    el.classList.remove('editing');
+    if (revert) el.textContent = char?.name || '—';
+  };
+  const startEdit = () => {
+    if (el.dataset.editing === 'true') return;
+    el.dataset.editing = 'true';
+    el.contentEditable = 'true';
+    el.classList.add('editing');
+    el.focus();
+    // Selektiere kompletten Text
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(range);
+  };
+
+  btn.addEventListener('click', () => {
+    el.dataset.editing === 'true' ? el.blur() : startEdit();
+  });
+  el.addEventListener('blur', async () => {
+    if (el.dataset.editing !== 'true') return;
+    const newName = (el.textContent || '').trim();
+    stopEdit(false);
+    if (!newName || newName === char.name) {
+      el.textContent = char?.name || '—';
+      return;
+    }
+    const oldName = char.name;
+    char.name = newName;
+    document.getElementById('navName').textContent = newName;
+    document.title = `${newName} — LZRV Hub`;
+    try {
+      await patchCharacter(char.id, { name: newName });
+    } catch (e) {
+      console.error('Name speichern fehlgeschlagen:', e);
+      char.name = oldName;
+      el.textContent = oldName || '—';
+      alert('Speichern fehlgeschlagen: ' + (e.message || e));
+    }
+  });
+  el.addEventListener('keydown', e => {
+    if (el.dataset.editing !== 'true') return;
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    if (e.key === 'Escape') { e.preventDefault(); stopEdit(true); el.blur(); }
+  });
 }
 
 function setupStatEditing() {
@@ -3425,12 +3496,15 @@ function showSkillCheckModal(expr, ctx) {
       if (b) { soloBonus += b; soloBonusLabel += ` +${b} (Initiative Reaction)`; }
     }
   }
-  const totalBase    = base + soloBonus;
+  const sleep        = (window.__gameTime?.getSleepDeprivationModifier(char) ?? { value: 0, label: null });
+  const sleepMod     = sleep.value || 0;
+  const totalBase    = base + soloBonus + sleepMod;
   const adjustedExpr = totalBase >= 0 ? `1d10+${totalBase}` : `1d10${totalBase}`;
   const penParts     = [];
   if (armorPen > 0) penParts.push(`−${armorPen} Rüstung`);
   if (swPen > 0)    penParts.push(`−${swPen} SW`);
   if (injPen < 0)   penParts.push(`${injPen} Injury`);
+  if (sleepMod)     penParts.push(`${sleepMod} ${sleep.label || 'Schlafentzug'}`);
   const penLabel     = penParts.length ? ` <span style="color:var(--red);font-size:.8em">(${penParts.join(', ')})</span>` : '';
 
   const overlay = document.createElement('div');
