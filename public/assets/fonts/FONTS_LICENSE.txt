@@ -37,6 +37,30 @@ Share Tech Mono
   Source   : https://fonts.google.com/specimen/Share+Tech+Mono
   License  : SIL Open Font License 1.1
   Files    : share-tech-mono-400.woff2
+
+----------------------------------------------------------------
+Phase 2/3 — Ersatz für entfernte Google-Fonts-Links (DSGVO).
+Aktuell vom (noch nicht reskinnten) UI genutzte Familien; @font-face
+in base.css. TEMPORÄR bis zur Font-Migration der Page-CSS.
+----------------------------------------------------------------
+
+Audiowide
+  Designer : Astigmatic (AOETI)
+  Source   : https://fonts.google.com/specimen/Audiowide
+  License  : SIL Open Font License 1.1
+  Files    : audiowide-400.woff2
+
+Inter
+  Designer : Rasmus Andersson
+  Source   : https://fonts.google.com/specimen/Inter
+  License  : SIL Open Font License 1.1
+  Files    : inter-latin.woff2  (Variable Font, Achse wght 400–600)
+
+Caveat
+  Designer : Pablo Impallari (Impallari Type)
+  Source   : https://fonts.google.com/specimen/Caveat
+  License  : SIL Open Font License 1.1
+  Files    : caveat-400.woff2
 ----------------------------------------------------------------
 
 The OFL allows bundling, redistribution, and self-hosting of these

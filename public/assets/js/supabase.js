@@ -616,18 +616,36 @@ export async function deleteSavedMap(id) {
 
 // ── Session Log (DM Session-Bar) ──────────────────────────────
 
+// Erkennt den Fall „Tabelle session_log existiert nicht / 404" (PostgREST
+// liefert dann z.B. PGRST205/42P01 bzw. „Could not find the table … in the
+// schema cache"). In diesem Fall sollen Lese-Zugriffe einen Empty State
+// liefern statt zu werfen — vorhandene Tabelle = unverändertes Verhalten.
+function _isMissingTableError(error) {
+  if (!error) return false;
+  const code = String(error.code || '');
+  if (code === 'PGRST205' || code === 'PGRST204' || code === '42P01') return true;
+  const msg = String(error.message || '') + ' ' + String(error.details || '');
+  return /could not find the table|does not exist|schema cache/i.test(msg);
+}
+
 export async function getActiveSession() {
   const { data, error } = await supabase.from('session_log')
     .select('*').is('ended_at', null)
     .order('started_at', { ascending: false }).limit(1);
-  if (error) throw error;
+  if (error) {
+    if (_isMissingTableError(error)) return null;   // Empty State statt Crash
+    throw error;
+  }
   return (data && data[0]) || null;
 }
 
 export async function getRecentSessions(limit = 50) {
   const { data, error } = await supabase.from('session_log')
     .select('*').order('started_at', { ascending: false }).limit(limit);
-  if (error) throw error;
+  if (error) {
+    if (_isMissingTableError(error)) return [];     // Empty State statt Crash
+    throw error;
+  }
   return data || [];
 }
 
@@ -656,7 +674,10 @@ export async function endSession(id) {
 export async function recordSessionResponse(sessionId, { character_id, name, response }) {
   const { data: cur, error: e1 } = await supabase.from('session_log')
     .select('participants').eq('id', sessionId).single();
-  if (e1) throw e1;
+  if (e1) {
+    if (_isMissingTableError(e1)) return null;   // Tabelle fehlt → No-op statt Crash
+    throw e1;
+  }
   const list = Array.isArray(cur?.participants) ? [...cur.participants] : [];
   const idx = list.findIndex(p => p.character_id === character_id);
   const entry = { character_id, name, response, joined_at: new Date().toISOString() };
@@ -665,7 +686,19 @@ export async function recordSessionResponse(sessionId, { character_id, name, res
 }
 
 export function subscribeSessionLog(callback) {
-  return supabase.channel('session-log-live')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'session_log' }, callback)
-    .subscribe();
+  // Defensiv: fehlt die Tabelle, soll das Abonnieren die Seite nicht crashen.
+  // (Realtime meldet das Fehlen asynchron via Status-Callback; wir fangen zudem
+  //  einen evtl. synchronen Fehler ab und liefern einen No-op-Channel-Stub.)
+  try {
+    return supabase.channel('session-log-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'session_log' }, callback)
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[session_log] Realtime nicht verfügbar (Status:', status + ') — Empty State.');
+        }
+      });
+  } catch (e) {
+    console.warn('[session_log] subscribe fehlgeschlagen:', e?.message || e);
+    return { unsubscribe() {} };
+  }
 }

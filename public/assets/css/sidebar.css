@@ -1,0 +1,284 @@
+/* ============================================================
+   sidebar.css — App-Shell · Linke HUD-Navigations-Sidebar
+   Phase 2 — Redesign. Nur Optik/Layout/Navigation.
+   Wird NUR auf Shell-Seiten mit Nav geladen (player.html, dm.html).
+   Styling über Tokens aus cyberpunk-ui.css. Muster wie Phase 0/1:
+   Clip-Path via Pseudo-Layer, drop-shadow-Glow, Mono-Type,
+   reduced-motion-Guard.
+   ============================================================ */
+
+:root {
+  --sb-w:    240px;   /* Sidebar voll        */
+  --sb-rail:  60px;   /* Icon-Rail (collapsed) */
+}
+
+/* ── Body-Offsets (Desktop) ─────────────────────────────────
+   Sidebar ist fixed/full-height links; Content + die fixierten
+   Status-Bars werden nach rechts versetzt. */
+@media (min-width: 769px) {
+  body.has-cyber-sidebar { padding-left: var(--sb-w); transition: padding-left var(--t-med) var(--ease); }
+  body.has-cyber-sidebar.sidebar-collapsed { padding-left: var(--sb-rail); }
+
+  /* Status-Bars (session-bar + game-time topbar) rechts neben die Sidebar */
+  body.has-cyber-sidebar .session-bar,
+  body.has-cyber-sidebar .gt-topbar { left: var(--sb-w); transition: left var(--t-med) var(--ease); }
+  body.has-cyber-sidebar.sidebar-collapsed .session-bar,
+  body.has-cyber-sidebar.sidebar-collapsed .gt-topbar { left: var(--sb-rail); }
+}
+
+/* ── Sidebar-Container ──────────────────────────────────────── */
+.cyber-sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: var(--sb-w);
+  z-index: 1250;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: none;
+  font-family: var(--font-heading);
+  isolation: isolate;
+  transition: width var(--t-med) var(--ease), transform var(--t-med) var(--ease);
+  overflow: hidden;
+}
+/* Rechte Kante: leuchtende Linie + dezenter Inset-Glow */
+.cyber-sidebar::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--bg-panel);
+  box-shadow: var(--inset-cyan);
+}
+.cyber-sidebar::after {
+  content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+  background: linear-gradient(180deg, transparent, var(--cyan-soft) 18%, var(--cyan-soft) 82%, transparent);
+  box-shadow: var(--glow-cyan-s);
+}
+body.sidebar-collapsed .cyber-sidebar { width: var(--sb-rail); }
+
+/* ── Kopf (Logo + Collapse-Toggle) ──────────────────────────── */
+.cyber-sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 68px;          /* deckt sich mit Status-Bar-Stack (32+36) */
+  padding: var(--sp-3) var(--sp-3);
+  border-bottom: 1px solid var(--border-dark);
+}
+.cyber-sidebar-head .nav-logo-img {
+  height: 34px; width: auto; object-fit: contain; flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(34,247,255,.25));
+}
+.cyber-sidebar-toggle {
+  margin-left: auto;
+  width: 34px; height: 34px; min-height: 34px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark);
+  color: var(--cyan-soft);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 1rem; line-height: 1;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.cyber-sidebar-toggle:hover { color: var(--neon-cyan); border-color: var(--cyan-soft); background: var(--bg-panel-cyan); }
+.cyber-sidebar-toggle:focus-visible { outline: none; box-shadow: var(--glow-cyan-s); }
+
+/* ── Nav-Bereich ────────────────────────────────────────────── */
+.cyber-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-2);
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+.cyber-sidebar-foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-2);
+  border-top: 1px solid var(--border-dark);
+}
+
+/* ── Nav-Item (Links + Buttons, behalten IDs/Handler) ───────── */
+.cyber-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius);
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+/* linker Akzent-Balken */
+.cyber-nav-item::before {
+  content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2px;
+  background: transparent;
+  transition: background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.cyber-nav-item:hover {
+  color: var(--neon-cyan);
+  background: var(--bg-panel-soft);
+}
+.cyber-nav-item:hover::before { background: var(--cyan-soft); box-shadow: var(--glow-cyan-s); }
+.cyber-nav-item:focus-visible { outline: none; color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+.cyber-nav-item.is-active {
+  color: var(--neon-cyan);
+  background: var(--bg-panel-cyan);
+}
+.cyber-nav-item.is-active::before { background: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+
+/* rote Variante (illegal / Combat: Schwarzmarkt, Neuer Kampf) */
+.cyber-nav-item--red { color: var(--red-soft); }
+.cyber-nav-item--red:hover { color: var(--neon-red); background: var(--bg-panel-red); }
+.cyber-nav-item--red:hover::before { background: var(--neon-red); box-shadow: var(--glow-red-s); }
+
+.cyber-nav-item .ci-icon {
+  flex-shrink: 0;
+  width: 20px; text-align: center;
+  font-size: 1rem; line-height: 1;
+}
+.cyber-nav-item .ci-label { overflow: hidden; text-overflow: ellipsis; }
+
+/* Charaktername-Zeile (player) */
+.cyber-sidebar-name {
+  display: block;
+  padding: 0 var(--sp-3) var(--sp-2);
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking);
+  color: var(--neon-red);
+  text-shadow: var(--glow-red-s);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* DM-Label / Section-Label */
+.cyber-sidebar-label {
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-heading);
+  font-size: var(--fs-xs);
+  letter-spacing: .2em;
+  color: var(--neon-red);
+  text-transform: uppercase;
+}
+
+/* Cash-Anzeige im Foot */
+.cyber-sidebar-cash {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+}
+.cyber-sidebar-cash .nav-cash {
+  font-family: var(--font-mono);
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-cyan-s);
+  font-size: var(--fs-sm);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1 1 auto;
+}
+.cyber-sidebar-cashlog {
+  flex-shrink: 0;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1rem; line-height: 1; padding: var(--sp-1);
+  opacity: .75;
+  transition: color var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease);
+}
+.cyber-sidebar-cashlog:hover { color: var(--neon-cyan); opacity: 1; }
+
+/* ── Icon-Rail (collapsed, Desktop) ─────────────────────────── */
+@media (min-width: 769px) {
+  body.sidebar-collapsed .cyber-sidebar .ci-label,
+  body.sidebar-collapsed .cyber-sidebar .cyber-sidebar-name,
+  body.sidebar-collapsed .cyber-sidebar .cyber-sidebar-label,
+  body.sidebar-collapsed .cyber-sidebar .cyber-sidebar-cash .nav-cash,
+  body.sidebar-collapsed .cyber-sidebar .cyber-sidebar-cashlog {
+    display: none;
+  }
+  body.sidebar-collapsed .cyber-nav-item { justify-content: center; gap: 0; padding-left: 0; padding-right: 0; }
+  /* Cash-Zeile zentriert (nur 💰-Icon sichtbar) — kein Clipping in der Rail */
+  body.sidebar-collapsed .cyber-sidebar-cash { justify-content: center; padding-left: 0; padding-right: 0; }
+  /* Kopf vertikal stapeln: Logo oben, Toggle darunter — passt beides in die schmale Rail */
+  body.sidebar-collapsed .cyber-sidebar-head {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--sp-1);
+    padding-left: var(--sp-1); padding-right: var(--sp-1);
+  }
+  /* Logo in BEIDEN Dimensionen auf die Rail begrenzen (kein horizontales Clipping) */
+  body.sidebar-collapsed .cyber-sidebar-head .nav-logo-img {
+    width: auto; height: auto;
+    max-width: 100%; max-height: 26px;
+  }
+  /* Toggle voll sichtbar + ≥44px Trefferfläche, zentriert in der Rail */
+  body.sidebar-collapsed .cyber-sidebar-toggle {
+    margin-left: 0;
+    width: 44px; height: 44px; min-height: 44px;
+  }
+}
+
+/* ── Burger (nur Mobile) ────────────────────────────────────── */
+.cyber-burger {
+  position: fixed;
+  top: 6px; left: 8px;
+  z-index: 1300;
+  width: 44px; height: 44px;
+  display: none;
+  align-items: center; justify-content: center;
+  background: var(--bg-panel);
+  border: 1px solid var(--cyan-soft);
+  color: var(--neon-cyan);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 1.2rem; line-height: 1;
+  box-shadow: var(--glow-cyan-s);
+}
+
+/* ── Off-Canvas Overlay (Mobile) ────────────────────────────── */
+.cyber-sidebar-overlay {
+  position: fixed; inset: 0;
+  z-index: 1240;
+  background: rgba(0,0,0,.6);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--t-med) var(--ease);
+}
+
+/* ── Mobile (<769px): Off-Canvas ────────────────────────────── */
+@media (max-width: 768px) {
+  .cyber-burger { display: inline-flex; }
+  .cyber-sidebar {
+    transform: translateX(-100%);
+    width: var(--sb-w);
+    box-shadow: 0 0 40px rgba(0,0,0,.8);
+  }
+  body.sidebar-open .cyber-sidebar { transform: translateX(0); }
+  body.sidebar-open .cyber-sidebar-overlay { opacity: 1; pointer-events: auto; }
+  /* Auf Mobile kein Content-Offset + Bars volle Breite */
+  body.has-cyber-sidebar { padding-left: 0; }
+  /* Platz für den Burger im oberen Bar-Stack */
+  body.has-cyber-sidebar .session-bar,
+  body.has-cyber-sidebar .gt-topbar { left: 0; }
+  body.has-cyber-sidebar .session-bar-inner { padding-left: 60px; }
+  /* Burger nicht im Collapsed-Modus relevant */
+  body.sidebar-collapsed .cyber-sidebar { width: var(--sb-w); }
+}
+
+/* ── Reduced-Motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .cyber-sidebar, .cyber-sidebar-overlay,
+  body.has-cyber-sidebar, body.has-cyber-sidebar .session-bar, body.has-cyber-sidebar .gt-topbar {
+    transition: none !important;
+  }
+}

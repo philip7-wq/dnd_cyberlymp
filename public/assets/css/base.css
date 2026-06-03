@@ -1,8 +1,27 @@
 /* ============================================================
    LZRV D&D Hub — Base styles (shared across all pages)
    Palette: near-black bg · #FF2D2D red · #00E5FF cyan
-   Fonts: self-hosted in Phase 6; system fallbacks for now
    ============================================================ */
+
+/* ── Self-hosted Fonts (DSGVO; ersetzen die früheren Google-Fonts-Links) ──
+   Audiowide/Inter/Caveat = die aktuell vom (noch nicht reskinnten) UI genutzten
+   Familien. woff2 (OFL) in assets/fonts/. Hier in base.css, weil diese Datei auf
+   JEDER Seite geladen wird (cyberpunk-ui.css nur auf player/dm/map). TEMPORÄR —
+   entfallen, sobald die Page-CSS in den Reskin-Phasen auf Rajdhani/IBM Plex Mono
+   migriert sind. Latin-Subset deckt deutsche Umlaute/ß ab. */
+@font-face {
+  font-family: 'Audiowide'; font-style: normal; font-weight: 400;
+  font-display: swap; src: url('../fonts/audiowide-400.woff2') format('woff2');
+}
+@font-face {
+  /* Inter ist ein Variable Font — eine Datei deckt 400–600 ab (wie zuvor bei Google). */
+  font-family: 'Inter'; font-style: normal; font-weight: 400 600;
+  font-display: swap; src: url('../fonts/inter-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Caveat'; font-style: normal; font-weight: 400;
+  font-display: swap; src: url('../fonts/caveat-400.woff2') format('woff2');
+}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DM Dashboard — LZRV Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Redesign-Fundament (Master §3: ZUERST laden) -->
+  <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
+  <link rel="stylesheet" href="assets/css/cyber-components.css">
   <link rel="stylesheet" href="assets/css/base.css?v=2">
   <link rel="stylesheet" href="assets/css/dm.css?v=5">
   <link rel="stylesheet" href="assets/css/agent.css">
@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="assets/css/radio.css?v=2">
   <link rel="stylesheet" href="assets/css/topbar.css?v=2">
   <link rel="stylesheet" href="assets/css/session-bar.css?v=1">
+  <link rel="stylesheet" href="assets/css/sidebar.css">
 </head>
 <body>
 
@@ -26,16 +27,23 @@
   </div>
 </div>
 
-<nav class="nav">
-  <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
-  <span style="font-family:var(--font-display);font-size:.72rem;color:var(--red);margin-left:.75rem;letter-spacing:.12em">DM DASHBOARD</span>
-  <button id="dmItemsBtn" class="btn btn-ghost" style="font-size:.75rem;margin-left:.75rem">🛍 Items</button>
-  <button id="dmTimerBtn" class="btn btn-ghost" style="font-size:.75rem;margin-left:.5rem">⏱ Timer</button>
-  <a href="map.html" target="_blank" class="btn btn-ghost" style="font-size:.75rem;margin-left:.5rem">🗺 Karte</a>
-  <button id="bmDmBtn" class="btn btn-ghost" style="font-size:.75rem;margin-left:.5rem;border-color:rgba(255,45,45,.4)">🚪 Schwarzmarkt</button>
-  <button class="btn btn-ghost" id="newCombatBtn" style="font-size:.75rem;margin-left:auto">⚔ Neuer Kampf</button>
-  <a href="index.html" class="btn btn-ghost" style="font-size:.75rem">← Übersicht</a>
-</nav>
+<aside class="cyber-sidebar">
+  <div class="cyber-sidebar-head">
+    <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
+    <button class="cyber-sidebar-toggle" type="button" aria-label="Sidebar einklappen">«</button>
+  </div>
+  <nav class="cyber-sidebar-nav">
+    <span class="cyber-sidebar-label">DM DASHBOARD</span>
+    <button id="dmItemsBtn" class="cyber-nav-item" type="button"><span class="ci-icon">🛍</span><span class="ci-label">Items</span></button>
+    <button id="dmTimerBtn" class="cyber-nav-item" type="button"><span class="ci-icon">⏱</span><span class="ci-label">Timer</span></button>
+    <a href="map.html" target="_blank" class="cyber-nav-item"><span class="ci-icon">🗺</span><span class="ci-label">Karte</span></a>
+    <button id="bmDmBtn" class="cyber-nav-item cyber-nav-item--red" type="button"><span class="ci-icon">🚪</span><span class="ci-label">Schwarzmarkt</span></button>
+    <button id="newCombatBtn" class="cyber-nav-item cyber-nav-item--red" type="button"><span class="ci-icon">⚔</span><span class="ci-label">Neuer Kampf</span></button>
+  </nav>
+  <div class="cyber-sidebar-foot">
+    <a href="index.html" class="cyber-nav-item"><span class="ci-icon">←</span><span class="ci-label">Übersicht</span></a>
+  </div>
+</aside>
 
 <!-- Combat Bars (one block per active session, rendered by renderAllCombatBars) -->
 <div id="combatBarsContainer"></div>
@@ -3796,6 +3804,15 @@ function sstClearTarget() {
 }
 
 document.addEventListener('DOMContentLoaded', sstStart);
+</script>
+
+<!-- Redesign App-Shell: Web Components + Sidebar + Scanlines (Master §3) -->
+<script type="module" src="assets/js/cyber-components.js"></script>
+<script type="module">
+  import { initSidebar } from './assets/js/ui/sidebar.js';
+  import { mountScanlines } from './assets/js/cyber-fx.js';
+  initSidebar();
+  mountScanlines();
 </script>
 
 </body>

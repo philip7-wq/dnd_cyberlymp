@@ -413,6 +413,7 @@ async function onTransferChange({ eventType, new: row }) {
 // ---------- HELPERS ----------
 export async function getOrCreateThread(otherType, otherId) {
   const me = agentState.activeIdentity;
+  if (!me) return null;  // keine aktive Identität → kein Thread
   const { data, error } = await supabase.rpc('agent_get_or_create_thread', {
     p1_type: me.type, p1_id: me.id,
     p2_type: otherType, p2_id: otherId

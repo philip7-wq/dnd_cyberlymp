@@ -30,6 +30,7 @@ function renderContactsApp() {
 
 async function refreshContacts() {
   const me = getActiveIdentity();
+  if (!me) return;  // keine aktive Identität (z.B. DM ohne gewählte NPC-Identität) → Leerzustand
 
   // DM mode (NPC identity): show all players as contacts
   if (me.type === 'npc') {
@@ -181,6 +182,7 @@ function openAddContactModal() {
     if (error || !codeRow) { errEl.textContent = 'Ungültiger Code.'; return; }
 
     const me = getActiveIdentity();
+    if (!me) { errEl.textContent = 'Keine aktive Identität.'; return; }
     const { error: insErr } = await supabase.from('agent_contacts').insert({
       owner_character_id: me.id,
       contact_type: 'npc',
@@ -219,6 +221,7 @@ async function renderThreadList() {
   const listWrap = main.querySelector('#cc-list-wrap');
 
   const me = getActiveIdentity();
+  if (!me) return;  // keine aktive Identität → leere Thread-Liste
   const [{ data: asA }, { data: asB }] = await Promise.all([
     supabase.from('agent_threads').select('*').eq('a_type', me.type).eq('a_id', me.id),
     supabase.from('agent_threads').select('*').eq('b_type', me.type).eq('b_id', me.id),
@@ -309,6 +312,7 @@ async function openChatThread(threadId, otherType, otherId, name, avatar) {
     if (!txt) return;
     inp.value = '';
     const me = getActiveIdentity();
+    if (!me) return;
     await supabase.from('agent_messages').insert({
       thread_id: threadId,
       sender_type: me.type,
@@ -328,6 +332,7 @@ async function refreshChatStream(threadId) {
   const { data: msgs } = await supabase.from('agent_messages')
     .select('*').eq('thread_id', threadId).order('created_at');
   const me = getActiveIdentity();
+  if (!me) return;
   stream.innerHTML = (msgs || []).map(m => {
     const out = (m.sender_type === me.type && m.sender_id === me.id);
     return `
@@ -364,6 +369,7 @@ function showAgentToast(senderName, snippet) {
 window.addEventListener('agent:message', async (e) => {
   const { msg, thread } = e.detail;
   const me = getActiveIdentity();
+  if (!me) return;
   const isOwn = msg.sender_type === me.type && msg.sender_id === me.id;
 
   if (agentState.currentThreadId === thread.id) {
@@ -477,6 +483,7 @@ function openGroupCallPicker() {
 async function startGroupCall(targets) {
   if (!targets.length) return;
   const me = getActiveIdentity();
+  if (!me) return;
   const groupId = (crypto.randomUUID && crypto.randomUUID()) ||
     Date.now().toString(36) + Math.random().toString(36).slice(2);
   let nowIngame = null;
@@ -505,6 +512,7 @@ async function refreshCallHistory() {
   const list = document.getElementById('cj-list');
   if (!list) return;
   const me = getActiveIdentity();
+  if (!me) return;  // keine aktive Identität → leere Anrufliste
   const [{ data: asCaller }, { data: asCallee }] = await Promise.all([
     supabase.from('agent_calls').select('*').eq('caller_id', me.id).order('started_at', { ascending: false }).limit(25),
     supabase.from('agent_calls').select('*').eq('callee_id', me.id).order('started_at', { ascending: false }).limit(25),
@@ -592,6 +600,7 @@ function openCallContactPicker() {
 async function openCallWith(otherType, otherId) {
   // Initiate outgoing call
   const me = getActiveIdentity();
+  if (!me) return;
   let name = '?', avatar = null;
   if (otherType === 'player') {
     const { data: p } = await supabase.from('characters').select('handle, name, image_url').eq('id', otherId).maybeSingle();
@@ -783,7 +792,7 @@ function renderEddieWireApp() {
 
 async function refreshBalance() {
   const me = getActiveIdentity();
-  if (me.type !== 'player') return;
+  if (!me || me.type !== 'player') return;
   const { data } = await supabase.from('characters').select('cash').eq('id', me.id).maybeSingle();
   const el = document.getElementById('ew-balance');
   if (el) el.textContent = data?.cash ?? 0;
@@ -793,6 +802,7 @@ async function refreshTransfers() {
   const list = document.getElementById('ew-history');
   if (!list) return;
   const me = getActiveIdentity();
+  if (!me) return;  // keine aktive Identität → leere Transfer-Liste
   const [{ data: asSender }, { data: asRecipient }] = await Promise.all([
     supabase.from('agent_transfers').select('*').eq('sender_id', me.id).order('created_at', { ascending: false }).limit(25),
     supabase.from('agent_transfers').select('*').eq('recipient_id', me.id).order('created_at', { ascending: false }).limit(25),
@@ -903,7 +913,7 @@ function openTransferForm(presetType, presetId, mode = 'send') {
 
     if (mode === 'send' && !negativeWarned) {
       const me = getActiveIdentity();
-      if (me.type === 'player') {
+      if (me && me.type === 'player') {
         const { data: bal } = await supabase.from('characters').select('cash').eq('id', me.id).maybeSingle();
         const current = bal?.cash ?? 0;
         if (amount > current) {
@@ -916,6 +926,7 @@ function openTransferForm(presetType, presetId, mode = 'send') {
     }
 
     const me = getActiveIdentity();
+    if (!me) { err.textContent = 'Keine aktive Identität.'; return; }
     const row = {
       sender_type: me.type,
       sender_id: me.id,

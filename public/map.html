@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tactical Map — LZRV Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Redesign-Fundament (Master §3: ZUERST laden) -->
+  <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
+  <link rel="stylesheet" href="assets/css/cyber-components.css">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/map.css">
   <link rel="stylesheet" href="assets/css/map-weapons.css?v=2">
@@ -4978,6 +4978,13 @@ function renderCombatBar() {
 }
 
 boot();
+</script>
+
+<!-- Redesign App-Shell: Web Components + Scanlines (Master §3) — KEINE Nav-Sidebar (Phase 7) -->
+<script type="module" src="assets/js/cyber-components.js"></script>
+<script type="module">
+  import { mountScanlines } from './assets/js/cyber-fx.js';
+  mountScanlines();
 </script>
 </body>
 </html>

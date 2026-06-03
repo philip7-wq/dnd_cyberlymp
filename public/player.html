@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Character — LZRV Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Caveat&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Redesign-Fundament (Master §3: ZUERST laden) -->
+  <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
+  <link rel="stylesheet" href="assets/css/cyber-components.css">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/player.css?v=2">
   <link rel="stylesheet" href="assets/css/agent.css">
@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="assets/css/radio.css?v=2">
   <link rel="stylesheet" href="assets/css/topbar.css?v=2">
   <link rel="stylesheet" href="assets/css/session-bar.css?v=1">
+  <link rel="stylesheet" href="assets/css/sidebar.css">
 </head>
 <body>
 
@@ -111,16 +112,26 @@
   <div><span class="loader-dot"></span><span class="loader-dot"></span><span class="loader-dot"></span></div>
 </div>
 
-<nav class="nav" id="topNav" style="display:none">
-  <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
-  <span id="navName" style="font-family:var(--font-display);font-size:.85rem;color:var(--red);margin-left:.75rem"></span>
-  <a id="shopLink" href="#" class="btn btn-ghost" style="font-size:.75rem">Shop</a>
-  <a id="mapLink" href="map.html" class="btn btn-ghost" style="font-size:.75rem">🗺 Karte</a>
-  <button id="bmBtn" class="btn btn-ghost bm-topbar-btn" onclick="bmShowPopup()" style="font-size:.75rem;display:none">🚪 Schwarzmarkt</button>
-  <span id="navCash" class="nav-cash" style="margin-left:auto">—</span>
-  <button id="cashLogBtn" title="Transaktionsverlauf" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.85rem;padding:0 .3rem;margin-left:.2rem;opacity:.7">📜</button>
-  <a href="index.html" class="btn btn-ghost" style="font-size:.75rem">← Übersicht</a>
-</nav>
+<aside class="cyber-sidebar" id="topNav" style="display:none">
+  <div class="cyber-sidebar-head">
+    <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
+    <button class="cyber-sidebar-toggle" type="button" aria-label="Sidebar einklappen">«</button>
+  </div>
+  <nav class="cyber-sidebar-nav">
+    <span id="navName" class="cyber-sidebar-name"></span>
+    <a id="shopLink" href="#" class="cyber-nav-item"><span class="ci-icon">🛒</span><span class="ci-label">Shop</span></a>
+    <a id="mapLink" href="map.html" class="cyber-nav-item"><span class="ci-icon">🗺</span><span class="ci-label">Karte</span></a>
+    <button id="bmBtn" class="cyber-nav-item cyber-nav-item--red bm-topbar-btn" type="button" onclick="bmShowPopup()" style="display:none"><span class="ci-icon">🚪</span><span class="ci-label">Schwarzmarkt</span></button>
+  </nav>
+  <div class="cyber-sidebar-foot">
+    <div class="cyber-sidebar-cash">
+      <span class="ci-icon" aria-hidden="true">💰</span>
+      <span id="navCash" class="nav-cash">—</span>
+      <button id="cashLogBtn" class="cyber-sidebar-cashlog" type="button" title="Transaktionsverlauf">📜</button>
+    </div>
+    <a href="index.html" class="cyber-nav-item"><span class="ci-icon">←</span><span class="ci-label">Übersicht</span></a>
+  </div>
+</aside>
 
 <!-- Combat Panel (combat active) -->
 <div class="combat-panel" id="combatPanel" style="display:none">
@@ -489,6 +500,10 @@ function setLoaderMsg(msg) {
   if (el) el.querySelector('span')?.setAttribute('data-msg', msg) || (el.innerHTML = `<span>${msg}</span><div><span class="loader-dot"></span><span class="loader-dot"></span><span class="loader-dot"></span></div>`);
 }
 
+// In eine async-Funktion gekapselt (statt Top-Level-await), damit der restliche
+// Modul-Body (inkl. später deklarierter let/const wie _bm*/_RB) initialisiert ist,
+// bevor boot()→renderAll() läuft. Verhindert Temporal-Dead-Zone-Fehler. (vgl. dm.html)
+async function boot() {
 if (id) {
   // 15-second timeout — if boot hangs, show a helpful message
   const bootTimeout = setTimeout(() => {
@@ -640,6 +655,8 @@ if (id) {
     }
   }
 }
+}
+boot();
 
 // Wire up shop + map links
 if (id) {
@@ -4153,6 +4170,15 @@ function bmHandleClose() {
 </script>
 
 <div id="sound-indicator" title="Sound aktiv" aria-hidden="true">🔊</div>
+
+<!-- Redesign App-Shell: Web Components + Sidebar + Scanlines (Master §3) -->
+<script type="module" src="assets/js/cyber-components.js"></script>
+<script type="module">
+  import { initSidebar } from './assets/js/ui/sidebar.js';
+  import { mountScanlines } from './assets/js/cyber-fx.js';
+  initSidebar();
+  mountScanlines();
+</script>
 
 </body>
 </html>
