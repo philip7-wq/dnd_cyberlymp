@@ -1,0 +1,464 @@
+/* ============================================================
+   cyberpunk-ui.css — Night-City HUD Design System
+   Phase 0 — Fundament (Tokens · Fonts · Reset · Basis-Klassen · FX)
+   Single Source of Truth. Auf jeder Seite ZUERST laden.
+   Token-Werte verbatim aus REDESIGN_MASTER.md §2.
+   ============================================================ */
+
+/* ── Design-Tokens (MASTER §2, verbatim) ───────────────────── */
+:root {
+  /* — Backgrounds — */
+  --bg-main:        #080A0F;
+  --bg-panel:       #101318;
+  --bg-panel-soft:  #151920;
+  --bg-panel-red:   #261116;
+  --bg-panel-cyan:  #062329;
+
+  /* — Text — */
+  --text-main:      #E8F8FF;
+  --text-muted:     #8A9AA3;
+  --text-dim:       #53616A;
+
+  /* — Cyan (System / Daten / Charakter) — */
+  --neon-cyan:      #22F7FF;
+  --cyan-soft:      #0DB7D9;
+  --cyan-dark:      #064D5E;
+
+  /* — Red/Pink (Combat / Gefahr / Night Market) — */
+  --neon-red:       #FF3158;
+  --red-soft:       #B8253D;
+  --red-dark:       #44151C;
+
+  /* — Status — */
+  --warning-yellow: #FFD166;
+  --success-green:  #36FF9F;
+  --danger-red:     #FF2B2B;
+
+  /* — Lines / Grid — */
+  --border-dark:    #25313A;
+  --grid-line:      rgba(34,247,255,0.08);
+
+  /* — Glow-Presets (box-shadow) — */
+  --glow-cyan-s:    0 0 8px rgba(34,247,255,0.45);
+  --glow-cyan-m:    0 0 18px rgba(34,247,255,0.30);
+  --glow-cyan-l:    0 0 28px rgba(34,247,255,0.45);
+  --glow-red-s:     0 0 8px rgba(255,49,88,0.45);
+  --glow-red-m:     0 0 18px rgba(255,49,88,0.30);
+  --inset-cyan:     inset 0 0 24px rgba(34,247,255,0.04);
+
+  /* — Geometrie — */
+  --clip-sm: 8px;     /* Clip-Path-Eckmaß klein  */
+  --clip-md: 14px;    /* mittel (Buttons/Cards)   */
+  --clip-lg: 18px;    /* groß (Panels)            */
+  --border-w: 1px;
+  --radius: 2px;      /* fast eckig — niemals SaaS-Rundung */
+
+  /* — Spacing-Skala — */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+
+  /* — Typografie — */
+  --font-heading: "Rajdhani", "Orbitron", sans-serif;
+  --font-body:    "IBM Plex Mono", "Share Tech Mono", monospace;
+  --font-mono:    "Share Tech Mono", monospace;     /* Zahlen/Stats */
+  --fs-xs: 0.75rem; --fs-sm: 0.85rem; --fs-md: 1rem;
+  --fs-lg: 1.25rem; --fs-xl: 1.6rem;  --fs-2xl: 2.2rem;
+  --tracking: 0.12em;
+
+  /* — Motion — */
+  --t-fast: 120ms; --t-med: 200ms; --t-slow: 360ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* — Z-Index-Skala — */
+  --z-base: 1; --z-panel: 10; --z-nav: 100;
+  --z-modal: 1000; --z-toast: 2000; --z-scanlines: 9999;
+
+  /* — Semantische Aliases (im Code DIESE benutzen) — */
+  --color-data:    var(--neon-cyan);
+  --color-combat:  var(--neon-red);
+  --color-illegal: var(--neon-red);
+  --color-ok:      var(--success-green);
+  --color-warn:    var(--warning-yellow);
+}
+
+/* ── Migrations-Aliase ──────────────────────────────────────
+   TEMPORÄR — wird in Phase 11 entfernt.
+   Mappt alte global genutzte base.css-Vars auf neue Tokens, damit
+   halb-migrierte Seiten zwischen Phasen nicht brechen. Namespaced
+   Vars (--agent-*, --role-*, --snd-*, --relic-*, --cyber-*) sind
+   seiten-lokal und werden NICHT gemappt.
+   ──────────────────────────────────────────────────────────── */
+:root {
+  --red:        var(--neon-red);    /* alt: #FF2D2D  TEMPORÄR — Phase 11 entfernen */
+  --cyan:       var(--neon-cyan);   /* alt: #00E5FF  TEMPORÄR — Phase 11 entfernen */
+  --bg:         var(--bg-main);     /* alt: #0a0a0f  TEMPORÄR — Phase 11 entfernen */
+  --bg-card:    var(--bg-panel);    /* alt: #12121a  TEMPORÄR — Phase 11 entfernen */
+  --bg-input:   var(--bg-panel-soft); /* alt: #1a1a26 TEMPORÄR — Phase 11 entfernen */
+  --border:     var(--border-dark); /* alt: #2a2a3e  TEMPORÄR — Phase 11 entfernen */
+  --red-dim:    var(--red-soft);    /* alt: #cc1f1f  TEMPORÄR — Phase 11 entfernen */
+  --cyan-dim:   var(--cyan-soft);   /* alt: #00b8cc  TEMPORÄR — Phase 11 entfernen */
+  --text:       var(--text-main);   /* alt: #c8c8d8  TEMPORÄR — Phase 11 entfernen */
+  /* --text-muted: gleicher Name, neuer Wert (siehe Token-Set oben) — TEMPORÄR */
+  --text-head:  var(--text-main);   /* alt: #e8e8f0  TEMPORÄR — Phase 11 entfernen */
+}
+
+/* ── @font-face (self-hosted woff2, font-display: swap) ─────── */
+@font-face {
+  font-family: "Rajdhani"; font-style: normal; font-weight: 400;
+  font-display: swap; src: url("../fonts/rajdhani-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Rajdhani"; font-style: normal; font-weight: 500;
+  font-display: swap; src: url("../fonts/rajdhani-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Rajdhani"; font-style: normal; font-weight: 600;
+  font-display: swap; src: url("../fonts/rajdhani-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Rajdhani"; font-style: normal; font-weight: 700;
+  font-display: swap; src: url("../fonts/rajdhani-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Orbitron"; font-style: normal; font-weight: 400;
+  font-display: swap; src: url("../fonts/orbitron-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Orbitron"; font-style: normal; font-weight: 700;
+  font-display: swap; src: url("../fonts/orbitron-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400;
+  font-display: swap; src: url("../fonts/ibm-plex-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500;
+  font-display: swap; src: url("../fonts/ibm-plex-mono-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600;
+  font-display: swap; src: url("../fonts/ibm-plex-mono-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Share Tech Mono"; font-style: normal; font-weight: 400;
+  font-display: swap; src: url("../fonts/share-tech-mono-400.woff2") format("woff2");
+}
+
+/* ── Reset ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Basis-Klassen (Styling-only, noch nirgends angewendet) ──── */
+
+/* Panel — abgeschrägter HUD-Container
+   Border via Pseudo-Layer (::before), damit die Linie der Clip-Form inkl.
+   Diagonale folgt — eine echte border würde vom clip-path mitgeschnitten.
+   Glow via filter: drop-shadow (wird NACH dem Clip angewandt → folgt der Form;
+   box-shadow würde ebenfalls weggeschnitten). */
+.cyber-panel {
+  position: relative;
+  isolation: isolate;            /* hält die z-index:-1-Layer lokal (Nesting-safe) */
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  padding: var(--sp-5);
+  color: var(--text-main);
+  clip-path: polygon(
+    var(--clip-lg) 0, 100% 0, 100% calc(100% - var(--clip-lg)),
+    calc(100% - var(--clip-lg)) 100%, 0 100%, 0 var(--clip-lg)
+  );
+}
+.cyber-panel::before {           /* = Border-Farbe, folgt der Clip-Form */
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--border-dark);
+  clip-path: inherit;
+}
+.cyber-panel::after {            /* = Füllung, um border-w eingerückt */
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--bg-panel);
+  box-shadow: var(--inset-cyan);
+  clip-path: inherit;
+}
+.cyber-panel--cyan::before { background: var(--cyan-soft); }
+.cyber-panel--cyan::after  { background: var(--bg-panel-cyan); }
+.cyber-panel--cyan         { filter: drop-shadow(var(--glow-cyan-m)); }
+.cyber-panel--red::before  { background: var(--red-soft); }
+.cyber-panel--red::after   { background: var(--bg-panel-red); box-shadow: none; }
+.cyber-panel--red          { filter: drop-shadow(var(--glow-red-m)); }
+.cyber-panel--ghost::after { background: transparent; box-shadow: none; }
+
+/* Button — Border via ::before, Füllung via ::after, Glow via filter */
+.cyber-button {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: var(--sp-3) var(--sp-5);
+  background: transparent;
+  border: none;
+  color: var(--neon-cyan);
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: var(--radius);
+  clip-path: polygon(
+    var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
+    calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm)
+  );
+  transition: color var(--t-fast) var(--ease),
+              filter var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease);
+}
+.cyber-button::before {          /* = Border-Farbe */
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--cyan-soft);
+  clip-path: inherit;
+}
+.cyber-button::after {           /* = Füllung, um border-w eingerückt */
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--bg-panel-soft);
+  clip-path: inherit;
+  transition: background var(--t-fast) var(--ease);
+}
+.cyber-button:hover {
+  filter: drop-shadow(var(--glow-cyan-s));
+  transform: translateY(-1px);
+}
+.cyber-button:hover::after { background: var(--bg-panel-cyan); }
+.cyber-button:active { transform: translateY(0); }
+.cyber-button:focus-visible {
+  outline: none;
+  filter: drop-shadow(var(--glow-cyan-m));
+}
+.cyber-button[disabled],
+.cyber-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+.cyber-button--red { color: var(--neon-red); }
+.cyber-button--red::before { background: var(--red-soft); }
+.cyber-button--red:hover { filter: drop-shadow(var(--glow-red-s)); }
+.cyber-button--red:hover::after { background: var(--bg-panel-red); }
+.cyber-button.is-active,
+.cyber-button[active] { filter: drop-shadow(var(--glow-cyan-s)); }
+.cyber-button.is-active::after,
+.cyber-button[active]::after { background: var(--bg-panel-cyan); }
+
+/* Inputs */
+.cyber-input,
+.cyber-search,
+.cyber-select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-panel-soft);
+  border: var(--border-w) solid var(--border-dark);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--tracking);
+  border-radius: var(--radius);
+  transition: border-color var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
+}
+.cyber-input::placeholder,
+.cyber-search::placeholder { color: var(--text-dim); }
+.cyber-input:focus,
+.cyber-search:focus,
+.cyber-select:focus {
+  outline: none;
+  border-color: var(--cyan-soft);
+  box-shadow: var(--glow-cyan-s);
+}
+/* Search — Suchfeld mit Lupe-Affordance via Padding */
+.cyber-search { padding-left: var(--sp-5); }
+/* Select — Pfeil-Indikator + eckige Optik */
+.cyber-select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: var(--sp-6);
+  background-image: linear-gradient(45deg, transparent 50%, var(--neon-cyan) 50%),
+                    linear-gradient(135deg, var(--neon-cyan) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* Status-Chip — Label/Tag (RANGED, ILLEGAL, ACTIVE …) */
+.status-chip {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  background: transparent;
+  border: none;
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  clip-path: polygon(
+    var(--clip-sm) 0, 100% 0, 100% 100%,
+    0 100%, 0 var(--clip-sm)
+  );
+}
+.status-chip::before {           /* = Border-Farbe */
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--cyan-soft);
+  clip-path: inherit;
+}
+.status-chip::after {            /* = Füllung, um border-w eingerückt */
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--bg-panel-soft);
+  clip-path: inherit;
+}
+.status-chip--red          { color: var(--neon-red); }
+.status-chip--red::before  { background: var(--red-soft); }
+.status-chip--ok           { color: var(--success-green); }
+.status-chip--ok::before   { background: var(--success-green); }
+.status-chip--warn         { color: var(--warning-yellow); }
+.status-chip--warn::before { background: var(--warning-yellow); }
+
+/* HUD-Divider — leuchtende Segment-Trennlinie */
+.hud-divider {
+  height: 2px;
+  border: 0;
+  margin: var(--sp-4) 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0,
+    var(--cyan-soft) 12%,
+    var(--neon-cyan) 50%,
+    var(--cyan-soft) 88%,
+    transparent 100%
+  );
+  box-shadow: var(--glow-cyan-s);
+}
+
+/* Tabelle */
+.cyber-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-main);
+}
+.cyber-table th,
+.cyber-table td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  border-bottom: var(--border-w) solid var(--border-dark);
+}
+.cyber-table th {
+  color: var(--neon-cyan);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  border-bottom-color: var(--cyan-soft);
+}
+.cyber-table tbody tr {
+  transition: background var(--t-fast) var(--ease);
+}
+.cyber-table tbody tr:hover { background: var(--bg-panel-soft); }
+
+/* ── Keyframes (MASTER §5) ──────────────────────────────────── */
+@keyframes boot-flicker {
+  0%   { opacity: 0;   filter: brightness(2.2); }
+  10%  { opacity: 1;   }
+  12%  { opacity: 0.3; }
+  16%  { opacity: 1;   }
+  22%  { opacity: 0.6; }
+  28%  { opacity: 1;   filter: brightness(1.4); }
+  100% { opacity: 1;   filter: brightness(1); }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: var(--glow-cyan-s); }
+  50%      { box-shadow: var(--glow-cyan-l); }
+}
+@keyframes glitch {
+  0%   { transform: translate(0, 0);    clip-path: inset(0 0 0 0); }
+  20%  { transform: translate(-2px, 1px); clip-path: inset(0 0 60% 0); }
+  40%  { transform: translate(2px, -1px); clip-path: inset(50% 0 0 0); }
+  60%  { transform: translate(-1px, 0);   clip-path: inset(0 0 20% 0); }
+  80%  { transform: translate(1px, 1px);  clip-path: inset(30% 0 30% 0); }
+  100% { transform: translate(0, 0);    clip-path: inset(0 0 0 0); }
+}
+@keyframes scanline-move {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 100vh; }
+}
+
+/* ── FX Utility-Klassen ─────────────────────────────────────── */
+.fx-boot   { animation: boot-flicker var(--t-slow) var(--ease) both; }
+.fx-pulse  { animation: glow-pulse 2.4s var(--ease) infinite; }
+.fx-glitch { animation: glitch 320ms steps(2, end) 1; }
+
+/* ── Scanline-Overlay ──────────────────────────────────────── */
+.cyber-scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-scanlines);
+}
+.cyber-scanlines::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(34,247,255,0.05) 0px,
+    rgba(34,247,255,0.05) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  animation: scanline-move 8s linear infinite;
+}
+.cyber-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    rgba(0,0,0,0.35) 100%
+  );
+}
+
+/* ── Reduced-Motion ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .fx-boot, .fx-pulse, .fx-glitch { animation: none !important; }
+  .cyber-scanlines::before { animation: none !important; }
+}

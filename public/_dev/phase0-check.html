@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phase 0 — Fundament-Check (DEV)</title>
+  <meta name="robots" content="noindex, nofollow">
+  <!-- Lädt NUR das neue Fundament — kein base.css, kein Page-CSS. -->
+  <link rel="stylesheet" href="../assets/css/cyberpunk-ui.css">
+  <style>
+    /* Nur Harness-Layout — gehört NICHT ins Design-System. */
+    body { padding: var(--sp-6); }
+    .wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: var(--sp-6); }
+    h1 { font-family: var(--font-heading); font-weight: 700; letter-spacing: var(--tracking);
+         color: var(--neon-cyan); text-transform: uppercase; font-size: var(--fs-2xl); }
+    h2 { font-family: var(--font-heading); font-weight: 600; letter-spacing: var(--tracking);
+         color: var(--text-main); text-transform: uppercase; font-size: var(--fs-lg);
+         margin-bottom: var(--sp-3); }
+    section { display: grid; gap: var(--sp-3); }
+    .row { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+    .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-2); }
+    .swatch { border: var(--border-w) solid var(--border-dark); border-radius: var(--radius); overflow: hidden; }
+    .swatch .chip { height: 56px; }
+    .swatch .meta { padding: var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-xs);
+                    color: var(--text-muted); background: var(--bg-panel); }
+    .swatch .meta b { color: var(--text-main); display: block; }
+    .font-demo { font-size: var(--fs-xl); }
+    .label { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-dim);
+             text-transform: uppercase; letter-spacing: var(--tracking); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1 class="fx-boot">Phase 0 — Fundament-Check</h1>
+  <p class="label">DEV-Harness · lädt nur cyberpunk-ui.css + cyber-fx.js</p>
+
+  <!-- ── Fonts ── -->
+  <section class="cyber-panel">
+    <h2>Fonts</h2>
+    <div><span class="label">Rajdhani 700</span>
+      <div class="font-demo" style="font-family:'Rajdhani';font-weight:700">NIGHT CITY 0123456789</div></div>
+    <div><span class="label">Orbitron 700</span>
+      <div class="font-demo" style="font-family:'Orbitron';font-weight:700">NIGHT CITY 0123456789</div></div>
+    <div><span class="label">IBM Plex Mono 400</span>
+      <div class="font-demo" style="font-family:'IBM Plex Mono'">Night City 0123456789</div></div>
+    <div><span class="label">Share Tech Mono 400</span>
+      <div class="font-demo" style="font-family:'Share Tech Mono'">Night City 0123456789</div></div>
+  </section>
+
+  <!-- ── Token-Swatches ── -->
+  <section>
+    <h2>Token-Farben</h2>
+    <div class="swatches" id="swatches"></div>
+  </section>
+
+  <!-- ── Basis-Klassen ── -->
+  <section>
+    <h2>Basis-Klassen</h2>
+
+    <div class="row">
+      <button class="cyber-button">Cyber Button</button>
+      <button class="cyber-button cyber-button--red">Combat</button>
+      <button class="cyber-button is-active">Active</button>
+      <button class="cyber-button" disabled>Disabled</button>
+    </div>
+
+    <div class="row">
+      <span class="status-chip">RANGED</span>
+      <span class="status-chip status-chip--red">ILLEGAL</span>
+      <span class="status-chip status-chip--ok">ACTIVE</span>
+      <span class="status-chip status-chip--warn">LOW HP</span>
+    </div>
+
+    <div class="row" style="align-items:stretch">
+      <input class="cyber-input" placeholder="cyber-input">
+      <input class="cyber-search" placeholder="cyber-search">
+      <select class="cyber-select">
+        <option>cyber-select</option><option>Option B</option>
+      </select>
+    </div>
+
+    <div class="cyber-panel cyber-panel--cyan">cyber-panel --cyan</div>
+    <div class="cyber-panel cyber-panel--red">cyber-panel --red</div>
+    <div class="cyber-panel cyber-panel--ghost">cyber-panel --ghost</div>
+
+    <hr class="hud-divider">
+
+    <table class="cyber-table">
+      <thead><tr><th>Stat</th><th>Wert</th><th>Mod</th></tr></thead>
+      <tbody>
+        <tr><td>INT</td><td>7</td><td>+2</td></tr>
+        <tr><td>REF</td><td>8</td><td>+3</td></tr>
+        <tr><td>BODY</td><td>6</td><td>+1</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── FX-Trigger ── -->
+  <section class="cyber-panel">
+    <h2>FX</h2>
+    <div class="row">
+      <button class="cyber-button" id="btnBoot">bootFlicker</button>
+      <button class="cyber-button" id="btnPulse">glowPulse toggle</button>
+      <button class="cyber-button cyber-button--red" id="btnGlitch">glitch</button>
+    </div>
+    <div class="cyber-panel cyber-panel--cyan" id="fxTarget" style="text-align:center">
+      FX-Ziel — hier laufen die Effekte
+    </div>
+    <p class="label" id="rmNote"></p>
+  </section>
+
+</div>
+
+<script type="module">
+  import { bootFlicker, glowPulse, glitch, mountScanlines } from '../assets/js/cyber-fx.js';
+
+  // Token-Swatches dynamisch aus :root lesen.
+  const colorTokens = [
+    '--bg-main','--bg-panel','--bg-panel-soft','--bg-panel-red','--bg-panel-cyan',
+    '--text-main','--text-muted','--text-dim',
+    '--neon-cyan','--cyan-soft','--cyan-dark',
+    '--neon-red','--red-soft','--red-dark',
+    '--warning-yellow','--success-green','--danger-red',
+    '--border-dark'
+  ];
+  const cs = getComputedStyle(document.documentElement);
+  const host = document.getElementById('swatches');
+  for (const t of colorTokens) {
+    const val = cs.getPropertyValue(t).trim();
+    const el = document.createElement('div');
+    el.className = 'swatch';
+    el.innerHTML = `<div class="chip" style="background:var(${t})"></div>
+      <div class="meta"><b>${t}</b>${val}</div>`;
+    host.appendChild(el);
+  }
+
+  // FX-Trigger
+  const target = document.getElementById('fxTarget');
+  let pulseOn = false;
+  document.getElementById('btnBoot').addEventListener('click', () => bootFlicker(target));
+  document.getElementById('btnGlitch').addEventListener('click', () => glitch(target));
+  document.getElementById('btnPulse').addEventListener('click', () => {
+    pulseOn = !pulseOn; glowPulse(target, pulseOn);
+  });
+
+  // Scanlines aktivieren
+  mountScanlines();
+
+  // reduced-motion-Hinweis
+  const rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('rmNote').textContent =
+    rm ? 'prefers-reduced-motion: reduce AKTIV → FX sind No-Ops.'
+       : 'prefers-reduced-motion: reduce inaktiv → FX laufen.';
+</script>
+</body>
+</html>

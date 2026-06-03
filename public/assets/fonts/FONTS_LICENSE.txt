@@ -1,0 +1,45 @@
+================================================================
+LZRV D&D Hub — Self-hosted Webfonts (DSGVO-compliant)
+Phase 0 — Redesign Fundament
+================================================================
+
+All fonts below are licensed under the SIL Open Font License,
+Version 1.1 (OFL-1.1). Full license text:
+https://openfontlicense.org  ·  https://scripts.sil.org/OFL
+
+Downloaded as .woff2 (latin subset) from Fontsource via jsDelivr:
+https://cdn.jsdelivr.net/fontsource/fonts/<family>@latest/latin-<weight>-normal.woff2
+Fontsource packages the upstream Google Fonts releases unmodified.
+
+----------------------------------------------------------------
+Rajdhani
+  Designer : Indian Type Foundry
+  Source   : https://fonts.google.com/specimen/Rajdhani
+  License  : SIL Open Font License 1.1
+  Files    : rajdhani-400.woff2, rajdhani-500.woff2,
+             rajdhani-600.woff2, rajdhani-700.woff2
+
+Orbitron
+  Designer : Matt McInerney
+  Source   : https://fonts.google.com/specimen/Orbitron
+  License  : SIL Open Font License 1.1
+  Files    : orbitron-400.woff2, orbitron-700.woff2
+
+IBM Plex Mono
+  Designer : Mike Abbink, Paul van der Laan, Pieter van Rosmalen (IBM / Bold Monday)
+  Source   : https://fonts.google.com/specimen/IBM+Plex+Mono
+  License  : SIL Open Font License 1.1
+  Files    : ibm-plex-mono-400.woff2, ibm-plex-mono-500.woff2,
+             ibm-plex-mono-600.woff2
+
+Share Tech Mono
+  Designer : Carrois Apostrophe
+  Source   : https://fonts.google.com/specimen/Share+Tech+Mono
+  License  : SIL Open Font License 1.1
+  Files    : share-tech-mono-400.woff2
+----------------------------------------------------------------
+
+The OFL allows bundling, redistribution, and self-hosting of these
+fonts, including for commercial use, provided the fonts are not sold
+by themselves and the license/copyright notices are retained.
+This file satisfies that notice requirement for the self-hosted copies.
