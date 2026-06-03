@@ -143,10 +143,12 @@ Neu anzulegen:
 ```
 public/assets/
 ├── css/
-│   └── cyberpunk-ui.css        ← Tokens + Reset + Basis-Utility/Komponenten-Klassen (ZUERST laden)
+│   ├── cyberpunk-ui.css        ← Tokens + Reset + Basis-Utility/Komponenten-Klassen (ZUERST laden)
+│   └── cyber-components.css     ← Styles der Web Components (NACH cyberpunk-ui.css laden)
 ├── js/
-│   ├── cyber-components.js      ← registriert alle Custom Elements (oder Ordner, s.u.)
-│   ├── components/              ← optional: 1 Datei pro Custom Element
+│   ├── cyber-components.js      ← registriert alle Custom Elements (importiert components/)
+│   ├── components/              ← 1 Datei pro Custom Element + cyber-element.js (Basisklasse)
+│   │   ├── cyber-element.js
 │   │   ├── cyber-panel.js
 │   │   ├── cyber-button.js
 │   │   ├── health-bar.js
@@ -155,7 +157,19 @@ public/assets/
 └── fonts/                       ← woff2: Rajdhani, Orbitron, IBM Plex Mono, Share Tech Mono
 ```
 
-**Lade-Reihenfolge auf jeder Seite:** `cyberpunk-ui.css` zuerst → dann Page-CSS → dann (am Ende von body) `cyber-components.js` als `type="module"`.
+**Lade-Reihenfolge auf jeder Seite (verbindlich):**
+1. `cyberpunk-ui.css` (Tokens/Reset/Basis-Klassen) — ZUERST.
+2. `cyber-components.css` (Komponenten-Styles) — NACH cyberpunk-ui.css (nutzt deren Tokens).
+3. Page-CSS (seitenspezifisch).
+4. `cyber-components.js` als `<script type="module">` — am Ende von `<body>`.
+
+```html
+<link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
+<link rel="stylesheet" href="assets/css/cyber-components.css">
+<link rel="stylesheet" href="assets/css/<page>.css">
+<!-- … -->
+<script type="module" src="assets/js/cyber-components.js"></script>
+```
 
 Bestehende CSS-Dateien (werden Phase für Phase neu aufgebaut, nicht spurlos gelöscht bevor klar ist was sie tun):
 `base.css, player.css, dm.css, map.css, map-weapons.css, agent.css, roles.css, shop.css, topbar.css, session-bar.css, radio.css, radio-standalone.css, sound.css, index.css, upload.css`

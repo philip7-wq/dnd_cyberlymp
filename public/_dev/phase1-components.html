@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phase 1 — Komponenten-Bibliothek (DEV)</title>
+  <meta name="robots" content="noindex, nofollow">
+  <!-- Lädt NUR Fundament + Komponenten — kein base.css, kein Page-CSS. -->
+  <link rel="stylesheet" href="../assets/css/cyberpunk-ui.css">
+  <link rel="stylesheet" href="../assets/css/cyber-components.css">
+  <style>
+    /* Nur Harness-Layout — gehört NICHT ins Design-System. */
+    body { padding: var(--sp-6); }
+    .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: var(--sp-7); }
+    h1 { font-family: var(--font-heading); font-weight: 700; letter-spacing: var(--tracking);
+         color: var(--neon-cyan); text-transform: uppercase; font-size: var(--fs-2xl); }
+    h2 { font-family: var(--font-heading); font-weight: 600; letter-spacing: var(--tracking);
+         color: var(--text-main); text-transform: uppercase; font-size: var(--fs-lg);
+         margin-bottom: var(--sp-3); border-bottom: 1px solid var(--border-dark); padding-bottom: var(--sp-2); }
+    section { display: grid; gap: var(--sp-4); }
+    .row { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--sp-4); }
+    .label { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-dim);
+             text-transform: uppercase; letter-spacing: var(--tracking); }
+    .stack { display: grid; gap: var(--sp-3); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="stack">
+    <h1>Phase 1 — Komponenten-Bibliothek</h1>
+    <p class="label">DEV-Harness · lädt cyberpunk-ui.css + cyber-components.css + cyber-components.js</p>
+  </header>
+
+  <!-- ── Batch A — Primitives ── -->
+  <section>
+    <h2>Batch A · Primitives</h2>
+    <div class="row">
+      <cyber-button>Default</cyber-button>
+      <cyber-button variant="red">Combat</cyber-button>
+      <cyber-button active>Active</cyber-button>
+      <cyber-button disabled>Disabled</cyber-button>
+    </div>
+    <div class="row">
+      <status-chip>RANGED</status-chip>
+      <status-chip variant="red">ILLEGAL</status-chip>
+      <status-chip variant="ok">ACTIVE</status-chip>
+      <status-chip variant="warn">LOW HP</status-chip>
+    </div>
+    <div class="row">
+      <stat-block label="INT" value="7"></stat-block>
+      <stat-block label="REF" value="8"></stat-block>
+      <stat-block label="BODY" value="6"></stat-block>
+      <stat-block label="COOL" value="5"></stat-block>
+    </div>
+    <div class="grid">
+      <cyber-panel variant="cyan" title="Cyan Panel">Datenkontext · System · Charakter.</cyber-panel>
+      <cyber-panel variant="red" title="Red Panel">Combat · Gefahr · Night Market.</cyber-panel>
+      <cyber-panel variant="ghost" title="Ghost Panel">Transparenter Container.</cyber-panel>
+      <cyber-panel title="Neutral Panel">Ohne Variante.</cyber-panel>
+    </div>
+    <hud-divider></hud-divider>
+  </section>
+
+  <!-- ── Batch B — Bars ── -->
+  <section>
+    <h2>Batch B · Bars</h2>
+    <div class="grid">
+      <div class="stack"><span class="label">segmented-bar</span>
+        <segmented-bar value="7" max="10" variant="cyan" show-numbers></segmented-bar></div>
+      <div class="stack"><span class="label">health-bar (high / mid / low)</span>
+        <health-bar value="34" max="40" show-numbers></health-bar>
+        <health-bar value="16" max="40" show-numbers></health-bar>
+        <health-bar value="6" max="40" show-numbers></health-bar></div>
+      <div class="stack"><span class="label">armor-bar (full / ablated / low)</span>
+        <armor-bar value="11" max="11" show-numbers></armor-bar>
+        <armor-bar value="7" max="11" show-numbers></armor-bar>
+        <armor-bar value="2" max="11" show-numbers></armor-bar></div>
+      <div class="stack"><span class="label">humanity-bar (stable / mid / critical)</span>
+        <humanity-bar value="52" max="60" show-numbers></humanity-bar>
+        <humanity-bar value="26" max="60" show-numbers></humanity-bar>
+        <humanity-bar value="8" max="60" show-numbers></humanity-bar></div>
+    </div>
+  </section>
+
+  <!-- ── Batch C — Feedback ── -->
+  <section>
+    <h2>Batch C · Feedback</h2>
+    <div class="stack">
+      <warning-banner level="locked">SESSION LOCKED</warning-banner>
+      <warning-banner level="combat">COMBAT ACTIVE</warning-banner>
+      <warning-banner level="critical">CRITICAL INJURY — BROKEN ARM</warning-banner>
+    </div>
+    <div class="stack">
+      <span class="label">loading-strip (60% / indeterminate)</span>
+      <loading-strip progress="60"></loading-strip>
+      <loading-strip></loading-strip>
+    </div>
+    <div class="row">
+      <glitch-text style="font-size:var(--fs-xl); color:var(--neon-red)">SYSTEM FAILURE</glitch-text>
+      <cyber-button variant="red" id="btnGlitch">Trigger glitch</cyber-button>
+    </div>
+  </section>
+
+  <!-- ── Batch D — cyber-select ── -->
+  <section>
+    <h2>Batch D · cyber-select</h2>
+    <div class="row">
+      <cyber-select placeholder="Skill wählen…" id="sel1">
+        <option value="handgun">Handgun</option>
+        <option value="brawling" selected>Brawling</option>
+        <option value="stealth">Stealth</option>
+        <option value="autofire">Autofire</option>
+        <option value="perception">Perception</option>
+      </cyber-select>
+      <cyber-select id="sel2" options="cheap:Cheap,costly:Costly,luxury:Luxury,super:Super Luxury" placeholder="Preisklasse…"></cyber-select>
+      <span class="label" id="selOut">value: —</span>
+    </div>
+  </section>
+
+  <!-- ── Batch E — Cards ── -->
+  <section>
+    <h2>Batch E · Cards</h2>
+    <div class="grid" id="cards"></div>
+  </section>
+
+  <!-- ── Batch F — Tools ── -->
+  <section>
+    <h2>Batch F · Tools</h2>
+    <div class="grid">
+      <dice-roller></dice-roller>
+      <damage-calculator></damage-calculator>
+    </div>
+  </section>
+
+</div>
+
+<script type="module">
+  import '../assets/js/cyber-components.js';
+  import { mountScanlines } from '../assets/js/cyber-fx.js';
+
+  mountScanlines();
+
+  // ── cyber-select Output ──
+  const out = document.getElementById('selOut');
+  const showVal = () => {
+    out.textContent = `sel1: ${document.getElementById('sel1').value} · sel2: ${document.getElementById('sel2').value ?? '—'}`;
+  };
+  document.getElementById('sel1').addEventListener('change', showVal);
+  document.getElementById('sel2').addEventListener('change', showVal);
+  customElements.whenDefined('cyber-select').then(showVal);
+
+  // ── glitch trigger ──
+  document.getElementById('btnGlitch').addEventListener('click', () =>
+    document.querySelector('glitch-text').triggerGlitch());
+
+  // ── Cards mit Mock-Daten ──
+  const host = document.getElementById('cards');
+  const mk = (tag, data) => { const el = document.createElement(tag); el.data = data; return el; };
+
+  customElements.whenDefined('item-card').then(() => {
+    host.append(
+      mk('item-card', { name: 'Heavy Pistol', category: 'Weapon', subcategory: 'Handgun',
+        price: 100, damage: '3d6', rof: 2, notes: 'Standard sidearm.' }),
+      mk('item-card', { name: 'Militech "Crusher"', category: 'Weapon', subcategory: 'Shotgun',
+        price: 500, damage: '5d6', rof: 1, illegal: true }),
+      mk('character-card', { name: 'Vincent Vance', handle: 'GHOST', role: 'Solo',
+        current_hp: 18, max_hp: 40, current_humanity: 34, max_humanity: 60, conditions: ['Wounded'] }),
+      mk('cyberware-card', { name: 'Cyberaudio Suite', slot: 'Audio', humanity_loss: '2d6',
+        install: 'Clinic', price: 500, notes: 'Base for audio mods.' }),
+      mk('cyberware-card', { name: 'Sandevistan', slot: 'Neuralware', humanity_loss: '7',
+        install: 'Hospital', price: 8000, illegal: true }),
+      mk('enemy-card', { name: 'Maelstrom Goon', type: 'Ganger', threat: 'medium',
+        current_hp: 12, max_hp: 25, headSP: 7, bodySP: 11, tags: ['Cyberpsycho'] }),
+      mk('location-card', { name: 'Lizzie\'s Bar', zone: 'Watson · Kabuki', type: 'Club',
+        danger: 'low', vendors: 3, notes: 'Mox territory.' }),
+      mk('location-card', { name: 'All Foods Plant', zone: 'Watson · Northside', type: 'Factory',
+        danger: 'high', vendors: 0 }),
+      mk('combat-participant-card', { name: 'GHOST', side: 'pc', initiative: 18,
+        current_hp: 30, max_hp: 40, active: true, conditions: ['Aimed'] }),
+      mk('combat-participant-card', { name: 'Maelstrom Goon', side: 'enemy', initiative: 12,
+        current_hp: 6, max_hp: 25, active: false }),
+    );
+  });
+</script>
+</body>
+</html>
