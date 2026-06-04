@@ -4,97 +4,208 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LZRV Hub — Night City</title>
-  <link rel="stylesheet" href="assets/css/base.css">
-  <link rel="stylesheet" href="assets/css/index.css">
+  <!-- Lade-Reihenfolge: Tokens → Komponenten → Topbar → Page (Master §3) -->
+  <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
+  <link rel="stylesheet" href="assets/css/cyber-components.css">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=2">
+  <link rel="stylesheet" href="assets/css/index.css?v=3">
 </head>
 <body>
 
-<div class="hub-wrap">
-  <div class="hub-scanlines"></div>
+<main class="dash">
 
-  <header class="hub-header">
-    <img src="assets/img/logo.png" alt="LZRV Hub" class="hub-logo-img">
-    <a href="radio.html" class="hub-radio-btn" aria-label="Radio öffnen">
-      <span class="hub-radio-led"></span>
-      <span class="hub-radio-label">RADIO</span>
-    </a>
-    <div class="hub-subtitle">NIGHT CITY CHARACTER HUB</div>
+  <header class="dash-header">
+    <img src="assets/img/logo.png" alt="LZRV Hub" class="dash-logo">
+    <div class="dash-subtitle">NIGHT CITY CHARACTER HUB</div>
   </header>
 
-  <main class="hub-card">
-    <div class="hub-select-wrap">
-      <label class="hub-label" for="charSelect">Charakter</label>
-      <select id="charSelect" class="hub-select">
-        <option value="">— Auswählen —</option>
-      </select>
+  <hud-divider></hud-divider>
+
+  <!-- ── Status-Zeile: Game-Time · Combat · Session ── -->
+  <section class="dash-grid dash-grid--status">
+
+    <cyber-panel variant="cyan" title="In-Game Time">
+      <div class="gt-readout" id="gtReadout">
+        <span class="gt-readout__time" id="gtReadoutTime">————-——-——  ——:——:——</span>
+        <span class="gt-readout__mode" id="gtReadoutMode">—</span>
+      </div>
+    </cyber-panel>
+
+    <cyber-panel title="Combat">
+      <div id="combatTile">
+        <div class="empty-state">Verbinde…</div>
+      </div>
+    </cyber-panel>
+
+    <cyber-panel title="Session">
+      <div id="sessionTile">
+        <div class="empty-state">Verbinde…</div>
+      </div>
+    </cyber-panel>
+
+  </section>
+
+  <!-- ── Hauptbereich: Charaktere + Würfel/Links ── -->
+  <section class="dash-grid dash-grid--main">
+
+    <cyber-panel title="Active Characters" class="dash-span2">
+      <div id="charGrid" class="char-grid">
+        <div class="empty-state">Lade Charaktere…</div>
+      </div>
+    </cyber-panel>
+
+    <div class="dash-col">
+      <!-- DM-Einstieg: prominenter Haupteinstieg (Routing unverändert: dm.html) -->
+      <a href="dm.html" class="dm-hero" aria-label="Als DM einsteigen — DM-Dashboard öffnen">
+        <span class="dm-hero__icon" aria-hidden="true">🎛</span>
+        <span class="dm-hero__label">DM-Dashboard</span>
+        <span class="dm-hero__sub">Als Spielleiter einsteigen</span>
+        <span class="dm-hero__cta">Einsteigen →</span>
+      </a>
+
+      <!-- Radio-Einstieg: eigener hervorgehobener Block (Routing unverändert: radio.html) -->
+      <a href="radio.html" class="radio-block" aria-label="Radio öffnen">
+        <span class="radio-block__led" aria-hidden="true"></span>
+        <span class="radio-block__text">
+          <span class="radio-block__label">Radio</span>
+          <span class="radio-block__sub">Night City FM</span>
+        </span>
+      </a>
+
+      <cyber-panel title="Charakter Erstellen">
+        <nav class="quick-links">
+          <a href="upload.html" class="cyber-button">＋ Charakter hochladen</a>
+          <a href="create.html" class="cyber-button">＋ Manuell erstellen</a>
+        </nav>
+      </cyber-panel>
     </div>
 
-    <div class="hub-actions">
-      <button id="btnPlayer" class="btn-hub btn-hub-primary" disabled>
-        Als Spieler einsteigen
-      </button>
-      <button id="btnDM" class="btn-hub btn-hub-ghost">
-        Als DM einsteigen
-      </button>
-    </div>
+  </section>
 
-    <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem">
-      <a href="upload.html" class="hub-upload-link">+ Neuen Charakter hochladen</a>
-      <a href="create.html" class="hub-upload-link" style="color:var(--cyan,#00E5FF);border-color:var(--cyan,#00E5FF)">+ Charakter manuell erstellen</a>
-    </div>
-  </main>
+</main>
 
-  <div class="hub-loader" id="hubLoader">VERBINDE MIT NIGHT CITY…</div>
-  <div class="hub-error" id="hubError" hidden></div>
-</div>
-
+<script type="module" src="assets/js/cyber-components.js"></script>
 <script type="module">
-import { getCharacters } from './assets/js/supabase.js';
+  import { mountTopbar } from './assets/js/ui/topbar.js';
+  import { mountScanlines } from './assets/js/cyber-fx.js';
+  import {
+    initGameTime, getCachedGameState, onGameStateChange,
+    getCurrentIngameTime, formatIngameTime, getEffectiveHp,
+  } from './assets/js/game-time.js';
+  import {
+    getCharacters, getActiveSession,
+  } from './assets/js/supabase.js';
 
-const LAST_CHAR_KEY = 'lzrv_last_char';
+  const LAST_CHAR_KEY = 'lzrv_last_char';
+  const MODE_LABEL = { running: 'Running', paused: 'Paused', combat: 'Combat', long_rest: 'Long Rest' };
 
-async function boot() {
+  // ── Fundament: Scanlines + Status-Topbar (live Game-Time) ──
+  // mountTopbar ruft intern initGameTime() + onGameStateChange — KEIN zweiter Realtime-Kanal.
+  mountScanlines();
   try {
-    const chars = await getCharacters();
-    const sel   = document.getElementById('charSelect');
-    const saved = localStorage.getItem(LAST_CHAR_KEY);
-
-    chars.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value       = c.id;
-      opt.textContent = c.handle ? `${c.name}  (${c.handle})` : c.name;
-      if (c.id === saved) opt.selected = true;
-      sel.appendChild(opt);
-    });
-
-    document.getElementById('hubLoader').hidden = true;
-    updateButtons();
-    sel.addEventListener('change', updateButtons);
+    await mountTopbar({ isDm: false });
   } catch (e) {
-    document.getElementById('hubLoader').hidden = true;
-    const err = document.getElementById('hubError');
-    err.hidden = false;
-    err.textContent = `Fehler: ${e.message}`;
+    console.warn('[dashboard] Topbar konnte nicht montiert werden:', e?.message || e);
   }
-}
+  await initGameTime().catch(() => {});   // idempotent — stellt _gs sicher
 
-function updateButtons() {
-  const id = document.getElementById('charSelect').value;
-  document.getElementById('btnPlayer').disabled = !id;
-  if (id) localStorage.setItem(LAST_CHAR_KEY, id);
-}
+  // ── Kachel 1: In-Game Time (eigener 1s-Tick, nur Textknoten) ──
+  const tTime = document.getElementById('gtReadoutTime');
+  const tMode = document.getElementById('gtReadoutMode');
+  function renderGameTime() {
+    const gs = getCachedGameState();
+    if (tTime) tTime.textContent = formatIngameTime(getCurrentIngameTime(gs));
+    if (tMode && gs) { tMode.textContent = MODE_LABEL[gs.mode] || gs.mode; tMode.dataset.mode = gs.mode; }
+  }
+  renderGameTime();
+  setInterval(renderGameTime, 1000);
 
-document.getElementById('btnPlayer').addEventListener('click', () => {
-  const id = document.getElementById('charSelect').value;
-  if (id) location.href = `player.html?id=${id}`;
-});
+  // ── Kachel 2: Combat-Status (aus game_state abgeleitet) ──
+  const combatTile = document.getElementById('combatTile');
+  function renderCombat() {
+    const gs = getCachedGameState();
+    if (!combatTile) return;
+    if (gs && gs.mode === 'combat') {
+      const round = gs.combat_round > 0 ? `<span class="status-chip">R${gs.combat_round}</span>` : '';
+      combatTile.innerHTML =
+        `<warning-banner level="combat">COMBAT ACTIVE</warning-banner>
+         <div class="tile-row">${round}<a href="map.html" class="cyber-button cyber-button--red">Zur Karte →</a></div>`;
+    } else {
+      combatTile.innerHTML = `<div class="empty-state">Kein aktiver Kampf.</div>`;
+    }
+  }
+  renderCombat();
 
-document.getElementById('btnDM').addEventListener('click', () => {
-  location.href = 'dm.html';
-});
+  // Eine Subscription für beide game_state-abhängigen Kacheln.
+  onGameStateChange(() => { renderGameTime(); renderCombat(); });
 
-boot();
+  // ── Kachel 3: Session-Status (read-only) ──
+  (async () => {
+    const tile = document.getElementById('sessionTile');
+    try {
+      const s = await getActiveSession();
+      if (!tile) return;
+      if (s) {
+        const name = s.session_name || 'Laufende Session';
+        const since = s.started_at ? new Date(s.started_at).toLocaleString('de-DE') : '';
+        const count = Array.isArray(s.participants) ? s.participants.length : 0;
+        tile.innerHTML =
+          `<div class="tile-strong">${escapeHTML(name)}</div>
+           ${since ? `<div class="tile-sub">Start: ${escapeHTML(since)}</div>` : ''}
+           <div class="tile-row"><span class="status-chip">${count} Teilnehmer</span></div>`;
+      } else {
+        tile.innerHTML = `<div class="empty-state">Keine laufende Session.</div>`;
+      }
+    } catch (e) {
+      console.warn('[dashboard] Session-Status:', e?.message || e);
+      if (tile) tile.innerHTML = `<div class="empty-state">Session-Status nicht verfügbar.</div>`;
+    }
+  })();
+
+  // ── Kachel 4: Active Characters (Klick → player.html?id=) ──
+  (async () => {
+    const grid = document.getElementById('charGrid');
+    try {
+      const chars = await getCharacters();
+      if (!grid) return;
+      if (!chars.length) {
+        grid.innerHTML = `<div class="empty-state">Noch keine Charaktere. <a href="upload.html">Hochladen</a> oder <a href="create.html">erstellen</a>.</div>`;
+        return;
+      }
+      grid.innerHTML = '';
+      for (const c of chars) {
+        const card = document.createElement('character-card');
+        card.tabIndex = 0;
+        card.setAttribute('role', 'link');
+        card.data = {
+          name: c.name,
+          handle: c.handle,
+          role: c.role,
+          image_url: c.image_url,
+          current_hp: getEffectiveHp(c),
+          max_hp: c.max_hp,
+          current_humanity: c.current_humanity,
+          max_humanity: c.max_humanity,
+          conditions: c.conditions,
+        };
+        const go = () => { localStorage.setItem(LAST_CHAR_KEY, c.id); location.href = `player.html?id=${c.id}`; };
+        card.addEventListener('click', go);
+        card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+        grid.appendChild(card);
+      }
+    } catch (e) {
+      console.warn('[dashboard] Charaktere:', e?.message || e);
+      if (grid) grid.innerHTML = `<div class="empty-state">Fehler beim Laden der Charaktere: ${escapeHTML(e?.message || '')}</div>`;
+    }
+  })();
+
+  function escapeHTML(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
 </script>
 
 </body>
 </html>
+</content>
+</invoke>
