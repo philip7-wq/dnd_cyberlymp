@@ -53,13 +53,13 @@
 </div>
 
 <!-- Cash Log Modal -->
-<div id="cashLogModal" hidden style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center">
-  <div style="background:#111;border:1px solid var(--border);border-radius:6px;padding:1.25rem;max-width:400px;width:92%;max-height:80vh;overflow-y:auto">
+<div id="cashLogModal" hidden style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center">
+  <div style="background:var(--bg-panel);border:1px solid var(--cyan-soft);border-radius:var(--radius);box-shadow:var(--glow-cyan-m);padding:1.25rem;max-width:400px;width:92%;max-height:80vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-      <span style="font-family:Audiowide,sans-serif;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)">Transaktionsverlauf</span>
+      <span style="font-family:var(--font-heading);font-weight:600;font-size:.75rem;letter-spacing:var(--tracking);text-transform:uppercase;color:var(--neon-cyan)">Transaktionsverlauf</span>
       <button id="cashLogClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem">✕</button>
     </div>
-    <div id="cashLogContent" style="font-size:.78rem;display:flex;flex-direction:column;gap:.3rem"></div>
+    <div id="cashLogContent" style="font-family:var(--font-mono);font-size:.78rem;display:flex;flex-direction:column;gap:.3rem"></div>
   </div>
 </div>
 
@@ -205,9 +205,16 @@
     <button class="death-save-btn" id="deathSaveBtn" style="display:none">☠ DEATH SAVE</button>
     <button class="btn btn-ghost" id="longRestBtn" type="button" style="font-size:.7rem;margin-top:.3rem;border-color:rgba(0,182,255,.35);color:#00B6FF">🌙 Long Rest</button>
   </div>
-  <div class="char-ip-badge" id="charIpBadge">
-    <div class="char-ip-label">IP</div>
-    <div class="char-ip-value" id="charIpValue">0</div>
+  <div class="char-meta">
+    <div class="char-ip-badge" id="charIpBadge">
+      <div class="char-ip-label">IP</div>
+      <div class="char-ip-value" id="charIpValue">0</div>
+    </div>
+    <div class="char-cash-badge">
+      <div class="char-cash-label">Cash</div>
+      <div class="char-cash-value" id="charCashValue">—</div>
+      <button class="char-cash-log" id="cashLogBtnHeader" type="button" title="Transaktionsverlauf">📜</button>
+    </div>
   </div>
 </header>
 
@@ -465,12 +472,20 @@ let _roomItems      = [];
 
 function updateNavCash() {
   const cash = char.cash ?? 0;
-  const el   = document.getElementById('navCash');
-  if (!el) return;
-  el.textContent = cash < 0
+  const text = cash < 0
     ? `💸 ${cash.toLocaleString('de-DE')} eb`
     : `${cash.toLocaleString('de-DE')} eb`;
-  el.style.color = cash < 0 ? 'var(--red)' : '';
+  const el = document.getElementById('navCash');
+  if (el) {
+    el.textContent = text;
+    el.style.color = cash < 0 ? 'var(--red)' : '';
+  }
+  // Spiegel-Anzeige im Dossier-Header (gleiche Quelle/gleicher Wert)
+  const headEl = document.getElementById('charCashValue');
+  if (headEl) {
+    headEl.textContent = text;
+    headEl.classList.toggle('is-negative', cash < 0);
+  }
 }
 
 const SVG_ZONE_SLOTS = {
@@ -971,7 +986,7 @@ function updateEffectiveEMP(humanity) {
       if (noteEl) noteEl.textContent = `eff. ${effEMP}`;
       else {
         const d = document.createElement('div');
-        d.style.cssText = 'font-size:.55rem;color:#FF8C00;margin-top:.1rem';
+        d.style.cssText = 'font-size:.55rem;color:var(--warning-yellow);margin-top:.1rem';
         d.textContent = `eff. ${effEMP}`;
         card.appendChild(d);
       }
@@ -1034,14 +1049,14 @@ function renderStats() {
       const effEMP = Math.min(rawVal, Math.floor((char.current_humanity ?? 0) / 10));
       if (effEMP < rawVal) {
         displayVal = rawVal;
-        empNote = `<div style="font-size:.55rem;color:#FF8C00;margin-top:.1rem">eff. ${effEMP}</div>`;
+        empNote = `<div style="font-size:.55rem;color:var(--warning-yellow);margin-top:.1rem">eff. ${effEMP}</div>`;
       }
     }
     if (s === 'MOVE') {
       const movePen = getInjuryPenalties().move;
       if (movePen < 0) {
         const effMove = Math.max(1, rawVal + movePen);
-        empNote += `<div style="font-size:.55rem;color:#FF8C00;margin-top:.1rem">eff. ${effMove} (Injury)</div>`;
+        empNote += `<div style="font-size:.55rem;color:var(--warning-yellow);margin-top:.1rem">eff. ${effMove} (Injury)</div>`;
       }
     }
     const effVal   = getEffectiveStat(s);
@@ -1050,13 +1065,13 @@ function renderStats() {
     const rollMod  = effVal + buffBon + rollPen;
     const rollExpr = rollMod >= 0 ? `1d10+${rollMod}` : `1d10${rollMod}`;
     const buffNote = buffBon !== 0
-      ? `<div style="font-size:.52rem;color:var(--cyan);margin-top:.1rem">${buffBon >= 0 ? '+' : ''}${buffBon} Buff</div>` : '';
+      ? `<div style="font-size:.52rem;color:var(--neon-cyan);margin-top:.1rem">${buffBon >= 0 ? '+' : ''}${buffBon} Buff</div>` : '';
     let penNote = '';
     if (s === 'REF') {
       const ap = getArmorRefPenalty();
-      if (ap > 0) penNote += `<div style="font-size:.52rem;color:#FF8C00;margin-top:.1rem">−${ap} Rüstung</div>`;
+      if (ap > 0) penNote += `<div style="font-size:.52rem;color:var(--warning-yellow);margin-top:.1rem">−${ap} Rüstung</div>`;
     }
-    if (rollPen < 0) penNote += `<div style="font-size:.52rem;color:var(--red);margin-top:.1rem">${rollPen} Penalty</div>`;
+    if (rollPen < 0) penNote += `<div style="font-size:.52rem;color:var(--neon-red);margin-top:.1rem">${rollPen} Penalty</div>`;
     html += `<div class="stat-card" id="stat-card-${s}">
       <div class="stat-key">${s}</div>
       <div class="stat-val"${editAttr} data-stat="${s}" spellcheck="false">${displayVal}</div>
@@ -1072,7 +1087,7 @@ function renderStats() {
   html += '<h3 class="sec-head">Ressourcen</h3><div class="res-grid">';
   const injPenalty = getInjuries().filter(i => i.effect?.includes('Base Death Save Penalty is increased')).length;
   const dsBase     = char.death_save ?? 0;
-  const dsDisplay  = injPenalty ? `${dsBase + injPenalty} <small style="color:var(--red)">(+${injPenalty})</small>` : dsBase;
+  const dsDisplay  = injPenalty ? `${dsBase + injPenalty} <small style="color:var(--neon-red)">(+${injPenalty})</small>` : dsBase;
   const res = [
     ['Cash',   char.cash               ?? 0, 'eb'],
     ['IP',     char.improvement_points ?? 0, ''],
@@ -1377,7 +1392,7 @@ function renderSkills() {
           return f > 0 ? `<span class="skill-role-note" title="Maker Field Expertise">+${f}⚙</span>` : ''; })()
       : '';
     const lvlSpan = skillsEditing
-      ? `<span class="skill-lvl" contenteditable="true" data-skill="${sk.name}" data-field="lvl" style="outline:1px solid var(--cyan);cursor:text;text-align:center">${sk.lvl ?? 0}</span>`
+      ? `<span class="skill-lvl" contenteditable="true" data-skill="${sk.name}" data-field="lvl" style="outline:1px solid var(--neon-cyan);cursor:text;text-align:center">${sk.lvl ?? 0}</span>`
       : `<span class="skill-lvl">${sk.lvl ?? 0}</span>`;
     return `<div class="skill-row">
       <button class="skill-fav-btn${favs.has(sk.name) ? ' active' : ''}" data-fav="${sk.name}">★</button>
@@ -2802,7 +2817,7 @@ function setupTooltip() {
 
 // ── Item removal ──────────────────────────────────────────────
 function setupCashLog() {
-  document.getElementById('cashLogBtn')?.addEventListener('click', () => {
+  const openCashLog = () => {
     const modal = document.getElementById('cashLogModal');
     const content = document.getElementById('cashLogContent');
     const log = char.cash_log || [];
@@ -2823,7 +2838,9 @@ function setupCashLog() {
     }
     modal.hidden = false;
     modal.style.display = 'flex';
-  });
+  };
+  document.getElementById('cashLogBtn')?.addEventListener('click', openCashLog);
+  document.getElementById('cashLogBtnHeader')?.addEventListener('click', openCashLog);
   document.getElementById('cashLogClose')?.addEventListener('click', () => {
     const modal = document.getElementById('cashLogModal');
     modal.hidden = true; modal.style.display = '';

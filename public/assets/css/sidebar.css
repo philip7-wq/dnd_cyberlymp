@@ -108,8 +108,8 @@ body.sidebar-collapsed .cyber-sidebar { width: var(--sb-rail); }
   width: 100%;
   min-height: 44px;
   padding: var(--sp-2) var(--sp-3);
-  background: transparent;
-  border: none;
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark);
   color: var(--text-muted);
   font-family: var(--font-heading);
   font-size: var(--fs-sm);
@@ -121,7 +121,8 @@ body.sidebar-collapsed .cyber-sidebar { width: var(--sb-rail); }
   cursor: pointer;
   border-radius: var(--radius);
   white-space: nowrap;
-  transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+  transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
 /* linker Akzent-Balken */
 .cyber-nav-item::before {
@@ -132,18 +133,22 @@ body.sidebar-collapsed .cyber-sidebar { width: var(--sb-rail); }
 .cyber-nav-item:hover {
   color: var(--neon-cyan);
   background: var(--bg-panel-soft);
+  border-color: var(--cyan-soft);
+  box-shadow: var(--glow-cyan-s);
 }
 .cyber-nav-item:hover::before { background: var(--cyan-soft); box-shadow: var(--glow-cyan-s); }
-.cyber-nav-item:focus-visible { outline: none; color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+.cyber-nav-item:focus-visible { outline: none; color: var(--neon-cyan); border-color: var(--cyan-soft); box-shadow: var(--glow-cyan-s); }
 .cyber-nav-item.is-active {
   color: var(--neon-cyan);
   background: var(--bg-panel-cyan);
+  border-color: var(--neon-cyan);
+  box-shadow: var(--glow-cyan-s);
 }
 .cyber-nav-item.is-active::before { background: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 
 /* rote Variante (illegal / Combat: Schwarzmarkt, Neuer Kampf) */
-.cyber-nav-item--red { color: var(--red-soft); }
-.cyber-nav-item--red:hover { color: var(--neon-red); background: var(--bg-panel-red); }
+.cyber-nav-item--red { color: var(--red-soft); border-color: var(--red-dark); }
+.cyber-nav-item--red:hover { color: var(--neon-red); background: var(--bg-panel-red); border-color: var(--red-soft); box-shadow: var(--glow-red-s); }
 .cyber-nav-item--red:hover::before { background: var(--neon-red); box-shadow: var(--glow-red-s); }
 
 .cyber-nav-item .ci-icon {
