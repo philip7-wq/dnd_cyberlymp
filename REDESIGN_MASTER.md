@@ -221,6 +221,40 @@ Subtil, nie die ganze Seite flackern lassen.
 
 ---
 
+## Layout & Proportionen (verbindlich, gilt ab sofort für alle Relayout-Arbeit)
+
+Leitprinzip: **Daten/Events/Berechnungen identisch — Layout/Struktur frei.** Relayout
+(Anordnung, Grids, Hierarchie, Abstände, Größen) ist ausdrücklich IN SCOPE und erwünscht.
+
+Aesthetik-Richtung: industrielles HUD-/Cockpit-Layout mit KONTROLLIERTER DICHTE —
+datendicht wie eine Ops-Konsole, NICHT luftig/SaaS, KEINE halbleeren Karten oder über
+die volle Breite gespreizten Inhalte.
+
+Normen:
+- Content-Container: max-width-Cap auf ultrabreiten Screens; Inhalt nie edge-to-edge in
+  Leere ziehen. Zentrierte oder bewusst asymmetrische Komposition, kein Stretch.
+- Spacing strikt über die --sp-Skala. Section-Gap ~--sp-5/6, intra ~--sp-2/3. Überall gleich.
+- Grids (Stats/Karten): grid auto-fit minmax mit sinnvollem MIN und MAX-Cap, gleiche Gaps;
+  Karten dürfen auf breiten Screens NICHT aufgeblasen werden. Karten content-getriebene
+  Höhe, einheitliches Padding (--sp-4), kein riesiger Leerraum innen.
+- Hierarchie über Größe+Gewicht+Farbe, nicht nur Abstand: Wert groß (mono), Label klein
+  in Versalien + tracking. Auf einen Blick lesbar.
+- Buttons: feste Größenskala. Aktions-Buttons ~40px Höhe; kompakte ~32–36px; Icon-Buttons
+  (z.B. ⚄) quadratisch min 36px; Touch ≥44px. KEINE verlorenen Mini-Knöpfe.
+- Tabellen (z.B. Skills): CSS-Grid-Spalten content-breit; Zahlen-Spalten schmal+fix,
+  rechtsbündig mono; Aktions-Cluster (UP/Roll) gruppiert an fester Position, NICHT über
+  die volle Breite gespreizt. Konsistente Zeilenhöhe, dezenter Hover.
+- Bars: einheitliche Höhe via Token, volle Breite im Container.
+- Native-Reste sind Bugs: jedes ungestylte native <select>/<input>/Balken (z.B. die weiße
+  „Aus Map"-Bar) muss ins HUD-System überführt oder ersetzt werden.
+- Responsive: Karten → 1 Spalte, Tabellen → gestapelte Karten auf Mobile.
+
+Verfeinerte Leitplanke (ersetzt „Struktur 1:1 erhalten"): Markup/Struktur DARF umgebaut
+werden, solange Daten, Events, IDs-für-JS-Hooks, Berechnungen und beobachtbares Verhalten
+identisch bleiben. Geteilte Klassen weiter scopen (siehe Gotchas).
+
+---
+
 ## 6. Session-Protokoll für Claude Code (gilt für JEDE Phase)
 
 Jeder Phasen-Prompt verlangt explizit:

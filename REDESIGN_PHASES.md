@@ -23,6 +23,8 @@
 
 > Phasen 4/5/7 sind die großen Brocken. Falls eine davon eine Session sprengt, wird sie tab-/sektionsweise
 > in Unter-Sessions geteilt (z.B. 4a Stats/Skills, 4b Weapons/Armor/Cyberware, 4c Lifepath/Notes/Rollen).
+> **player.html:** 4a/4b/4c sind **Reskin** (In-Place-CSS pro Tab); danach folgt **4d** als eigener
+> holistischer **Layout-Pass** über die ganze Seite (siehe Phase 4d).
 
 ---
 
@@ -58,33 +60,47 @@
 **Leitplanke:** Würfeln, Skill-Check-Modal (Sleep/Solo/Injury-Mods), Damage-Rolls, Name/Stats-Edit, alle Subscriptions verhaltensgleich.
 **Done:** Optik neu, jeder bestehende Flow identisch testbar.
 
+## Phase 4d — Holistischer Layout-Pass (`player.html`)
+**Ziel:** Nach den Reskin-Sub-Phasen 4a/4b/4c die **ganze Seite** nach den MASTER-Layout-Normen
+(„Layout & Proportionen") neu proportionieren/anordnen: alle Tabs (Stats·Skills·Weapons·Armor·Cyberware·
+Gear·Lifepath·Injuries·Notes·Raum·Rolle), Grids, Hierarchie, Button-Skala, Tabellen-Spalten, Bars.
+**Leitplanke:** Daten, Events, JS-Hook-IDs, Berechnungen und beobachtbares Verhalten **identisch** —
+nur Anordnung/Proportionen ändern sich (verfeinerte Leitplanke, MASTER §„Layout & Proportionen").
+**Done:** player.html erfüllt die Layout-Normen; jeder bestehende Flow identisch testbar.
+
 ## Phase 5 — DM-Dashboard (`dm.html`)
 **Ziel:** HUD-Look für alle Tabs (Charaktere·NPCs·Combat·Chat·Sound·Settings) + Combat Tracker als `combat-participant-card`-Liste.
+**Mandat:** Reskin **+ Relayout** (nach MASTER-Layout-Normen).
 **Leitplanke:** HP-Edit, Initiative, Damage/Roll-Requests, Chat, Sound-Board, Realtime unverändert.
 **Done:** wie Phase 4, für DM-Seite.
 
 ## Phase 6 — Night Market (`shop.html`)
 **Ziel:** Dunkelrot/illegal-Look. `item-card`/`cyberware-card`, Kategorie-Filter als Chips, Preis-/Seltenheitsfarben (Cheap→Super-Luxury), Slot-Picker im HUD-Stil.
+**Mandat:** Reskin **+ Relayout** (nach MASTER-Layout-Normen).
 **Leitplanke:** Kauf, `patchCash`, cash_log, Cyberpsychosis-Modal, room_items unverändert.
 **Done:** Shop neu gestyled, Kauf-Flow identisch.
 
 ## Phase 7 — Map / Locations (`map.html`)
 **Ziel:** Nur **Chrome + Sidebar** im NightCity.io-Stil (Zones/Places/Vendors/People-Filter), Panels, Combat-Bar, Buttons.
+**Mandat:** Reskin **+ Relayout** (nach MASTER-Layout-Normen) — **nur Chrome/Sidebar/Panels**, Canvas-Bereich unangetastet.
 **Leitplanke — kritisch:** Das **Canvas-Rendering, Hit-Test, Drag/Snap, Z-Order, Weapon-Range-Rings, Attack-Flow, Measure-Tool bleiben funktional unangetastet.** Nur DOM-Chrome um das Canvas herum wird gestyled.
 **Done:** Sidebar/Panels neu; Map-Mechanik unverändert.
 
 ## Phase 8 — Rest-Seiten
 **Ziel:** `create.html` (Step-Wizard), `upload.html` (PDF-Upload/Preview), `npc-sheet.html`, `radio.html` auf das System umstellen.
+**Mandat:** Reskin **+ Relayout** (nach MASTER-Layout-Normen).
 **Leitplanke:** PDF-Parser, Wizard-Steps, Radio-Audio-Engine unverändert.
 **Done:** alle Rest-Seiten im einheitlichen Look.
 
 ## Phase 9 — Rulebook (NEU)
 **Ziel:** Statische Regel-Datenbank als Accordion-Panels (Basic Checks, Combat, Armor, Damage, Critical Injuries, Movement, Cover, Healing, Cyberware, Economy).
+**Mandat:** Reskin **+ Relayout** (nach MASTER-Layout-Normen) — neue Seite direkt normgerecht aufbauen.
 **Inhalt:** aus Cyberpunk RED Core Rulebook **+ deine House Rules** (Heilung 1 HP/IG-Std, Schlafentzug-Penalties, Long-Rest +4 HP) klar als House Rule markiert.
 **Done:** navigierbare Regel-Seite; House Rules sichtbar gekennzeichnet.
 
 ## Phase 10 — Cyberware-Index (NEU)
 **Ziel:** Browsebare Cyberware-DB (Cyberoptics, Neuralware, Cyberarms, Cyberlegs, Internal, Fashionware) mit `cyberware-card`, gespeist aus `items`-Tabelle (Kategorie Cyberware).
+**Mandat:** Reskin **+ Relayout** (nach MASTER-Layout-Normen) — neue Seite direkt normgerecht aufbauen.
 **Leitplanke:** liest nur vorhandene Daten; keine Schema-Änderung.
 **Done:** Index zeigt Cyberware mit Humanity-Loss, Slots, Install-Req.
 
@@ -92,6 +108,9 @@
 **Ziel:** Mobile-Cards statt Tabellen, Filter-Chips horizontal scrollbar, Sidebar einklappbar, Buttons ≥44px, Fokus-States sichtbar, `prefers-reduced-motion` global, Kontrast-Check.
 **Cleanup:** Migrations-Aliase entfernen, tote Alt-Styles löschen.
 **Final-QA:** jede Seite einmal durchklicken, Konsole sauber, keine Funktion verloren.
+**Relayout-Konsistenz:** Teil der Final-QA — Layout-Normen aus MASTER („Layout & Proportionen")
+auf allen Seiten eingehalten (Spacing-Skala, Grid-Caps, Button-Größen, Tabellen-Spalten, keine
+Native-Reste, max-width-Cap, Mobile-Stacking).
 **Done:** Definition of Done aus Master §7 erfüllt.
 
 ---

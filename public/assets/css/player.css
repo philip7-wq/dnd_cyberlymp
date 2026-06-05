@@ -247,51 +247,90 @@ body.combat-active .char-sub {
   transition: border-color .12s, color .12s;
 }
 .roll-btn:hover        { border-color: var(--cyan); color: var(--cyan); }
-.roll-btn.dmg-btn      { border-color: rgba(255,140,0,.45); color: #FF8C00; font-size: .92rem; font-family: var(--font-display); padding: .4rem .9rem; width: auto; letter-spacing: .04em; }
-.roll-btn.dmg-btn:hover{ background: rgba(255,140,0,.1); border-color: #FF8C00; color: #FF8C00; }
 .dice-result-num.dmg-orange { color: #FF8C00; text-shadow: 0 0 18px rgba(255,140,0,.55); }
 .roll-toast.dmg-orange      { border-color: #FF8C00; color: #FF8C00; }
 
-/* ── Weapons ── */
+/* ── Weapons (HUD-Karten, Clip-Border via Pseudo-Layer) ── */
 .weapon-card {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .7rem .9rem; margin-bottom: .5rem;
+  position: relative; isolation: isolate;
+  padding: .7rem .9rem; margin-bottom: var(--sp-3);
+  border-radius: var(--radius);
+  clip-path: polygon(var(--clip-md) 0, 100% 0, 100% calc(100% - var(--clip-md)),
+                     calc(100% - var(--clip-md)) 100%, 0 100%, 0 var(--clip-md));
+  transition: filter var(--t-fast) var(--ease);
 }
-.weapon-header { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .25rem; }
-.weapon-name { font-family: var(--font-display); font-size: .95rem; color: var(--text-head); }
+.weapon-card::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--border-dark); clip-path: inherit; }
+.weapon-card::after  { content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--bg-panel); clip-path: inherit; }
+.weapon-card:hover   { filter: drop-shadow(var(--glow-cyan-s)); }
+.weapon-header     { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .25rem; }
+.weapon-header-row { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin-bottom: .3rem; }
+.weapon-name { font-family: var(--font-heading); font-weight: 600; font-size: .95rem; letter-spacing: .03em; color: var(--text-main); }
 .weapon-stats { display: flex; flex-wrap: wrap; gap: .4rem .8rem; font-size: .8rem; }
 .ws-pair { display: flex; flex-direction: column; }
-.ws-label { font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); }
-.ws-val   { color: var(--text); }
-.weapon-meta  { font-size: .72rem; color: var(--text-muted); margin-bottom: .2rem; }
+.ws-label { font-size: .6rem; letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-muted); }
+.ws-val   { color: var(--text-main); }
+.weapon-meta  { font-family: var(--font-mono); font-size: .72rem; color: var(--text-muted); margin-bottom: .2rem; }
 .weapon-notes { font-size: .75rem; color: var(--text-muted); margin-bottom: .2rem; }
+.weapon-action-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-top: .35rem; }
+.weapons-section-head {
+  font-family: var(--font-heading); font-weight: 600; font-size: .68rem;
+  letter-spacing: var(--tracking); text-transform: uppercase; color: var(--neon-cyan);
+  border-bottom: 1px solid var(--border-dark); padding-bottom: var(--sp-2);
+  margin: var(--sp-4) 0 var(--sp-3);
+}
+/* Weapon-/Melee-Würfelknöpfe = Combat-Rot (scoped — globale .roll-btn unberührt) */
+.weapon-card .roll-btn {
+  border-color: rgba(255,49,88,.4); color: var(--neon-red); width: auto;
+  border-radius: var(--radius);
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.weapon-card .roll-btn:hover { border-color: var(--neon-red); background: var(--bg-panel-red); box-shadow: var(--glow-red-s); }
+.weapon-card .roll-btn.dmg-btn {
+  font-size: .92rem; font-family: var(--font-heading); font-weight: 600;
+  padding: .4rem .9rem; letter-spacing: .04em;
+}
 
-/* ── Armor ── */
-.armor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+/* ── Armor (HUD-Slots, Clip-Border via Pseudo-Layer) ── */
+.armor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }
 .armor-slot {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .7rem; text-align: center;
+  position: relative; isolation: isolate;
+  padding: .7rem; text-align: center;
+  border-radius: var(--radius);
+  clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
+                     calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm));
+  transition: filter var(--t-fast) var(--ease);
 }
-.armor-slot-label { font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .3rem; }
-.armor-name { font-size: .75rem; color: var(--text); min-height: 1.5em; }
-.armor-sp   { font-family: var(--font-display); font-size: 1.6rem; color: var(--cyan); }
-.armor-pen  { font-size: .68rem; color: var(--text-muted); }
-.armor-total-row { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; padding: .5rem .75rem; background: rgba(255,45,45,.06); border: 1px solid rgba(255,45,45,.25); border-radius: var(--radius); }
-.armor-total-label { font-size: .6rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); flex: 1; }
-.armor-total-val { font-family: var(--font-display); font-size: 1.4rem; color: var(--red); }
-.armor-total-pen { font-size: .72rem; color: var(--red); opacity: .7; }
+.armor-slot::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--border-dark); clip-path: inherit; }
+.armor-slot::after  { content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--bg-panel); clip-path: inherit; }
+.armor-slot:hover   { filter: drop-shadow(var(--glow-cyan-s)); }
+.armor-slot-label { font-family: var(--font-heading); font-weight: 600; font-size: .6rem; letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-muted); margin-bottom: .3rem; }
+.armor-name { font-size: .75rem; color: var(--text-main); min-height: 1.5em; }
+.armor-sp   { font-family: var(--font-mono); font-size: 1.6rem; color: var(--neon-cyan); text-shadow: var(--glow-cyan-s); }
+.armor-pen  { font-family: var(--font-mono); font-size: .68rem; color: var(--text-muted); }
+.armor-total-row { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; padding: .5rem .75rem; background: var(--bg-panel-red); border: 1px solid var(--red-soft); border-radius: var(--radius); }
+.armor-total-label { font-family: var(--font-heading); font-weight: 600; font-size: .6rem; text-transform: uppercase; letter-spacing: var(--tracking); color: var(--text-muted); flex: 1; }
+.armor-total-val { font-family: var(--font-mono); font-size: 1.4rem; color: var(--neon-red); text-shadow: var(--glow-red-s); }
+.armor-total-pen { font-family: var(--font-mono); font-size: .72rem; color: var(--neon-red); opacity: .8; }
+/* Armor-Löschknopf (✕) — scoped, damit Gear-Tab (4c) .remove-btn unberührt bleibt */
+#tab-armor .remove-btn { border-color: var(--red-soft); color: var(--neon-red); border-radius: var(--radius); }
+#tab-armor .remove-btn:hover { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); box-shadow: var(--glow-red-s); }
 
-/* ── Cyberware ── */
+/* ── Cyberware (Legacy-Fallback-Slot/Tag; aktives Med-HUD-Layout weiter unten) ── */
 .cyber-slot {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .7rem .9rem; margin-bottom: .5rem;
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: .7rem .9rem; margin-bottom: var(--sp-2);
 }
-.cyber-slot-label { font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); margin-bottom: .35rem; }
+.cyber-slot-label { font-family: var(--font-heading); font-weight: 600; font-size: .62rem; letter-spacing: var(--tracking); text-transform: uppercase; color: var(--neon-cyan); margin-bottom: .35rem; }
 .cyber-items { display: flex; flex-wrap: wrap; gap: .3rem; }
 .cyber-tag {
   font-size: .75rem; padding: .15rem .55rem;
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: 2px; color: var(--text);
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: 2px; color: var(--text-main);
 }
 
 /* ── Gear ── */
@@ -1102,8 +1141,29 @@ body.near-death::before {
 .info-tip-overlay.open { display: block; }
 
 /* ── Damage Apply Modal ─────────────────────────────────────── */
-.dmg-calc-row { font-family:var(--font-display); font-size:.9rem; color:var(--cyan);
+.dmg-calc-row { font-family: var(--font-mono); font-size:.9rem; color: var(--neon-cyan);
   padding:.4rem 0; text-align:center; }
+/* Damage-Apply-Modal — NUR via #dmgApplyBox gescopt (geteilte .crit-modal-*-Basis
+   bleibt für das Crit-Injury-Modal aus 4c unberührt) */
+#dmgApplyBox.crit-modal-box {
+  background: var(--bg-panel); border: 1px solid var(--neon-red);
+  box-shadow: var(--glow-red-m), var(--inset-cyan);
+}
+#dmgApplyBox .crit-modal-title {
+  font-family: var(--font-heading); font-weight: 700; color: var(--neon-red);
+  letter-spacing: .1em; text-shadow: var(--glow-red-s);
+}
+#dmgApplyBox .btn-primary {
+  background: var(--neon-red); color: var(--bg-main);
+  font-family: var(--font-heading); font-weight: 600; border-radius: var(--radius);
+}
+#dmgApplyBox .btn-primary:hover:not(:disabled) { background: var(--red-soft); box-shadow: var(--glow-red-s); }
+#dmgApplyBox .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+#dmgApplyBox .btn-ghost {
+  background: transparent; border: 1px solid var(--border-dark); color: var(--text-muted);
+  font-family: var(--font-heading); font-weight: 600;
+}
+#dmgApplyBox .btn-ghost:hover { border-color: var(--cyan-soft); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 
 /* ── Crit optgroup colours ──────────────────────────────────── */
 .crit-group-player, select optgroup[label*="Spieler"] { color: var(--cyan); }
@@ -1125,7 +1185,11 @@ body.near-death::before {
 }
 .cyber-center-col { display: flex; flex-direction: column; gap: .75rem; }
 
-.cyber-skeleton-wrap { position: relative; width: 100%; user-select: none; }
+.cyber-skeleton-wrap {
+  position: relative; width: 100%; user-select: none;
+  border: 1px solid var(--cyan-dark); border-radius: var(--radius);
+  box-shadow: var(--inset-cyan); overflow: hidden;
+}
 .cyber-skeleton-img  { width: 100%; display: block; border-radius: var(--radius); }
 .cyber-skeleton-svg  {
   position: absolute; inset: 0; width: 100%; height: 100%;
@@ -1135,39 +1199,49 @@ body.near-death::before {
   cursor: pointer; pointer-events: all;
   transition: fill .2s, filter .2s, stroke .2s;
 }
-.cyber-svg-zone:hover { filter: brightness(1.5) drop-shadow(0 0 4px #00E5FF); }
+.cyber-svg-zone:hover { filter: brightness(1.5) drop-shadow(0 0 4px var(--neon-cyan)); }
 
 .cyber-hum-section { text-align: center; }
-.cyber-hum-label { font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .3rem; }
-.cyber-hum-bar-wrap { background: #111; border-radius: 3px; height: 8px; overflow: hidden; }
-.cyber-hum-bar { height: 100%; border-radius: 3px; transition: width .4s, background .4s; }
-#cyberHumLabel { font-size: .65rem; color: var(--text-muted); margin-top: .2rem; }
+.cyber-hum-label { font-family: var(--font-heading); font-weight: 600; font-size: .6rem; letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-muted); margin-bottom: .3rem; }
+.cyber-hum-bar-wrap { background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: 2px; height: 8px; overflow: hidden; }
+.cyber-hum-bar { height: 100%; border-radius: 1px; transition: width .4s, background .4s; }
+#cyberHumLabel { font-family: var(--font-mono); font-size: .65rem; color: var(--text-muted); margin-top: .2rem; }
 
 .cyber-slot {
-  background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.07);
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
   border-radius: var(--radius); padding: .55rem .7rem;
-  transition: border-color .2s, background .2s;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
 .cyber-slot.has-items {
-  background: rgba(0,229,255,.06);
-  border-color: rgba(0,229,255,.45);
-  box-shadow: 0 0 6px rgba(0,229,255,.08);
+  background: var(--bg-panel-cyan);
+  border-color: var(--cyan-soft);
+  box-shadow: var(--glow-cyan-s), var(--inset-cyan);
 }
-.cyber-slot-label { font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; color: rgba(0,229,255,.45); margin-bottom: .3rem; }
-.cyber-slot.has-items .cyber-slot-label { color: var(--cyan); }
-.cyber-slot-empty { font-size: .7rem; color: rgba(255,255,255,.2); font-style: italic; }
+.cyber-slot-label { font-family: var(--font-heading); font-weight: 600; font-size: .58rem; letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-dim); margin-bottom: .3rem; }
+.cyber-slot.has-items .cyber-slot-label { color: var(--neon-cyan); }
+.cyber-slot-empty { font-family: var(--font-mono); font-size: .7rem; color: var(--text-dim); font-style: italic; }
 .cyber-items { display: flex; flex-direction: column; gap: .35rem; }
 .cyber-item-card { display: flex; align-items: center; gap: .35rem; }
-.cyber-item-name { font-size: .78rem; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cyber-item-name { font-size: .78rem; color: var(--text-main); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cyber-item-actions { display: flex; gap: .25rem; flex-shrink: 0; }
+/* Cyberware-Buttons (Ausoperieren/Löschen) — scoped, Gear-Tab (4c) unberührt */
+#tab-cyberware .gear-action-btn {
+  background: var(--bg-panel-soft); border-color: var(--border-dark);
+  color: var(--text-muted); font-family: var(--font-mono);
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+#tab-cyberware .gear-action-btn:hover { background: var(--bg-panel-cyan); border-color: var(--cyan-soft); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+#tab-cyberware .gear-del-btn { border-color: var(--red-soft); color: var(--neon-red); }
+#tab-cyberware .gear-del-btn:hover { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); box-shadow: var(--glow-red-s); }
 .cyber-tag {
   font-size: .75rem; padding: .15rem .55rem;
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: 2px; color: var(--text);
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: 2px; color: var(--text-main);
 }
 .cyber-zone-badge {
-  font-family: Audiowide, sans-serif; font-size: 5px;
-  fill: #00E5FF; pointer-events: none;
+  font-family: var(--font-heading); font-weight: 600; font-size: 5px;
+  fill: var(--neon-cyan); pointer-events: none;
 }
 
 @media (max-width: 700px) {
@@ -1180,81 +1254,110 @@ body.near-death::before {
   display: flex; align-items: center; gap: .4rem;
   font-size: .72rem; margin: .2rem 0;
 }
-.weapon-mag-label { color: var(--text-muted); flex-shrink: 0; }
-.weapon-mag-val { flex-shrink: 0; font-variant-numeric: tabular-nums; }
-.weapon-mag-val.mag-ok       { color: #4a9a4a; }
-.weapon-mag-val.mag-low      { color: #c4a000; }
-.weapon-mag-val.mag-critical { color: var(--red); }
-.weapon-mag-val.mag-empty    { color: #666; }
+.weapon-mag-label { font-family: var(--font-mono); color: var(--text-muted); flex-shrink: 0; }
+.weapon-mag-val { flex-shrink: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.weapon-mag-val.mag-ok       { color: var(--success-green); }
+.weapon-mag-val.mag-low      { color: var(--warning-yellow); }
+.weapon-mag-val.mag-critical { color: var(--neon-red); }
+.weapon-mag-val.mag-empty    { color: var(--text-dim); }
 .weapon-hp-bar-wrap {
-  flex: 1; height: 4px; background: var(--bg-input);
-  border-radius: 2px; overflow: hidden;
+  flex: 1; height: 5px; background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark); border-radius: 2px; overflow: hidden;
 }
 .weapon-hp-bar {
-  height: 100%; border-radius: 2px; transition: width .3s;
+  height: 100%; border-radius: 1px; transition: width .3s;
 }
-.weapon-hp-bar.mag-ok       { background: #4a9a4a; }
-.weapon-hp-bar.mag-low      { background: #c4a000; }
-.weapon-hp-bar.mag-critical { background: var(--red); }
-.weapon-hp-bar.mag-empty    { background: #333; }
+.weapon-hp-bar.mag-ok       { background: var(--success-green); box-shadow: 0 0 6px rgba(54,255,159,.5); }
+.weapon-hp-bar.mag-low      { background: var(--warning-yellow); }
+.weapon-hp-bar.mag-critical { background: var(--neon-red); box-shadow: var(--glow-red-s); }
+.weapon-hp-bar.mag-empty    { background: var(--border-dark); }
 .mag-empty-badge {
-  background: var(--red); color: #fff;
-  font-size: .58rem; padding: .05rem .3rem;
+  background: var(--neon-red); color: var(--bg-main);
+  font-family: var(--font-heading); font-weight: 600;
+  font-size: .58rem; letter-spacing: .08em; padding: .05rem .35rem;
   border-radius: 2px; margin-left: .25rem;
 }
 .weapon-ammo-loaded {
-  font-size: .68rem; color: var(--cyan);
+  font-family: var(--font-mono); font-size: .68rem; color: var(--neon-cyan);
   margin: .15rem 0; line-height: 1.3;
 }
 .ammo-special-badge-small {
   display: inline-block; font-size: .58rem;
-  background: rgba(0,229,255,.15); color: var(--cyan);
-  border: 1px solid var(--cyan); padding: .05rem .3rem;
+  background: var(--bg-panel-cyan); color: var(--neon-cyan);
+  border: 1px solid var(--cyan-soft); padding: .05rem .3rem;
   border-radius: 2px; margin-right: .3rem;
 }
-.reload-btn { border-color: #4a9a4a !important; color: #4a9a4a !important; font-weight: 600; }
-.reload-btn:hover:not(:disabled) { background: rgba(74,154,74,.12) !important; }
-.reload-btn:disabled { opacity: .35; cursor: not-allowed; }
-.autofire-toggle { border-color: var(--red) !important; color: var(--red) !important; }
-.autofire-toggle:hover { background: rgba(255,45,45,.08) !important; }
-.autofire-toggle.active {
-  background: var(--red) !important; color: #fff !important; border-color: var(--red) !important;
+/* Weapon-Action-Buttons — scoped auf #tab-weapons, damit Gear-Tab (4c) unberührt bleibt */
+#tab-weapons .gear-action-btn {
+  background: var(--bg-panel-soft); border-color: var(--border-dark);
+  color: var(--text-muted); font-family: var(--font-mono);
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
-.unequip-btn { border-color: #555 !important; color: #999 !important; }
+#tab-weapons .gear-action-btn:hover {
+  background: var(--bg-panel-cyan); border-color: var(--cyan-soft);
+  color: var(--neon-cyan); box-shadow: var(--glow-cyan-s);
+}
+#tab-weapons .gear-sell-btn  { border-color: var(--success-green); color: var(--success-green); }
+#tab-weapons .gear-sell-btn:hover { background: rgba(54,255,159,.08); border-color: var(--success-green); color: var(--success-green); box-shadow: 0 0 8px rgba(54,255,159,.4); }
+#tab-weapons .gear-del-btn   { border-color: var(--red-soft); color: var(--neon-red); }
+#tab-weapons .gear-del-btn:hover { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); box-shadow: var(--glow-red-s); }
+.reload-btn { border-color: var(--success-green) !important; color: var(--success-green) !important; font-weight: 600; }
+.reload-btn:hover:not(:disabled) { background: rgba(54,255,159,.12) !important; box-shadow: 0 0 8px rgba(54,255,159,.4) !important; }
+.reload-btn:disabled { opacity: .35; cursor: not-allowed; }
+.autofire-toggle { border-color: var(--neon-red) !important; color: var(--neon-red) !important; }
+.autofire-toggle:hover { background: var(--bg-panel-red) !important; box-shadow: var(--glow-red-s) !important; }
+.autofire-toggle.active {
+  background: var(--neon-red) !important; color: var(--bg-main) !important; border-color: var(--neon-red) !important;
+  box-shadow: var(--glow-red-s) !important;
+}
+.unequip-btn { border-color: var(--border-dark) !important; color: var(--text-muted) !important; }
 .ammo-type-select {
   font-size: .78rem; padding: .32rem .5rem;
-  background: var(--bg-input); border: 1px solid var(--border);
-  color: var(--text); border-radius: var(--radius); cursor: pointer;
-  height: 30px;
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  color: var(--text-main); border-radius: var(--radius); cursor: pointer;
+  height: 30px; font-family: var(--font-mono);
 }
+.ammo-type-select:focus { outline: none; border-color: var(--cyan-soft); box-shadow: var(--glow-cyan-s); }
 .ammo-inventory-section { margin-top: .5rem; }
+.ammo-inventory-section .section-header {
+  font-family: var(--font-heading); font-weight: 600; font-size: .65rem;
+  letter-spacing: var(--tracking); text-transform: uppercase; color: var(--neon-cyan);
+  margin-bottom: .4rem;
+}
 .ammo-inventory-grid {
   display: flex; flex-wrap: wrap; gap: .35rem; padding: .4rem 0;
 }
 .ammo-inv-chip {
-  padding: .2rem .5rem; border-radius: var(--radius);
-  font-size: .72rem; border: 1px solid var(--border);
+  padding: .2rem .55rem; border-radius: var(--radius);
+  font-family: var(--font-mono); font-size: .72rem; border: 1px solid var(--border-dark);
+  background: var(--bg-panel-soft);
 }
-.ammo-inv-ok      { border-color: #4a9a4a; color: #4a9a4a; }
-.ammo-inv-low     { border-color: #c4a000; color: #c4a000; }
-.ammo-inv-empty   { border-color: var(--red); color: var(--red); }
+.ammo-inv-ok      { border-color: var(--success-green); color: var(--success-green); }
+.ammo-inv-low     { border-color: var(--warning-yellow); color: var(--warning-yellow); }
+.ammo-inv-empty   { border-color: var(--neon-red); color: var(--neon-red); }
+/* Distanz-Bar — HUD-Rahmen (Inhalt bleibt inline-gestylt, kein Render-JS-Eingriff) */
+.weapon-distance-bar {
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: .55rem .65rem; margin-bottom: var(--sp-3);
+}
 
 /* ── Weapon card ammo info block (right column) ── */
 .weapon-card--ammo { display: flex; gap: .6rem; align-items: flex-start; }
 .weapon-card-main  { flex: 1; min-width: 0; }
 .weapon-ammo-info-block {
   flex-shrink: 0; width: 150px;
-  background: rgba(0,229,255,.06); border: 1px solid rgba(0,229,255,.3);
+  background: var(--bg-panel-cyan); border: 1px solid var(--cyan-dark);
   border-radius: var(--radius); padding: .5rem .6rem;
   font-size: .68rem; line-height: 1.4;
 }
 .weapon-ammo-info-badge {
-  font-size: .62rem; font-family: Audiowide,sans-serif;
-  letter-spacing: .06em; color: var(--cyan);
+  font-size: .62rem; font-family: var(--font-heading); font-weight: 600;
+  letter-spacing: .06em; color: var(--neon-cyan);
   text-transform: uppercase; margin-bottom: .3rem;
 }
-.weapon-ammo-info-effect { color: var(--text-muted); }
-.weapon-ammo-info-req { color: #ffa000; font-size: .62rem; margin-top: .25rem; }
+.weapon-ammo-info-effect { font-family: var(--font-mono); color: var(--text-muted); }
+.weapon-ammo-info-req { color: var(--warning-yellow); font-size: .62rem; margin-top: .25rem; }
 
 /* ── Timer Bar ── */
 .timer-bar {
@@ -1330,51 +1433,52 @@ body.timer-active { padding-top: 50px; }
 .screen-flash-overlay { animation: screen-flash .5s ease-out forwards; }
 
 /* ── Phase 2: Armor ablation ── */
-.armor-sp-row { display: flex; align-items: center; gap: .4rem; }
-.armor-sp--destroyed { color: var(--red) !important; }
+.armor-sp-row { display: flex; align-items: center; gap: .4rem; justify-content: center; }
+.armor-sp--destroyed { color: var(--neon-red) !important; }
 .armor-destroyed-badge {
-  font-size: .58rem; background: rgba(255,45,45,.15);
-  border: 1px solid var(--red); color: var(--red);
-  border-radius: 3px; padding: .08rem .3rem;
-  font-family: Audiowide, sans-serif; letter-spacing: .06em;
+  font-size: .58rem; background: var(--bg-panel-red);
+  border: 1px solid var(--neon-red); color: var(--neon-red);
+  border-radius: 3px; padding: .08rem .35rem;
+  font-family: var(--font-heading); font-weight: 600; letter-spacing: .06em;
 }
-.armor-slot--destroyed { border-color: rgba(255,45,45,.3) !important; }
+/* Zerstörter Slot: Clip-Border-Layer (::before) rot einfärben */
+.armor-slot--destroyed::before { background: var(--red-soft) !important; }
 
 .sp-bar-wrap {
-  width: 100%; height: 5px; background: #111;
-  border-radius: 2px; overflow: hidden; margin: .2rem 0;
+  width: 100%; height: 6px; background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark); border-radius: 2px; overflow: hidden; margin: .25rem 0;
 }
 .sp-bar-fill {
-  height: 100%; border-radius: 2px;
-  background: var(--cyan); transition: width .3s;
+  height: 100%; border-radius: 1px;
+  background: var(--neon-cyan); box-shadow: 0 0 6px rgba(34,247,255,.5); transition: width .3s;
 }
-.sp-bar-fill.warn { background: #FFA000; }
-.sp-bar-fill.crit { background: var(--red); }
+.sp-bar-fill.warn { background: var(--warning-yellow); box-shadow: none; }
+.sp-bar-fill.crit { background: var(--neon-red); box-shadow: var(--glow-red-s); }
 
-/* ── Phase 2: Autofire panel ── */
+/* ── Phase 2: Autofire panel (Combat-Rot HUD) ── */
 .autofire-panel {
-  background: rgba(255,107,53,.06);
-  border: 1px solid rgba(255,107,53,.22);
+  background: var(--bg-panel-red);
+  border: 1px solid var(--red-soft);
   border-radius: var(--radius);
   padding: .55rem .65rem; margin-top: .5rem;
 }
 .af-label {
-  font-size: .55rem; letter-spacing: .12em; text-transform: uppercase;
-  color: #FF8C00; font-family: Audiowide, sans-serif; margin-bottom: .3rem;
+  font-size: .58rem; letter-spacing: var(--tracking); text-transform: uppercase;
+  color: var(--neon-red); font-family: var(--font-heading); font-weight: 600; margin-bottom: .3rem;
 }
 .af-row { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
-.af-row-label { font-size: .65rem; color: var(--text-muted); white-space: nowrap; }
+.af-row-label { font-family: var(--font-mono); font-size: .65rem; color: var(--text-muted); white-space: nowrap; }
 .af-roll-btn { font-size: .68rem; padding: .18rem .45rem; }
 .af-roll-result {
-  font-family: Audiowide, sans-serif; font-size: .95rem;
-  color: #FF8C00; min-width: 24px; text-align: center;
+  font-family: var(--font-mono); font-size: .95rem;
+  color: var(--neon-red); min-width: 24px; text-align: center;
 }
 .af-dv-input {
   width: 60px; padding: .2rem .35rem; font-size: .78rem;
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--text);
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); color: var(--text-main); font-family: var(--font-mono);
 }
-.af-dv-input:focus { outline: none; border-color: #FF8C00; }
+.af-dv-input:focus { outline: none; border-color: var(--neon-red); box-shadow: var(--glow-red-s); }
 .af-result { font-size: .75rem; margin-top: .35rem; line-height: 1.5; }
 .screen-flash-overlay { animation: screen-flash .5s ease-out forwards; }
 
