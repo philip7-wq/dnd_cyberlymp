@@ -30,8 +30,9 @@ Füllung via `::after` (bg-panel-soft → bg-panel-cyan @hover), Glow via `filte
 ## 0. Globale Normen (alle Tabs)
 
 - **Content-Cap:** Header bleibt full-bleed. **Tab-Panels** zentrierte Spalte:
-  `.tab-panel { max-width: 1100px; margin-inline: auto; padding: var(--sp-5) var(--sp-5) var(--sp-8); }`
-  (ersetzt heutiges `1.25rem … 7rem`). Cyberware-Skelett darf die 1100px-Spalte voll nutzen.
+  `.tab-panel { max-width: 1280px; margin-inline: auto; padding: var(--sp-5) var(--sp-5) var(--sp-8); }`
+  (ersetzt heutiges `1.25rem … 7rem`). Cyberware-Skelett darf die 1280px-Spalte voll nutzen.
+  (Content-Cap **1280px** — Session-Entscheidung 4d-1, ersetzt das ältere 1100; Header+Tab-Bar+Panels.)
 - **Spacing:** Section-Gap `--sp-5` (Gruppen) / `--sp-6` (Tab-Blöcke); Intra `--sp-2`/`--sp-3`.
   Karten-Padding **einheitlich `--sp-4`**. Grid-Gap `--sp-3`.
 - **Grids:** überall `repeat(auto-fit, minmax(MIN, 1fr))` mit MIN je Inhaltstyp + MAX-Cap über
@@ -233,7 +234,7 @@ Basis (combatGrappleBtn), globale `.crit-modal-*`-Basis (`#dmgApplyBox`), `roles
 
 | Element | Wert |
 |---|---|
-| Content-max-width (Tab-Panels) | 1100px, zentriert |
+| Content-max-width (Header/Tab-Bar/Panels) | 1280px, zentriert |
 | Tab-Panel-Padding | `var(--sp-5) var(--sp-5) var(--sp-8)` |
 | Section-Gap | `--sp-5` (Gruppen) / `--sp-6` (Tab-Blöcke) |
 | Intra-Gap | `--sp-2` / `--sp-3` |

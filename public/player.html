@@ -146,51 +146,74 @@
 
 <!-- ── Character header ── -->
 <header class="char-header" id="charHeader" style="display:none">
-  <img id="charPortrait" class="char-portrait" src="" alt="Portrait">
-  <div class="char-info">
-    <div class="char-name-row">
-      <div class="char-name" id="charName" data-editing="false">—</div>
-      <button class="char-name-edit" id="charNameEditBtn" type="button" title="Name bearbeiten" aria-label="Name bearbeiten">✎</button>
-    </div>
-    <div class="char-sub" id="charSub">—</div>
-    <div class="res-rows">
-      <!-- HP -->
-      <div class="res-row">
-        <span class="res-label">HP</span>
-        <div class="res-bar-wrap">
-          <div class="res-track"><div class="res-fill hp" id="hpFill" style="width:0%"></div></div>
-          <div class="res-controls">
-            <button class="res-btn" data-res="hp" data-d="-1">−</button>
-            <span class="res-cur" id="hpCur">0</span>
-            <span class="res-sep">/</span>
-            <span class="res-max" id="hpMax">0</span>
-            <button class="res-btn" data-res="hp" data-d="+1">+</button>
-            <input type="number" class="res-amount" id="hpAmountInput" value="1" min="1" title="Betrag — Enter = direkt setzen, ±-Buttons = Schaden/Heal">
-          </div>
+  <div class="char-header__inner">
+    <!-- Zone L — Identität -->
+    <div class="char-info hdr-identity">
+      <img id="charPortrait" class="char-portrait" src="" alt="Portrait">
+      <div class="hdr-id-text">
+        <div class="char-name-row">
+          <div class="char-name" id="charName" data-editing="false">—</div>
+          <button class="char-name-edit" id="charNameEditBtn" type="button" title="Name bearbeiten" aria-label="Name bearbeiten">✎</button>
         </div>
-      </div>
-      <!-- Humanity -->
-      <div class="res-row">
-        <span class="res-label">HUM</span>
-        <div class="res-bar-wrap">
-          <div class="res-track"><div class="res-fill hum" id="humFill" style="width:0%"></div></div>
-          <div class="res-controls">
-            <button class="res-btn" data-res="humanity" data-d="-1">−</button>
-            <span class="res-cur" id="humCur" contenteditable="true" data-res="humanity">0</span>
-            <span class="res-sep">/</span>
-            <span class="res-max" id="humMax">0</span>
-            <button class="res-btn" data-res="humanity" data-d="+1">+</button>
-          </div>
-        </div>
-      </div>
-      <div id="psychosisLabel" style="font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;font-family:Audiowide,sans-serif;min-height:.9rem;margin-top:.1rem;padding-left:2.5rem"></div>
-      <!-- Luck dots -->
-      <div class="luck-row">
-        <span class="luck-label">LUCK</span>
-        <div class="luck-dots" id="luckDots"></div>
-        <span class="luck-count" id="luckCount"></span>
+        <div class="char-sub" id="charSub">—</div>
       </div>
     </div>
+    <!-- Zone M — Vitals-Strip (HP dominant) -->
+    <div class="hdr-vitals">
+      <div class="res-rows">
+        <!-- HP -->
+        <div class="res-row res-row--hp">
+          <span class="res-label">HP</span>
+          <div class="res-bar-wrap">
+            <div class="res-track"><div class="res-fill hp" id="hpFill" style="width:0%"></div></div>
+            <div class="res-controls">
+              <button class="res-btn" data-res="hp" data-d="-1">−</button>
+              <span class="res-cur" id="hpCur">0</span>
+              <span class="res-sep">/</span>
+              <span class="res-max" id="hpMax">0</span>
+              <button class="res-btn" data-res="hp" data-d="+1">+</button>
+              <input type="number" class="res-amount" id="hpAmountInput" value="1" min="1" title="Betrag — Enter = direkt setzen, ±-Buttons = Schaden/Heal">
+            </div>
+          </div>
+        </div>
+        <!-- Humanity -->
+        <div class="res-row res-row--hum">
+          <span class="res-label">HUM</span>
+          <div class="res-bar-wrap">
+            <div class="res-track"><div class="res-fill hum" id="humFill" style="width:0%"></div></div>
+            <div class="res-controls">
+              <button class="res-btn" data-res="humanity" data-d="-1">−</button>
+              <span class="res-cur" id="humCur" contenteditable="true" data-res="humanity">0</span>
+              <span class="res-sep">/</span>
+              <span class="res-max" id="humMax">0</span>
+              <button class="res-btn" data-res="humanity" data-d="+1">+</button>
+            </div>
+          </div>
+        </div>
+        <div id="psychosisLabel" style="font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;font-family:Audiowide,sans-serif;min-height:.9rem;margin-top:.1rem;padding-left:2.5rem"></div>
+        <!-- Luck dots -->
+        <div class="luck-row">
+          <span class="luck-label">LUCK</span>
+          <div class="luck-dots" id="luckDots"></div>
+          <span class="luck-count" id="luckCount"></span>
+        </div>
+      </div>
+    </div>
+    <!-- Zone R — Meta (IP + Cash) -->
+    <div class="char-meta hdr-meta">
+      <div class="char-ip-badge" id="charIpBadge">
+        <div class="char-ip-label">IP</div>
+        <div class="char-ip-value" id="charIpValue">0</div>
+      </div>
+      <div class="char-cash-badge">
+        <div class="char-cash-label">Cash</div>
+        <div class="char-cash-value" id="charCashValue">—</div>
+        <button class="char-cash-log" id="cashLogBtnHeader" type="button" title="Transaktionsverlauf">📜</button>
+      </div>
+    </div>
+  </div>
+  <!-- Sekundäre Statuszeile (volle Breite, sekundär gewichtet) -->
+  <div class="hdr-status">
     <!-- Buff Bar -->
     <div class="buff-bar" id="buffBar" style="display:none">
       <div class="buff-bar-label">BUFFS</div>
@@ -203,34 +226,25 @@
     </div>
     <div class="condition-badges" id="conditionBadges"></div>
     <button class="death-save-btn" id="deathSaveBtn" style="display:none">☠ DEATH SAVE</button>
-    <button class="btn btn-ghost" id="longRestBtn" type="button" style="font-size:.7rem;margin-top:.3rem;border-color:rgba(0,182,255,.35);color:#00B6FF">🌙 Long Rest</button>
-  </div>
-  <div class="char-meta">
-    <div class="char-ip-badge" id="charIpBadge">
-      <div class="char-ip-label">IP</div>
-      <div class="char-ip-value" id="charIpValue">0</div>
-    </div>
-    <div class="char-cash-badge">
-      <div class="char-cash-label">Cash</div>
-      <div class="char-cash-value" id="charCashValue">—</div>
-      <button class="char-cash-log" id="cashLogBtnHeader" type="button" title="Transaktionsverlauf">📜</button>
-    </div>
+    <button class="btn btn-ghost" id="longRestBtn" type="button">🌙 Long Rest</button>
   </div>
 </header>
 
 <!-- ── Tabs ── -->
 <div class="tabs" id="tabBar" style="display:none">
-  <button class="tab-btn active" data-tab="stats">Stats</button>
-  <button class="tab-btn" data-tab="skills">Skills</button>
-  <button class="tab-btn" data-tab="role">Rolle</button><button id="roleSettingsBtnTab" title="Rolle & Rank ändern" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);cursor:pointer;padding:.35rem .25rem .35rem 0;font-size:.85rem;line-height:1;vertical-align:middle">⚙</button>
-  <button class="tab-btn" data-tab="weapons">Weapons</button>
-  <button class="tab-btn" data-tab="armor">Armor</button>
-  <button class="tab-btn" data-tab="cyberware">Cyberware</button>
-  <button class="tab-btn" data-tab="gear">Gear</button>
-  <button class="tab-btn" data-tab="lifepath">Lifepath</button>
-  <button class="tab-btn" data-tab="injuries">Injuries<span id="injuryBadge" class="injury-badge" hidden></span></button>
-  <button class="tab-btn" data-tab="notes">Notes</button>
-  <button class="tab-btn" data-tab="raum">📦 Raum<span id="raumBadge" class="injury-badge" hidden></span></button>
+  <div class="tabs__inner">
+    <button class="tab-btn active" data-tab="stats">Stats</button>
+    <button class="tab-btn" data-tab="skills">Skills</button>
+    <button class="tab-btn" data-tab="role">Rolle</button><button id="roleSettingsBtnTab" class="tab-settings-btn" type="button" title="Rolle & Rank ändern">⚙</button>
+    <button class="tab-btn" data-tab="weapons">Weapons</button>
+    <button class="tab-btn" data-tab="armor">Armor</button>
+    <button class="tab-btn" data-tab="cyberware">Cyberware</button>
+    <button class="tab-btn" data-tab="gear">Gear</button>
+    <button class="tab-btn" data-tab="lifepath">Lifepath</button>
+    <button class="tab-btn" data-tab="injuries">Injuries<span id="injuryBadge" class="injury-badge" hidden></span></button>
+    <button class="tab-btn" data-tab="notes">Notes</button>
+    <button class="tab-btn" data-tab="raum">📦 Raum<span id="raumBadge" class="injury-badge" hidden></span></button>
+  </div>
 </div>
 
 <!-- ── Tab panels ── -->

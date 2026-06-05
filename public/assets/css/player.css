@@ -4,11 +4,8 @@
 
 /* ── Google Fonts loaded in HTML head ──────────────────────── */
 
-/* ── Character header (HUD-Banner, full-bleed) ── */
+/* ── Character header (3-Zonen-HUD-Banner, full-bleed; Inhalt auf 1280 zentriert — 4d-1) ── */
 .char-header {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-4);
   padding: var(--sp-4) var(--sp-5);
   background: var(--bg-panel);
   border-bottom: 1px solid var(--cyan-soft);
@@ -16,6 +13,26 @@
               var(--inset-cyan);
   position: relative;
   transition: box-shadow .4s ease;
+}
+.char-header__inner {
+  position: relative; z-index: 1;
+  max-width: 1280px; margin-inline: auto;
+  display: flex; align-items: stretch; gap: var(--sp-5);
+}
+/* Zone L — Identität (Portrait + Name/Sub) */
+.hdr-identity { display: flex; align-items: center; gap: var(--sp-3); flex: 0 1 auto; min-width: 0; }
+.hdr-id-text  { min-width: 0; }
+/* Zone M — Vitals-Strip (HP dominant) */
+.hdr-vitals   { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+.hdr-vitals .res-rows { width: 100%; }
+/* Zone R (IP/Cash) vertikal mittig (Desktop) — bündig zur zentrierten Identität/Vitals;
+   <720px wird sie per Media-Query wieder auf flex-start gepinnt */
+.char-meta.hdr-meta { align-self: center; }
+/* Sekundäre Statuszeile (volle Breite unter den Zonen) */
+.hdr-status {
+  position: relative; z-index: 1;
+  max-width: 1280px; margin-inline: auto; margin-top: var(--sp-3);
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2);
 }
 @keyframes combat-header-pulse {
   0%, 100% { box-shadow: inset 0 0 0 0 rgba(255,45,45,0); }
@@ -44,7 +61,7 @@ body.combat-active .char-sub {
   z-index: 1;
 }
 .char-portrait {
-  width: 76px; height: 76px;
+  width: 88px; height: 88px;
   border-radius: var(--radius);
   border: 1px solid var(--cyan-soft);
   object-fit: cover;
@@ -53,7 +70,7 @@ body.combat-active .char-sub {
   box-shadow: var(--glow-cyan-s);
 }
 .char-portrait.placeholder { display: flex; align-items: center; justify-content: center; font-size: 2rem; }
-.char-info { flex: 1; min-width: 0; }
+.char-info { flex: 0 1 auto; min-width: 0; }
 .char-name-row { display: flex; align-items: center; gap: .5rem; }
 .char-name {
   font-family: var(--font-heading);
@@ -99,14 +116,14 @@ body.combat-active .char-sub {
   color: var(--neon-cyan);
   letter-spacing: var(--tracking);
   text-transform: uppercase;
-  margin-bottom: var(--sp-3);
+  margin-bottom: 0;
 }
 
 /* ── Resource rows (HP / Humanity) ── */
-.res-rows { display: flex; flex-direction: column; gap: .45rem; }
+.res-rows { display: flex; flex-direction: column; gap: var(--sp-3); }
 .res-row { display: flex; align-items: center; gap: .5rem; }
 .res-label { width: 34px; font-family: var(--font-heading); font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-muted); flex-shrink: 0; }
-.res-bar-wrap { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.res-bar-wrap { flex: 1; display: flex; flex-direction: column; gap: var(--sp-1); }
 .res-track { height: 6px; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); overflow: hidden; }
 .res-fill { height: 100%; border-radius: 1px; transition: width .4s ease; }
 .res-fill.hp  { background: var(--neon-red); box-shadow: 0 0 8px rgba(255,49,88,.55); }
@@ -135,9 +152,15 @@ body.combat-active .char-sub {
 .res-cur:focus { border-bottom-color: var(--neon-cyan); }
 .res-sep { color: var(--text-dim); }
 .res-max { font-family: var(--font-mono); color: var(--text-muted); }
+/* HP dominant: 10px-Track + großer Leitwert; HUM sekundär 8px (4d-1) */
+.res-row--hp  .res-track { height: 10px; }
+.res-row--hum .res-track { height: 8px; }
+.res-row--hp  .res-cur { font-size: var(--fs-xl); min-width: 2.2ch; }
+.res-row--hp  .res-max,
+.res-row--hp  .res-sep { font-size: var(--fs-md); }
 
 /* ── Luck dots ── */
-.luck-row { display: flex; align-items: center; gap: .5rem; margin-top: .2rem; }
+.luck-row { display: flex; align-items: center; gap: .5rem; margin-top: 0; }
 .luck-label { width: 34px; font-family: var(--font-heading); font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-muted); }
 .luck-dots { display: flex; gap: 4px; flex-wrap: wrap; }
 .luck-dot {
@@ -148,29 +171,51 @@ body.combat-active .char-sub {
 .luck-dot.on { background: var(--neon-cyan); border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 .luck-count { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-muted); margin-left: 2px; }
 
-/* ── Tabs (HUD-Leiste) ── */
+/* Header responsive: Zone R unter Zone M, Portrait 64px (4d-1) */
+@media (max-width: 720px) {
+  .char-header__inner { flex-wrap: wrap; }
+  .hdr-identity { flex: 1 1 auto; }
+  .char-meta.hdr-meta { flex: 0 0 auto; flex-direction: row; align-self: flex-start; }
+  .hdr-vitals { order: 3; flex-basis: 100%; }
+  .char-portrait { width: 64px; height: 64px; }
+}
+
+/* ── Tabs (HUD-Leiste; full-bleed bg, Inhalt 1280 zentriert, Wrap in 2 Reihen — 4d-1) ── */
 .tabs {
-  display: flex; overflow-x: auto;
   border-bottom: 1px solid var(--cyan-soft);
   background: var(--bg-panel);
   box-shadow: 0 1px 0 0 rgba(34,247,255,.25), 0 4px 14px -8px rgba(34,247,255,.35);
   position: sticky; top: 0; z-index: var(--z-panel);
 }
-.tabs::-webkit-scrollbar { display: none; }
+.tabs__inner {
+  max-width: 1280px; margin-inline: auto;
+  display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--sp-1);
+  padding: 0 var(--sp-5);
+}
 .tab-btn {
-  padding: var(--sp-3) var(--sp-4); background: none; border: none;
+  height: 40px; padding: 0 var(--sp-4); background: none; border: none;
   border-bottom: 2px solid transparent;
   color: var(--text-muted); font-family: var(--font-heading); font-weight: 600;
   font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase;
   cursor: pointer; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: .3rem;
   transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease),
               text-shadow var(--t-fast) var(--ease);
 }
 .tab-btn:hover  { color: var(--neon-cyan); }
 .tab-btn.active { color: var(--neon-red); border-bottom-color: var(--neon-red); text-shadow: var(--glow-red-s); }
+/* ⚙ Rollen-Einstellungen — Inline-Style → Klasse (4d-1) */
+.tab-settings-btn {
+  height: 40px; padding: 0 var(--sp-2); background: none; border: none;
+  border-bottom: 2px solid transparent; color: var(--text-muted);
+  font-size: var(--fs-sm); line-height: 1; cursor: pointer;
+  display: inline-flex; align-items: center;
+  transition: color var(--t-fast) var(--ease);
+}
+.tab-settings-btn:hover { color: var(--neon-cyan); }
 
-/* ── Tab panels ── */
-.tab-panel { display: none; padding: 1.25rem 1.25rem 7rem; }
+/* ── Tab panels (Content-Cap 1280, zentriert — 4d-1) ── */
+.tab-panel { display: none; max-width: 1280px; margin-inline: auto; padding: var(--sp-5) var(--sp-5) var(--sp-8); }
 .tab-panel.active { display: block; }
 
 /* ── Section header ── */
@@ -224,9 +269,11 @@ body.combat-active .char-sub {
 /* ── Skills ── */
 .skill-group { margin-bottom: var(--sp-4); }
 .skill-cat-label {
-  font-family: var(--font-heading); font-weight: 600; font-size: .62rem; letter-spacing: var(--tracking); text-transform: uppercase;
-  color: var(--neon-cyan); margin-bottom: .4rem;
+  font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase;
+  color: var(--neon-cyan);
+  border-bottom: 1px solid var(--border-dark); padding-bottom: var(--sp-2); margin: var(--sp-5) 0 var(--sp-3);
 }
+.skill-group:first-child .skill-cat-label { margin-top: 0; }
 .skill-row {
   display: grid; grid-template-columns: 18px 1fr 32px 26px 32px 28px;
   align-items: center; gap: .25rem;
@@ -275,10 +322,10 @@ body.combat-active .char-sub {
 .weapon-notes { font-size: .75rem; color: var(--text-muted); margin-bottom: .2rem; }
 .weapon-action-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-top: .35rem; }
 .weapons-section-head {
-  font-family: var(--font-heading); font-weight: 600; font-size: .68rem;
+  font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-xs);
   letter-spacing: var(--tracking); text-transform: uppercase; color: var(--neon-cyan);
   border-bottom: 1px solid var(--border-dark); padding-bottom: var(--sp-2);
-  margin: var(--sp-4) 0 var(--sp-3);
+  margin: var(--sp-5) 0 var(--sp-3);
 }
 /* Weapon-/Melee-Würfelknöpfe = Combat-Rot (scoped — globale .roll-btn unberührt) */
 .weapon-card .roll-btn {
@@ -434,16 +481,7 @@ body.combat-active .char-sub {
 #critModalBox .crit-divider      { border-top-color: var(--border-dark); }
 #critModalBox .crit-bonus-dmg    { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); }
 #critModalBox .crit-already      { color: var(--neon-red); }
-#critModalBox .btn-primary {
-  background: var(--neon-red); color: var(--bg-main);
-  font-family: var(--font-heading); font-weight: 600; border-radius: var(--radius);
-}
-#critModalBox .btn-primary:hover:not(:disabled) { background: var(--red-soft); box-shadow: var(--glow-red-s); }
-#critModalBox .btn-ghost {
-  background: transparent; border: 1px solid var(--border-dark); color: var(--text-muted);
-  font-family: var(--font-heading); font-weight: 600;
-}
-#critModalBox .btn-ghost:hover { border-color: var(--cyan-soft); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+/* #critModalBox .btn-primary/.btn-ghost — Look kommt aus dem Button-System (4d-1, combat-lg / ghost-md). */
 
 /* ── Injuries tab ── */
 .injury-badge  { background:var(--neon-red);color:#fff;border-radius:10px;font-size:.58rem;
@@ -1210,17 +1248,7 @@ body.near-death::before {
   font-family: var(--font-heading); font-weight: 700; color: var(--neon-red);
   letter-spacing: .1em; text-shadow: var(--glow-red-s);
 }
-#dmgApplyBox .btn-primary {
-  background: var(--neon-red); color: var(--bg-main);
-  font-family: var(--font-heading); font-weight: 600; border-radius: var(--radius);
-}
-#dmgApplyBox .btn-primary:hover:not(:disabled) { background: var(--red-soft); box-shadow: var(--glow-red-s); }
-#dmgApplyBox .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
-#dmgApplyBox .btn-ghost {
-  background: transparent; border: 1px solid var(--border-dark); color: var(--text-muted);
-  font-family: var(--font-heading); font-weight: 600;
-}
-#dmgApplyBox .btn-ghost:hover { border-color: var(--cyan-soft); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+/* #dmgApplyBox .btn-primary/.btn-ghost — Look kommt aus dem Button-System (4d-1, combat-lg / ghost-md). */
 
 /* ── Crit optgroup colours ──────────────────────────────────── */
 .crit-group-player, select optgroup[label*="Spieler"] { color: var(--cyan); }
@@ -1359,16 +1387,9 @@ body.near-death::before {
 #tab-weapons .gear-sell-btn:hover { background: rgba(54,255,159,.08); border-color: var(--success-green); color: var(--success-green); box-shadow: 0 0 8px rgba(54,255,159,.4); }
 #tab-weapons .gear-del-btn   { border-color: var(--red-soft); color: var(--neon-red); }
 #tab-weapons .gear-del-btn:hover { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); box-shadow: var(--glow-red-s); }
-.reload-btn { border-color: var(--success-green) !important; color: var(--success-green) !important; font-weight: 600; }
-.reload-btn:hover:not(:disabled) { background: rgba(54,255,159,.12) !important; box-shadow: 0 0 8px rgba(54,255,159,.4) !important; }
-.reload-btn:disabled { opacity: .35; cursor: not-allowed; }
-.autofire-toggle { border-color: var(--neon-red) !important; color: var(--neon-red) !important; }
-.autofire-toggle:hover { background: var(--bg-panel-red) !important; box-shadow: var(--glow-red-s) !important; }
-.autofire-toggle.active {
-  background: var(--neon-red) !important; color: var(--bg-main) !important; border-color: var(--neon-red) !important;
-  box-shadow: var(--glow-red-s) !important;
-}
-.unequip-btn { border-color: var(--border-dark) !important; color: var(--text-muted) !important; }
+/* Farben/Varianten von reload/autofire/unequip kommen aus dem Button-System
+   (Phase 4d-1, #tab-weapons-gescopt) — kein !important mehr nötig. */
+#tab-weapons .reload-btn:disabled { opacity: .35; cursor: not-allowed; }
 .ammo-type-select {
   font-size: .78rem; padding: .32rem .5rem;
   background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
@@ -1378,9 +1399,9 @@ body.near-death::before {
 .ammo-type-select:focus { outline: none; border-color: var(--cyan-soft); box-shadow: var(--glow-cyan-s); }
 .ammo-inventory-section { margin-top: .5rem; }
 .ammo-inventory-section .section-header {
-  font-family: var(--font-heading); font-weight: 600; font-size: .65rem;
+  font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-xs);
   letter-spacing: var(--tracking); text-transform: uppercase; color: var(--neon-cyan);
-  margin-bottom: .4rem;
+  border-bottom: 1px solid var(--border-dark); padding-bottom: var(--sp-2); margin: var(--sp-5) 0 var(--sp-3);
 }
 .ammo-inventory-grid {
   display: flex; flex-wrap: wrap; gap: .35rem; padding: .4rem 0;
@@ -1735,4 +1756,226 @@ body.timer-active { padding-top: 50px; }
 #tab-role .netrunner-floor,
 .role-modal .role-dice-result {
   font-family: var(--font-mono);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BUTTON-SYSTEM (Phase 4d-1) — cyber-button-Look auf bestehende Buttons
+   Variante A: gemeinsame Look-/Größen-/Varianten-Regeln, angewandt über
+   die BESTEHENDEN (gescopten) Selektoren — KEIN Element-Austausch, keine
+   JS/Markup-/Handler-Änderung. Muster wie .cyber-button (cyberpunk-ui.css):
+   Border via ::before, Füllung via ::after, Glow via filter:drop-shadow,
+   Clip-sm (Gotcha #2). Quellordnung am Dateiende → gewinnt bei gleicher
+   Spezifität über die alten 4a/4b/4c-Regeln; gescopte Selektoren (#tab-*)
+   schützen die geteilten Basisklassen (combatGrappleBtn, globale
+   .gear-action-btn/.remove-btn/.roll-btn, neutrale .crit-modal-*).
+   Größenskala: lg44 / md38 / sm32 / icon-md36 / icon-sm30 (38→44 @coarse).
+   NICHT hier (kommt mit Tab-Content-Relayout):
+     · Skills-Tab-Buttons (.skill-row .roll-btn/.skill-up-btn/.skill-fav-btn)
+       — enge Grid-Spalten (18/26/28px) → erst nach Skill-Grid-Relayout (4d-2).
+     · #weaponDistMapBtn (Distanz-Bar-Native-Rest → 4d-2).
+     · Rolle-Tab-Buttons (.role-dice-btn via geteilter roles.css → späterer Pass).
+   .death-save-btn bleibt absichtlich OHNE Clip (death-pulse nutzt box-shadow,
+   würde vom clip-path geschnitten) — nur combat-lg-Größe angeglichen.
+   ════════════════════════════════════════════════════════════════ */
+
+/* — Basis-Look (Default = primary/cyan, md38). --btn-*-Props steuern Variante/Größe — */
+.res-btn,
+.char-name-edit,
+.char-cash-log,
+#longRestBtn,
+.stat-dice-btn,
+.stat-roll-btn,
+.roll-all-btn,
+.stats-edit-btn,
+#tab-weapons .weapon-card .roll-btn,
+#tab-weapons .gear-action-btn,
+#tab-gear .gear-action-btn,
+#tab-cyberware .gear-action-btn,
+#tab-armor .remove-btn,
+#tab-injuries .remove-btn,
+#tab-raum .ctrl-btn,
+#critModalBox .btn-primary,
+#critModalBox .btn-ghost,
+#dmgApplyBox .btn-primary,
+#dmgApplyBox .btn-ghost,
+#skillRollBtn {
+  --btn-border: var(--cyan-soft);
+  --btn-fill: var(--bg-panel-soft);
+  --btn-fill-hover: var(--bg-panel-cyan);
+  --btn-color: var(--neon-cyan);
+  --btn-glow: var(--glow-cyan-s);
+  --btn-h: 38px;
+  --btn-px: var(--sp-4);
+  --btn-fs: var(--fs-sm);
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--btn-h);
+  height: auto;
+  padding: 0 var(--btn-px);
+  background: transparent;
+  border: none;
+  color: var(--btn-color);
+  font-family: var(--font-heading);
+  font-size: var(--btn-fs);
+  font-weight: 600;
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 1;
+  box-shadow: none;
+  border-radius: var(--radius);
+  clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
+                     calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm));
+  transition: color var(--t-fast) var(--ease), filter var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease);
+}
+/* Border-Layer (::before) + Füllung (::after, um border-w eingerückt) */
+.res-btn::before, .char-name-edit::before, .char-cash-log::before, #longRestBtn::before,
+.stat-dice-btn::before, .stat-roll-btn::before, .roll-all-btn::before, .stats-edit-btn::before,
+#tab-weapons .weapon-card .roll-btn::before, #tab-weapons .gear-action-btn::before,
+#tab-gear .gear-action-btn::before, #tab-cyberware .gear-action-btn::before,
+#tab-armor .remove-btn::before, #tab-injuries .remove-btn::before, #tab-raum .ctrl-btn::before,
+#critModalBox .btn-primary::before, #critModalBox .btn-ghost::before,
+#dmgApplyBox .btn-primary::before, #dmgApplyBox .btn-ghost::before, #skillRollBtn::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--btn-border); clip-path: inherit;
+}
+.res-btn::after, .char-name-edit::after, .char-cash-log::after, #longRestBtn::after,
+.stat-dice-btn::after, .stat-roll-btn::after, .roll-all-btn::after, .stats-edit-btn::after,
+#tab-weapons .weapon-card .roll-btn::after, #tab-weapons .gear-action-btn::after,
+#tab-gear .gear-action-btn::after, #tab-cyberware .gear-action-btn::after,
+#tab-armor .remove-btn::after, #tab-injuries .remove-btn::after, #tab-raum .ctrl-btn::after,
+#critModalBox .btn-primary::after, #critModalBox .btn-ghost::after,
+#dmgApplyBox .btn-primary::after, #dmgApplyBox .btn-ghost::after, #skillRollBtn::after {
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--btn-fill); clip-path: inherit;
+  transition: background var(--t-fast) var(--ease);
+}
+/* States */
+.res-btn:hover, .char-name-edit:hover, .char-cash-log:hover, #longRestBtn:hover,
+.stat-dice-btn:hover, .stat-roll-btn:hover, .roll-all-btn:hover, .stats-edit-btn:hover,
+#tab-weapons .weapon-card .roll-btn:hover, #tab-weapons .gear-action-btn:hover,
+#tab-gear .gear-action-btn:hover, #tab-cyberware .gear-action-btn:hover,
+#tab-armor .remove-btn:hover, #tab-injuries .remove-btn:hover, #tab-raum .ctrl-btn:hover,
+#critModalBox .btn-primary:hover, #critModalBox .btn-ghost:hover,
+#dmgApplyBox .btn-primary:hover, #dmgApplyBox .btn-ghost:hover, #skillRollBtn:hover {
+  background: transparent; box-shadow: none;
+  filter: drop-shadow(var(--btn-glow)); transform: translateY(-1px);
+}
+.res-btn:hover::after, .char-name-edit:hover::after, .char-cash-log:hover::after, #longRestBtn:hover::after,
+.stat-dice-btn:hover::after, .stat-roll-btn:hover::after, .roll-all-btn:hover::after, .stats-edit-btn:hover::after,
+#tab-weapons .weapon-card .roll-btn:hover::after, #tab-weapons .gear-action-btn:hover::after,
+#tab-gear .gear-action-btn:hover::after, #tab-cyberware .gear-action-btn:hover::after,
+#tab-armor .remove-btn:hover::after, #tab-injuries .remove-btn:hover::after, #tab-raum .ctrl-btn:hover::after,
+#critModalBox .btn-primary:hover::after, #critModalBox .btn-ghost:hover::after,
+#dmgApplyBox .btn-primary:hover::after, #dmgApplyBox .btn-ghost:hover::after, #skillRollBtn:hover::after {
+  background: var(--btn-fill-hover);
+}
+.res-btn:active, .char-name-edit:active, .char-cash-log:active, #longRestBtn:active,
+.stat-dice-btn:active, .stat-roll-btn:active, .roll-all-btn:active, .stats-edit-btn:active,
+#tab-weapons .weapon-card .roll-btn:active, #tab-weapons .gear-action-btn:active,
+#tab-gear .gear-action-btn:active, #tab-cyberware .gear-action-btn:active,
+#tab-armor .remove-btn:active, #tab-injuries .remove-btn:active, #tab-raum .ctrl-btn:active,
+#critModalBox .btn-primary:active, #critModalBox .btn-ghost:active,
+#dmgApplyBox .btn-primary:active, #dmgApplyBox .btn-ghost:active, #skillRollBtn:active { transform: translateY(0); }
+.res-btn:focus-visible, .char-name-edit:focus-visible, .char-cash-log:focus-visible, #longRestBtn:focus-visible,
+.stat-dice-btn:focus-visible, .stat-roll-btn:focus-visible, .roll-all-btn:focus-visible, .stats-edit-btn:focus-visible,
+#tab-weapons .weapon-card .roll-btn:focus-visible, #tab-weapons .gear-action-btn:focus-visible,
+#tab-gear .gear-action-btn:focus-visible, #tab-cyberware .gear-action-btn:focus-visible,
+#tab-armor .remove-btn:focus-visible, #tab-injuries .remove-btn:focus-visible, #tab-raum .ctrl-btn:focus-visible,
+#critModalBox .btn-primary:focus-visible, #critModalBox .btn-ghost:focus-visible,
+#dmgApplyBox .btn-primary:focus-visible, #dmgApplyBox .btn-ghost:focus-visible, #skillRollBtn:focus-visible {
+  outline: none; filter: drop-shadow(var(--btn-glow));
+}
+.res-btn:disabled, #longRestBtn:disabled,
+.stat-dice-btn:disabled, .stat-roll-btn:disabled, .roll-all-btn:disabled, .stats-edit-btn:disabled,
+#tab-weapons .weapon-card .roll-btn:disabled, #tab-weapons .gear-action-btn:disabled,
+#tab-gear .gear-action-btn:disabled, #tab-cyberware .gear-action-btn:disabled,
+#critModalBox .btn-primary:disabled, #dmgApplyBox .btn-primary:disabled, #skillRollBtn:disabled {
+  opacity: .4; cursor: not-allowed; filter: none; transform: none;
+}
+
+/* — Stat-Dice/Roll: zentriert unter dem Wert (block-flex statt inline) — */
+.stat-dice-btn, .stat-roll-btn { display: flex; margin: var(--sp-2) auto 0; }
+
+/* — Größen — */
+/* icon-md 36×36 */
+.res-btn, .stat-dice-btn, .stat-roll-btn {
+  --btn-h: 36px; width: 36px; min-width: 36px; padding: 0; font-size: 1.1rem; gap: 0;
+}
+/* icon-sm 30×30 */
+.char-name-edit, .char-cash-log, #tab-armor .remove-btn, #tab-injuries .remove-btn {
+  --btn-h: 30px; width: 30px; min-width: 30px; padding: 0; font-size: .8rem; gap: 0;
+}
+/* lg 44 (Modal-Primary / Skill-Roll) */
+#critModalBox .btn-primary, #dmgApplyBox .btn-primary, #skillRollBtn {
+  --btn-h: 44px; --btn-px: var(--sp-5); min-width: 44px;
+}
+
+/* — Varianten (setzen nur die --btn-*-Props; Default = primary/cyan) — */
+/* combat / red */
+.res-btn[data-res="hp"], .stat-roll-btn, .roll-all-btn,
+#tab-weapons .weapon-card .roll-btn, #tab-weapons .autofire-toggle,
+#critModalBox .btn-primary, #dmgApplyBox .btn-primary {
+  --btn-border: var(--red-soft); --btn-fill-hover: var(--bg-panel-red);
+  --btn-color: var(--neon-red); --btn-glow: var(--glow-red-s);
+}
+/* success / green (Sell / Reload) */
+#tab-weapons .reload-btn, #tab-weapons .gear-sell-btn, #tab-gear .gear-sell-btn {
+  --btn-border: var(--success-green); --btn-fill-hover: rgba(54,255,159,.10);
+  --btn-color: var(--success-green); --btn-glow: 0 0 8px rgba(54,255,159,.5);
+}
+/* danger / rot (Löschen / ✕) */
+#tab-armor .remove-btn, #tab-injuries .remove-btn,
+#tab-weapons .gear-del-btn, #tab-gear .gear-del-btn, #tab-cyberware .gear-del-btn {
+  --btn-border: var(--red-soft); --btn-fill-hover: var(--bg-panel-red);
+  --btn-color: var(--neon-red); --btn-glow: var(--glow-red-s);
+}
+/* ghost (+ ghost-icon) — neutral, Hover → cyan */
+.stats-edit-btn, #tab-weapons .unequip-btn, #longRestBtn,
+#critModalBox .btn-ghost, #dmgApplyBox .btn-ghost,
+.char-name-edit, .char-cash-log {
+  --btn-border: var(--border-dark); --btn-color: var(--text-muted);
+  --btn-fill-hover: var(--bg-panel-cyan); --btn-glow: var(--glow-cyan-s);
+}
+.stats-edit-btn:hover, #tab-weapons .unequip-btn:hover, #longRestBtn:hover,
+#critModalBox .btn-ghost:hover, #dmgApplyBox .btn-ghost:hover,
+.char-name-edit:hover, .char-cash-log:hover { color: var(--neon-cyan); }
+/* toggle / active — gefüllter Akzent, Text = bg-main */
+.stats-edit-btn.active {
+  --btn-border: var(--success-green); --btn-fill: var(--success-green);
+  --btn-fill-hover: var(--success-green); --btn-color: var(--bg-main);
+  --btn-glow: 0 0 10px rgba(54,255,159,.5);
+  filter: drop-shadow(var(--btn-glow));
+}
+.stats-edit-btn.active:hover { color: var(--bg-main); }
+#tab-weapons .autofire-toggle.active {
+  --btn-border: var(--neon-red); --btn-fill: var(--neon-red);
+  --btn-fill-hover: var(--neon-red); --btn-color: var(--bg-main);
+  --btn-glow: var(--glow-red-s);
+  filter: drop-shadow(var(--btn-glow));
+}
+
+/* — death-save: combat-lg, ABER ohne clip (box-shadow-Puls bleibt, Gotcha #2) — */
+.death-save-btn {
+  min-height: 44px; padding: var(--sp-3) var(--sp-5);
+  font-family: var(--font-heading); font-size: var(--fs-sm); font-weight: 600;
+  letter-spacing: var(--tracking); text-transform: uppercase;
+}
+
+/* — Touch: alle Aktions-Buttons ≥44px — */
+@media (pointer: coarse) {
+  .res-btn, .stat-dice-btn, .stat-roll-btn,
+  .char-name-edit, .char-cash-log, #tab-armor .remove-btn, #tab-injuries .remove-btn {
+    --btn-h: 44px; width: 44px; min-width: 44px;
+  }
+  .roll-all-btn, .stats-edit-btn, #longRestBtn,
+  #tab-weapons .weapon-card .roll-btn, #tab-weapons .gear-action-btn,
+  #tab-gear .gear-action-btn, #tab-cyberware .gear-action-btn, #tab-raum .ctrl-btn,
+  #critModalBox .btn-ghost, #dmgApplyBox .btn-ghost { --btn-h: 44px; }
 }

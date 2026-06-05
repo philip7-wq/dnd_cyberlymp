@@ -18,7 +18,7 @@
 | 4a player Header/Stats/Skills | ✅ fertig | + Cash im Bogen; in-place restyle; Würfel-Box-Fix |
 | 4b player Weapons/Armor/Cyberware | ✅ fertig | In-Place-CSS; .roll/.gear-action/.remove gescopt; #dmgApplyBox-Scoping; Autofire→Combat-Rot |
 | 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ✅ fertig | In-Place-Reskin; #tab-gear/#tab-raum/#critModalBox/#tab-injuries gescopt; Rollen-Body via #tab-role-Override (roles.css unangetastet) |
-| 4d player Layout-Pass | ⬜ offen | ganzer player.html nach MASTER-Layout-Normen, Verhalten identisch |
+| 4d player Layout-Pass | 🟡 läuft | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2/4d-3 = Tab-Inhalte offen |
 | 5 dm.html | ⬜ offen | Opus xhigh |
 | 6 shop.html | ⬜ offen | |
 | 7 map.html | ⬜ offen | Opus xhigh; Canvas unantastbar; Nav-Sidebar hier |
@@ -294,6 +294,70 @@ keine JS-Logik/IDs/Events/Struktur geändert (Equip/Sell/Drop, Raum-Claim/Move, 
 Assign, Rolle/Rank/Specialties + async Load, Notes-Autosave, Realtime unverändert).
 **Offen:** Audiowide→Rajdhani in role-Widgets kann in 4d/Phase 8 noch feinjustiert werden (Metrik-Shift);
 body-portalierte role-Modals nutzen Default-Cyan-Akzent (kein Pro-Rollen-Akzent — bestehendes Verhalten).
+
+---
+
+## Phase 4d-1 — Relayout: Basis + Button-System + Header + Tab-Bar ✅
+**Geändert:** `player.css` (globale Basis, Button-System, 3-Zonen-Header, Tab-Bar-Wrap; ~707 Braces, +~250 Z.),
+`player.html` (Header-Markup-Restruktur + Tab-Bar-`__inner`-Wrapper + Inline-Style→Klasse). **Nur CSS + Markup,
+keine JS-Logik/IDs/Events/Handler/Berechnungen.** Nur 2 Dateien (+ concept.md Doku-Sync).
+
+**Session-Entscheidungen (Nutzer, 2026-06-05):** Content-Cap **1280px** (Session-Prompt schlägt Konzept-1100 —
+concept.md §0/§8 nachgezogen); Cap-Umfang **Header+Tab-Bar+Panels** (bg full-bleed, Inhalt zentriert);
+**HP-Leitwert vereint in Zone M** (kein dupliziertes Live-Element → JS unangetastet; statt der Mock-Variante
+„große HP-Zahl in Zone R"). Schrift NICHT angefasst (Audiowide bleibt, Font-Migration = Phase 11).
+
+**Globale Basis:** `.tab-panel` Content-Cap 1280 zentriert (`var(--sp-5) var(--sp-5) var(--sp-8)`);
+Section-Header vereinheitlicht — `.weapons-section-head`/`.skill-cat-label`/`.ammo-inventory-section .section-header`
+auf den `.sec-head`-Look (fs-xs, border-bottom, Margin `sp-5 0 sp-3`).
+
+**Button-System (Variante A, reines CSS am Dateiende):** custom-property-getriebene Basis
+(`--btn-border/-fill/-fill-hover/-color/-glow/-h/-px/-fs`) im `.cyber-button`-Muster (clip-sm, Rajdhani 600
+uppercase, Border `::before` / Füllung `::after`, Glow `filter:drop-shadow`), angewandt über die **bestehenden
+(gescopten)** Selektoren. Quellordnung am Ende → gewinnt bei gleicher Spezifität; `#tab-*`-Scope schützt die
+geteilten Basisklassen. Größenskala lg44/md38/sm32/icon-md36/icon-sm30 (→44 @pointer:coarse).
+- **Umgesetzte Mappings:** `.res-btn` (icon-md, HP=combat/HUM=primary), `.stat-dice-btn` (primary icon-md),
+  `.stat-roll-btn` (combat icon-md), `.roll-all-btn` (combat md), `.stats-edit-btn` (ghost→toggle-success),
+  `.char-name-edit`/`.char-cash-log` (ghost-icon icon-sm), `#tab-weapons .weapon-card .roll-btn`/`.dmg-btn`/`.af-roll-btn`
+  (combat md), `#tab-weapons .gear-action-btn` (primary), `.reload-btn`/`.gear-sell-btn` (success),
+  `.autofire-toggle`(+`.active` toggle-combat), `.unequip-btn` (ghost), `#tab-weapons/.gear/.cyberware .gear-del-btn`
+  + `#tab-armor/.injuries .remove-btn` (danger), `#tab-gear`/`#tab-cyberware .gear-action-btn` (primary/danger),
+  `#tab-raum .ctrl-btn` (primary), `.death-save-btn` (combat-lg, **ohne Clip** — death-pulse braucht box-shadow,
+  Gotcha #2), `#critModalBox`/`#dmgApplyBox .btn-primary` (combat-lg) /`.btn-ghost` (ghost-md), `#skillRollBtn`
+  (primary-lg). Die neutralen `#critModalBox`/`#dmgApplyBox .btn-primary/.btn-ghost`-Farbregeln (4b/4c) entfernt
+  (Look kommt jetzt aus dem System); die `!important`-Overrides von `.reload-btn`/`.autofire-toggle`/`.unequip-btn`
+  **entfernt** und scoped (`#tab-weapons …`) re-expressed → kein `!important` mehr nötig.
+- **Bewusst NICHT in 4d-1 (Begründung im CSS-Header dokumentiert):** Skills-Tab-Buttons
+  (`.skill-row .roll-btn`/`.skill-up-btn`/`.skill-fav-btn`) — die festen engen Grid-Spalten (★18px / 26-28px)
+  fassen die icon-sm/sm-Skala erst nach dem Skill-Grid-Relayout (§4 = **4d-2**); behalten bis dahin 4a-Farben.
+  `#weaponDistMapBtn` (Distanz-Bar-Native-Rest → 4d-2). Rolle-Tab-Buttons: `.role-roll-btn`/`.role-save-btn`
+  sind **dead CSS** (werden nirgends gerendert; live = `.role-dice-btn` aus geteilter roles.css) → späterer Pass.
+
+**Header → 3-Zonen-HUD-Banner (Markup-Restruktur):** `.char-header` bleibt full-bleed (bg/Border/Box-Shadow/
+`body.combat-active`-Puls); neuer `.char-header__inner` (1280 zentriert, `z-index:1` über dem Combat-Overlay)
+mit Zone L `.hdr-identity`(=`.char-info`, Portrait **88×88**, Name/Sub), Zone M `.hdr-vitals` (Ressourcen-Strip,
+HP dominant: 10px-Track + HP-Leitwert `fs-xl`, HUM 8px), Zone R `.char-meta.hdr-meta` (IP+Cash+📜). Sekundäre
+`.hdr-status`-Zeile unter den Zonen (Buffs/Effects/Conditions/Death-Save/Long-Rest). HP/HUM-Rows via
+`.res-row--hp`/`--hum` differenziert. `#longRestBtn` Inline-Style → Klasse (ghost-md). `#psychosisLabel` Inline
+bewusst belassen (Audiowide; JS setzt color/animation per ID — unverändert). Alle IDs/Handler/contenteditable/
+data-* erhalten; `.char-info{flex:1→0 1 auto}` (player-only, npc-sheet nutzt die Klasse nicht).
+
+**Tab-Bar → Wrap in 2 Reihen:** `.tabs` full-bleed bg/Border/Sticky, `overflow-x:auto` entfernt;
+`.tabs__inner` (1280 zentriert, `flex-wrap:wrap`, gap `sp-1`) um die `.tab-btn`s (Delegation auf `#tabBar`
++ `closest('.tab-btn')` unberührt). `.tab-btn` Höhe **40px**, aktiv = roter Unterstrich + Glow (Status quo).
+`⚙ #roleSettingsBtnTab` Inline-Style → `.tab-settings-btn`. `#injuryBadge`/`#raumBadge` bleiben inline.
+
+**FAB52:** **Kein neuer FAB.** `#diceFab` (player.html) existiert bereits, löst die bestehende Würfel-Box aus
+und ist ein eigenes Subsystem („bleibt") — die FAB52-Größe dokumentiert nur diesen Auslöser; ein neues FAB
+hätte keine existierende Aktion zum Auslösen (Regel: FAB nur als zusätzlicher Trigger einer existierenden Aktion).
+
+**Verifiziert:** player.css Braces 707/707; nur `player.css` + `player.html` geändert (kein JS); Header-Div-Balance
+36/36, Tab 2/2; Delegation/IDs intakt; `combatGrappleBtn`/globale `.gear-action-btn`/`.remove-btn`/`.roll-btn` +
+neutrale `.crit-modal-*`-Basis + base.css-`.btn*` unangetastet; `roles.css`/`npc-sheet.html` unverändert.
+**Offen/zu beachten:** Skills-/DistMap-/Rolle-Buttons (s.o.) in 4d-2/4d-3; Armor-✕ (icon-sm 30) sitzt neben dem
+inline-getunten 📦-Unequip (Größen-Mismatch bis Armor-Relayout 4d-2); manueller Durchklick-Test (jeder Tab
+rendert, Würfeln/Skill-Check/Damage/Autofire/Reload/Equip/Sell/Drop/Injury/Raum/Name-Edit/Stat-Edit/Notes/
+Realtime identisch) steht noch aus (kein Browser in dieser Session).
 
 ---
 
