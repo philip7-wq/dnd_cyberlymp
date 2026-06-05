@@ -17,7 +17,7 @@
 | 3 Dashboard | ✅ fertig | index.html in-place → HUD-Dashboard, live, read-only |
 | 4a player Header/Stats/Skills | ✅ fertig | + Cash im Bogen; in-place restyle; Würfel-Box-Fix |
 | 4b player Weapons/Armor/Cyberware | ✅ fertig | In-Place-CSS; .roll/.gear-action/.remove gescopt; #dmgApplyBox-Scoping; Autofire→Combat-Rot |
-| 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ⬜ offen | ggf. Sub-Split 4c-1/4c-2 |
+| 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ✅ fertig | In-Place-Reskin; #tab-gear/#tab-raum/#critModalBox/#tab-injuries gescopt; Rollen-Body via #tab-role-Override (roles.css unangetastet) |
 | 4d player Layout-Pass | ⬜ offen | ganzer player.html nach MASTER-Layout-Normen, Verhalten identisch |
 | 5 dm.html | ⬜ offen | Opus xhigh |
 | 6 shop.html | ⬜ offen | |
@@ -254,8 +254,50 @@ Relayout (Anordnung, Grids, Hierarchie, Größen, Abstände) war via **3C** imme
 
 ---
 
+## Phase 4c — player.html: Gear/Lifepath/Injuries/Notes/Raum/Rolle ✅
+**Geändert:** `player.css` (Gear/Lifepath/Injuries/Notes-Klassen + neue scoped Blöcke
+`#tab-gear`/`#tab-raum`/`#critModalBox`/`#tab-injuries` + Rollen-Body-Override `#tab-role`),
+`player.html` (Inline-/JS-Render-Tokens in 4c-Zonen). **Reiner Reskin**, kein Relayout (→ 4d).
+
+**Render-Fundorte (für Folgephasen):**
+- Gear `renderGear()` :2068 (+ equip/sell/drop :2056–2250); Raum `renderRaumTab()` :2270 + statisches Panel :246.
+- Lifepath `renderLifepath()` :2311.
+- **Injuries** = **`renderCritInjuries()` :3183** (KEIN „renderInjuries" — daher per Standardname nicht auffindbar);
+  Crit-Flow `showCritInjuryFlow` :3043 / `rollInjury` :3080 / `showInjuryResult` :3089 / `applyInjury` :3123 / `removeInjury` :3263.
+- **Notes** = **kein Render-Fn**; statisches Markup :253 + Wiring `setupNotes()` :3676.
+- Crit-Injury-Modal `#crit-modal`/`#critModalBox` :277; Rollen-Einstellungen-Modal :66; Cyberpsychosis-Modal :98; Armor-Slot-Modal :42 (nur Gear-Equip-Flow).
+
+**Scoping-Entscheidungen (kritisch):**
+- **Crit-Modal:** neutrale `.crit-modal-*`-Basis **unangetastet** → `#dmgApplyBox` (4b) bleibt dran;
+  Crit-Injury nur via **`#critModalBox`** + `#critModalBox .btn-primary/.btn-ghost`. Target-Select/No-Target-Warn-Inline-Tokens mit-migriert.
+- **Gear:** globale `.gear-action-btn`-Basis **unangetastet** (combatGrappleBtn!) → Gear-Buttons nur via **`#tab-gear`**
+  (action=cyan, equip=cyan, sell=grün, del/remove=rot — analog 4b weapons/cyberware).
+- **`.remove-btn`:** globale Basis unangetastet (Cyberware-Legacy-Fallback :1997) → Injuries-✕ via **`#tab-injuries .remove-btn`**.
+- **`.ctrl-btn`** war auf player.html **komplett ungestylt** (nur in dm/map.css, die player nicht lädt) → Raum-„Aufheben" via **`#tab-raum .ctrl-btn`** ins HUD geholt. (Weapons-„Aus Map"-`.ctrl-btn` bleibt 4b/4d.)
+- **`.injury-badge`** (Injuries + Raum, beide 4c) bewusst gestylt.
+
+**Rollen-Body (Nutzer-Entscheidung: „scoped in player.css"):** Der von `mountRoleInterface` gerenderte
+Body wird von der **geteilten `roles.css`** (auch `npc-sheet.html`/Phase 8) gestylt. Statt roles.css zu
+editieren → **Override unter `#tab-role` in player.css**: nicht-Akzent-`--role-*`-Tokens auf HUD-Palette
+remapped, **Pro-Rollen-Akzentfarben (`--role-accent*`) erhalten**. Verifiziert: `npc-sheet.html` nutzt
+KEINE Rollen-/4c-Klassen (kein Bleed, obwohl es player.css lädt). Gotchas dabei:
+  - `roles.css` lädt **NACH** player.css → Schrift-Overrides (Audiowide→Rajdhani, JetBrains→Mono) brauchen
+    **höhere Spezifität** (`#tab-role …` / `.role-modal …`).
+  - `.role-modal` wird von `roles-core.js:252` an **`<body>`** portaliert (außerhalb `#tab-role`) →
+    Variablen + Modal-Schriften zusätzlich über `.role-modal` gescopt.
+  - Radien/Layout der role-Widgets bewusst NICHT angefasst (Relayout = 4d). `#FFD700`-Crit-Gold belassen.
+
+**Verifiziert:** 4a/4b intakt (15× 4b-Scoping vorhanden), base `.crit-modal-*` + globale `.gear-action-btn`
+unverändert, player.css Braces 679/679, roles.css/npc-sheet.html unangetastet, keine Alt-Tokens mehr in
+den 4c-Zonen, Rank-Up-Template-Literal intakt. Nur Token-/Schrift-/Border-Swaps + additive scoped Regeln —
+keine JS-Logik/IDs/Events/Struktur geändert (Equip/Sell/Drop, Raum-Claim/Move, Lifepath, Injury Add/Heal/
+Assign, Rolle/Rank/Specialties + async Load, Notes-Autosave, Realtime unverändert).
+**Offen:** Audiowide→Rajdhani in role-Widgets kann in 4d/Phase 8 noch feinjustiert werden (Metrik-Shift);
+body-portalierte role-Modals nutzen Default-Cyan-Akzent (kein Pro-Rollen-Akzent — bestehendes Verhalten).
+
+---
+
 ## Offene Punkte / To-do bis Ende
-- **4c** (Gear, Lifepath, Injuries, Notes, 📦 Raum, Rolle) — ggf. Sub-Split 4c-1/4c-2.
 - **Phase 5–10** wie Status-Tabelle.
 - **Phase 11 Cleanup:** Migrations-Aliase entfernen; `--radius`-Kollision auflösen; Temp-Fonts
   (Audiowide/Inter/Caveat) entfernen, sobald alle 13 Page-CSS migriert sind; optional In-Place-

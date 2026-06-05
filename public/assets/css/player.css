@@ -336,13 +336,13 @@ body.combat-active .char-sub {
 /* ── Gear ── */
 .gear-list { display: flex; flex-direction: column; gap: .45rem; }
 .gear-item {
-  padding: .6rem .8rem; background: var(--bg-card);
-  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: .6rem .8rem; background: var(--bg-panel);
+  border: 1px solid var(--border-dark); border-radius: var(--radius);
   display: flex; flex-direction: column; gap: .25rem;
 }
 .gear-item-top { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
-.gear-item-name { font-size: .88rem; color: var(--text-head); }
-.gear-item-price { font-size: .68rem; color: var(--cyan); white-space: nowrap; }
+.gear-item-name { font-size: .88rem; color: var(--text-main); }
+.gear-item-price { font-family: var(--font-mono); font-size: .68rem; color: var(--neon-cyan); white-space: nowrap; }
 .gear-item-meta { font-size: .72rem; color: var(--text-muted); line-height: 1.4; }
 .gear-item-actions { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .1rem; }
 .gear-action-btn {
@@ -359,13 +359,42 @@ body.combat-active .char-sub {
 .gear-del-btn   { border-color: #5a2222; color: #aa4444; }
 .gear-del-btn:hover { background: rgba(255,45,45,.06); border-color: var(--red); color: var(--red); }
 
+/* Gear-Tab-Buttons (4c) — scoped auf #tab-gear; globale .gear-action-btn-Basis
+   (combatGrappleBtn) bleibt unberührt, andere Tabs bleiben über ihr #tab-* gescopt. */
+#tab-gear .gear-action-btn {
+  background: var(--bg-panel-soft); border-color: var(--border-dark);
+  color: var(--text-muted); font-family: var(--font-mono);
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+#tab-gear .gear-action-btn:hover { background: var(--bg-panel-cyan); border-color: var(--cyan-soft); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+#tab-gear .gear-equip-btn { border-color: var(--cyan-soft); color: var(--neon-cyan); }
+#tab-gear .gear-equip-btn:hover { background: var(--bg-panel-cyan); border-color: var(--neon-cyan); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+#tab-gear .gear-sell-btn  { border-color: var(--success-green); color: var(--success-green); }
+#tab-gear .gear-sell-btn:hover { background: rgba(54,255,159,.08); border-color: var(--success-green); color: var(--success-green); box-shadow: 0 0 8px rgba(54,255,159,.4); }
+#tab-gear .gear-del-btn,
+#tab-gear .remove-btn { border-color: var(--red-soft); color: var(--neon-red); }
+#tab-gear .gear-del-btn:hover,
+#tab-gear .remove-btn:hover { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); box-shadow: var(--glow-red-s); }
+
+/* Raum-Tab (4c) — .ctrl-btn ist auf player.html sonst ungestylt (nur in dm/map.css
+   definiert, die player.html nicht lädt) → hier scoped ins HUD-System überführt. */
+#tab-raum .ctrl-btn {
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  color: var(--text-muted); border-radius: var(--radius);
+  font-family: var(--font-mono); cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+#tab-raum .ctrl-btn:hover { background: var(--bg-panel-cyan); border-color: var(--cyan-soft); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+
 /* ── Lifepath ── */
 .lp-grid { display: flex; flex-direction: column; gap: .7rem; }
 .lp-item { }
-.lp-key { font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .2rem; }
+.lp-key { font-family: var(--font-heading); font-weight: 600; font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .2rem; }
 .lp-val {
-  font-size: .88rem; color: var(--text);
-  background: var(--bg-card); border: 1px solid var(--border);
+  font-size: .88rem; color: var(--text-main);
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
   border-radius: var(--radius); padding: .45rem .75rem;
 }
 .lp-val:empty::after { content: '—'; color: var(--text-muted); }
@@ -393,19 +422,47 @@ body.combat-active .char-sub {
 .crit-modal-btns  { display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap; }
 .crit-already     { font-size:.75rem;color:var(--red);margin-bottom:.5rem; }
 
+/* Crit-Injury-Modal (4c) — NUR via #critModalBox gescopt. Die neutrale .crit-modal-*-Basis
+   bleibt unangetastet, damit das Damage-Apply-Modal (#dmgApplyBox, 4b) daran hängen bleibt. */
+#critModalBox { background: var(--bg-panel); border: 1px solid var(--neon-red);
+  box-shadow: var(--glow-red-m), var(--inset-cyan); }
+#critModalBox .crit-modal-title  { font-family: var(--font-heading); font-weight: 700;
+  color: var(--neon-red); text-shadow: var(--glow-red-s); }
+#critModalBox .crit-injury-name  { font-family: var(--font-heading); font-weight: 700;
+  color: var(--neon-red); text-shadow: var(--glow-red-s); }
+#critModalBox .crit-field-val    { color: var(--text-main); }
+#critModalBox .crit-divider      { border-top-color: var(--border-dark); }
+#critModalBox .crit-bonus-dmg    { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); }
+#critModalBox .crit-already      { color: var(--neon-red); }
+#critModalBox .btn-primary {
+  background: var(--neon-red); color: var(--bg-main);
+  font-family: var(--font-heading); font-weight: 600; border-radius: var(--radius);
+}
+#critModalBox .btn-primary:hover:not(:disabled) { background: var(--red-soft); box-shadow: var(--glow-red-s); }
+#critModalBox .btn-ghost {
+  background: transparent; border: 1px solid var(--border-dark); color: var(--text-muted);
+  font-family: var(--font-heading); font-weight: 600;
+}
+#critModalBox .btn-ghost:hover { border-color: var(--cyan-soft); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+
 /* ── Injuries tab ── */
-.injury-badge  { background:var(--red);color:#fff;border-radius:10px;font-size:.58rem;
+.injury-badge  { background:var(--neon-red);color:#fff;border-radius:10px;font-size:.58rem;
                  padding:.05rem .35rem;margin-left:.3rem;vertical-align:middle; }
-.injury-card   { background:var(--bg-card);border:1px solid var(--red);
+.injury-card   { background:var(--bg-panel);border:1px solid var(--red-soft);
                  border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:.5rem; }
 .injury-header { display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem; }
-.injury-name   { font-family:var(--font-display);color:var(--red);font-size:.9rem;flex:1; }
+.injury-name   { font-family:var(--font-heading);font-weight:600;color:var(--neon-red);font-size:.9rem;flex:1; }
 .injury-table  { font-size:.62rem;color:var(--text-muted);padding:.1rem .4rem;
-                 border:1px solid var(--border);border-radius:2px;text-transform:uppercase; }
-.injury-effect { font-size:.82rem;color:var(--text);margin-bottom:.4rem;line-height:1.5; }
+                 border:1px solid var(--border-dark);border-radius:2px;text-transform:uppercase; }
+.injury-effect { font-size:.82rem;color:var(--text-main);margin-bottom:.4rem;line-height:1.5; }
 .injury-meta   { font-size:.75rem;color:var(--text-muted);margin-top:.2rem; }
-.inj-key       { font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;
+.inj-key       { font-family:var(--font-heading);font-weight:600;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;
                  color:var(--text-muted);margin-right:.25rem; }
+
+/* Injuries-Tab (4c) — ✕ nutzt die geteilte .remove-btn-Basis; hier scoped ins HUD-Rot
+   (globale .remove-btn-Basis bleibt für den Cyberware-Legacy-Fallback unberührt). */
+#tab-injuries .remove-btn { border-color: var(--red-soft); color: var(--neon-red); }
+#tab-injuries .remove-btn:hover { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); box-shadow: var(--glow-red-s); }
 
 /* ── Remove button (on inventory items) ── */
 .remove-btn {
@@ -702,9 +759,9 @@ body.near-death::before {
 
 /* ── Notes Tab ── */
 .notes-wrap { display: flex; flex-direction: column; gap: .5rem; min-height: 300px; }
-.notes-header { font-family: var(--font-display); font-size: .65rem; letter-spacing: .15em; color: var(--text-muted); text-transform: uppercase; }
-.player-notes-area { flex: 1; min-height: 300px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: .88rem; padding: .75rem; resize: vertical; line-height: 1.6; }
-.player-notes-area:focus { outline: none; border-color: var(--cyan); }
+.notes-header { font-family: var(--font-heading); font-weight: 600; font-size: .65rem; letter-spacing: .15em; color: var(--text-muted); text-transform: uppercase; }
+.player-notes-area { flex: 1; min-height: 300px; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); font-family: var(--font-body); font-size: .88rem; padding: .75rem; resize: vertical; line-height: 1.6; }
+.player-notes-area:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 .notes-save-status { font-size: .65rem; color: var(--text-muted); text-align: right; height: 1em; }
 
 /* ── Buff Bar ── */
@@ -1629,3 +1686,53 @@ body.timer-active { padding-top: 50px; }
   transition: border-color .2s, color .2s;
 }
 .bm-x-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Rolle-Tab (4c) — Rollen-Interface-Body ins HUD ziehen, OHNE die geteilte
+   roles.css anzufassen (npc-sheet.html lädt sie ebenfalls / Phase 8).
+   → Nur die NICHT-Akzent-Tokens werden auf die HUD-Palette remapped; die
+     bewussten Pro-Rollen-Akzentfarben (--role-accent / -soft / -glow) bleiben.
+   → roles.css lädt NACH player.css, darum gewinnen Schrift-Overrides nur über
+     höhere Spezifität (#tab-role … bzw. .role-modal …).
+   → roles-core.js portaliert .role-modal an <body> (außerhalb #tab-role) →
+     Variablen + Modal-Schriften separat mit-gescopt.
+   Nur Optik (Token-/Schrift-Remap) — keine Radien/Layout (das ist 4d).
+   ════════════════════════════════════════════════════════════════════════════ */
+#tab-role,
+.role-modal {
+  --role-bg:      var(--bg-main);
+  --role-bg-elev: var(--bg-panel);
+  --role-bg-deep: var(--bg-panel-soft);
+  --role-text:    var(--text-main);
+  --role-muted:   var(--text-muted);
+  --role-line:    var(--border-dark);
+  --role-danger:  var(--neon-red);
+  --role-success: var(--success-green);
+}
+/* Display-Schrift (roles.css: Audiowide) → HUD-Heading (Rajdhani) */
+#tab-role .role-glyph,
+#tab-role .role-name,
+#tab-role .role-rank-value,
+#tab-role .role-section-title,
+#tab-role .role-card-name,
+#tab-role .role-card-badge,
+#tab-role .role-subtab,
+#tab-role .netrunner-floor-num,
+#tab-role .role-dice-btn,
+#tab-role .role-die,
+#tab-role .role-dice-result .dice-total,
+#tab-role .role-dice-result .dice-verdict,
+.role-modal .role-modal-body h3,
+.role-modal .role-modal-actions button,
+.role-modal .role-dice-btn,
+.role-modal .role-die,
+.role-modal .role-dice-result .dice-total,
+.role-modal .role-dice-result .dice-verdict {
+  font-family: var(--font-heading);
+}
+/* Mono-Displays (roles.css: JetBrains Mono) → HUD-Mono */
+#tab-role .role-dice-result,
+#tab-role .netrunner-floor,
+.role-modal .role-dice-result {
+  font-family: var(--font-mono);
+}

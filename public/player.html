@@ -41,14 +41,14 @@
 
 <!-- Armor Slot Modal -->
 <div id="armorSlotModal" hidden style="position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center">
-  <div style="background:#111;border:1px solid #00E5FF;border-radius:6px;padding:1.5rem;max-width:280px;width:90%">
-    <div style="font-family:Audiowide,sans-serif;font-size:.75rem;color:#00E5FF;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem">Slot wählen</div>
+  <div style="background:var(--bg-panel);border:1px solid var(--neon-cyan);box-shadow:var(--glow-cyan-m);border-radius:var(--radius);padding:1.5rem;max-width:280px;width:90%">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:.75rem;color:var(--neon-cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem">Slot wählen</div>
     <div style="display:flex;flex-direction:column;gap:.4rem">
-      <button data-armor-slot="head"   style="background:#1a1a1a;border:1px solid #00E5FF;color:#00E5FF;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem">🪖 HEAD</button>
-      <button data-armor-slot="body"   style="background:#1a1a1a;border:1px solid #00E5FF;color:#00E5FF;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem">🛡 BODY</button>
-      <button data-armor-slot="shield" style="background:#1a1a1a;border:1px solid #00E5FF;color:#00E5FF;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem">🛡 SHIELD</button>
+      <button data-armor-slot="head"   style="background:var(--bg-panel-soft);border:1px solid var(--cyan-soft);color:var(--neon-cyan);border-radius:var(--radius);padding:.4rem;cursor:pointer;font-size:.82rem">🪖 HEAD</button>
+      <button data-armor-slot="body"   style="background:var(--bg-panel-soft);border:1px solid var(--cyan-soft);color:var(--neon-cyan);border-radius:var(--radius);padding:.4rem;cursor:pointer;font-size:.82rem">🛡 BODY</button>
+      <button data-armor-slot="shield" style="background:var(--bg-panel-soft);border:1px solid var(--cyan-soft);color:var(--neon-cyan);border-radius:var(--radius);padding:.4rem;cursor:pointer;font-size:.82rem">🛡 SHIELD</button>
     </div>
-    <button id="armorSlotCancel" style="margin-top:.75rem;width:100%;background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:.35rem;cursor:pointer;font-size:.78rem">Abbrechen</button>
+    <button id="armorSlotCancel" style="margin-top:.75rem;width:100%;background:none;border:1px solid var(--border-dark);color:var(--text-muted);border-radius:var(--radius);padding:.35rem;cursor:pointer;font-size:.78rem">Abbrechen</button>
   </div>
 </div>
 
@@ -65,10 +65,10 @@
 
 <!-- Role Settings Modal -->
 <div id="roleSettingsModal" hidden style="position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center">
-  <div style="background:#111;border:1px solid var(--cyan);border-radius:6px;padding:1.5rem;max-width:300px;width:90%">
-    <div style="font-family:Audiowide,sans-serif;font-size:.75rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem">Rollen-Einstellungen</div>
+  <div style="background:var(--bg-panel);border:1px solid var(--neon-cyan);box-shadow:var(--glow-cyan-m);border-radius:var(--radius);padding:1.5rem;max-width:300px;width:90%">
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:.75rem;color:var(--neon-cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem">Rollen-Einstellungen</div>
     <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.25rem">Rolle</label>
-    <select id="roleSettingsRole" style="width:100%;background:#1a1a1a;border:1px solid #444;color:var(--text);border-radius:4px;padding:.4rem;font-size:.82rem;margin-bottom:.75rem">
+    <select id="roleSettingsRole" style="width:100%;background:var(--bg-panel-soft);border:1px solid var(--border-dark);color:var(--text-main);border-radius:var(--radius);padding:.4rem;font-size:.82rem;margin-bottom:.75rem">
       <option value="">— Keine —</option>
       <option value="solo">Solo</option>
       <option value="netrunner">Netrunner</option>
@@ -82,26 +82,26 @@
       <option value="rockerboy">Rockerboy</option>
     </select>
     <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.25rem">Rank (1–10)</label>
-    <input type="number" id="roleSettingsRank" min="1" max="10" style="width:100%;background:#1a1a1a;border:1px solid #444;color:var(--text);border-radius:4px;padding:.4rem;font-size:.82rem;margin-bottom:1rem">
-    <div style="border-top:1px solid #2a2a2a;margin-bottom:.75rem;padding-top:.75rem">
-      <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.4rem">Punkteverteilung (Combat Awareness, Specialties, etc.) wird im <strong style="color:var(--text)">Rollen-Tab</strong> vergeben. Hier zurücksetzen um neu zu verteilen:</div>
-      <button id="roleSettingsReset" style="width:100%;background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:.35rem;cursor:pointer;font-size:.75rem">↺ Punkte zurücksetzen</button>
-      <div id="roleSettingsResetMsg" style="font-size:.7rem;color:#4caf50;margin-top:.3rem;min-height:.9rem"></div>
+    <input type="number" id="roleSettingsRank" min="1" max="10" style="width:100%;background:var(--bg-panel-soft);border:1px solid var(--border-dark);color:var(--text-main);border-radius:var(--radius);padding:.4rem;font-size:.82rem;margin-bottom:1rem">
+    <div style="border-top:1px solid var(--border-dark);margin-bottom:.75rem;padding-top:.75rem">
+      <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.4rem">Punkteverteilung (Combat Awareness, Specialties, etc.) wird im <strong style="color:var(--text-main)">Rollen-Tab</strong> vergeben. Hier zurücksetzen um neu zu verteilen:</div>
+      <button id="roleSettingsReset" style="width:100%;background:none;border:1px solid var(--border-dark);color:var(--text-muted);border-radius:var(--radius);padding:.35rem;cursor:pointer;font-size:.75rem">↺ Punkte zurücksetzen</button>
+      <div id="roleSettingsResetMsg" style="font-size:.7rem;color:var(--success-green);margin-top:.3rem;min-height:.9rem"></div>
     </div>
     <div style="display:flex;gap:.5rem">
-      <button id="roleSettingsSave" style="flex:1;background:var(--red);border:none;color:#fff;border-radius:4px;padding:.5rem;cursor:pointer;font-family:Audiowide,sans-serif;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase">Speichern</button>
-      <button id="roleSettingsCancel" style="flex:1;background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:.5rem;cursor:pointer;font-size:.78rem">Abbrechen</button>
+      <button id="roleSettingsSave" style="flex:1;background:var(--neon-red);border:none;color:var(--bg-main);border-radius:var(--radius);padding:.5rem;cursor:pointer;font-family:var(--font-heading);font-weight:600;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase">Speichern</button>
+      <button id="roleSettingsCancel" style="flex:1;background:none;border:1px solid var(--border-dark);color:var(--text-muted);border-radius:var(--radius);padding:.5rem;cursor:pointer;font-size:.78rem">Abbrechen</button>
     </div>
   </div>
 </div>
 
 <!-- Cyberpsychosis Modal (Player) -->
 <div id="playerPsychosisModal" hidden style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center">
-  <div style="background:#0d0000;border:2px solid #FF0000;border-radius:8px;padding:2rem;max-width:400px;width:92%;text-align:center">
-    <div style="font-family:Audiowide,sans-serif;font-size:1.1rem;letter-spacing:.12em;text-transform:uppercase;color:#FF0000;margin-bottom:.6rem;animation:psychosis-pulse .8s ease-in-out infinite">⚠ CYBERPSYCHOSIS ⚠</div>
-    <div style="color:#FF2D2D;font-size:.95rem;margin-bottom:1rem;line-height:1.6">Deine Humanity ist auf <strong>0</strong> gesunken.<br>Der GM übernimmt die Kontrolle.</div>
-    <div style="color:#aaa;font-size:.75rem;margin-bottom:1.25rem">CP RED Core Rulebook S. 229</div>
-    <button onclick="document.getElementById('playerPsychosisModal').hidden=true;document.getElementById('playerPsychosisModal').style.display=''" style="background:#FF0000;border:none;color:#fff;border-radius:4px;padding:.5rem 2rem;cursor:pointer;font-family:Audiowide,sans-serif;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase">Verstanden</button>
+  <div style="background:var(--bg-panel-red);border:2px solid var(--danger-red);box-shadow:var(--glow-red-m);border-radius:var(--radius);padding:2rem;max-width:400px;width:92%;text-align:center">
+    <div style="font-family:var(--font-heading);font-weight:700;font-size:1.1rem;letter-spacing:.12em;text-transform:uppercase;color:var(--danger-red);margin-bottom:.6rem;animation:psychosis-pulse .8s ease-in-out infinite">⚠ CYBERPSYCHOSIS ⚠</div>
+    <div style="color:var(--neon-red);font-size:.95rem;margin-bottom:1rem;line-height:1.6">Deine Humanity ist auf <strong>0</strong> gesunken.<br>Der GM übernimmt die Kontrolle.</div>
+    <div style="color:var(--text-muted);font-size:.75rem;margin-bottom:1.25rem">CP RED Core Rulebook S. 229</div>
+    <button onclick="document.getElementById('playerPsychosisModal').hidden=true;document.getElementById('playerPsychosisModal').style.display=''" style="background:var(--neon-red);border:none;color:var(--bg-main);border-radius:var(--radius);padding:.5rem 2rem;cursor:pointer;font-family:var(--font-heading);font-weight:600;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase">Verstanden</button>
   </div>
 </div>
 
@@ -245,7 +245,7 @@
 <div class="tab-panel" id="tab-injuries"></div>
 <div class="tab-panel" id="tab-raum">
   <div style="padding:.5rem 0 .25rem">
-    <div id="raumBeschreibung" style="font-family:Audiowide,sans-serif;font-size:.7rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem"></div>
+    <div id="raumBeschreibung" style="font-family:var(--font-heading);font-weight:600;font-size:.7rem;color:var(--neon-cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem"></div>
     <div id="raumListe" style="display:flex;flex-direction:column;gap:.4rem"></div>
     <p class="empty-state" id="raumEmpty">Keine Items im Raum.</p>
   </div>
@@ -2199,7 +2199,7 @@ async function equipCyberwareFromGear(item, gearIdx) {
       const container = modal.querySelector('div:nth-child(2)');
       const dynBtns = slots.map(s => {
         const b = document.createElement('button');
-        b.style.cssText = 'background:#1a1a1a;border:1px solid #00E5FF;color:#00E5FF;border-radius:4px;padding:.4rem;cursor:pointer;font-size:.82rem';
+        b.style.cssText = 'background:var(--bg-panel-soft);border:1px solid var(--cyan-soft);color:var(--neon-cyan);border-radius:var(--radius);padding:.4rem;cursor:pointer;font-size:.82rem';
         b.textContent = SLOTLABELS[s] || s;
         b.onclick = () => cleanup(s);
         return b;
@@ -2283,8 +2283,8 @@ function renderRaumTab() {
   }
   if (emptyEl) emptyEl.style.display = 'none';
   lista.innerHTML = _roomItems.map(r => `
-    <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border)">
-      <span style="flex:1;font-size:.82rem;color:var(--text)">${r.item_name}${r.placed_by ? `<span style="color:var(--text-muted);font-size:.7rem"> (von ${r.placed_by})</span>` : ''}</span>
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:var(--bg-panel);border-radius:var(--radius);border:1px solid var(--border-dark)">
+      <span style="flex:1;font-size:.82rem;color:var(--text-main)">${r.item_name}${r.placed_by ? `<span style="color:var(--text-muted);font-size:.7rem"> (von ${r.placed_by})</span>` : ''}</span>
       <button class="ctrl-btn" data-pickup="${r.id}" data-name="${r.item_name}" style="font-size:.7rem;padding:.2rem .5rem">Aufheben</button>
     </div>`).join('');
 
@@ -2358,21 +2358,21 @@ async function renderRoleTab() {
       };
       const abilityName = ROLE_LABELS[(char.role||'').toLowerCase()] || 'Role Ability';
       const wrap = document.createElement('div');
-      wrap.style.cssText = 'padding:.75rem 1rem 1rem; border-top:1px solid #1e1e2a; margin-top:.5rem;';
+      wrap.style.cssText = 'padding:.75rem 1rem 1rem; border-top:1px solid var(--border-dark); margin-top:.5rem;';
       if (nextRank <= 10) {
         const canAfford = ip >= cost;
         wrap.innerHTML = `
-          <div style="font-size:.55rem;letter-spacing:.15em;color:#555;text-transform:uppercase;
-            font-family:Audiowide,sans-serif;margin-bottom:.45rem">${abilityName} — Rang aufleveln</div>
-          <button id="roleRankUpBtn" style="width:100%;padding:.5rem .75rem;font-family:Audiowide,sans-serif;
+          <div style="font-size:.55rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;
+            font-family:var(--font-heading);font-weight:600;margin-bottom:.45rem">${abilityName} — Rang aufleveln</div>
+          <button id="roleRankUpBtn" style="width:100%;padding:.5rem .75rem;font-family:var(--font-heading);font-weight:600;
             font-size:.72rem;letter-spacing:.05em;
-            background:${canAfford ? 'rgba(0,229,255,.08)' : 'rgba(60,60,60,.08)'};
-            border:1px solid ${canAfford ? '#00E5FF' : '#333'};
-            color:${canAfford ? '#00E5FF' : '#444'};border-radius:6px;
+            background:${canAfford ? 'var(--bg-panel-cyan)' : 'rgba(60,60,60,.08)'};
+            border:1px solid ${canAfford ? 'var(--neon-cyan)' : 'var(--border-dark)'};
+            color:${canAfford ? 'var(--neon-cyan)' : 'var(--text-dim)'};border-radius:var(--radius);
             cursor:${canAfford ? 'pointer' : 'not-allowed'};transition:background .15s;"
             ${!canAfford ? 'disabled' : ''}>
             ▲ Rang ${rank} → ${nextRank} &nbsp;·&nbsp; ${cost} IP
-            ${!canAfford ? `<span style="font-size:.6rem;color:#FF2D2D;margin-left:.5rem">(${cost - ip} IP fehlen)</span>` : ''}
+            ${!canAfford ? `<span style="font-size:.6rem;color:var(--neon-red);margin-left:.5rem">(${cost - ip} IP fehlen)</span>` : ''}
           </button>`;
         container.appendChild(wrap);
         if (canAfford) {
@@ -2388,7 +2388,7 @@ async function renderRoleTab() {
           });
         }
       } else {
-        wrap.innerHTML = `<div style="font-size:.62rem;color:#555;text-align:center;font-family:Audiowide,sans-serif">
+        wrap.innerHTML = `<div style="font-size:.62rem;color:var(--text-dim);text-align:center;font-family:var(--font-heading);font-weight:600">
           ${abilityName} — Max Rang erreicht</div>`;
         container.appendChild(wrap);
       }
@@ -3058,7 +3058,7 @@ async function showCritInjuryFlow() {
     <div class="crit-modal-sub">≥2 Sechsen gewürfelt.</div>
     <div style="margin:.5rem 0">
       <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);margin-bottom:.3rem">Ziel</div>
-      <select id="critTargetSelect" style="width:100%;padding:.4rem .6rem;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.82rem">
+      <select id="critTargetSelect" style="width:100%;padding:.4rem .6rem;background:var(--bg-panel-soft);border:1px solid var(--border-dark);border-radius:var(--radius);color:var(--text-main);font-size:.82rem">
         ${targetOptions}
       </select>
     </div>
@@ -3127,7 +3127,7 @@ async function applyInjury(injury, table) {
     if (!warn) {
       warn = document.createElement('div');
       warn.className = 'crit-no-target';
-      warn.style.cssText = 'color:var(--red);font-size:.75rem;margin-top:.4rem';
+      warn.style.cssText = 'color:var(--neon-red);font-size:.75rem;margin-top:.4rem';
       box.appendChild(warn);
     }
     warn.textContent = 'Bitte erst ein Ziel auswählen.';
@@ -3208,13 +3208,13 @@ function renderCritInjuries() {
     const qfEffect = quickfixByName[inj.name];
     if (qfEffect && qfEffect.expires_at_ingame && new Date(qfEffect.expires_at_ingame) > nowIngame) {
       const remainingMs = new Date(qfEffect.expires_at_ingame) - nowIngame;
-      return `<div class="injury-card" style="opacity:.4;border-color:#00E5FF44">
+      return `<div class="injury-card" style="opacity:.4;border-color:rgba(34,247,255,.27)">
         <div class="injury-header">
           <span class="injury-name">${inj.name}</span>
           <span class="injury-table">${inj.table === 'head' ? 'Head' : 'Body'}</span>
         </div>
         <div class="injury-effect" style="color:#888">${inj.effect}</div>
-        <div class="injury-meta" style="color:#00E5FF;font-size:.7rem">⏱ Quick Fix aktiv: ${gt ? gt.formatDuration(remainingMs) : '…'}</div>
+        <div class="injury-meta" style="color:var(--neon-cyan);font-size:.7rem">⏱ Quick Fix aktiv: ${gt ? gt.formatDuration(remainingMs) : '…'}</div>
         <div class="injury-meta"><span class="inj-key">Treatment</span>${inj.treatment || '—'}</div>
       </div>`;
     }
