@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <clipPath id="cut">
+      <path d="M6 6 H50 L58 14 V58 H14 L6 50 Z"/>
+    </clipPath>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.1" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Panel-Fläche mit Clip-Ecke -->
+  <g clip-path="url(#cut)">
+    <rect x="0" y="0" width="64" height="64" fill="#080A0F"/>
+    <rect x="0" y="0" width="64" height="64" fill="#0DB7D9" opacity="0.06"/>
+    <!-- Scanlines -->
+    <g fill="#22F7FF" opacity="0.05">
+      <rect x="0" y="12" width="64" height="1"/>
+      <rect x="0" y="24" width="64" height="1"/>
+      <rect x="0" y="36" width="64" height="1"/>
+      <rect x="0" y="48" width="64" height="1"/>
+    </g>
+  </g>
+
+  <!-- Neon-Rahmen entlang der Clip-Form -->
+  <path d="M6 6 H50 L58 14 V58 H14 L6 50 Z" fill="none"
+        stroke="#22F7FF" stroke-width="2.5" filter="url(#glow)"/>
+
+  <!-- Stilisiertes C (Cockpit/Bracket-Stil) -->
+  <path d="M44 22 H28 a8 8 0 0 0 -8 8 v4 a8 8 0 0 0 8 8 H44"
+        fill="none" stroke="#22F7FF" stroke-width="5"
+        stroke-linecap="square" filter="url(#glow)"/>
+
+  <!-- Roter Glitch-Akzent -->
+  <rect x="40" y="29" width="9" height="3" fill="#FF3158" filter="url(#glow)"/>
+</svg>

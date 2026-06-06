@@ -18,7 +18,7 @@
 | 4a player Header/Stats/Skills | ✅ fertig | + Cash im Bogen; in-place restyle; Würfel-Box-Fix |
 | 4b player Weapons/Armor/Cyberware | ✅ fertig | In-Place-CSS; .roll/.gear-action/.remove gescopt; #dmgApplyBox-Scoping; Autofire→Combat-Rot |
 | 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ✅ fertig | In-Place-Reskin; #tab-gear/#tab-raum/#critModalBox/#tab-injuries gescopt; Rollen-Body via #tab-role-Override (roles.css unangetastet) |
-| 4d player Layout-Pass | 🟡 läuft | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2/4d-3 = Tab-Inhalte offen |
+| 4d player Layout-Pass | 🟡 läuft | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2 ✅ (Stats/Skills/Karten/Distanz-Bar); 4d-3 offen (Lifepath/Notes/Injuries/Raum/Rolle) |
 | 5 dm.html | ⬜ offen | Opus xhigh |
 | 6 shop.html | ⬜ offen | |
 | 7 map.html | ⬜ offen | Opus xhigh; Canvas unantastbar; Nav-Sidebar hier |
@@ -358,6 +358,66 @@ neutrale `.crit-modal-*`-Basis + base.css-`.btn*` unangetastet; `roles.css`/`npc
 inline-getunten 📦-Unequip (Größen-Mismatch bis Armor-Relayout 4d-2); manueller Durchklick-Test (jeder Tab
 rendert, Würfeln/Skill-Check/Damage/Autofire/Reload/Equip/Sell/Drop/Injury/Raum/Name-Edit/Stat-Edit/Notes/
 Realtime identisch) steht noch aus (kein Browser in dieser Session).
+
+---
+
+## Phase 4d-2 — Relayout: Stats-Grid + Skills-Tabelle + Item-Karten + Distanz-Bar ✅
+**Geändert:** `player.css` (Stats/Res/Skills/Weapons/Armor/Cyberware/Gear/Distanz-Bar-Zonen +
+Button-System-Erweiterung; Braces **720/720**, vorher 707), `player.html` (Render-Funktionen
+`renderSkills`/`renderWeapons`/`renderArmor` + `distBarHtml`). **Nur CSS + Markup-Relayout,
+keine JS-Logik/IDs/Events/Handler/Berechnungen.** Nur 2 Dateien.
+
+**Stats-Tab (`renderStats`):** `.stat-grid` `repeat(5,1fr)` → `repeat(auto-fit,minmax(132px,1fr))`
+gap `--sp-3` (420px-`@media` entfernt — auto-fit regelt Mobile); `.stat-card`-Padding `--sp-4`;
+`.stat-val` `1.7rem` → `var(--fs-2xl)`; `.res-grid` `repeat(2,1fr)` → `repeat(auto-fit,minmax(150px,1fr))`,
+`.res-card`-Padding `--sp-3`. Kein Markup-Eingriff (Dice/Roll-Buttons bereits 4d-1-System,
+Inline-Notiz-Divs empNote/buffNote/penNote = Daten, unverändert).
+
+**Skills-Tab (`renderSkills`/`skillRowHtml`/Header-Zeile):** Echte Daten **1:1 erhalten**
+(Nutzer-Entscheidung) — Markup-Umbau nur: Roll + UP in `<div class="skill-actions">`-**Cluster**
+gruppiert (damit Buttons die sm/icon-Skala fassen); Inline-gestylte Header-Zeile → `.skill-head-row`
+(Label-Texte „Stat/Base/LVL" **wortgleich**, inkl. der bestehenden Label↔Var-Inversion:
+„Base" über `sk.lvl`, „LVL" über `ipLvl`). **Grid (`.skill-row` + `.skill-head-row`):**
+`28px minmax(0,1fr) 40px 40px 44px auto` (★ | Name | Stat | Base | LVL | Cluster), `min-height:40px`,
+dezenter Hover-BG. Zahlenspalten **rechtsbündig** `tabular-nums` mono (Stat dim, LVL cyan — Farben behalten).
+Penalty/Rollen-Badges bleiben in `.skill-base`; `contenteditable`-`lvlSpan` (Edit) unverändert;
+Favoriten-Sektion nutzt `skillRowHtml` → übernimmt Struktur automatisch.
+
+**Karten (§5):** **Weapons** `renderWeapons`: `weapons.map` + Nahkampf-Karten je in
+`<div class="weapon-grid">` (`repeat(auto-fit,minmax(320px,1fr))`, gap `--sp-3`); `.weapon-card`
+`margin-bottom:0` (Gap regelt), Padding `--sp-4`, `.weapon-name` `var(--fs-md)`. **Armor**
+`renderArmor`: `.armor-grid` → `repeat(auto-fit,minmax(150px,1fr))`, `.armor-sp` `var(--fs-xl)`.
+**Cyberware:** `.cyber-slot`-Padding `--sp-3` (HUM-Bar bleibt 8px; SVG-Klick/JS-Live-Barfarbe
+unangetastet, Gotcha #4). **Gear:** `.gear-list` flex → `repeat(auto-fit,minmax(280px,1fr))`-Grid;
+`.gear-item` auf **HUD-Karte** gehoben (Pseudo-Border clip-md `::before`/`::after` wie `.weapon-card`,
+Padding `--sp-4`, Hover-Glow), `.gear-item-name` `var(--fs-md)` Rajdhani.
+
+**Distanz-Bar (§9):** `distBarHtml`-Inline-Hex/Styles → Klassen + Tokens (`.dist-bar-label/-row/
+-input/-unit/-mapbtn/-info/-dv/-wname/-tname`). IDs alle erhalten (`weaponDistInput`/`weaponDistMapBtn`/
+`weaponDistInfo`/`wdBracket`/`wdDv`/`wdWeaponName`/`wdTargetName`); `#weaponDistInfo` behält
+initiales `style="display:none"` (JS toggelt `style.display`). `#FFD700` (wdDv) → `var(--warning-yellow)`,
+**`font-family:Audiowide` auf wdDv bewusst belassen** (Font-Migration = Phase 11). `#weaponDistMapBtn`
+ins Button-System (**primary md**), `flex:1` via `.dist-bar-mapbtn`.
+
+**Button-System-Erweiterung (4d-2):** zu den bestehenden 4d-1-Selektorlisten (Basis-Look +
+`::before`/`::after` + hover/hover::after/active/focus-visible + Größen + Varianten + coarse)
+hinzugefügt: `.skill-row .roll-btn` + `.skill-up-btn` (**primary, neue sm-32-Größe**),
+`.skill-fav-btn` (**ghost-icon icon-sm 30**, `.active` = warning-yellow), `#weaponDistMapBtn`
+(**primary md**), `#tab-armor .unequip-btn` (**ghost-icon icon-sm 30** — löst den
+4d-1-Größen-Mismatch zwischen 📦-Unequip und ✕-Remove auf). `.skill-up-btn.unaffordable` bleibt
+klickbarer gedämpfter Zustand (kein `:disabled` — Handler bleibt); `.skill-maxed` (Span) unverändert.
+Alte enge Regeln (`.skill-row .roll-btn` 287-289, 7-Spalten-Redef, `.skill-fav-btn`/`.skill-up-btn`-Basis)
+ersetzt/getrimmt. Armor-📦-Inline-Style + `float:right`-Span → `.armor-slot-actions`-Klasse.
+
+**Verifiziert:** `player.css` Braces 720/720; Haupt-Modul-Script `node --check` OK (Template-
+Literal-/Div-Balance der neuen Wrapper sauber); nur `player.html` + `player.css` geändert (kein JS);
+geteilte Basisklassen (`combatGrappleBtn`/globale `.gear-action-btn`/`.remove-btn`/`.roll-btn`,
+neutrale `.crit-modal-*`) + `#tab-*`-Scopes intakt; `roles.css`/`npc-sheet.html` unverändert.
+**Offen/zu beachten:** manueller Durchklick-Test (jeder Tab rendert, Würfeln/Skill-Check/▲UP/★Fav/
+Damage/Autofire/Reload/Ammo/Equip/Unequip/Sell/Drop/Armor-Ablation/Cyberware-SVG/Distanz-Bar+Map-Sync/
+Realtime identisch) steht aus (kein Browser in dieser Session). Weapon-Karten mit offenem Autofire-
+Rechner werden im Grid zu höheren Zeilen (auto-rows, akzeptabel). **4d-3** offen: Lifepath/Notes/
+Injuries/Raum/Rolle (+ Rolle-Tab-Buttons `.role-dice-btn` via geteilter roles.css).
 
 ---
 

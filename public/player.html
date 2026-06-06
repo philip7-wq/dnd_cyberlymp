@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>Character — LZRV Hub</title>
   <!-- Redesign-Fundament (Master §3: ZUERST laden) -->
   <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
@@ -1414,8 +1415,10 @@ function renderSkills() {
       <span class="skill-stat">${statVal}</span>
       ${lvlSpan}
       <span class="skill-base">${ipLvl}${penBadge}${motoNote}${surgNote}${medTechNote}${techFieldNote}</span>
-      <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1" title="1d10+${base}">⚄</button>
-      ${upgradeBtn}
+      <div class="skill-actions">
+        <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1" title="1d10+${base}">⚄</button>
+        ${upgradeBtn}
+      </div>
     </div>`;
   }
 
@@ -1453,8 +1456,8 @@ function renderSkills() {
     html += '</div>';
   }
 
-  html += '<div class="skill-row" style="font-size:.62rem;color:var(--text-muted);border-bottom:1px solid var(--border);padding-bottom:.3rem;margin-bottom:.4rem">'
-    + '<span></span><span>Skill</span><span style="text-align:center">Stat</span><span style="text-align:center">Base</span><span style="text-align:center">LVL</span><span></span><span style="text-align:center">UP</span></div>';
+  html += '<div class="skill-head-row">'
+    + '<span></span><span>Skill</span><span class="skill-head-num">Stat</span><span class="skill-head-num">Base</span><span class="skill-head-num">LVL</span><span></span></div>';
 
   const orderedCats = [...CAT_ORDER.filter(c => groups[c]), ...Object.keys(groups).filter(c => !CAT_ORDER.includes(c))];
   for (const cat of orderedCats) {
@@ -1536,19 +1539,17 @@ function renderWeapons() {
 
   // Distance bar HTML (prepended to weapons tab)
   const distBarHtml = `<div class="weapon-distance-bar">
-    <div style="font-size:.65rem;color:#555;letter-spacing:.08em;margin-bottom:.35rem">DISTANZ ZUM ZIEL</div>
-    <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.35rem">
-      <input type="number" id="weaponDistInput" min="0" placeholder="m"
-        style="width:56px;background:#0f0f18;border:1px solid #2a2a3a;color:#e0e0e8;border-radius:4px;padding:.2rem .4rem;font-size:.8rem">
-      <span style="font-size:.7rem;color:#555">m</span>
-      <button id="weaponDistMapBtn" class="ctrl-btn" style="font-size:.65rem;padding:.2rem .5rem;flex:1">📡 Aus Map</button>
+    <div class="dist-bar-label">DISTANZ ZUM ZIEL</div>
+    <div class="dist-bar-row">
+      <input type="number" id="weaponDistInput" min="0" placeholder="m" class="dist-bar-input">
+      <span class="dist-bar-unit">m</span>
+      <button id="weaponDistMapBtn" class="ctrl-btn dist-bar-mapbtn">📡 Aus Map</button>
     </div>
-    <div id="weaponDistInfo" style="display:none;font-size:.72rem;color:#888;
-      padding:.25rem .5rem;background:#0f0f18;border:1px solid #1e1e2a;border-radius:4px;margin-bottom:.5rem">
+    <div id="weaponDistInfo" class="dist-bar-info" style="display:none">
       <span id="wdBracket">—</span> · DV:
-      <span id="wdDv" style="color:#FFD700;font-family:Audiowide,sans-serif">—</span>
-      <span id="wdWeaponName" style="color:#555;margin-left:.4rem"></span>
-      <span id="wdTargetName" style="color:#FF2D2D;font-size:.6rem;margin-left:.4rem"></span>
+      <span id="wdDv" class="dist-bar-dv">—</span>
+      <span id="wdWeaponName" class="dist-bar-wname"></span>
+      <span id="wdTargetName" class="dist-bar-tname"></span>
     </div>
   </div>`;
 
@@ -1562,7 +1563,7 @@ function renderWeapons() {
   const ammoTypes = AMMO_DATA?.ammo_types || [];
   const inv = char.ammo_inventory || {};
 
-  el.innerHTML = buildAmmoInventoryHtml() + distBarHtml + weapons.map((w, i) => {
+  el.innerHTML = buildAmmoInventoryHtml() + distBarHtml + '<div class="weapon-grid">' + weapons.map((w, i) => {
     const sellPrice = Math.round((w.price || 0) * 0.65);
     const meta = [w.ammo ? `Ammo: ${w.ammo}` : '', w.rof ? `ROF: ${w.rof}` : '', w.hands ? `Hands: ${w.hands}` : ''].filter(Boolean).join(' · ');
 
@@ -1656,7 +1657,7 @@ function renderWeapons() {
       ${specialAmmoInfo}
       ${autofirePanelHtml}
     </div>`;
-  }).join('');
+  }).join('') + '</div>';
 
   el.querySelectorAll('.gear-sell-btn').forEach(btn => {
     btn.addEventListener('click', () => sellItem(btn.dataset.sellInv, parseInt(btn.dataset.sellIdx)));
@@ -1743,6 +1744,7 @@ function renderWeapons() {
 
   const meleeHtml = `
     <div class="weapons-section-head" style="margin-top:1rem">NAHKAMPF</div>
+    <div class="weapon-grid">
     <div class="weapon-card">
       <div class="weapon-header-row">
         <span class="weapon-name">Brawling</span>
@@ -1774,6 +1776,7 @@ function renderWeapons() {
         <span class="weapon-ammo-info-req" style="margin-left:.5rem">${c.note}</span>
       </div>
     </div>`).join('')}
+    </div>
   `;
   el.insertAdjacentHTML('beforeend', meleeHtml);
 
@@ -1897,7 +1900,7 @@ function renderArmor() {
       const spCls = spPct > 50 ? '' : spPct > 20 ? ' warn' : ' crit';
       const destroyed = s.name && curSp <= 0;
       return `<div class="armor-slot${destroyed?' armor-slot--destroyed':''}">
-        <div class="armor-slot-label">${label}${s.name ? `<span style="float:right;display:flex;gap:.2rem"><button class="unequip-btn" data-inv="armor" data-idx="${slotKey}" title="Ablegen → Gear" style="background:none;border:none;cursor:pointer;font-size:.7rem;opacity:.6">📦</button><button class="remove-btn" data-inv="armor" data-idx="${slotKey}">✕</button></span>` : ''}</div>
+        <div class="armor-slot-label">${label}${s.name ? `<span class="armor-slot-actions"><button class="unequip-btn" data-inv="armor" data-idx="${slotKey}" title="Ablegen → Gear">📦</button><button class="remove-btn" data-inv="armor" data-idx="${slotKey}">✕</button></span>` : ''}</div>
         <div class="armor-name">${s.name || '—'}</div>
         <div class="armor-sp-row">
           <span class="armor-sp${destroyed?' armor-sp--destroyed':''}">${curSp}${maxSp && maxSp !== curSp ? ` / ${maxSp}` : ''}</span>

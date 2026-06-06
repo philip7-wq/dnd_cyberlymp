@@ -227,33 +227,42 @@ body.combat-active .char-sub {
 .sec-head:first-child { margin-top: 0; }
 
 /* ── Stats grid (HUD-Kacheln, Clip-Border via Pseudo-Layer) ── */
+/* 4d Fix3: feste, gleich breite Spalten füllen die volle Breite (10 Karten → 5×2 Desktop,
+   keine einsame Rest-Karte). Breakpoints 4 (mittel) / 2 (Mobile) — 3 bewusst vermieden
+   (gäbe 9+1 = einsame Karte). grid-auto-rows:1fr hält alle Reihen gleich hoch. */
 .stat-grid {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--sp-2);
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: var(--sp-3); grid-auto-rows: 1fr;
 }
-@media (max-width: 420px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 560px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
 .stat-card {
   position: relative; isolation: isolate;
-  padding: var(--sp-3) var(--sp-2); text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp-1);
+  padding: var(--sp-3); text-align: center;
   border-radius: var(--radius);
   clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
                      calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm));
   transition: filter var(--t-fast) var(--ease);
 }
+/* Dice-Button im Flex-Stapel: Abstand kommt aus dem Card-gap (kein extra margin-top) */
+.stat-card .stat-dice-btn, .stat-card .stat-roll-btn { margin: 0; }
 .stat-card::before { content: ""; position: absolute; inset: 0; z-index: -1;
   background: var(--border-dark); clip-path: inherit; }
 .stat-card::after  { content: ""; position: absolute; inset: var(--border-w); z-index: -1;
   background: var(--bg-panel); clip-path: inherit; }
 .stat-card:hover { filter: drop-shadow(var(--glow-cyan-s)); }
 .stat-key  { font-family: var(--font-heading); font-size: .6rem; letter-spacing: var(--tracking); color: var(--text-muted); text-transform: uppercase; }
-.stat-val  { font-family: var(--font-mono); font-size: 1.7rem; color: var(--neon-cyan); line-height: 1.1; text-shadow: var(--glow-cyan-s); }
+.stat-val  { font-family: var(--font-mono); font-size: var(--fs-2xl); color: var(--neon-cyan); line-height: 1.1; text-shadow: var(--glow-cyan-s); }
 
 /* ── Resource grid ── */
 .res-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-2);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sp-3);
 }
 .res-card {
   position: relative; isolation: isolate;
-  padding: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3);
   display: flex; justify-content: space-between; align-items: center;
   border-radius: var(--radius);
   clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
@@ -274,19 +283,48 @@ body.combat-active .char-sub {
   border-bottom: 1px solid var(--border-dark); padding-bottom: var(--sp-2); margin: var(--sp-5) 0 var(--sp-3);
 }
 .skill-group:first-child .skill-cat-label { margin-top: 0; }
+/* 4d-2: Tabelle — feste schmale Zahlenspalten (rechtsbündig mono) + fixer Aktions-Cluster.
+   Grid: ★ | Name | Stat | Base(sk.lvl) | LVL(ipLvl+Badges) | [⚄ + ▲ Cluster] */
 .skill-row {
-  display: grid; grid-template-columns: 18px 1fr 32px 26px 32px 28px;
-  align-items: center; gap: .25rem;
-  padding: .28rem .2rem; border-bottom: 1px solid var(--border-dark); font-size: .85rem;
+  display: grid; grid-template-columns: 28px minmax(0, 1fr) 40px 40px 44px auto;
+  align-items: center; gap: var(--sp-2);
+  min-height: 40px; padding: 0 var(--sp-1);
+  border-bottom: 1px solid var(--border-dark); font-size: .85rem;
+  transition: background var(--t-fast) var(--ease);
 }
+.skill-row:hover { background: rgba(34,247,255,.04); }
+.skill-head-row {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr) 40px 40px 44px auto;
+  align-items: center; gap: var(--sp-2); padding: 0 var(--sp-1) var(--sp-2);
+  border-bottom: 1px solid var(--border-dark); margin-bottom: var(--sp-2);
+  font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-xs);
+  letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-muted);
+}
+.skill-head-num { text-align: right; }
 .skill-name  { color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.skill-stat  { text-align: center; font-family: var(--font-mono); font-size: .65rem; color: var(--text-muted); }
-.skill-lvl   { text-align: center; color: var(--neon-cyan); font-family: var(--font-mono); font-size: .8rem; }
-.skill-base  { text-align: center; color: var(--text-main); font-family: var(--font-mono); font-size: .8rem; }
-/* Skill-Check-Würfelknopf (scoped — Waffen-/Cyberware-.roll-btn bleibt unberührt) */
-.skill-row .roll-btn { border-color: var(--cyan-dark); color: var(--text-muted); border-radius: var(--radius);
-  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
-.skill-row .roll-btn:hover { border-color: var(--cyan-soft); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+.skill-stat  { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: .7rem; color: var(--text-muted); }
+.skill-lvl   { text-align: right; font-variant-numeric: tabular-nums; color: var(--neon-cyan); font-family: var(--font-mono); font-size: .82rem; }
+.skill-base  { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-main); font-family: var(--font-mono); font-size: .82rem; }
+/* 4d Fix4 (P1): Edit-State (contenteditable LVL-Feld) rechtsbündig halten wie im Ruhezustand.
+   Der Edit-Rahmen ist eine outline (im Markup) → nimmt KEINEN Layout-Platz. Der sichtbare
+   Sprung kam allein vom Inline-`text-align:center`, das `text-align:right` überschrieb →
+   hier zurück auf rechtsbündig gezwungen (Inline schlagen = `!important`). Zelle/Spaltenbreite
+   unverändert, Zahl bleibt exakt an Position, nur die Outline erscheint drumherum. */
+.skill-lvl[contenteditable="true"] { text-align: right !important; }
+/* 4d Fix4 (P2): Skills-"Base"-Toggle aktiv = getönt + grüner Border/Text/Glow (Label lesbar),
+   NICHT vollflächig grün gefüllt wie der geteilte .stats-edit-btn-Toggle. Per-ID gescopt →
+   der Stats-Tab-Edit-Toggle (#statsEditBtn) bleibt unverändert. */
+#skillBaseEditBtn.active {
+  --btn-fill: var(--bg-panel-soft);
+  --btn-fill-hover: rgba(54,255,159,.10);
+  --btn-color: var(--success-green);
+  --btn-border: var(--success-green);
+  --btn-glow: 0 0 8px rgba(54,255,159,.45);
+  filter: drop-shadow(var(--btn-glow));
+}
+#skillBaseEditBtn.active:hover { color: var(--success-green); }
+/* Aktions-Cluster (⚄ Roll + ▲ UP) — fix rechts, nicht über volle Breite gespreizt */
+.skill-actions { display: flex; gap: var(--sp-1); justify-content: flex-end; align-items: center; }
 .roll-btn {
   background: none; border: 1px solid var(--border); border-radius: 3px;
   color: var(--text-muted); font-size: .9rem; padding: .25rem 0;
@@ -298,9 +336,13 @@ body.combat-active .char-sub {
 .roll-toast.dmg-orange      { border-color: #FF8C00; color: #FF8C00; }
 
 /* ── Weapons (HUD-Karten, Clip-Border via Pseudo-Layer) ── */
+/* 4d-2: content-getriebenes Grid (Mobile 1 Spalte); Karten-Gap statt margin-bottom */
+.weapon-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--sp-3);
+}
 .weapon-card {
   position: relative; isolation: isolate;
-  padding: .7rem .9rem; margin-bottom: var(--sp-3);
+  padding: var(--sp-4); margin-bottom: 0;
   border-radius: var(--radius);
   clip-path: polygon(var(--clip-md) 0, 100% 0, 100% calc(100% - var(--clip-md)),
                      calc(100% - var(--clip-md)) 100%, 0 100%, 0 var(--clip-md));
@@ -313,7 +355,7 @@ body.combat-active .char-sub {
 .weapon-card:hover   { filter: drop-shadow(var(--glow-cyan-s)); }
 .weapon-header     { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .25rem; }
 .weapon-header-row { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin-bottom: .3rem; }
-.weapon-name { font-family: var(--font-heading); font-weight: 600; font-size: .95rem; letter-spacing: .03em; color: var(--text-main); }
+.weapon-name { font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-md); letter-spacing: .03em; color: var(--text-main); }
 .weapon-stats { display: flex; flex-wrap: wrap; gap: .4rem .8rem; font-size: .8rem; }
 .ws-pair { display: flex; flex-direction: column; }
 .ws-label { font-size: .6rem; letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-muted); }
@@ -341,10 +383,11 @@ body.combat-active .char-sub {
 }
 
 /* ── Armor (HUD-Slots, Clip-Border via Pseudo-Layer) ── */
-.armor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }
+/* 4d-2: content-getriebenes Grid (statt fix 3 Spalten) */
+.armor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sp-3); }
 .armor-slot {
   position: relative; isolation: isolate;
-  padding: .7rem; text-align: center;
+  padding: var(--sp-3); text-align: center;
   border-radius: var(--radius);
   clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
                      calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm));
@@ -356,8 +399,10 @@ body.combat-active .char-sub {
   background: var(--bg-panel); clip-path: inherit; }
 .armor-slot:hover   { filter: drop-shadow(var(--glow-cyan-s)); }
 .armor-slot-label { font-family: var(--font-heading); font-weight: 600; font-size: .6rem; letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-muted); margin-bottom: .3rem; }
+/* Slot-Aktionen (📦 Abrüsten + ✕ Löschen) — beide icon-sm 30 aus dem Button-System (4d-2) */
+.armor-slot-actions { float: right; display: flex; gap: var(--sp-1); }
 .armor-name { font-size: .75rem; color: var(--text-main); min-height: 1.5em; }
-.armor-sp   { font-family: var(--font-mono); font-size: 1.6rem; color: var(--neon-cyan); text-shadow: var(--glow-cyan-s); }
+.armor-sp   { font-family: var(--font-mono); font-size: var(--fs-xl); color: var(--neon-cyan); text-shadow: var(--glow-cyan-s); }
 .armor-pen  { font-family: var(--font-mono); font-size: .68rem; color: var(--text-muted); }
 .armor-total-row { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; padding: .5rem .75rem; background: var(--bg-panel-red); border: 1px solid var(--red-soft); border-radius: var(--radius); }
 .armor-total-label { font-family: var(--font-heading); font-weight: 600; font-size: .6rem; text-transform: uppercase; letter-spacing: var(--tracking); color: var(--text-muted); flex: 1; }
@@ -381,14 +426,24 @@ body.combat-active .char-sub {
 }
 
 /* ── Gear ── */
-.gear-list { display: flex; flex-direction: column; gap: .45rem; }
+/* 4d-2: Karten-Grid + HUD-Karte (Pseudo-Border clip-md wie .weapon-card) */
+.gear-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-3); }
 .gear-item {
-  padding: .6rem .8rem; background: var(--bg-panel);
-  border: 1px solid var(--border-dark); border-radius: var(--radius);
-  display: flex; flex-direction: column; gap: .25rem;
+  position: relative; isolation: isolate;
+  padding: var(--sp-4);
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  border-radius: var(--radius);
+  clip-path: polygon(var(--clip-md) 0, 100% 0, 100% calc(100% - var(--clip-md)),
+                     calc(100% - var(--clip-md)) 100%, 0 100%, 0 var(--clip-md));
+  transition: filter var(--t-fast) var(--ease);
 }
+.gear-item::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--border-dark); clip-path: inherit; }
+.gear-item::after  { content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--bg-panel); clip-path: inherit; }
+.gear-item:hover   { filter: drop-shadow(var(--glow-cyan-s)); }
 .gear-item-top { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
-.gear-item-name { font-size: .88rem; color: var(--text-main); }
+.gear-item-name { font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-md); color: var(--text-main); }
 .gear-item-price { font-family: var(--font-mono); font-size: .68rem; color: var(--neon-cyan); white-space: nowrap; }
 .gear-item-meta { font-size: .72rem; color: var(--text-muted); line-height: 1.4; }
 .gear-item-actions { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .1rem; }
@@ -774,14 +829,11 @@ body.near-death::before {
 .verdict-fail { color: var(--neon-red); }
 .skill-modal-btns { display: flex; gap: .5rem; }
 
-/* ── Skill Favorites ── */
-.skill-fav-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: .85rem; padding: 0 .15rem; transition: color var(--t-fast) var(--ease); line-height: 1; }
-.skill-fav-btn.active { color: var(--warning-yellow); text-shadow: 0 0 8px rgba(255,209,102,.5); }
+/* ── Skill Favorites (.skill-fav-btn → 4d-2 Button-System: ghost-icon icon-sm, active=yellow) ── */
 .skill-favs-section { margin-bottom: .5rem; padding-bottom: .5rem; border-bottom: 1px solid var(--border-dark); }
 .skill-favs-label { font-family: var(--font-heading); font-size: .55rem; text-transform: uppercase; letter-spacing: var(--tracking); color: var(--neon-cyan); margin-bottom: .3rem; }
 
-/* ── Skill grid: 7 columns (★ name stat lvl base roll upgrade) ── */
-.skill-row { grid-template-columns: 18px 1fr 32px 26px 32px 28px 26px; }
+/* (Skill-Grid-Spalten in der Haupt-.skill-row-Regel oben definiert — 4d-2) */
 
 /* ── IP Banner ── */
 .skill-penalty-banner { font-family: var(--font-mono); font-size: .72rem; color: var(--neon-red); background: rgba(255,49,88,.08); border: 1px solid var(--red-soft); border-radius: var(--radius); padding: .3rem .6rem; margin-bottom: .4rem; }
@@ -789,11 +841,10 @@ body.near-death::before {
 .skill-ip-banner strong { color: var(--neon-cyan); font-family: var(--font-mono); }
 .skill-pen-badge { font-size: .6rem; color: var(--neon-red); margin-left: .2rem; cursor: default; }
 
-/* ── Skill upgrade button ── */
-.skill-up-btn { background: rgba(34,247,255,.08); border: 1px solid var(--cyan-soft); color: var(--neon-cyan); border-radius: var(--radius); font-size: .6rem; padding: 0; cursor: pointer; width: 100%; text-align: center; transition: background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
-.skill-up-btn:hover { background: rgba(34,247,255,.2); box-shadow: var(--glow-cyan-s); }
-.skill-up-btn.unaffordable { opacity: .3; cursor: default; border-color: var(--border-dark); color: var(--text-muted); background: none; box-shadow: none; }
-.skill-maxed { font-size: .58rem; color: var(--text-dim); text-align: center; display: block; }
+/* ── Skill upgrade button (.skill-up-btn → 4d-2 Button-System: primary sm) ── */
+/* .unaffordable bleibt klickbarer, gedämpfter Zustand (kein :disabled — Handler bleibt) */
+.skill-up-btn.unaffordable { --btn-border: var(--border-dark); --btn-color: var(--text-dim); --btn-glow: none; opacity: .45; }
+.skill-maxed { font-size: .58rem; color: var(--text-dim); text-align: center; display: block; min-width: 30px; }
 
 /* ── Notes Tab ── */
 .notes-wrap { display: flex; flex-direction: column; gap: .5rem; min-height: 300px; }
@@ -1294,7 +1345,7 @@ body.near-death::before {
 
 .cyber-slot {
   background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
-  border-radius: var(--radius); padding: .55rem .7rem;
+  border-radius: var(--radius); padding: var(--sp-3);
   transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
 .cyber-slot.has-items {
@@ -1414,11 +1465,34 @@ body.near-death::before {
 .ammo-inv-ok      { border-color: var(--success-green); color: var(--success-green); }
 .ammo-inv-low     { border-color: var(--warning-yellow); color: var(--warning-yellow); }
 .ammo-inv-empty   { border-color: var(--neon-red); color: var(--neon-red); }
-/* Distanz-Bar — HUD-Rahmen (Inhalt bleibt inline-gestylt, kein Render-JS-Eingriff) */
+/* Distanz-Bar (§9) — HUD-Rahmen + Inhalt 4d-2 von Inline-Hex auf Klassen/Tokens überführt.
+   wdDv behält bewusst Audiowide (Font-Migration = Phase 11). */
 .weapon-distance-bar {
   background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
-  border-radius: var(--radius); padding: .55rem .65rem; margin-bottom: var(--sp-3);
+  border-radius: var(--radius); padding: var(--sp-3); margin-bottom: var(--sp-3);
 }
+.dist-bar-label {
+  font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-xs);
+  letter-spacing: var(--tracking); text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: var(--sp-2);
+}
+.dist-bar-row { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; margin-bottom: var(--sp-2); }
+.dist-bar-input {
+  width: 64px; padding: .25rem .45rem; font-size: .8rem;
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  color: var(--text-main); border-radius: var(--radius); font-family: var(--font-mono);
+}
+.dist-bar-input:focus { outline: none; border-color: var(--cyan-soft); box-shadow: var(--glow-cyan-s); }
+.dist-bar-unit { font-size: .7rem; color: var(--text-muted); }
+.dist-bar-mapbtn { flex: 1; }
+.dist-bar-info {
+  font-family: var(--font-mono); font-size: .72rem; color: var(--text-muted);
+  padding: .25rem .5rem; background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); margin-bottom: var(--sp-2);
+}
+.dist-bar-dv { color: var(--warning-yellow); font-family: Audiowide, sans-serif; }
+.dist-bar-wname { color: var(--text-dim); margin-left: .4rem; }
+.dist-bar-tname { color: var(--neon-red); font-size: .6rem; margin-left: .4rem; }
 
 /* ── Weapon card ammo info block (right column) ── */
 .weapon-card--ammo { display: flex; gap: .6rem; align-items: flex-start; }
@@ -1769,10 +1843,11 @@ body.timer-active { padding-top: 50px; }
    schützen die geteilten Basisklassen (combatGrappleBtn, globale
    .gear-action-btn/.remove-btn/.roll-btn, neutrale .crit-modal-*).
    Größenskala: lg44 / md38 / sm32 / icon-md36 / icon-sm30 (38→44 @coarse).
-   NICHT hier (kommt mit Tab-Content-Relayout):
-     · Skills-Tab-Buttons (.skill-row .roll-btn/.skill-up-btn/.skill-fav-btn)
-       — enge Grid-Spalten (18/26/28px) → erst nach Skill-Grid-Relayout (4d-2).
-     · #weaponDistMapBtn (Distanz-Bar-Native-Rest → 4d-2).
+   4d-2 ergänzt: Skills-Tab-Buttons (.skill-row .roll-btn/.skill-up-btn = primary sm32;
+   .skill-fav-btn = ghost-icon sm30, .active = warning-yellow) nach Skill-Grid-Relayout;
+   #weaponDistMapBtn (Distanz-Bar = primary md); #tab-armor .unequip-btn (📦 = ghost-icon sm30,
+   löst den 4d-1-Größen-Mismatch mit dem ✕ auf).
+   NICHT hier:
      · Rolle-Tab-Buttons (.role-dice-btn via geteilter roles.css → späterer Pass).
    .death-save-btn bleibt absichtlich OHNE Clip (death-pulse nutzt box-shadow,
    würde vom clip-path geschnitten) — nur combat-lg-Größe angeglichen.
@@ -1798,7 +1873,9 @@ body.timer-active { padding-top: 50px; }
 #critModalBox .btn-ghost,
 #dmgApplyBox .btn-primary,
 #dmgApplyBox .btn-ghost,
-#skillRollBtn {
+#skillRollBtn,
+.skill-row .roll-btn, .skill-up-btn, .skill-fav-btn,
+#weaponDistMapBtn, #tab-armor .unequip-btn {
   --btn-border: var(--cyan-soft);
   --btn-fill: var(--bg-panel-soft);
   --btn-fill-hover: var(--bg-panel-cyan);
@@ -1841,7 +1918,9 @@ body.timer-active { padding-top: 50px; }
 #tab-gear .gear-action-btn::before, #tab-cyberware .gear-action-btn::before,
 #tab-armor .remove-btn::before, #tab-injuries .remove-btn::before, #tab-raum .ctrl-btn::before,
 #critModalBox .btn-primary::before, #critModalBox .btn-ghost::before,
-#dmgApplyBox .btn-primary::before, #dmgApplyBox .btn-ghost::before, #skillRollBtn::before {
+#dmgApplyBox .btn-primary::before, #dmgApplyBox .btn-ghost::before, #skillRollBtn::before,
+.skill-row .roll-btn::before, .skill-up-btn::before, .skill-fav-btn::before,
+#weaponDistMapBtn::before, #tab-armor .unequip-btn::before {
   content: ""; position: absolute; inset: 0; z-index: -1;
   background: var(--btn-border); clip-path: inherit;
 }
@@ -1851,7 +1930,9 @@ body.timer-active { padding-top: 50px; }
 #tab-gear .gear-action-btn::after, #tab-cyberware .gear-action-btn::after,
 #tab-armor .remove-btn::after, #tab-injuries .remove-btn::after, #tab-raum .ctrl-btn::after,
 #critModalBox .btn-primary::after, #critModalBox .btn-ghost::after,
-#dmgApplyBox .btn-primary::after, #dmgApplyBox .btn-ghost::after, #skillRollBtn::after {
+#dmgApplyBox .btn-primary::after, #dmgApplyBox .btn-ghost::after, #skillRollBtn::after,
+.skill-row .roll-btn::after, .skill-up-btn::after, .skill-fav-btn::after,
+#weaponDistMapBtn::after, #tab-armor .unequip-btn::after {
   content: ""; position: absolute; inset: var(--border-w); z-index: -1;
   background: var(--btn-fill); clip-path: inherit;
   transition: background var(--t-fast) var(--ease);
@@ -1863,7 +1944,9 @@ body.timer-active { padding-top: 50px; }
 #tab-gear .gear-action-btn:hover, #tab-cyberware .gear-action-btn:hover,
 #tab-armor .remove-btn:hover, #tab-injuries .remove-btn:hover, #tab-raum .ctrl-btn:hover,
 #critModalBox .btn-primary:hover, #critModalBox .btn-ghost:hover,
-#dmgApplyBox .btn-primary:hover, #dmgApplyBox .btn-ghost:hover, #skillRollBtn:hover {
+#dmgApplyBox .btn-primary:hover, #dmgApplyBox .btn-ghost:hover, #skillRollBtn:hover,
+.skill-row .roll-btn:hover, .skill-up-btn:hover, .skill-fav-btn:hover,
+#weaponDistMapBtn:hover, #tab-armor .unequip-btn:hover {
   background: transparent; box-shadow: none;
   filter: drop-shadow(var(--btn-glow)); transform: translateY(-1px);
 }
@@ -1873,7 +1956,9 @@ body.timer-active { padding-top: 50px; }
 #tab-gear .gear-action-btn:hover::after, #tab-cyberware .gear-action-btn:hover::after,
 #tab-armor .remove-btn:hover::after, #tab-injuries .remove-btn:hover::after, #tab-raum .ctrl-btn:hover::after,
 #critModalBox .btn-primary:hover::after, #critModalBox .btn-ghost:hover::after,
-#dmgApplyBox .btn-primary:hover::after, #dmgApplyBox .btn-ghost:hover::after, #skillRollBtn:hover::after {
+#dmgApplyBox .btn-primary:hover::after, #dmgApplyBox .btn-ghost:hover::after, #skillRollBtn:hover::after,
+.skill-row .roll-btn:hover::after, .skill-up-btn:hover::after, .skill-fav-btn:hover::after,
+#weaponDistMapBtn:hover::after, #tab-armor .unequip-btn:hover::after {
   background: var(--btn-fill-hover);
 }
 .res-btn:active, .char-name-edit:active, .char-cash-log:active, #longRestBtn:active,
@@ -1882,14 +1967,18 @@ body.timer-active { padding-top: 50px; }
 #tab-gear .gear-action-btn:active, #tab-cyberware .gear-action-btn:active,
 #tab-armor .remove-btn:active, #tab-injuries .remove-btn:active, #tab-raum .ctrl-btn:active,
 #critModalBox .btn-primary:active, #critModalBox .btn-ghost:active,
-#dmgApplyBox .btn-primary:active, #dmgApplyBox .btn-ghost:active, #skillRollBtn:active { transform: translateY(0); }
+#dmgApplyBox .btn-primary:active, #dmgApplyBox .btn-ghost:active, #skillRollBtn:active,
+.skill-row .roll-btn:active, .skill-up-btn:active, .skill-fav-btn:active,
+#weaponDistMapBtn:active, #tab-armor .unequip-btn:active { transform: translateY(0); }
 .res-btn:focus-visible, .char-name-edit:focus-visible, .char-cash-log:focus-visible, #longRestBtn:focus-visible,
 .stat-dice-btn:focus-visible, .stat-roll-btn:focus-visible, .roll-all-btn:focus-visible, .stats-edit-btn:focus-visible,
 #tab-weapons .weapon-card .roll-btn:focus-visible, #tab-weapons .gear-action-btn:focus-visible,
 #tab-gear .gear-action-btn:focus-visible, #tab-cyberware .gear-action-btn:focus-visible,
 #tab-armor .remove-btn:focus-visible, #tab-injuries .remove-btn:focus-visible, #tab-raum .ctrl-btn:focus-visible,
 #critModalBox .btn-primary:focus-visible, #critModalBox .btn-ghost:focus-visible,
-#dmgApplyBox .btn-primary:focus-visible, #dmgApplyBox .btn-ghost:focus-visible, #skillRollBtn:focus-visible {
+#dmgApplyBox .btn-primary:focus-visible, #dmgApplyBox .btn-ghost:focus-visible, #skillRollBtn:focus-visible,
+.skill-row .roll-btn:focus-visible, .skill-up-btn:focus-visible, .skill-fav-btn:focus-visible,
+#weaponDistMapBtn:focus-visible, #tab-armor .unequip-btn:focus-visible {
   outline: none; filter: drop-shadow(var(--btn-glow));
 }
 .res-btn:disabled, #longRestBtn:disabled,
@@ -1909,8 +1998,14 @@ body.timer-active { padding-top: 50px; }
   --btn-h: 36px; width: 36px; min-width: 36px; padding: 0; font-size: 1.1rem; gap: 0;
 }
 /* icon-sm 30×30 */
-.char-name-edit, .char-cash-log, #tab-armor .remove-btn, #tab-injuries .remove-btn {
+.char-name-edit, .char-cash-log, #tab-armor .remove-btn, #tab-injuries .remove-btn,
+.skill-fav-btn, #tab-armor .unequip-btn {
   --btn-h: 30px; width: 30px; min-width: 30px; padding: 0; font-size: .8rem; gap: 0;
+}
+/* sm 32 (Skill-Roll / Skill-UP) — kompakt, im fixen Aktions-Cluster */
+.skill-row .roll-btn, .skill-up-btn {
+  --btn-h: 32px; --btn-px: var(--sp-2); --btn-fs: var(--fs-xs);
+  width: auto; min-width: 32px; padding: 0 var(--btn-px); font-size: .8rem;
 }
 /* lg 44 (Modal-Primary / Skill-Roll) */
 #critModalBox .btn-primary, #dmgApplyBox .btn-primary, #skillRollBtn {
@@ -1939,13 +2034,20 @@ body.timer-active { padding-top: 50px; }
 /* ghost (+ ghost-icon) — neutral, Hover → cyan */
 .stats-edit-btn, #tab-weapons .unequip-btn, #longRestBtn,
 #critModalBox .btn-ghost, #dmgApplyBox .btn-ghost,
-.char-name-edit, .char-cash-log {
+.char-name-edit, .char-cash-log,
+.skill-fav-btn, #tab-armor .unequip-btn {
   --btn-border: var(--border-dark); --btn-color: var(--text-muted);
   --btn-fill-hover: var(--bg-panel-cyan); --btn-glow: var(--glow-cyan-s);
 }
 .stats-edit-btn:hover, #tab-weapons .unequip-btn:hover, #longRestBtn:hover,
 #critModalBox .btn-ghost:hover, #dmgApplyBox .btn-ghost:hover,
-.char-name-edit:hover, .char-cash-log:hover { color: var(--neon-cyan); }
+.char-name-edit:hover, .char-cash-log:hover,
+#tab-armor .unequip-btn:hover { color: var(--neon-cyan); }
+/* Skill-Favorit (★) aktiv = warning-yellow (Ghost-Icon, ungefüllt) */
+.skill-fav-btn.active {
+  --btn-border: var(--warning-yellow); --btn-color: var(--warning-yellow);
+  --btn-fill-hover: rgba(255,209,102,.10); --btn-glow: 0 0 8px rgba(255,209,102,.5);
+}
 /* toggle / active — gefüllter Akzent, Text = bg-main */
 .stats-edit-btn.active {
   --btn-border: var(--success-green); --btn-fill: var(--success-green);
@@ -1971,11 +2073,13 @@ body.timer-active { padding-top: 50px; }
 /* — Touch: alle Aktions-Buttons ≥44px — */
 @media (pointer: coarse) {
   .res-btn, .stat-dice-btn, .stat-roll-btn,
-  .char-name-edit, .char-cash-log, #tab-armor .remove-btn, #tab-injuries .remove-btn {
+  .char-name-edit, .char-cash-log, #tab-armor .remove-btn, #tab-injuries .remove-btn,
+  .skill-fav-btn, #tab-armor .unequip-btn {
     --btn-h: 44px; width: 44px; min-width: 44px;
   }
   .roll-all-btn, .stats-edit-btn, #longRestBtn,
   #tab-weapons .weapon-card .roll-btn, #tab-weapons .gear-action-btn,
   #tab-gear .gear-action-btn, #tab-cyberware .gear-action-btn, #tab-raum .ctrl-btn,
-  #critModalBox .btn-ghost, #dmgApplyBox .btn-ghost { --btn-h: 44px; }
+  #critModalBox .btn-ghost, #dmgApplyBox .btn-ghost,
+  .skill-row .roll-btn, .skill-up-btn, #weaponDistMapBtn { --btn-h: 44px; }
 }
