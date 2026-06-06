@@ -31,7 +31,7 @@
 <!-- Timer Expired Modal -->
 <div id="timerExpiredModal" class="modal-overlay" style="display:none">
   <div class="modal-box" style="text-align:center;max-width:340px">
-    <div class="timer-expired-title">⏱ ZEIT ABGELAUFEN</div>
+    <div class="timer-expired-title"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-timer"/></svg> ZEIT ABGELAUFEN</div>
     <div id="timerExpiredLabel" style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 1rem"></div>
     <button type="button" class="btn" id="timerExpiredOk" style="background:var(--red);color:#fff;width:100%">OK</button>
   </div>
@@ -120,15 +120,15 @@
   </div>
   <nav class="cyber-sidebar-nav">
     <span id="navName" class="cyber-sidebar-name"></span>
-    <a id="shopLink" href="#" class="cyber-nav-item"><span class="ci-icon">🛒</span><span class="ci-label">Shop</span></a>
-    <a id="mapLink" href="map.html" class="cyber-nav-item"><span class="ci-icon">🗺</span><span class="ci-label">Karte</span></a>
-    <button id="bmBtn" class="cyber-nav-item cyber-nav-item--red bm-topbar-btn" type="button" onclick="bmShowPopup()" style="display:none"><span class="ci-icon">🚪</span><span class="ci-label">Schwarzmarkt</span></button>
+    <a id="shopLink" href="#" class="cyber-nav-item"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-shop"/></svg></span><span class="ci-label">Shop</span></a>
+    <a id="mapLink" href="map.html" class="cyber-nav-item"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-map"/></svg></span><span class="ci-label">Karte</span></a>
+    <button id="bmBtn" class="cyber-nav-item cyber-nav-item--red bm-topbar-btn" type="button" onclick="bmShowPopup()" style="display:none"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-blackmarket"/></svg></span><span class="ci-label">Schwarzmarkt</span></button>
   </nav>
   <div class="cyber-sidebar-foot">
     <div class="cyber-sidebar-cash">
-      <span class="ci-icon" aria-hidden="true">💰</span>
+      <span class="ci-icon" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-money"/></svg></span>
       <span id="navCash" class="nav-cash">—</span>
-      <button id="cashLogBtn" class="cyber-sidebar-cashlog" type="button" title="Transaktionsverlauf">📜</button>
+      <button id="cashLogBtn" class="cyber-sidebar-cashlog" type="button" title="Transaktionsverlauf"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-history"/></svg></button>
     </div>
     <a href="index.html" class="cyber-nav-item"><span class="ci-icon">←</span><span class="ci-label">Übersicht</span></a>
   </div>
@@ -209,7 +209,7 @@
       <div class="char-cash-badge">
         <div class="char-cash-label">Cash</div>
         <div class="char-cash-value" id="charCashValue">—</div>
-        <button class="char-cash-log" id="cashLogBtnHeader" type="button" title="Transaktionsverlauf">📜</button>
+        <button class="char-cash-log" id="cashLogBtnHeader" type="button" title="Transaktionsverlauf"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-history"/></svg></button>
       </div>
     </div>
   </div>
@@ -227,7 +227,7 @@
     </div>
     <div class="condition-badges" id="conditionBadges"></div>
     <button class="death-save-btn" id="deathSaveBtn" style="display:none">☠ DEATH SAVE</button>
-    <button class="btn btn-ghost" id="longRestBtn" type="button">🌙 Long Rest</button>
+    <button class="btn btn-ghost" id="longRestBtn" type="button"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-longrest"/></svg> Long Rest</button>
   </div>
 </header>
 
@@ -285,7 +285,7 @@
   </div>
 </div>
 <button id="chatToggle" class="chat-toggle-btn">
-  💬<span class="chat-unread-badge" id="chatUnreadBadge" style="display:none">0</span>
+  <svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-chat"/></svg><span class="chat-unread-badge" id="chatUnreadBadge" style="display:none">0</span>
 </button>
 
 <!-- Critical Injury Modal -->
@@ -318,7 +318,7 @@
 <div id="dice-canvas-placeholder" style="position:fixed;inset:0;pointer-events:none;z-index:900"></div>
 
 <!-- ── Dice ── -->
-<button class="dice-fab" id="diceFab" style="display:none" title="Würfeln">🎲</button>
+<button class="dice-fab" id="diceFab" style="display:none" title="Würfeln"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>
 
 <div class="dice-popup" id="dicePopup">
   <div class="dice-popup-head">
@@ -774,7 +774,7 @@ function _showLongRestConfirm() {
     overlay.className = 'gt-confirm-overlay';
     overlay.innerHTML = `
       <div class="gt-confirm-box">
-        <div class="gt-confirm-icon">🌙</div>
+        <div class="gt-confirm-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-longrest"/></svg></div>
         <div class="gt-confirm-title">LONG REST</div>
         <div class="gt-confirm-body">
           8 Stunden Schlaf vorspulen?<br>
@@ -782,7 +782,7 @@ function _showLongRestConfirm() {
         </div>
         <div class="gt-confirm-actions">
           <button type="button" class="gt-btn" data-act="cancel">Abbrechen</button>
-          <button type="button" class="gt-btn gt-success" data-act="ok">🌙 Schlafen</button>
+          <button type="button" class="gt-btn gt-success" data-act="ok"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-longrest"/></svg> Schlafen</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -805,7 +805,7 @@ function _showRestOverlay(state) {
     _gtRestOverlay = document.createElement('div');
     _gtRestOverlay.className = 'gt-rest-overlay';
     _gtRestOverlay.innerHTML = `
-      <div class="gt-moon">🌙</div>
+      <div class="gt-moon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-longrest"/></svg></div>
       <div class="gt-rest-title">RESTING</div>
       <div class="gt-rest-sub">8 hours of in-game sleep</div>
       <div class="gt-rest-count" id="gtRestCount">5</div>
@@ -1050,7 +1050,7 @@ function renderStats() {
 
   // Toolbar: roll-all (when all zero) + edit toggle button
   html += `<div class="stats-toolbar">`;
-  if (allStatsZero) html += `<button class="roll-all-btn" id="rollAllStatsBtn">⚄ Alle Stats würfeln</button>`;
+  if (allStatsZero) html += `<button class="roll-all-btn" id="rollAllStatsBtn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Alle Stats würfeln</button>`;
   html += `<button class="stats-edit-btn${statsEditing ? ' active' : ''}" id="statsEditBtn">${statsEditing ? '✓ Fertig' : '✎ Bearbeiten'}</button>`;
   html += `</div>`;
 
@@ -1092,8 +1092,8 @@ function renderStats() {
       <div class="stat-val"${editAttr} data-stat="${s}" spellcheck="false">${displayVal}</div>
       ${empNote}${buffNote}${penNote}
       ${allStatsZero
-        ? `<button class="stat-roll-btn" data-roll-stat="${s}" title="1d10 würfeln">⚄</button>`
-        : `<button class="stat-dice-btn" data-stat="${s}" data-expr="${rollExpr}" title="${rollExpr}">🎲</button>`}
+        ? `<button class="stat-roll-btn" data-roll-stat="${s}" title="1d10 würfeln"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>`
+        : `<button class="stat-dice-btn" data-stat="${s}" data-expr="${rollExpr}" title="${rollExpr}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>`}
     </div>`;
   }
   html += `<div class="stat-card"><div class="stat-key">LUCK</div><div class="stat-val">${luck}</div></div>`;
@@ -1416,7 +1416,7 @@ function renderSkills() {
       ${lvlSpan}
       <span class="skill-base">${ipLvl}${penBadge}${motoNote}${surgNote}${medTechNote}${techFieldNote}</span>
       <div class="skill-actions">
-        <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1" title="1d10+${base}">⚄</button>
+        <button class="roll-btn" data-expr="${expr}" data-ctx="${sk.name} skill check" data-skill="1" title="1d10+${base}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>
         ${upgradeBtn}
       </div>
     </div>`;
@@ -1543,7 +1543,7 @@ function renderWeapons() {
     <div class="dist-bar-row">
       <input type="number" id="weaponDistInput" min="0" placeholder="m" class="dist-bar-input">
       <span class="dist-bar-unit">m</span>
-      <button id="weaponDistMapBtn" class="ctrl-btn dist-bar-mapbtn">📡 Aus Map</button>
+      <button id="weaponDistMapBtn" class="ctrl-btn dist-bar-mapbtn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-mapdist"/></svg> Aus Map</button>
     </div>
     <div id="weaponDistInfo" class="dist-bar-info" style="display:none">
       <span id="wdBracket">—</span> · DV:
@@ -1599,11 +1599,11 @@ function renderWeapons() {
       const curr = w.ammo_current ?? 0;
       const full = curr >= w.magazine_max;
       const stockOk = (inv[w.ammo] || 0) + curr > 0;
-      return `<button class="gear-action-btn reload-btn" data-reload-idx="${i}" ${full ? 'disabled' : ''}>🔄 ${full ? 'Voll' : 'Nachladen'}</button>`;
+      return `<button class="gear-action-btn reload-btn" data-reload-idx="${i}" ${full ? 'disabled' : ''}><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-reload"/></svg> ${full ? 'Voll' : 'Nachladen'}</button>`;
     })() : '';
 
     // Autofire toggle (only for autofire-capable weapons)
-    const autofireBtn = w.is_autofire ? `<button class="gear-action-btn autofire-toggle${_autofireActive.has(i) ? ' active' : ''}" data-autofire-idx="${i}">🔫 ${_autofireActive.has(i) ? 'Autofire AN' : 'Autofire AUS'}</button>` : '';
+    const autofireBtn = w.is_autofire ? `<button class="gear-action-btn autofire-toggle${_autofireActive.has(i) ? ' active' : ''}" data-autofire-idx="${i}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-autofire"/></svg>${_autofireActive.has(i) ? 'Autofire AN' : 'Autofire AUS'}</button>` : '';
 
     // Special ammo tooltip block (shown on right when loaded)
     const specialAmmoInfo = (() => {
@@ -1649,8 +1649,8 @@ function renderWeapons() {
           ${reloadBtn}
           ${ammoSelectHtml}
           ${autofireBtn}
-          <button class="gear-action-btn unequip-btn" data-inv="weapons" data-idx="${i}">📦 Abrüsten</button>
-          ${sellPrice > 0 ? `<button class="gear-action-btn gear-sell-btn" data-sell-inv="weapons" data-sell-idx="${i}">💰 ${sellPrice.toLocaleString('de-DE')} eb</button>` : ''}
+          <button class="gear-action-btn unequip-btn" data-inv="weapons" data-idx="${i}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-unequip"/></svg> Abrüsten</button>
+          ${sellPrice > 0 ? `<button class="gear-action-btn gear-sell-btn" data-sell-inv="weapons" data-sell-idx="${i}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-money"/></svg> ${sellPrice.toLocaleString('de-DE')} eb</button>` : ''}
           <button class="gear-action-btn gear-del-btn remove-btn" data-inv="weapons" data-idx="${i}">✕ Löschen</button>
         </div>
       </div>
@@ -1751,7 +1751,7 @@ function renderWeapons() {
         <span class="weapon-meta">Melee · 2m · ½ Armor SP</span>
       </div>
       <div class="weapon-action-row">
-        <button class="roll-btn" data-expr="${brawlDmg}" data-context="Brawling Schaden">${brawlDmg} 🎲</button>
+        <button class="roll-btn" data-expr="${brawlDmg}" data-context="Brawling Schaden">${brawlDmg} <svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>
         <span class="weapon-ammo-info-req" style="margin-left:.5rem">BODY ${body} → ${brawlDmg} | ignoriert ½ Rüstungs-SP</span>
       </div>
       ${brawlSkill > 0 ? `<div class="weapon-meta" style="margin-top:.2rem">Brawling Skill: +${brawlSkill}</div>` : ''}
@@ -1762,7 +1762,7 @@ function renderWeapons() {
         <span class="weapon-meta">Melee · 2m · ½ Armor SP</span>
       </div>
       <div class="weapon-action-row">
-        <button class="roll-btn" data-expr="${brawlDmg}" data-context="Martial Arts Schaden">${brawlDmg} 🎲</button>
+        <button class="roll-btn" data-expr="${brawlDmg}" data-context="Martial Arts Schaden">${brawlDmg} <svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>
         <span class="weapon-ammo-info-req" style="margin-left:.5rem">Skill: +${martialSkill} | ignoriert ½ Rüstungs-SP</span>
       </div>
     </div>` : ''}
@@ -1772,7 +1772,7 @@ function renderWeapons() {
         <span class="weapon-meta">Cyberware · 2m</span>
       </div>
       <div class="weapon-action-row">
-        ${c.dmg !== '0' ? `<button class="roll-btn" data-expr="${c.dmg}" data-context="${c.name} Schaden">${c.dmg} 🎲</button>` : ''}
+        ${c.dmg !== '0' ? `<button class="roll-btn" data-expr="${c.dmg}" data-context="${c.name} Schaden">${c.dmg} <svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>` : ''}
         <span class="weapon-ammo-info-req" style="margin-left:.5rem">${c.note}</span>
       </div>
     </div>`).join('')}
@@ -1900,7 +1900,7 @@ function renderArmor() {
       const spCls = spPct > 50 ? '' : spPct > 20 ? ' warn' : ' crit';
       const destroyed = s.name && curSp <= 0;
       return `<div class="armor-slot${destroyed?' armor-slot--destroyed':''}">
-        <div class="armor-slot-label">${label}${s.name ? `<span class="armor-slot-actions"><button class="unequip-btn" data-inv="armor" data-idx="${slotKey}" title="Ablegen → Gear">📦</button><button class="remove-btn" data-inv="armor" data-idx="${slotKey}">✕</button></span>` : ''}</div>
+        <div class="armor-slot-label">${label}${s.name ? `<span class="armor-slot-actions"><button class="unequip-btn" data-inv="armor" data-idx="${slotKey}" title="Ablegen → Gear"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-unequip"/></svg></button><button class="remove-btn" data-inv="armor" data-idx="${slotKey}">✕</button></span>` : ''}</div>
         <div class="armor-name">${s.name || '—'}</div>
         <div class="armor-sp-row">
           <span class="armor-sp${destroyed?' armor-sp--destroyed':''}">${curSp}${maxSp && maxSp !== curSp ? ` / ${maxSp}` : ''}</span>
@@ -1990,7 +1990,7 @@ function buildCyberSlotHtml(slotKey, cw) {
         <div class="cyber-item-card">
           <span class="cyber-item-name has-tooltip" data-tooltip='${safeJson(item)}'>${item.name}</span>
           <div class="cyber-item-actions">
-            <button class="cyber-uninstall-btn gear-action-btn" data-slot="${slotKey}" data-idx="${i}" title="Ausoperieren → Gear">🩺</button>
+            <button class="cyber-uninstall-btn gear-action-btn" data-slot="${slotKey}" data-idx="${i}" title="Ausoperieren → Gear"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-surgery"/></svg></button>
             <button class="remove-btn gear-action-btn gear-del-btn" data-inv="cyberware" data-slot="${slotKey}" data-idx="${i}">✕</button>
           </div>
         </div>`).join('')
@@ -2102,8 +2102,8 @@ function renderGear() {
       ${g.notes ? `<div class="gear-item-meta">${g.notes}</div>` : ''}
       <div class="gear-item-actions">
         ${getEquipButton(g, i)}
-        ${sellPrice > 0 ? `<button class="gear-action-btn gear-sell-btn" data-sell-inv="gear" data-sell-idx="${i}">💰 ${sellPrice.toLocaleString('de-DE')} eb</button>` : ''}
-        <button class="gear-action-btn drop-btn" data-inv="gear" data-idx="${i}">📦 Raum</button>
+        ${sellPrice > 0 ? `<button class="gear-action-btn gear-sell-btn" data-sell-inv="gear" data-sell-idx="${i}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-money"/></svg> ${sellPrice.toLocaleString('de-DE')} eb</button>` : ''}
+        <button class="gear-action-btn drop-btn" data-inv="gear" data-idx="${i}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-roomadd"/></svg> Raum</button>
         <button class="gear-action-btn gear-del-btn remove-btn" data-inv="gear" data-idx="${i}">✕ Löschen</button>
       </div>
     </div>`;
@@ -4203,7 +4203,7 @@ function bmHandleClose() {
 }
 </script>
 
-<div id="sound-indicator" title="Sound aktiv" aria-hidden="true">🔊</div>
+<div id="sound-indicator" title="Sound aktiv" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-volume"/></svg></div>
 
 <!-- Redesign App-Shell: Web Components + Sidebar + Scanlines (Master §3) -->
 <script type="module" src="assets/js/cyber-components.js"></script>

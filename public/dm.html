@@ -35,11 +35,11 @@
   </div>
   <nav class="cyber-sidebar-nav">
     <span class="cyber-sidebar-label">DM DASHBOARD</span>
-    <button id="dmItemsBtn" class="cyber-nav-item" type="button"><span class="ci-icon">🛍</span><span class="ci-label">Items</span></button>
-    <button id="dmTimerBtn" class="cyber-nav-item" type="button"><span class="ci-icon">⏱</span><span class="ci-label">Timer</span></button>
-    <a href="map.html" target="_blank" class="cyber-nav-item"><span class="ci-icon">🗺</span><span class="ci-label">Karte</span></a>
-    <button id="bmDmBtn" class="cyber-nav-item cyber-nav-item--red" type="button"><span class="ci-icon">🚪</span><span class="ci-label">Schwarzmarkt</span></button>
-    <button id="newCombatBtn" class="cyber-nav-item cyber-nav-item--red" type="button"><span class="ci-icon">⚔</span><span class="ci-label">Neuer Kampf</span></button>
+    <button id="dmItemsBtn" class="cyber-nav-item" type="button"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-items"/></svg></span><span class="ci-label">Items</span></button>
+    <button id="dmTimerBtn" class="cyber-nav-item" type="button"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-timer"/></svg></span><span class="ci-label">Timer</span></button>
+    <a href="map.html" target="_blank" class="cyber-nav-item"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-map"/></svg></span><span class="ci-label">Karte</span></a>
+    <button id="bmDmBtn" class="cyber-nav-item cyber-nav-item--red" type="button"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-blackmarket"/></svg></span><span class="ci-label">Schwarzmarkt</span></button>
+    <button id="newCombatBtn" class="cyber-nav-item cyber-nav-item--red" type="button"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-combat"/></svg></span><span class="ci-label">Neuer Kampf</span></button>
   </nav>
   <div class="cyber-sidebar-foot">
     <a href="index.html" class="cyber-nav-item"><span class="ci-icon">←</span><span class="ci-label">Übersicht</span></a>
@@ -96,7 +96,7 @@
 <div id="dmTimerModal" class="dm-modal-overlay" hidden>
   <div class="dm-modal-box" style="max-width:340px;width:96vw">
     <div class="dm-modal-header">
-      <span>⏱ TIMER</span>
+      <span><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-timer"/></svg> TIMER</span>
       <button class="dm-modal-close" id="dmTimerModalClose">✕</button>
     </div>
     <div style="padding:1rem;display:flex;flex-direction:column;gap:.6rem">
@@ -142,7 +142,7 @@
     <div class="dm-content-tabs">
       <button class="dm-content-tab active" data-panel="chars">CHARAKTERE</button>
       <button class="dm-content-tab" data-panel="npcs">NPCs</button>
-      <button class="dm-content-tab" data-panel="sound">🔊 SOUND</button>
+      <button class="dm-content-tab" data-panel="sound"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-volume"/></svg> SOUND</button>
     </div>
     <div class="dm-grid-wrap" id="dmGrid">
       <div style="color:var(--text-muted);font-size:.82rem;padding:.5rem">Lade Charaktere…</div>
@@ -207,7 +207,7 @@
         </div>
         <div id="dmRoomItemResults" class="dm-room-results"></div>
         <div id="dmRoomItemList" class="dm-room-list"></div>
-        <button class="ctrl-btn ctrl-btn-red" id="dmRoomClear" style="width:100%;font-size:.65rem;margin-top:.25rem">🗑 Raum leeren</button>
+        <button class="ctrl-btn ctrl-btn-red" id="dmRoomClear" style="width:100%;font-size:.65rem;margin-top:.25rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-roomempty"/></svg> Raum leeren</button>
       </div>
     </div>
 
@@ -247,7 +247,7 @@
     </div>
     <div id="dmRoomOverlayList" style="overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.4rem;flex:1"></div>
     <div style="padding:.5rem 1rem;border-top:1px solid var(--border)">
-      <button class="ctrl-btn ctrl-btn-red" id="dmRoomOverlayClear" style="width:100%;font-size:.72rem">🗑 Raum leeren</button>
+      <button class="ctrl-btn ctrl-btn-red" id="dmRoomOverlayClear" style="width:100%;font-size:.72rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-roomempty"/></svg> Raum leeren</button>
     </div>
   </div>
 </div>
@@ -279,7 +279,7 @@
 </div>
 
 <!-- DM Dice FAB -->
-<button class="dice-fab" id="dmDiceFab" title="Würfeln">⚄</button>
+<button class="dice-fab" id="dmDiceFab" title="Würfeln"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>
 <div class="dice-popup" id="dmDicePopup">
   <div class="dice-popup-head">
     <span>DM WÜRFELN</span>
@@ -346,7 +346,7 @@
 <div id="dmItemsModal" hidden style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.8);display:none;align-items:flex-start;justify-content:center;padding-top:3rem">
   <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:8px;width:92%;max-width:700px;max-height:85vh;display:flex;flex-direction:column">
     <div style="display:flex;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--border);gap:.5rem">
-      <span style="font-family:Audiowide,sans-serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)">🛍 Items</span>
+      <span style="font-family:Audiowide,sans-serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-items"/></svg> Items</span>
       <input id="dmItemsSearch" class="ctrl-input" placeholder="Suchen…" style="flex:1;max-width:200px" autocomplete="off">
       <select id="dmItemsCatFilter" class="ctrl-select" style="max-width:160px;font-size:.72rem"></select>
       <select id="dmItemsCharTarget" class="ctrl-select" style="max-width:160px;font-size:.72rem"></select>
@@ -833,7 +833,7 @@ function renderGrid() {
       ${cardAmmo(c)}
       <div class="dm-card-footer">
         ${c.session_notes ? `<button class="dm-notes-icon" data-cid="${c.id}" title="Notizen anzeigen">📝</button>` : ''}
-        <button class="dm-card-delete" data-delete-id="${c.id}" title="Charakter löschen">🗑</button>
+        <button class="dm-card-delete" data-delete-id="${c.id}" title="Charakter löschen"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-delete"/></svg></button>
       </div>
     </div>`;
   }).join('');
@@ -903,7 +903,7 @@ function appendDmChatMessage(m) {
   const hlBtn = document.createElement('button');
   hlBtn.className = `dm-msg-highlight-btn${m.is_highlighted ? ' active' : ''}`;
   hlBtn.title = 'Für Spieler hervorheben';
-  hlBtn.textContent = '📌';
+  hlBtn.innerHTML = '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-pin"/></svg>';
   hlBtn.addEventListener('click', async () => {
     const newVal = !hlBtn.classList.contains('active');
     if (newVal && _highlightedMsgId && _highlightedMsgId !== m.id) {
@@ -1008,7 +1008,7 @@ function buildNpcCard(n) {
         ${n.is_visible_to_players ? '👁 Sichtbar' : '🙈 Versteckt'}
       </button>
       <button class="npc-edit-btn" data-npc-id="${n.id}">✎</button>
-      <button class="npc-dice-btn" data-npc-id="${n.id}">🎲</button>
+      <button class="npc-dice-btn" data-npc-id="${n.id}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>
     </div>
   </div>`;
 }
@@ -1038,7 +1038,7 @@ function buildCompactNpcCard(n) {
     <div class="npc-row-actions">
       <button class="npc-edit-btn" data-npc-id="${n.id}" title="Bearbeiten">✏</button>
       <button class="npc-visibility-btn${n.is_visible_to_players ? ' active' : ''}" data-npc-id="${n.id}" title="Sichtbar für Spieler">${n.is_visible_to_players ? '👁' : '🙈'}</button>
-      <button class="npc-dice-btn" data-npc-id="${n.id}" title="Würfeln">🎲</button>
+      <button class="npc-dice-btn" data-npc-id="${n.id}" title="Würfeln"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>
       <button class="npc-play-btn" data-npc-id="${n.id}" title="NPC spielen">🎮</button>
     </div>
   </div>`;
@@ -3050,7 +3050,7 @@ function renderSetupInitiativeList() {
       <span style="flex:1;font-size:.78rem">${c.name}</span>
       <input type="number" class="ctrl-input" style="max-width:55px"
              value="${c.initiative || ''}" placeholder="Init" data-si="${i}">
-      ${!c.isNpc ? `<button class="ctrl-btn combat-roll-init" data-si="${i}" data-ref="${c.ref ?? 0}">🎲</button>` : ''}
+      ${!c.isNpc ? `<button class="ctrl-btn combat-roll-init" data-si="${i}" data-ref="${c.ref ?? 0}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>` : ''}
     </div>`).join('');
   wrap.querySelectorAll('input[type=number]').forEach(inp => {
     inp.addEventListener('input', () => {

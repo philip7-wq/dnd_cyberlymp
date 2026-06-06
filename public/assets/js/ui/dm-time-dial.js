@@ -58,7 +58,7 @@ export async function mountDmTimeDial() {
       <div class="gt-dial-section">
         <h4>Combat</h4>
         <div class="gt-btn-row">
-          <button type="button" class="gt-btn gt-danger" id="gtDialStartCombat">⚔ Start</button>
+          <button type="button" class="gt-btn gt-danger" id="gtDialStartCombat"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-combat"/></svg> Start</button>
           <button type="button" class="gt-btn" id="gtDialNextRound">⏭ +5s (Round)</button>
           <button type="button" class="gt-btn" id="gtDialEndCombat">⏹ End</button>
         </div>
@@ -69,7 +69,7 @@ export async function mountDmTimeDial() {
         <h4>Long Rest</h4>
         <select class="gt-dial-select" id="gtDialRestChar"></select>
         <div class="gt-btn-row">
-          <button type="button" class="gt-btn gt-success" id="gtDialForceRest">🌙 Force Long Rest</button>
+          <button type="button" class="gt-btn gt-success" id="gtDialForceRest"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-longrest"/></svg> Force Long Rest</button>
           <button type="button" class="gt-btn gt-danger" id="gtDialCancelRest" hidden>✕ Cancel</button>
         </div>
       </div>

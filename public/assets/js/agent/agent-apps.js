@@ -135,7 +135,7 @@ function openContactDetail(type, id) {
       </div>
       <h3 style="text-align:center;">${c.display_name}</h3>
       <div class="agent-modal-actions" style="flex-direction: column; gap: 8px;">
-        <button class="primary" data-act="chat">💬 Nachricht</button>
+        <button class="primary" data-act="chat"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-chat"/></svg> Nachricht</button>
         <button data-act="call">☏ Anrufen</button>
         <button data-act="pay">€$ Geld senden</button>
         <button data-act="close" style="margin-top:6px;">Schließen</button>

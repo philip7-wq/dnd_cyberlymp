@@ -115,6 +115,6 @@ function _renderSleep() {
   }
   el.hidden = false;
   el.dataset.severity = sleep.value <= -4 ? 'critical' : sleep.value <= -2 ? 'high' : 'low';
-  el.textContent = `😴 ${sleep.value}`;
+  el.innerHTML = `<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-nosleep"/></svg> ${sleep.value}`;
   el.title = `${sleep.label} — ${Math.floor(sleep.hoursAwake)} IG-Stunden wach`;
 }

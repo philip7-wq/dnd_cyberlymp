@@ -100,7 +100,7 @@
 </div>
 
 <!-- Map Dice FAB + Popup -->
-<button class="map-dice-fab" id="mapDiceFab" title="Würfeln">🎲</button>
+<button class="map-dice-fab" id="mapDiceFab" title="Würfeln"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>
 <div class="map-dice-popup" id="mapDicePopup">
   <div class="map-dice-popup-head">
     <span>WÜRFELN</span>
@@ -174,7 +174,7 @@
     <div id="dmRollResult" style="display:none;margin-bottom:.5rem;font-size:.85rem;
       font-family:Audiowide,sans-serif;color:#FFD700;text-align:center;padding:.4rem;
       background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:4px"></div>
-    <button id="dmRollExecBtn" class="atk-btn" style="margin-bottom:.35rem">🎲 Würfeln</button>
+    <button id="dmRollExecBtn" class="atk-btn" style="margin-bottom:.35rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Würfeln</button>
     <div id="dmSpRow" style="display:none">
       <div class="atk-input-row" style="margin-bottom:.3rem">
         <span style="font-size:.65rem;color:#888">SP des Ziels</span>
@@ -267,7 +267,7 @@
       <div class="ts-row" style="margin-bottom:.5rem">
         <span class="ts-label" style="min-width:70px">Schaden</span>
         <input type="text" id="aoeBlastExpr" class="ts-input" value="8d6" style="max-width:90px">
-        <button id="aoeBlastRollBtn" class="ctrl-btn" style="font-size:.72rem">🎲 Würfeln</button>
+        <button id="aoeBlastRollBtn" class="ctrl-btn" style="font-size:.72rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Würfeln</button>
         <span id="aoeBlastResult" style="font-family:Audiowide,sans-serif;color:#FF4500;font-size:.9rem;margin-left:.5rem"></span>
       </div>
       <div id="aoeBlastTargets" style="max-height:260px;overflow-y:auto;margin:.35rem 0"></div>
@@ -299,7 +299,7 @@
     <div class="token-modal-body" style="padding:.75rem;display:flex;flex-direction:column;gap:.5rem">
       <select id="grappleTarget" class="ctrl-input"><option value="">— Ziel wählen —</option></select>
       <div id="grappleResult" style="font-size:.78rem;color:var(--text-muted)"></div>
-      <button id="grappleRollBtn" class="ctrl-btn">🎲 Grapple würfeln</button>
+      <button id="grappleRollBtn" class="ctrl-btn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Grapple würfeln</button>
       <div id="grappleActions" style="display:none;flex-direction:column;gap:.35rem">
         <div style="font-size:.7rem;color:var(--cyan);font-family:Audiowide,sans-serif;letter-spacing:.08em;margin:.1rem 0">IM GRAPPLE:</div>
         <button class="ctrl-btn grapple-action-btn" data-action="choke" style="border-color:#FF8C00;color:#FF8C00">👊 Choke — BODY direkt auf HP</button>
@@ -470,7 +470,7 @@
     <button id="rrRollBtn" style="width:100%;padding:.7rem;font-family:Audiowide,sans-serif;
       font-size:.9rem;background:rgba(255,45,45,.15);border:1px solid #FF2D2D;
       color:#FF2D2D;border-radius:6px;cursor:pointer;letter-spacing:.08em;">
-      🎲 WÜRFELN
+      <svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> WÜRFELN
     </button>
     <div id="rrResultArea" style="display:none;margin-top:1rem">
       <div id="rrResultText" style="font-size:1rem;color:#e0e0e8;margin-bottom:.75rem"></div>
@@ -3795,12 +3795,12 @@ function buildPlayerPanel() {
             <div class="map-weapon-mag-bar-wrap">
               <div class="map-weapon-mag-bar" id="mwcMagBar"></div>
             </div>
-            <button id="mwcReloadBtn" class="ts-btn" style="font-size:.6rem;padding:.15rem .45rem;flex-shrink:0">🔄</button>
+            <button id="mwcReloadBtn" class="ts-btn" style="font-size:.6rem;padding:.15rem .45rem;flex-shrink:0"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-reload"/></svg></button>
           </div>
           <div class="map-weapon-actions">
             <button id="mapZoneToggleBtn" class="ts-btn" style="font-size:.62rem">👁 Zonen</button>
             <button id="shotgunConeBtn" class="ts-btn" style="display:none;font-size:.62rem">🎯 Kegel</button>
-            <button id="mapAutofireToggle" class="ts-btn" style="display:none;font-size:.62rem">🔫 Autofire</button>
+            <button id="mapAutofireToggle" class="ts-btn" style="display:none;font-size:.62rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-autofire"/></svg> Autofire</button>
           </div>
         </div>
 
@@ -3849,7 +3849,7 @@ function buildPlayerPanel() {
             </div>
             <div class="atk-dv-display" id="atkDvDisplay"></div>
             <div style="position:relative">
-              <button id="atkRollBtn" class="atk-btn" disabled>🎲 Angriff würfeln</button>
+              <button id="atkRollBtn" class="atk-btn" disabled><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Angriff würfeln</button>
               <div id="atkRollHint" style="font-size:.58rem;color:#555;margin-top:.2rem;text-align:center;
                 font-style:italic">Erst mit Messtool Ziel auswählen</div>
             </div>
@@ -4081,7 +4081,7 @@ function buildPlayerPanel() {
   // ── Autofire toggle ──────────────────────────────────────────
   document.getElementById('mapAutofireToggle')?.addEventListener('click', ()=>{
     _autofireOn = !_autofireOn;
-    document.getElementById('mapAutofireToggle').textContent = _autofireOn ? '🔫 Autofire AN' : '🔫 Autofire';
+    document.getElementById('mapAutofireToggle').innerHTML = _autofireOn ? '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-autofire"/></svg> Autofire AN' : '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-autofire"/></svg> Autofire';
   });
 
   // ── Reload button ────────────────────────────────────────────

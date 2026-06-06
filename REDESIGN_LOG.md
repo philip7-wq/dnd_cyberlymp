@@ -421,6 +421,82 @@ Injuries/Raum/Rolle (+ Rolle-Tab-Buttons `.role-dice-btn` via geteilter roles.cs
 
 ---
 
+## Emoji-Glyphen → SVG-Icon-Set (cyber-icons.svg) ✅
+**Ziel:** Emoji in Buttons/Labels durch das HUD-Icon-Sprite ersetzen (einheitlich, Farbe via
+`currentColor`). **Reiner Glyph-Tausch, keine Logikänderung** außer bewusstem textContent→innerHTML.
+
+**Setup:** Sprite `public/cyber-icons.svg` → **`public/assets/icons/cyber-icons.svg`** verschoben
+(`git mv`; Task-/Sprite-Kommentar-Pfad). `.ic`-Regel (`width/height:1em; inline-block;
+vertical-align:-.125em; flex:none`) in **`base.css` + `cyberpunk-ui.css`** (Union deckt alle 9
+Seiten — base fehlt nur auf index, cyberpunk-ui nur auf den nicht-migrierten Seiten).
+Snippet: `<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-NAME"/></svg>`.
+
+**Entscheidungen (Nutzer):** Sprite nach assets/icons verschieben; icon-tragende textContent-Sinks
+auf `innerHTML` umbauen; **konservatives Mapping** (nur eindeutige Funktions-Treffer; Grenzfälle
+nur melden).
+
+**Ersetzt (21 Icons, alle `use`-Refs == Sprite-Symbol-IDs verifiziert):**
+- **player.html:** ic-dice (🎲/⚄ stat/skill/melee/fab), ic-money (💰 Cash-Chip + Sell), ic-history
+  (📜 cashLog ×2), ic-longrest (🌙 ×4), ic-mapdist (📡), ic-shop (🛒), ic-map (🗺), ic-autofire (🔫),
+  ic-reload (🔄 reload-btn), ic-unequip (📦 Waffe+Armor), ic-surgery (🩺), ic-roomadd (📦 Gear→Raum),
+  ic-blackmarket (🚪 nav), ic-chat (💬 nav), ic-timer (⏱ ZEIT ABGELAUFEN), ic-volume (🔊 indicator).
+- **dm.html:** ic-timer (⏱ nav+TIMER), ic-map, ic-blackmarket (nav), ic-combat (⚔ Neuer Kampf),
+  ic-volume (🔊 SOUND), ic-roomempty (🗑 Raum leeren ×2), ic-delete (🗑 Charakter löschen),
+  ic-dice (🎲 ×3 / ⚄ fab).
+- **map.html:** ic-dice (🎲 ×6), ic-reload (🔄 mwcReload), ic-autofire (🔫 mapAutofire static +
+  textContent→innerHTML). **shop.html:** ic-money (navCash, textContent→innerHTML).
+  **npc-sheet.html:** ic-dice (🎲 Roll).
+- **assets/js:** `ui/topbar.js` ic-nosleep (😴, textContent→innerHTML), `sound-player.js` ic-volume
+  (🔊 settingsBtn textContent→innerHTML + Panel-Header), `radio/radio-mount.js` ic-radio (📻),
+  `agent/agent-apps.js` ic-chat (💬 Nachricht), `ui/dm-time-dial.js` ic-combat (⚔ Start) +
+  ic-longrest (🌙 Force Long Rest).
+
+**Bewusst NICHT ersetzt (konservativ → für Nutzer-Entscheidung):** Toast-/Log-Strings
+(player 1859/2135/2162/2887/2914/2929; map 3247) — `showToast` setzt textContent, Umbau wäre
+breiter Logik-/Escaping-Eingriff; 📦 Raum-Tab-Nav (player 247) + Sektionstitel „RAUM/UMGEBUNG"
+(dm 194/244) + „Aus Shop hinzufügen" (dm 413); 🗑 generisch „Löschen"/Clear-Roll-Log
+(dm 188/431, sound-dm 335) + Map-Editor-Tools (map 397/443); ⚔ „Ausrüsten" (player 2077),
+npc-sheet „⚔️ Combat"-Tab (FE0F-Variante), `warning-banner.js` ICON-Konstante; 🔫 „Supp. Fire"
+(map 389); 🔄 Timer-„Neu starten" (dm 125 — Restart ≠ Waffen-Reload); ⏱ „Session"/Quick-Fix/
+Buff-Time (dm 171, player 3234/3753); 🛍 DM-„Items" (dm 38/349); 💸 „Schulden" (player 491, dm
+825/1768/1856); DM-Schwarzmarkt-Panel 🚪/💬 (dm 3397/3421/3550/3617 — evtl. Pergament-Ästhetik);
+Rollen-Widget-Label-Emojis (`roles/solo|fixer|nomad|lawman|medtech.js` — Ability-Labels, kein
+Funktions-Match); create/upload Specialty-Card-Daten-Icons (🩺/🎲); radio-mount-Kommentar.
+
+**Verifiziert:** Sprite `xmllint` ok; **alle 21 genutzten `#ic-*` == definierte Symbole** (kein
+Tippfehler, kein fehlendes Icon); `node --check` sauber für alle 5 editierten Standalone-JS +
+inline-Module (dm/map/shop/player); Emoji-Reste-Re-Grep = nur die o.g. bewussten Ausschlüsse.
+**Offen:** voller Emoji-Restbestand (~130 Symbole, viele strukturell wie ─/→/✕/⚠) im
+Abschluss-Report gelistet — Nutzer entscheidet über weitere Icons.
+
+---
+
+## Icon-Set Batch 2 — Merge + ic-items/ic-pin ✅
+**Sprite:** 18 neue `<symbol>` (Batch 2) in `public/assets/icons/cyber-icons.svg` vor `</svg>`
+gemergt → **39 Symbole** gesamt, `xmllint`-well-formed, IDs eindeutig (keine Kollision mit
+Batch 1). Neue IDs: `ic-items, ic-pin, ic-target, ic-eye, ic-user, ic-lock, ic-shield, ic-edit,
+ic-skull, ic-wrench, ic-blood, ic-burst, ic-fire, ic-clipboard, ic-play, ic-pause, ic-stop,
+ic-next`. **`cyber-icons-batch2.svg` existierte nicht auf der Platte** (nur im Task-Anhang) →
+Symbole direkt aus dem Anhang gemergt; keine Batch2-Datei zu löschen.
+
+**Verdrahtet (nur `dm.html`):**
+- **🛍 → ic-items:** `dm.html:38` (Nav-Chip `dmItemsBtn`) + `dm.html:349` (Overlay-Titel „Items").
+- **📌 → ic-pin:** `dm.html:906` DM-Chat-Highlight (`hlBtn`/`dm-msg-highlight-btn`, „Für Spieler
+  hervorheben", in `appendDmChatMessage`) — `textContent`→`innerHTML`; `.active`-State (via
+  `className`/`is_highlighted`), Title, Click-Handler, `_highlightedMsgId` unverändert.
+
+**Bereitgestellt, nicht platziert:** die übrigen 16 Batch2-Icons (target/eye/user/lock/shield/
+edit/skull/wrench/blood/burst/fire/clipboard/play/pause/stop/next) für spätere Reskin-Phasen
+(z.B. play/pause/stop/next → Radio/Sound Phase 8; shield/blood/skull/eye/lock → Combat/Status).
+**Offen:** `map.html:2667` (📌 „Messung pinnen" = Karten-Distanzmessung) bewusst belassen →
+Map-Reskin (Phase 7).
+
+**Verifiziert:** Sprite 39 Symbole / well-formed / keine Dupe-IDs; `ic-items`+`ic-pin` definiert;
+alle genutzten `#ic-*` resolven weiterhin; `dm.html` Inline-Modul `node --check` sauber; kein
+🛍/📌 mehr in `dm.html`. Nur `cyber-icons.svg` + `dm.html` geändert.
+
+---
+
 ## Offene Punkte / To-do bis Ende
 - **Phase 5–10** wie Status-Tabelle.
 - **Phase 11 Cleanup:** Migrations-Aliase entfernen; `--radius`-Kollision auflösen; Temp-Fonts

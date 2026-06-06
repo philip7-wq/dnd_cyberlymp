@@ -29,7 +29,7 @@ const indicator = document.getElementById('sound-indicator');
 const settingsBtn = document.createElement('button');
 settingsBtn.id    = 'sound-settings-btn';
 settingsBtn.title = 'Lautstärke';
-settingsBtn.textContent = '🔊';
+settingsBtn.innerHTML = '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-volume"/></svg>';
 settingsBtn.style.cssText = `
   position:fixed; top:12px; right:14px; z-index:1100;
   width:36px; height:36px; border-radius:8px;
@@ -55,7 +55,7 @@ panel.style.cssText = `
 `;
 panel.innerHTML = `
   <div style="font-size:10px;letter-spacing:.1em;color:#aaa;margin-bottom:12px;border-bottom:1px solid #1e1e2a;padding-bottom:6px;">
-    🔊 LAUTSTÄRKE
+    <svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-volume"/></svg> LAUTSTÄRKE
   </div>
   ${[
     { key: 'oneshot',  label: 'One-Shot', color: '#FF2D2D' },

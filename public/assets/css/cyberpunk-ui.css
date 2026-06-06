@@ -5,6 +5,11 @@
    Token-Werte verbatim aus REDESIGN_MASTER.md §2.
    ============================================================ */
 
+/* ── SVG-HUD-Icons (cyber-icons.svg sprite) — ersetzen Emoji-Glyphen.
+   1em groß, Farbe via currentColor. Auch in base.css (deckt die noch nicht
+   migrierten Seiten ab); hier für index.html, das base.css nicht lädt. */
+.ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex: none; }
+
 /* ── Design-Tokens (MASTER §2, verbatim) ───────────────────── */
 :root {
   /* — Backgrounds — */

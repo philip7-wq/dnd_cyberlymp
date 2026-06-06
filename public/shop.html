@@ -403,7 +403,7 @@ function renderNav() {
 }
 
 function updateNavDisplay() {
-  document.getElementById('navCash').textContent = `💰 ${char.cash ?? 0} eb`;
+  document.getElementById('navCash').innerHTML = `<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-money"/></svg> ${char.cash ?? 0} eb`;
   const st  = getCyberpsychosisStatus(char.current_humanity ?? 0);
   const el  = document.getElementById('psychosisStatus');
   if (st) {

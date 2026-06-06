@@ -3,6 +3,11 @@
    Palette: near-black bg · #FF2D2D red · #00E5FF cyan
    ============================================================ */
 
+/* ── SVG-HUD-Icons (cyber-icons.svg sprite) — ersetzen Emoji-Glyphen in
+   Buttons/Labels. Größe = 1em, Farbe via currentColor vom umgebenden Text.
+   Auch in cyberpunk-ui.css dupliziert (deckt index.html ab, das base.css nicht lädt). */
+.ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex: none; }
+
 /* ── Self-hosted Fonts (DSGVO; ersetzen die früheren Google-Fonts-Links) ──
    Audiowide/Inter/Caveat = die aktuell vom (noch nicht reskinnten) UI genutzten
    Familien. woff2 (OFL) in assets/fonts/. Hier in base.css, weil diese Datei auf

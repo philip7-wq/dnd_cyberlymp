@@ -78,7 +78,7 @@ export function mountRadio(topNav, char, patchCharacter) {
   _radioBtn.type = 'button';
   _radioBtn.className = 'btn btn-ghost radio-topbar-btn';
   _radioBtn.style.fontSize = '.75rem';
-  _radioBtn.innerHTML = `<span class="radio-btn-led led-off"></span><span class="radio-btn-icon">📻</span><span class="radio-btn-freq">88.0</span>`;
+  _radioBtn.innerHTML = `<span class="radio-btn-led led-off"></span><span class="radio-btn-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-radio"/></svg></span><span class="radio-btn-freq">88.0</span>`;
   topNav.insertBefore(_radioBtn, topNav.querySelector('#navCash'));
 
   // Drawer (positioned under the button on open)
