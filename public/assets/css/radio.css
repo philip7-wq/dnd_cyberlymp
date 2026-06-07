@@ -230,7 +230,4 @@
 
 /* Control-Icons */
 .radio-ctrl-btn .ic, .radio-power-btn .ic { width: 1.15em; height: 1.15em; }
-.radio-ctrl-btn .ic-flip { transform: scaleX(-1); }   /* prev = gespiegeltes ic-next */
-.radio-power-btn .ic-pwr-off { display: none; }
-.radio-power-btn.powered .ic-pwr-on  { display: none; }
-.radio-power-btn.powered .ic-pwr-off { display: inline-block; }
+.radio-ctrl-btn .ic-flip { transform: scaleX(-1); }   /* prev = gespiegeltes ic-seek */

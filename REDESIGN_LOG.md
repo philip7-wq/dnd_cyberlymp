@@ -570,6 +570,32 @@ resolven. Geändert: `sidebar.css`, `sidebar.js`, `dm.html`, `player.html`, `pla
 
 ---
 
+## Phase 4d — Radio-Controls: dedizierte Icons (ic-power / ic-seek) ✅
+
+**Ziel:** Behelfs-Icons der Radio-Controls auf dedizierte Symbole umstellen — Power = `ic-power`,
+Seek = `ic-seek` (vor) bzw. gespiegeltes `ic-seek` (zurück).
+
+**Umsetzung:**
+- `cyber-icons.svg`: zwei neue `<symbol>` `ic-power` + `ic-seek` vor `</svg>` gemergt
+  (well-formed via `xmllint --noout` bestätigt, IDs eindeutig). Das nur als Doc gelieferte
+  `cyber-icons-radio.svg` existierte nicht auf der Platte → nichts zu löschen.
+- `radio-ui.js` (`buildUI`-Template): Power-Button von Doppel-Icon (`ic-play`/`ic-stop` mit
+  `ic-pwr-on`/`ic-pwr-off`) auf **ein** `ic-power` reduziert; Seek-Buttons `ic-next` → `ic-seek`,
+  `ic-flip` am Prev beibehalten. IDs (`radioPowerBtn`/`radioSeekNext`/`radioSeekPrev`),
+  `aria-label`s, Event-Verdrahtung und alle Handler **unverändert**.
+- `radio.css`: obsoleten `ic-pwr-on/off`-Display-Toggle (3 Zeilen) entfernt;
+  `.ic-flip{transform:scaleX(-1)}` + `.powered`-Optik (grün/Glow) bleiben.
+
+**Kernpunkte gelöst:** Power-Zustand rein per CSS über bestehende `.powered`-Klasse
+(`updateDisplay`, keine JS-Logik angefasst). Seek-Spiegelung via ein Symbol + `.ic-flip`.
+
+**Geteiltes Markup (bewusst):** `buildUI()` speist auch die Standalone-`radio.html`; per
+User-Entscheidung Icon-Tausch für beide übernommen. `radio.html` + `radio-standalone.css` selbst
+unberührt. Radio-Wiedergabe/Power/Seek/Web-Audio unverändert. Geändert: `cyber-icons.svg`,
+`radio-ui.js`, `radio.css`.
+
+---
+
 ## Offene Punkte / To-do bis Ende
 - **Phase 5–10** wie Status-Tabelle.
 - **Phase 11 Cleanup:** Migrations-Aliase entfernen; `--radius`-Kollision auflösen; Temp-Fonts
