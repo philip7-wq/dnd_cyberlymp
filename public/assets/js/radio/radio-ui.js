@@ -67,9 +67,9 @@ export function buildUI(container, callbacks) {
     </div>
 
     <div class="radio-controls">
-      <button class="radio-ctrl-btn" id="radioSeekPrev" type="button">◄ SEEK</button>
-      <button class="radio-power-btn" id="radioPowerBtn" type="button">⏻ POWER</button>
-      <button class="radio-ctrl-btn" id="radioSeekNext" type="button">SEEK ►</button>
+      <button class="radio-ctrl-btn" id="radioSeekPrev" type="button" aria-label="Vorheriger Sender"><svg class="ic ic-flip" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-next"/></svg></button>
+      <button class="radio-power-btn" id="radioPowerBtn" type="button" aria-label="Ein/Aus"><svg class="ic ic-pwr-on" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-play"/></svg><svg class="ic ic-pwr-off" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-stop"/></svg></button>
+      <button class="radio-ctrl-btn" id="radioSeekNext" type="button" aria-label="Nächster Sender"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-next"/></svg></button>
     </div>
   `;
 

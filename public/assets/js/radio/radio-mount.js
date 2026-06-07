@@ -6,6 +6,7 @@ const ITEM_NAME = 'Radio Scanner / Music Player';
 let _char = null;
 let _patchFn = null;
 let _radioBtn = null;
+let _radioBtnExternal = false;
 let _drawer = null;
 let _drawerOpen = false;
 let _saveTimer = null;
@@ -47,15 +48,30 @@ function _refresh() {
 
 function _openDrawer() {
   if (!_drawer || !_radioBtn) return;
-  const r = _radioBtn.getBoundingClientRect();
   const W = 320;
-  let left = r.left;
-  if (left + W > window.innerWidth - 12) left = window.innerWidth - 12 - W;
-  _drawer.style.top    = (r.bottom + 8) + 'px';
-  _drawer.style.left   = Math.max(12, left) + 'px';
+  const r = _radioBtn.getBoundingClientRect();
+  const desktop = window.matchMedia('(min-width: 769px)').matches;
+
   _drawer.style.right  = 'auto';
   _drawer.style.bottom = 'auto';
   _drawer.style.display = 'flex';
+
+  if (desktop) {
+    // left kommt aus CSS: left = var(--sb-current-w) + Gap → klebt an der rechten
+    // Sidebar-Kante und wandert beim Hover-Auf/Zuklappen synchron mit (CSS-Transition).
+    // Inline-left löschen, damit die CSS-Regel greift; nur top dynamisch am Trigger,
+    // gegen den unteren Viewport-Rand geklammert.
+    const h = _drawer.offsetHeight;
+    const top = Math.min(Math.max(12, r.top), window.innerHeight - 12 - h);
+    _drawer.style.left = '';
+    _drawer.style.top  = Math.max(12, top) + 'px';
+  } else {
+    // Mobile: bisheriges Verhalten (unter dem Trigger, am Viewport-Rand geklammert).
+    let left = r.left;
+    if (left + W > window.innerWidth - 12) left = window.innerWidth - 12 - W;
+    _drawer.style.left = Math.max(12, left) + 'px';
+    _drawer.style.top  = (r.bottom + 8) + 'px';
+  }
   _drawerOpen = true;
   _refresh();
 }
@@ -66,20 +82,28 @@ function _closeDrawer() {
   _drawerOpen = false;
 }
 
-export function mountRadio(topNav, char, patchCharacter) {
+export function mountRadio(topNav, char, patchCharacter, opts = {}) {
   _char = char;
   _patchFn = patchCharacter;
 
   if (!_hasRadio(char.gear)) return;
 
-  // Topbar button: LED + 📻 + live frequency
-  _radioBtn = document.createElement('button');
-  _radioBtn.id = 'radioBtn';
-  _radioBtn.type = 'button';
-  _radioBtn.className = 'btn btn-ghost radio-topbar-btn';
-  _radioBtn.style.fontSize = '.75rem';
-  _radioBtn.innerHTML = `<span class="radio-btn-led led-off"></span><span class="radio-btn-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-radio"/></svg></span><span class="radio-btn-freq">88.0</span>`;
-  topNav.insertBefore(_radioBtn, topNav.querySelector('#navCash'));
+  if (opts.triggerEl) {
+    // Use an existing element (e.g. a sidebar cyber-nav-item) as trigger + drawer anchor.
+    // No standalone button is injected; the drawer anchors to this element's rect.
+    _radioBtn = opts.triggerEl;
+    _radioBtnExternal = true;
+    _radioBtn.hidden = false;
+  } else {
+    // Legacy: inject a standalone topbar button (LED + icon + live frequency)
+    _radioBtn = document.createElement('button');
+    _radioBtn.id = 'radioBtn';
+    _radioBtn.type = 'button';
+    _radioBtn.className = 'btn btn-ghost radio-topbar-btn';
+    _radioBtn.style.fontSize = '.75rem';
+    _radioBtn.innerHTML = `<span class="radio-btn-led led-off"></span><span class="radio-btn-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-radio"/></svg></span><span class="radio-btn-freq">88.0</span>`;
+    topNav.insertBefore(_radioBtn, topNav.querySelector('#navCash'));
+  }
 
   // Drawer (positioned under the button on open)
   _drawer = document.createElement('div');
@@ -139,17 +163,25 @@ export function mountRadio(topNav, char, patchCharacter) {
   window.addEventListener('resize', () => { if (_drawerOpen) _openDrawer(); });
 }
 
-export function mountRadioDM(topNav) {
+export function mountRadioDM(topNav, triggerEl) {
   mountRadio(topNav, {
     gear: [{ name: ITEM_NAME }],
     radio_last_frequency: 88.0,
     radio_volume: 0.7,
     id: null,
-  }, () => Promise.resolve());
+  }, () => Promise.resolve(), { triggerEl });
 }
 
 export function updateRadioOwnership(newGear) {
-  if (!_hasRadio(newGear)) {
+  const has = _hasRadio(newGear);
+  // External trigger (static nav-item): just toggle visibility, keep drawer/engine intact.
+  if (_radioBtnExternal && _radioBtn) {
+    _radioBtn.hidden = !has;
+    if (!has) { powerOff(); _closeDrawer(); }
+    return;
+  }
+  // Legacy injected button: tear down on loss.
+  if (!has) {
     if (_drawer) { powerOff(); _closeDrawer(); _drawer.remove(); _drawer = null; }
     if (_radioBtn) { _radioBtn.remove(); _radioBtn = null; }
   }

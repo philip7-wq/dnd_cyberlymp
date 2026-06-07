@@ -1,127 +1,174 @@
-/* ── Topbar button ───────────────────────────────────────────── */
+/* ============================================================
+   radio.css — Eingebettetes Radio-Popup (#radioDrawer)
+   Phase 4d — HUD-Redesign. NUR das in player.html/dm.html gemountete
+   Popup; radio.html lädt diese Datei NICHT (eigenes radio-standalone.css).
+   Styling über Tokens aus cyberpunk-ui.css; Muster wie Phase 0/1:
+   Clip-Border via Pseudo-Layer, drop-shadow-Glow, Mono-Type.
+   Alle Selektoren/IDs/Klassen unverändert (Engine/UI-Logik unberührt).
+   ============================================================ */
+
+/* ── Legacy-Topbar-Button (nur ohne triggerEl-Mount genutzt) ───── */
 .radio-topbar-btn { display: inline-flex; align-items: center; gap: .4rem; }
 .radio-btn-icon { font-size: .85rem; line-height: 1; }
-.radio-btn-freq { font-family: 'Audiowide', sans-serif; font-size: .72rem; font-variant-numeric: tabular-nums; }
+.radio-btn-freq { font-family: var(--font-mono); font-size: .72rem; font-variant-numeric: tabular-nums; }
 .radio-btn-led {
   display: inline-block; width: 7px; height: 7px; border-radius: 50%;
   transition: background .2s, box-shadow .2s; flex-shrink: 0;
 }
 
-/* ── Shared LED colours ──────────────────────────────────────── */
-.led-off    { background: #1e1e2a; box-shadow: none; }
-.led-green  { background: #00FF88; box-shadow: 0 0 6px #00FF88, 0 0 14px rgba(0,255,136,.5); }
-.led-yellow { background: #FFD700; box-shadow: 0 0 6px #FFD700, 0 0 14px rgba(255,215,0,.4); }
-.led-flicker { background: #FFD700; animation: led-flicker .16s ease-in-out infinite alternate; }
+/* ── Geteilte LED-Farben (Topbar-Button + Drawer-LED) ──────────── */
+.led-off    { background: #1e242b; box-shadow: none; }
+.led-green  { background: var(--success-green); box-shadow: 0 0 6px var(--success-green), 0 0 14px rgba(54,255,159,.5); }
+.led-yellow { background: var(--warning-yellow); box-shadow: 0 0 6px var(--warning-yellow), 0 0 14px rgba(255,209,102,.4); }
+.led-flicker { background: var(--warning-yellow); animation: led-flicker .16s ease-in-out infinite alternate; }
 @keyframes led-flicker {
-  from { opacity: 1; box-shadow: 0 0 6px #FFD700, 0 0 14px rgba(255,215,0,.4); }
+  from { opacity: 1; box-shadow: 0 0 6px var(--warning-yellow), 0 0 14px rgba(255,209,102,.4); }
   to   { opacity: .3; box-shadow: none; }
 }
 
-/* ── Drawer ──────────────────────────────────────────────────── */
+/* ── Drawer (HUD-Panel mit Clip-Border-Pseudo-Layer + Glow) ────── */
 #radioDrawer {
   position: fixed;
   width: 320px;
-  background: linear-gradient(180deg, #0e0e16 0%, #0a0a11 100%);
-  border: 1px solid #20202e;
-  border-radius: 11px;
-  box-shadow: 0 16px 48px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.03);
-  z-index: 600;
+  z-index: 1260;                 /* über Sidebar (1250) + Mobile-Overlay (1240) */
+  display: none;                 /* JS schaltet auf flex (Spalte) */
   flex-direction: column;
-  overflow: hidden;
-  font-family: 'Audiowide', sans-serif;
+  isolation: isolate;            /* hält die z-index:-1-Layer lokal */
+  background: transparent;
+  color: var(--text-main);
+  font-family: var(--font-body);
   user-select: none;
+  clip-path: polygon(
+    var(--clip-md) 0, 100% 0, 100% calc(100% - var(--clip-md)),
+    calc(100% - var(--clip-md)) 100%, 0 100%, 0 var(--clip-md)
+  );
+  filter: drop-shadow(var(--glow-cyan-m));   /* Glow folgt der Clip-Kontur */
+}
+#radioDrawer::before {           /* = Border-Farbe, folgt der Clip-Form */
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--cyan-soft);
+  clip-path: inherit;
+}
+#radioDrawer::after {            /* = Füllung, um border-w eingerückt */
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--bg-panel);
+  box-shadow: var(--inset-cyan);
+  clip-path: inherit;
 }
 
-/* ── Header (brushed strip) ──────────────────────────────────── */
+/* ── Desktop: an der rechten Sidebar-Kante kleben + synchron mitwandern ──
+   left = aktuelle Sidebar-Breite (--sb-current-w aus sidebar.css) + Gap.
+   Die Variable flippt bei Sidebar-:hover instant Rail↔Expand; weil hier
+   die LÄNGE `left` transitioniert wird (gleiche Dauer/Ease wie die
+   Sidebar-Breite), gleitet das Popup synchron mit der Kante auf/zu und
+   wird nie überlappt. top setzt JS dynamisch (am Trigger). Mobile: JS-
+   Inline-left überschreibt dies (kein Tracking). */
+@media (min-width: 769px) {
+  #radioDrawer {
+    left: calc(var(--sb-current-w, var(--sb-rail)) + var(--sp-2));
+    transition: left var(--t-med) var(--ease);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #radioDrawer { transition: none !important; }
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
 .radio-head {
-  display: flex; align-items: center; gap: .55rem;
-  padding: .5rem .8rem;
-  background: linear-gradient(180deg, #1b1b26 0%, #101019 100%);
-  border-bottom: 1px solid #22222f;
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-panel-soft);
+  border-bottom: 1px solid var(--border-dark);
 }
 .radio-head-grip {
-  width: 20px; height: 10px; border-radius: 2px; opacity: .45;
-  background: repeating-linear-gradient(90deg, #3a3a4a 0 2px, transparent 2px 4px);
+  width: 22px; height: 8px; opacity: .5; flex: none;
+  background: repeating-linear-gradient(90deg, var(--cyan-dark) 0 2px, transparent 2px 4px);
 }
-.radio-head-title { flex: 1; font-size: .6rem; letter-spacing: .2em; color: #5fa3ad; }
+.radio-head-title {
+  flex: 1; font-family: var(--font-heading); font-weight: 600;
+  font-size: var(--fs-xs); letter-spacing: var(--tracking);
+  text-transform: uppercase; color: var(--cyan-soft);
+}
 .radio-close-btn {
-  background: none; border: none; color: #555; cursor: pointer;
-  font-size: .8rem; line-height: 1; padding: 0; transition: color .15s;
+  background: none; border: none; color: var(--text-dim); cursor: pointer;
+  font-size: var(--fs-sm); line-height: 1; padding: var(--sp-1);
+  transition: color var(--t-fast) var(--ease);
 }
-.radio-close-btn:hover { color: #00E5FF; }
+.radio-close-btn:hover { color: var(--neon-cyan); }
 
 /* ── Screen (backlit LCD) ────────────────────────────────────── */
 .radio-screen {
   position: relative;
-  margin: .65rem .8rem .3rem;
-  border-radius: 6px;
-  padding: .7rem .9rem .55rem;
-  background: #070709;
-  border: 1px solid #15151f;
+  margin: var(--sp-3) var(--sp-3) var(--sp-1);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  border-radius: var(--radius);
+  background: var(--bg-main);
+  border: 1px solid var(--border-dark);
   box-shadow: inset 0 0 18px rgba(0,0,0,.85);
   overflow: hidden;
-  transition: background .4s, box-shadow .4s;
+  transition: background var(--t-slow) var(--ease), box-shadow var(--t-slow) var(--ease);
 }
 .radio-screen.backlit {
-  background: radial-gradient(130% 150% at 50% 0%, #07363d 0%, #06191f 55%, #04121a 100%);
-  box-shadow: inset 0 0 22px rgba(0,229,255,.18), 0 0 0 1px rgba(0,229,255,.07);
+  background: radial-gradient(130% 150% at 50% 0%, var(--cyan-dark) 0%, #06191f 55%, var(--bg-main) 100%);
+  box-shadow: inset 0 0 22px rgba(34,247,255,.18), 0 0 0 1px rgba(34,247,255,.10);
 }
 .radio-led {
   position: absolute; top: 9px; left: 11px;
   width: 9px; height: 9px; border-radius: 50%;
-  transition: background .2s, box-shadow .2s;
+  transition: background var(--t-med), box-shadow var(--t-med);
 }
 .radio-screen-main { display: flex; align-items: baseline; justify-content: center; gap: .3rem; }
 .radio-freq-num {
+  font-family: var(--font-mono);
   font-size: 1.95rem; letter-spacing: .04em; line-height: 1;
-  color: #16323a; font-variant-numeric: tabular-nums;
-  transition: color .4s, text-shadow .4s;
+  color: var(--text-dim); font-variant-numeric: tabular-nums;
+  transition: color var(--t-slow) var(--ease), text-shadow var(--t-slow) var(--ease);
 }
-.radio-screen.backlit .radio-freq-num { color: #00E5FF; text-shadow: 0 0 16px rgba(0,229,255,.6); }
-.radio-mhz { font-size: .5rem; letter-spacing: .1em; color: #1d3036; transition: color .4s; }
-.radio-screen.backlit .radio-mhz { color: #2f6b73; }
+.radio-screen.backlit .radio-freq-num { color: var(--neon-cyan); text-shadow: 0 0 16px rgba(34,247,255,.6); }
+.radio-mhz { font-family: var(--font-mono); font-size: .5rem; letter-spacing: .1em; color: var(--text-dim); transition: color var(--t-slow) var(--ease); }
+.radio-screen.backlit .radio-mhz { color: var(--cyan-soft); }
 .radio-station-name {
   display: block; text-align: center; margin-top: .3rem; min-height: .72rem;
-  font-size: .55rem; letter-spacing: .08em; color: #00E5FF;
-  opacity: 0; transition: opacity .35s;
+  font-family: var(--font-mono); font-size: .55rem; letter-spacing: .08em; color: var(--neon-cyan);
+  opacity: 0; transition: opacity var(--t-med) var(--ease);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .radio-station-name.visible { opacity: .85; }
 
-/* ── Frequency strip (HTML, % aligned) ───────────────────────── */
-.radio-strip { position: relative; height: 44px; margin: .25rem .9rem .15rem; cursor: crosshair; }
+/* ── Frequenz-Strip (HTML, %-aligned) ────────────────────────── */
+.radio-strip { position: relative; height: 44px; margin: var(--sp-1) var(--sp-3) 0; cursor: crosshair; }
 .strip-ticks, .strip-dots { position: absolute; inset: 0; }
 .strip-tick {
   position: absolute; bottom: 0; width: 1px; height: 7px;
-  background: #262636; transform: translateX(-50%);
+  background: var(--border-dark); transform: translateX(-50%);
 }
-.strip-tick.major { height: 13px; background: #3a3a4e; }
+.strip-tick.major { height: 13px; background: #3a4a52; }
 .strip-tick-label {
   position: absolute; bottom: 16px; transform: translateX(-50%);
-  font-size: .45rem; color: #3a3a50;
+  font-family: var(--font-mono); font-size: .45rem; color: var(--text-dim);
 }
 .strip-dot {
   position: absolute; top: 2px; width: 7px; height: 7px; border-radius: 50%;
-  background: #00E5FF; opacity: .55; transform: translateX(-50%);
-  box-shadow: 0 0 4px rgba(0,229,255,.5);
+  background: var(--cyan-soft); opacity: .6; transform: translateX(-50%);
+  box-shadow: 0 0 4px rgba(34,247,255,.5);
 }
 .strip-needle {
   position: absolute; top: 0; bottom: 0; width: 2px;
-  background: #FF2D2D; transform: translateX(-50%);
-  box-shadow: 0 0 6px rgba(255,45,45,.7);
+  background: var(--neon-red); transform: translateX(-50%);
+  box-shadow: var(--glow-red-s);
 }
 
-/* ── Knobs (radial dials) ────────────────────────────────────── */
-.radio-knobs { display: flex; justify-content: space-around; padding: .55rem 1rem 1.2rem; }
+/* ── Knöpfe (radiale Dials) — funktional unverändert, nur Tokens ── */
+.radio-knobs { display: flex; justify-content: space-around; padding: var(--sp-2) var(--sp-4) var(--sp-5); }
 .radio-knob { position: relative; width: 84px; height: 84px; }
 .knob-ticks { position: absolute; inset: 0; width: 100%; height: 100%; }
-.ktick-major { stroke: #3a5a5e; stroke-width: 2; }
-.ktick-minor { stroke: #262636; stroke-width: 1.4; }
+.ktick-major { stroke: var(--cyan-dark); stroke-width: 2; }
+.ktick-minor { stroke: var(--border-dark); stroke-width: 1.4; }
 .knob-rotor {
   position: absolute; top: 13px; left: 13px; width: 58px; height: 58px;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 30%, #2c2c3c 0%, #18181f 62%, #0e0e15 100%);
-  box-shadow: inset 0 2px 4px rgba(255,255,255,.07), inset 0 -4px 7px rgba(0,0,0,.65), 0 2px 7px rgba(0,0,0,.55);
+  background: radial-gradient(circle at 38% 30%, #1b2026 0%, #12161b 62%, var(--bg-main) 100%);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,.05), inset 0 -4px 7px rgba(0,0,0,.65), 0 2px 7px rgba(0,0,0,.55);
   transition: transform .08s linear;
   cursor: grab;
 }
@@ -129,39 +176,61 @@
 .knob-pointer {
   position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
   width: 3px; height: 14px; border-radius: 2px;
-  background: #00E5FF; box-shadow: 0 0 6px #00E5FF;
+  background: var(--neon-cyan); box-shadow: var(--glow-cyan-s);
 }
-.knob-grip {
-  position: absolute; inset: 9px; border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.04);
-}
+.knob-grip { position: absolute; inset: 9px; border-radius: 50%; border: 1px solid rgba(34,247,255,.06); }
 .knob-center {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  font-size: .58rem; color: #7fd8e3; pointer-events: none;
-  font-variant-numeric: tabular-nums; text-shadow: 0 0 6px rgba(0,229,255,.4);
+  font-family: var(--font-mono); font-size: .58rem; color: var(--cyan-soft); pointer-events: none;
+  font-variant-numeric: tabular-nums; text-shadow: 0 0 6px rgba(34,247,255,.4);
 }
 .knob-label {
   position: absolute; bottom: -15px; left: 0; right: 0; text-align: center;
-  font-size: .46rem; letter-spacing: .2em; color: #555;
+  font-family: var(--font-heading); font-size: .46rem; letter-spacing: .2em; color: var(--text-dim);
 }
 
-/* ── Controls ────────────────────────────────────────────────── */
-.radio-controls { display: flex; gap: .4rem; padding: .3rem .9rem .9rem; }
-.radio-ctrl-btn {
-  flex: 1; padding: .4rem .3rem;
-  background: rgba(0,229,255,.06); border: 1px solid #1e1e2a; border-radius: 5px;
-  color: #666; font-family: 'Audiowide', sans-serif; font-size: .52rem; letter-spacing: .08em;
-  cursor: pointer; transition: border-color .15s, color .15s, background .15s;
+/* ── Controls (Button-System: Clip-Border + drop-shadow-Glow) ──── */
+.radio-controls { display: flex; gap: var(--sp-2); padding: 0 var(--sp-3) var(--sp-3); }
+.radio-ctrl-btn, .radio-power-btn {
+  position: relative; isolation: isolate;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 38px; padding: var(--sp-2);
+  background: transparent; border: none; cursor: pointer;
+  color: var(--cyan-soft); font-size: 1.1rem; line-height: 0;
+  clip-path: polygon(
+    var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
+    calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm)
+  );
+  transition: color var(--t-fast) var(--ease), filter var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
-.radio-ctrl-btn:hover { border-color: rgba(0,229,255,.3); color: #00E5FF; background: rgba(0,229,255,.1); }
-.radio-power-btn {
-  flex: 1.4; padding: .4rem .3rem;
-  background: rgba(255,45,45,.06); border: 1px solid rgba(255,45,45,.3); border-radius: 5px;
-  color: #FF2D2D; font-family: 'Audiowide', sans-serif; font-size: .52rem; letter-spacing: .08em;
-  cursor: pointer; transition: background .15s, box-shadow .15s, border-color .15s, color .15s;
+.radio-ctrl-btn { flex: 1; }
+.radio-power-btn { flex: 1.4; color: var(--neon-red); }
+.radio-ctrl-btn::before, .radio-power-btn::before {   /* Border-Farbe */
+  content: ""; position: absolute; inset: 0; z-index: -1; clip-path: inherit;
+  background: var(--cyan-soft);
 }
-.radio-power-btn:hover { background: rgba(255,45,45,.12); box-shadow: 0 0 8px rgba(255,45,45,.3); }
-.radio-power-btn.powered {
-  background: rgba(0,255,136,.1); border-color: #00FF88; color: #00FF88;
-  box-shadow: 0 0 12px rgba(0,255,136,.3);
+.radio-power-btn::before { background: var(--red-soft); }
+.radio-ctrl-btn::after, .radio-power-btn::after {     /* Füllung */
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1; clip-path: inherit;
+  background: var(--bg-panel-soft);
+  transition: background var(--t-fast) var(--ease);
 }
+.radio-ctrl-btn:hover { color: var(--neon-cyan); filter: drop-shadow(var(--glow-cyan-s)); transform: translateY(-1px); }
+.radio-ctrl-btn:hover::after { background: var(--bg-panel-cyan); }
+.radio-power-btn:hover { filter: drop-shadow(var(--glow-red-s)); transform: translateY(-1px); }
+.radio-power-btn:hover::after { background: var(--bg-panel-red); }
+.radio-ctrl-btn:focus-visible, .radio-power-btn:focus-visible { outline: none; filter: drop-shadow(var(--glow-cyan-m)); }
+.radio-ctrl-btn:active, .radio-power-btn:active { transform: translateY(0); }
+
+/* Power-Zustand: aus = rot/Play, an = grün/Stop (Klasse .powered von updateDisplay) */
+.radio-power-btn.powered { color: var(--success-green); }
+.radio-power-btn.powered::before { background: var(--success-green); }
+.radio-power-btn.powered::after  { background: var(--bg-panel-cyan); }
+.radio-power-btn.powered:hover   { filter: drop-shadow(0 0 8px rgba(54,255,159,.5)); }
+
+/* Control-Icons */
+.radio-ctrl-btn .ic, .radio-power-btn .ic { width: 1.15em; height: 1.15em; }
+.radio-ctrl-btn .ic-flip { transform: scaleX(-1); }   /* prev = gespiegeltes ic-next */
+.radio-power-btn .ic-pwr-off { display: none; }
+.radio-power-btn.powered .ic-pwr-on  { display: none; }
+.radio-power-btn.powered .ic-pwr-off { display: inline-block; }

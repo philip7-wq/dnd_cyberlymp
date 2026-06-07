@@ -497,6 +497,79 @@ alle genutzten `#ic-*` resolven weiterhin; `dm.html` Inline-Modul `node --check`
 
 ---
 
+## Radio-Nav-Item in Player- + DM-Sidebar ✅
+**Problem:** Radio fehlte in beiden redesignten Sidebars — die Mounts waren **defekt**:
+`mountRadio` (player) machte `topNav.insertBefore(_radioBtn, #navCash)`, aber `#navCash` ist
+kein direktes Kind von `#topNav` (liegt im `.cyber-sidebar-foot`) → `NotFoundError`;
+`mountRadioDM` zielte auf `nav.nav`, das im neuen DM-Sidebar nicht existiert → null → Crash.
+
+**Lösung (Nutzer: eingebettete Schublade, nicht radio.html):** statisches `cyber-nav-item`
+„Radio" (ic-radio) als Trigger/Anker der bestehenden `mountRadio`-Schublade.
+- **`radio-mount.js` (additiv, rückwärtskompatibel):** `mountRadio(topNav, char, patch, opts)`
+  nutzt `opts.triggerEl` als `_radioBtn` (kein `createElement`/`insertBefore`; Schublade ankert
+  an dessen Rect), schaltet es bei erfolgreichem (gear-gated) Mount sichtbar (`hidden=false`).
+  Ohne `triggerEl` = altes Verhalten. `mountRadioDM(topNav, triggerEl)` reicht durch.
+  `updateRadioOwnership` toggelt beim externen Trigger nur `hidden` (statt `.remove()`) →
+  Gating konsistent, Re-Acquire funktioniert. Schublade/Engine/UI unverändert.
+- **player.html:** `#radioNavBtn` (`hidden` per Default → nur bei Radio-Gear sichtbar) in
+  `.cyber-sidebar-nav`; Mount-Call um `{ triggerEl }` erweitert.
+- **dm.html:** `#radioNavBtn` (immer sichtbar, DM hat Radio stets); Mount-Call auf gültigen
+  Container `.cyber-sidebar-nav` + `triggerEl` gefixt (behebt den `nav.nav`-Crash).
+- **sidebar.css:** `.cyber-nav-item[hidden] { display:none }` — nötig, weil
+  `.cyber-nav-item { display:flex }` sonst die UA-`[hidden]`-Regel überschreibt (gated Item).
+
+**Verifiziert:** `node --check` radio-mount.js + player/dm Inline-Module sauber; `#radioNavBtn`
+in beiden Sidebars, Struktur identisch zu Geschwister-Items; ic-radio resolved; alte defekte
+Targets entfernt; sidebar.css Braces 56/56. Nur `radio-mount.js` + `player.html` + `dm.html` +
+`sidebar.css` geändert; andere Nav-Items/Cash/Handler unberührt.
+
+---
+
+## Phase 4d — Sidebar Hover-Expand / Toggle entfernt / Radio-Popup ✅
+**Ziel:** Desktop-Sidebar als schmale Icon-Rail, die bei :hover **als Overlay** aufklappt (kein
+Toggle, kein Reflow). Fixierte Elemente an die **konstante Rail-Breite** koppeln. Radio-Popup
+**neben** die Sidebar setzen + auf HUD-Look redesignen. Keine Funktions-/Logik-Änderung (Nav,
+Radio-Audio, Routing identisch). Mobile (Burger/Off-Canvas) unberührt; `radio.html` (Phase 8) tabu.
+
+**Lösung Overlay-Modell (Rail- vs Expand-Breite):** Der **Content-/Status-Bar-Offset bleibt
+konstant = `--sb-rail`** (60px) — die Sidebar (`position:fixed; z-index:1250`) wächst bei `:hover`
+nur in der **Breite** Rail→`--sb-w` und legt sich so über den Content, ohne ihn zu verschieben.
+- **`sidebar.css`:** Desktop-Content/Bars-Offset auf konstant `--sb-rail` (beide `.sidebar-collapsed`-
+  Varianten weg). Neuer Desktop-Block `.cyber-sidebar { width:var(--sb-rail) }` +
+  `.cyber-sidebar:hover { width:var(--sb-w); box-shadow:… }` (vorhandene `width`-Transition → smooth,
+  reduced-motion-Guard greift). Icon-Rail-Regeln von `body.sidebar-collapsed .cyber-sidebar` auf
+  **`.cyber-sidebar:not(:hover)`** invertiert (Labels/Name/Cash-Text aus, Items/Cash/Logo zentriert).
+  Bewusst **hover-only** (kein `:focus-within`) → Sidebar verdeckt nach Klick auf `#radioNavBtn` nicht
+  das daneben geöffnete Popup. Toggle-CSS + toter Mobile-`sidebar-collapsed`-Rest entfernt.
+- **`sidebar.js`:** `COLLAPSE_KEY`/localStorage-Read, `sidebar-collapsed`-Toggle-Handler **und**
+  `_syncToggleIcon()` entfernt. Burger/Off-Canvas/`_markActive`/`has-cyber-sidebar` unverändert.
+- **`dm.html` + `player.html`:** `.cyber-sidebar-toggle`-Markup entfernt; Cache-Bust
+  `radio.css?v=2→3`, `sidebar.css→?v=2`. Alle Nav-IDs/hrefs/`#radioNavBtn`/Cash/Mount-Calls unberührt.
+- **Fixierte Elemente an Rail-Offset gekoppelt (konstant, springen beim Hover nicht):**
+  `player.css` Dice-FAB/Popup + Timer-Bar → `calc(var(--sb-rail) + 1.5rem)` bzw. `var(--sb-rail)`
+  (collapsed-Varianten weg); **`dm.css` neu**: gleicher Dice-Offset (behebt nebenbei, dass
+  `#dmDiceFab` bei `left:1.5rem` unter der Sidebar saß).
+- **Radio-Popup-Position (`radio-mount.js` `_openDrawer`):** Desktop → `left = railBreite + 8`
+  (`--sb-rail` via `getComputedStyle`, Fallback 60), `top` am Trigger ausgerichtet + gegen
+  Viewport-Unterkante geklammert → steht **neben der Rail**, clippt nicht. Mobile-Pfad unverändert.
+  Audio/Engine/Open-Close/IDs/Handler unangetastet.
+- **Radio-Popup HUD-Restyle (`radio.css`, nur eingebettetes Popup — `radio.html` lädt es nicht):**
+  `#radioDrawer` mit Clip-Border-Pseudo-Layer (`::before` Cyan-Rand / `::after` `--bg-panel`-Füllung)
+  + `drop-shadow(--glow-cyan-m)`; Header/Screen/Strip/Knöpfe/LEDs auf Tokens umgefärbt, Mono-Typo.
+  Controls = Button-System (Clip-Path + Pseudo-Border + Hover-Glow), **icon-only** (gewählte Variante):
+  Seek = `ic-next` bzw. gespiegeltes `ic-next` (`.ic-flip`), Power = `ic-play`/`ic-stop`-Swap **rein
+  per CSS** über die bestehende `.powered`-Klasse (rot→grün). `radio-ui.js`: nur Controls-Markup auf
+  Icons + `aria-label` umgestellt (IDs/Handler/Knob-/Strip-Logik gleich).
+
+**Verifiziert:** `node --check` sidebar.js + radio-mount.js + radio-ui.js sauber; Brace-Balance
+sidebar.css 51/51, radio.css 69/69; keine Restreferenz auf `cyber-sidebar-toggle`/`sidebar-collapsed`/
+`lzrv_sidebar_collapsed`/`_syncToggleIcon`/`COLLAPSE_KEY` mehr; `radio.html` lädt weiterhin nur
+`radio-standalone.css` (Restyle isoliert); alle genutzten `#ic-*` (next/play/stop/radio/money/…)
+resolven. Geändert: `sidebar.css`, `sidebar.js`, `dm.html`, `player.html`, `player.css`, `dm.css`,
+`radio-mount.js`, `radio.css`, `radio-ui.js`. Nav-Handler/Radio-Audio/Routing unverändert.
+
+---
+
 ## Offene Punkte / To-do bis Ende
 - **Phase 5–10** wie Status-Tabelle.
 - **Phase 11 Cleanup:** Migrations-Aliase entfernen; `--radius`-Kollision auflösen; Temp-Fonts

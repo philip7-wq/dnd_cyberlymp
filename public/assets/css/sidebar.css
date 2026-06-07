@@ -10,20 +10,22 @@
 :root {
   --sb-w:    240px;   /* Sidebar voll        */
   --sb-rail:  60px;   /* Icon-Rail (collapsed) */
+  /* Aktuelle Sidebar-Breite: Rail im Normalzustand, Expand bei Desktop-Hover.
+     EINE Quelle für Sidebar-Breite UND das daran „klebende" Radio-Popup. */
+  --sb-current-w: var(--sb-rail);
 }
 
 /* ── Body-Offsets (Desktop) ─────────────────────────────────
-   Sidebar ist fixed/full-height links; Content + die fixierten
-   Status-Bars werden nach rechts versetzt. */
+   Overlay-Modell: Sidebar ist fixed/full-height links und startet als
+   schmale Icon-Rail; bei :hover klappt sie ÜBER den Content auf (siehe
+   unten). Darum bleibt der Content-/Status-Bar-Offset KONSTANT = Rail-
+   Breite (kein Reflow, kein Springen beim Hover-Expand). */
 @media (min-width: 769px) {
-  body.has-cyber-sidebar { padding-left: var(--sb-w); transition: padding-left var(--t-med) var(--ease); }
-  body.has-cyber-sidebar.sidebar-collapsed { padding-left: var(--sb-rail); }
+  body.has-cyber-sidebar { padding-left: var(--sb-rail); }
 
-  /* Status-Bars (session-bar + game-time topbar) rechts neben die Sidebar */
+  /* Status-Bars (session-bar + game-time topbar) rechts neben die Rail */
   body.has-cyber-sidebar .session-bar,
-  body.has-cyber-sidebar .gt-topbar { left: var(--sb-w); transition: left var(--t-med) var(--ease); }
-  body.has-cyber-sidebar.sidebar-collapsed .session-bar,
-  body.has-cyber-sidebar.sidebar-collapsed .gt-topbar { left: var(--sb-rail); }
+  body.has-cyber-sidebar .gt-topbar { left: var(--sb-rail); }
 }
 
 /* ── Sidebar-Container ──────────────────────────────────────── */
@@ -52,9 +54,21 @@
   background: linear-gradient(180deg, transparent, var(--cyan-soft) 18%, var(--cyan-soft) 82%, transparent);
   box-shadow: var(--glow-cyan-s);
 }
-body.sidebar-collapsed .cyber-sidebar { width: var(--sb-rail); }
+/* ── Desktop: Icon-Rail per Default, Hover klappt als OVERLAY auf ───
+   --sb-current-w steuert die Breite: Rail normal, Expand bei :hover (via
+   :has am body, damit auch das außerhalb der Sidebar liegende Radio-Popup
+   denselben Wert erbt und mitwandern kann). Da der Content-Offset konstant
+   = Rail bleibt, legt sich die ausgeklappte Sidebar über den Content
+   (z-index 1250), ohne ihn zu verschieben. width-Transition (oben) → smooth;
+   reduced-motion-Guard unten deckt .cyber-sidebar ab. Mobile nutzt die
+   Basis-Breite (--sb-w) für Off-Canvas (diese MQ greift nur ≥769px). */
+@media (min-width: 769px) {
+  body.has-cyber-sidebar:has(.cyber-sidebar:hover) { --sb-current-w: var(--sb-w); }
+  .cyber-sidebar { width: var(--sb-current-w); }
+  .cyber-sidebar:hover { box-shadow: 8px 0 32px rgba(0,0,0,.6); }
+}
 
-/* ── Kopf (Logo + Collapse-Toggle) ──────────────────────────── */
+/* ── Kopf (Logo) ────────────────────────────────────────────── */
 .cyber-sidebar-head {
   display: flex;
   align-items: center;
@@ -67,20 +81,6 @@ body.sidebar-collapsed .cyber-sidebar { width: var(--sb-rail); }
   height: 34px; width: auto; object-fit: contain; flex-shrink: 0;
   filter: drop-shadow(0 0 6px rgba(34,247,255,.25));
 }
-.cyber-sidebar-toggle {
-  margin-left: auto;
-  width: 34px; height: 34px; min-height: 34px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--bg-panel-soft);
-  border: 1px solid var(--border-dark);
-  color: var(--cyan-soft);
-  border-radius: var(--radius);
-  cursor: pointer;
-  font-size: 1rem; line-height: 1;
-  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
-}
-.cyber-sidebar-toggle:hover { color: var(--neon-cyan); border-color: var(--cyan-soft); background: var(--bg-panel-cyan); }
-.cyber-sidebar-toggle:focus-visible { outline: none; box-shadow: var(--glow-cyan-s); }
 
 /* ── Nav-Bereich ────────────────────────────────────────────── */
 .cyber-sidebar-nav {
@@ -124,6 +124,8 @@ body.sidebar-collapsed .cyber-sidebar { width: var(--sb-rail); }
   transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease),
               border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
+/* [hidden] muss display:flex schlagen (z.B. gated Radio-Nav-Item ohne Radio-Gear) */
+.cyber-nav-item[hidden] { display: none; }
 /* linker Akzent-Balken */
 .cyber-nav-item::before {
   content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2px;
@@ -203,34 +205,30 @@ body.sidebar-collapsed .cyber-sidebar { width: var(--sb-rail); }
 }
 .cyber-sidebar-cashlog:hover { color: var(--neon-cyan); opacity: 1; }
 
-/* ── Icon-Rail (collapsed, Desktop) ─────────────────────────── */
+/* ── Icon-Rail (Desktop-Default, solange NICHT gehovert) ────────
+   Labels/Texte aus, Items + Cash + Logo in der schmalen Rail zentriert.
+   Bei :hover (Sidebar voll) greift keine dieser Regeln → Labels kommen
+   zurück. */
 @media (min-width: 769px) {
-  body.sidebar-collapsed .cyber-sidebar .ci-label,
-  body.sidebar-collapsed .cyber-sidebar .cyber-sidebar-name,
-  body.sidebar-collapsed .cyber-sidebar .cyber-sidebar-label,
-  body.sidebar-collapsed .cyber-sidebar .cyber-sidebar-cash .nav-cash,
-  body.sidebar-collapsed .cyber-sidebar .cyber-sidebar-cashlog {
+  .cyber-sidebar:not(:hover) .ci-label,
+  .cyber-sidebar:not(:hover) .cyber-sidebar-name,
+  .cyber-sidebar:not(:hover) .cyber-sidebar-label,
+  .cyber-sidebar:not(:hover) .cyber-sidebar-cash .nav-cash,
+  .cyber-sidebar:not(:hover) .cyber-sidebar-cashlog {
     display: none;
   }
-  body.sidebar-collapsed .cyber-nav-item { justify-content: center; gap: 0; padding-left: 0; padding-right: 0; }
+  .cyber-sidebar:not(:hover) .cyber-nav-item { justify-content: center; gap: 0; padding-left: 0; padding-right: 0; }
   /* Cash-Zeile zentriert (nur 💰-Icon sichtbar) — kein Clipping in der Rail */
-  body.sidebar-collapsed .cyber-sidebar-cash { justify-content: center; padding-left: 0; padding-right: 0; }
-  /* Kopf vertikal stapeln: Logo oben, Toggle darunter — passt beides in die schmale Rail */
-  body.sidebar-collapsed .cyber-sidebar-head {
-    flex-direction: column;
+  .cyber-sidebar:not(:hover) .cyber-sidebar-cash { justify-content: center; padding-left: 0; padding-right: 0; }
+  /* Kopf: nur noch Logo, in der Rail zentriert */
+  .cyber-sidebar:not(:hover) .cyber-sidebar-head {
     justify-content: center;
-    gap: var(--sp-1);
     padding-left: var(--sp-1); padding-right: var(--sp-1);
   }
   /* Logo in BEIDEN Dimensionen auf die Rail begrenzen (kein horizontales Clipping) */
-  body.sidebar-collapsed .cyber-sidebar-head .nav-logo-img {
+  .cyber-sidebar:not(:hover) .cyber-sidebar-head .nav-logo-img {
     width: auto; height: auto;
     max-width: 100%; max-height: 26px;
-  }
-  /* Toggle voll sichtbar + ≥44px Trefferfläche, zentriert in der Rail */
-  body.sidebar-collapsed .cyber-sidebar-toggle {
-    margin-left: 0;
-    width: 44px; height: 44px; min-height: 44px;
   }
 }
 
@@ -276,8 +274,6 @@ body.sidebar-collapsed .cyber-sidebar { width: var(--sb-rail); }
   body.has-cyber-sidebar .session-bar,
   body.has-cyber-sidebar .gt-topbar { left: 0; }
   body.has-cyber-sidebar .session-bar-inner { padding-left: 60px; }
-  /* Burger nicht im Collapsed-Modus relevant */
-  body.sidebar-collapsed .cyber-sidebar { width: var(--sb-w); }
 }
 
 /* ── Reduced-Motion ─────────────────────────────────────────── */

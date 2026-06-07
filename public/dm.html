@@ -12,10 +12,10 @@
   <link rel="stylesheet" href="assets/css/dm.css?v=5">
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/sound.css">
-  <link rel="stylesheet" href="assets/css/radio.css?v=2">
+  <link rel="stylesheet" href="assets/css/radio.css?v=4">
   <link rel="stylesheet" href="assets/css/topbar.css?v=2">
   <link rel="stylesheet" href="assets/css/session-bar.css?v=1">
-  <link rel="stylesheet" href="assets/css/sidebar.css">
+  <link rel="stylesheet" href="assets/css/sidebar.css?v=3">
 </head>
 <body>
 
@@ -31,7 +31,6 @@
 <aside class="cyber-sidebar">
   <div class="cyber-sidebar-head">
     <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
-    <button class="cyber-sidebar-toggle" type="button" aria-label="Sidebar einklappen">«</button>
   </div>
   <nav class="cyber-sidebar-nav">
     <span class="cyber-sidebar-label">DM DASHBOARD</span>
@@ -40,6 +39,7 @@
     <a href="map.html" target="_blank" class="cyber-nav-item"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-map"/></svg></span><span class="ci-label">Karte</span></a>
     <button id="bmDmBtn" class="cyber-nav-item cyber-nav-item--red" type="button"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-blackmarket"/></svg></span><span class="ci-label">Schwarzmarkt</span></button>
     <button id="newCombatBtn" class="cyber-nav-item cyber-nav-item--red" type="button"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-combat"/></svg></span><span class="ci-label">Neuer Kampf</span></button>
+    <button id="radioNavBtn" class="cyber-nav-item" type="button"><span class="ci-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-radio"/></svg></span><span class="ci-label">Radio</span></button>
   </nav>
   <div class="cyber-sidebar-foot">
     <a href="index.html" class="cyber-nav-item"><span class="ci-icon">←</span><span class="ci-label">Übersicht</span></a>
@@ -536,7 +536,7 @@ async function boot() {
   }
 
   import('./assets/js/radio/radio-mount.js').then(({ mountRadioDM }) => {
-    mountRadioDM(document.querySelector('nav.nav'));
+    mountRadioDM(document.querySelector('.cyber-sidebar-nav'), document.getElementById('radioNavBtn'));
   }).catch(() => {});
 
   // Game-Time: Top-Bar + DM Time Dial + Session Bar

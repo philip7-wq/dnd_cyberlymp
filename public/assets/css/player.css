@@ -608,15 +608,13 @@ body.combat-active .char-sub {
 .dice-popup.open { display: flex; }
 
 /* ── Fixierte Würfel-UI neben die Nav-Sidebar versetzen ──────
-   Gleiches Var/Klassen-Schema wie der Content-Offset (sidebar.css):
-   body.has-cyber-sidebar(.sidebar-collapsed) + --sb-w/--sb-rail.
-   Nur Desktop mit Sidebar; Mobile (Off-Canvas) bleibt bei 1.5rem.
-   reduced-motion: global via cyberpunk-ui.css abgedeckt. */
+   Offset = KONSTANT Rail-Breite (--sb-rail), passend zum konstanten
+   Content-Offset (sidebar.css). Die Sidebar klappt bei Hover als Overlay
+   auf, ohne den Content/die Würfel-UI zu verschieben → kein Springen,
+   kein Clipping unter die Rail. Mobile (Off-Canvas) bleibt bei 1.5rem. */
 @media (min-width: 769px) {
   body.has-cyber-sidebar .dice-fab,
-  body.has-cyber-sidebar .dice-popup { left: calc(var(--sb-w) + 1.5rem); }
-  body.has-cyber-sidebar.sidebar-collapsed .dice-fab,
-  body.has-cyber-sidebar.sidebar-collapsed .dice-popup { left: calc(var(--sb-rail) + 1.5rem); }
+  body.has-cyber-sidebar .dice-popup { left: calc(var(--sb-rail) + 1.5rem); }
 }
 .dice-popup-head {
   padding: .6rem 1rem;
@@ -1521,10 +1519,10 @@ body.near-death::before {
   pointer-events: none;
 }
 .timer-bar.visible { transform: translateY(0); pointer-events: auto; }
-/* Timer-Bar (fixed, full-width-top) rechts neben die Nav-Sidebar — wie session-bar/gt-topbar */
+/* Timer-Bar (fixed, full-width-top) rechts neben die Nav-Rail — wie session-bar/gt-topbar.
+   Konstant --sb-rail (Overlay-Modell, kein Reflow beim Hover-Expand). */
 @media (min-width: 769px) {
-  body.has-cyber-sidebar .timer-bar { left: var(--sb-w); }
-  body.has-cyber-sidebar.sidebar-collapsed .timer-bar { left: var(--sb-rail); }
+  body.has-cyber-sidebar .timer-bar { left: var(--sb-rail); }
 }
 
 body.timer-active .nav { top: 50px !important; }

@@ -3,11 +3,11 @@
 // ------------------------------------------------------------
 // Operiert NUR auf vorhandenem Markup (<aside class="cyber-sidebar">).
 // Erfindet keine Nav-Items, ruft keine DB/Logik. Verdrahtet:
-//  - Desktop: Collapse-Toggle (voll ↔ Icon-Rail), Zustand in localStorage
+//  - Desktop: Icon-Rail, die bei :hover als Overlay aufklappt (rein CSS,
+//             kein Toggle/kein State — siehe sidebar.css)
 //  - Mobile:  Burger + Off-Canvas-Overlay, schließt bei Auswahl / Klick außerhalb
 // ============================================================
 
-const COLLAPSE_KEY = 'lzrv_sidebar_collapsed';
 const MOBILE_MQ = '(max-width: 768px)';
 
 export function initSidebar() {
@@ -16,21 +16,6 @@ export function initSidebar() {
   sidebar.dataset.shellInit = '1';
 
   document.body.classList.add('has-cyber-sidebar');
-
-  // ── Desktop Collapse-Zustand aus localStorage ──────────────
-  if (localStorage.getItem(COLLAPSE_KEY) === '1') {
-    document.body.classList.add('sidebar-collapsed');
-  }
-  _syncToggleIcon();
-
-  const toggle = sidebar.querySelector('.cyber-sidebar-toggle');
-  if (toggle) {
-    toggle.addEventListener('click', () => {
-      const collapsed = document.body.classList.toggle('sidebar-collapsed');
-      localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
-      _syncToggleIcon();
-    });
-  }
 
   // ── Mobile: Burger + Overlay ───────────────────────────────
   const burger = document.createElement('button');
@@ -65,14 +50,6 @@ export function initSidebar() {
 
   // Aktiven Link anhand des aktuellen Pfads markieren (rein optisch)
   _markActive(sidebar);
-}
-
-function _syncToggleIcon() {
-  const toggle = document.querySelector('.cyber-sidebar .cyber-sidebar-toggle');
-  if (!toggle) return;
-  const collapsed = document.body.classList.contains('sidebar-collapsed');
-  toggle.innerHTML = collapsed ? '»' : '«';
-  toggle.setAttribute('aria-label', collapsed ? 'Sidebar ausklappen' : 'Sidebar einklappen');
 }
 
 function _markActive(sidebar) {
