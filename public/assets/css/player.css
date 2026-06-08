@@ -490,14 +490,35 @@ body.combat-active .char-sub {
 }
 #tab-raum .ctrl-btn:hover { background: var(--bg-panel-cyan); border-color: var(--cyan-soft); color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 
-/* ── Lifepath ── */
-.lp-grid { display: flex; flex-direction: column; gap: .7rem; }
-.lp-item { }
-.lp-key { font-family: var(--font-heading); font-weight: 600; font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .2rem; }
+/* Raum-Inventar (4d-3) — Karten-Grid am Gear-Grid orientiert (auto-fit), --sp-Spacing,
+   Pseudo-Border-Clip wie .gear-item (Gotcha #2). */
+.raum-desc { font-family: var(--font-heading); font-weight: 600; font-size: .7rem; color: var(--neon-cyan); letter-spacing: .1em; text-transform: uppercase; margin-bottom: var(--sp-3); }
+.raum-desc:empty { display: none; }
+.raum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-3); }
+.raum-item {
+  position: relative; isolation: isolate;
+  padding: var(--sp-4);
+  display: flex; align-items: center; gap: var(--sp-3);
+  border-radius: var(--radius);
+  clip-path: polygon(var(--clip-md) 0, 100% 0, 100% calc(100% - var(--clip-md)),
+                     calc(100% - var(--clip-md)) 100%, 0 100%, 0 var(--clip-md));
+  transition: filter var(--t-fast) var(--ease);
+}
+.raum-item::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--border-dark); clip-path: inherit; }
+.raum-item::after  { content: ""; position: absolute; inset: var(--border-w); z-index: -1; background: var(--bg-panel); clip-path: inherit; }
+.raum-item:hover   { filter: drop-shadow(var(--glow-cyan-s)); }
+.raum-item-name { flex: 1; font-size: .88rem; color: var(--text-main); line-height: 1.4; }
+.raum-item-by   { color: var(--text-muted); font-size: .7rem; }
+.raum-item-actions { flex: none; }
+
+/* ── Lifepath (4d-3: auto-fit-Grid + --sp-Spacing, lesbare Spaltenbreite) ── */
+.lp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-3); }
+.lp-item { display: flex; flex-direction: column; }
+.lp-key { font-family: var(--font-heading); font-weight: 600; font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: var(--sp-1); }
 .lp-val {
-  font-size: .88rem; color: var(--text-main);
+  flex: 1; font-size: .88rem; color: var(--text-main); line-height: 1.5;
   background: var(--bg-panel); border: 1px solid var(--border-dark);
-  border-radius: var(--radius); padding: .45rem .75rem;
+  border-radius: var(--radius); padding: var(--sp-2) var(--sp-3);
 }
 .lp-val:empty::after { content: '—'; color: var(--text-muted); }
 
@@ -537,18 +558,32 @@ body.combat-active .char-sub {
 #critModalBox .crit-bonus-dmg    { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); }
 #critModalBox .crit-already      { color: var(--neon-red); }
 /* #critModalBox .btn-primary/.btn-ghost — Look kommt aus dem Button-System (4d-1, combat-lg / ghost-md). */
+/* Crit-Modal-Layout (4d-3) — inline-Styles → gescopt unter #critModalBox aufgeräumt.
+   Die neutrale .crit-modal-*-Basis bleibt unberührt (#dmgApplyBox/4b hängt dran). */
+#critModalBox .crit-target-row { margin: var(--sp-3) 0; }
+#critModalBox .crit-target-row .crit-field-key { margin-bottom: var(--sp-1); }
+#critModalBox .crit-target-select {
+  width: 100%; padding: var(--sp-2) var(--sp-3); font-size: .82rem; font-family: var(--font-body);
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); color: var(--text-main);
+}
+#critModalBox .crit-target-select:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+#critModalBox .crit-field-row { margin-top: var(--sp-2); }
+#critModalBox .crit-modal-btns { gap: var(--sp-2); margin-top: var(--sp-4); }
+#critModalBox .crit-no-target { color: var(--neon-red); font-size: .75rem; margin-top: var(--sp-2); }
 
-/* ── Injuries tab ── */
+/* ── Injuries tab (4d-3: auto-fit-Karten-Grid wie Gear/Weapons, --sp-Spacing) ── */
 .injury-badge  { background:var(--neon-red);color:#fff;border-radius:10px;font-size:.58rem;
                  padding:.05rem .35rem;margin-left:.3rem;vertical-align:middle; }
+.injury-grid   { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-3); }
 .injury-card   { background:var(--bg-panel);border:1px solid var(--red-soft);
-                 border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:.5rem; }
-.injury-header { display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem; }
+                 border-radius:var(--radius);padding:var(--sp-4);margin-bottom:0; }
+.injury-header { display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2); }
 .injury-name   { font-family:var(--font-heading);font-weight:600;color:var(--neon-red);font-size:.9rem;flex:1; }
 .injury-table  { font-size:.62rem;color:var(--text-muted);padding:.1rem .4rem;
                  border:1px solid var(--border-dark);border-radius:2px;text-transform:uppercase; }
-.injury-effect { font-size:.82rem;color:var(--text-main);margin-bottom:.4rem;line-height:1.5; }
-.injury-meta   { font-size:.75rem;color:var(--text-muted);margin-top:.2rem; }
+.injury-effect { font-size:.82rem;color:var(--text-main);margin-bottom:var(--sp-2);line-height:1.5; }
+.injury-meta   { font-size:.75rem;color:var(--text-muted);margin-top:var(--sp-1); }
 .inj-key       { font-family:var(--font-heading);font-weight:600;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;
                  color:var(--text-muted);margin-right:.25rem; }
 
@@ -845,9 +880,11 @@ body.near-death::before {
 .skill-maxed { font-size: .58rem; color: var(--text-dim); text-align: center; display: block; min-width: 30px; }
 
 /* ── Notes Tab ── */
-.notes-wrap { display: flex; flex-direction: column; gap: .5rem; min-height: 300px; }
-.notes-header { font-family: var(--font-heading); font-weight: 600; font-size: .65rem; letter-spacing: .15em; color: var(--text-muted); text-transform: uppercase; }
-.player-notes-area { flex: 1; min-height: 300px; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); font-family: var(--font-body); font-size: .88rem; padding: .75rem; resize: vertical; line-height: 1.6; }
+/* ── Notes (4d-3: notes-header auf sec-head-Look angeglichen, --sp-Spacing;
+   Textarea behält echte border — Input-Ausnahme, Gotcha #2) ── */
+.notes-wrap { display: flex; flex-direction: column; gap: var(--sp-3); min-height: 300px; }
+.notes-header { font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-xs); letter-spacing: var(--tracking); color: var(--neon-cyan); text-transform: uppercase; border-bottom: 1px solid var(--border-dark); padding-bottom: var(--sp-2); }
+.player-notes-area { flex: 1; min-height: 320px; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); font-family: var(--font-body); font-size: .88rem; padding: var(--sp-3); resize: vertical; line-height: 1.6; }
 .player-notes-area:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 .notes-save-status { font-size: .65rem; color: var(--text-muted); text-align: right; height: 1em; }
 
@@ -1830,6 +1867,31 @@ body.timer-active { padding-top: 50px; }
   font-family: var(--font-mono);
 }
 
+/* Rolle-Layout (4d-3) — LEICHT proportioniert, gescopt unter #tab-role; roles.css-
+   Karten-/Section-Geometrie bleibt. Tab-Panel hat bereits Cap+Padding → role-panel-
+   Eigenpadding raus (Doppel-Abstand vermeiden), Gap auf --sp. */
+#tab-role .role-panel { padding: 0; gap: var(--sp-4); }
+/* Rank-Up-Footer (eigenes Markup, an #tab-role angehängt) */
+#tab-role .role-rankup { padding: var(--sp-4) 0 var(--sp-1); border-top: 1px solid var(--border-dark); margin-top: var(--sp-3); }
+#tab-role .role-rankup-label { font-family: var(--font-heading); font-weight: 600; font-size: .6rem; letter-spacing: .15em; color: var(--text-dim); text-transform: uppercase; margin-bottom: var(--sp-2); }
+#tab-role .role-rankup-max { font-family: var(--font-heading); font-weight: 600; font-size: .62rem; color: var(--text-dim); text-align: center; }
+#tab-role .role-rankup-missing { font-size: .6rem; color: var(--neon-red); margin-left: var(--sp-2); }
+
+/* Rollen-Einstellungen-Modal (4d-3) — eigenes Markup, inline-Styles → gescopt.
+   Overlay-Element (#roleSettingsModal) behält seinen inline-Style (display wird per JS
+   getoggelt); nur die innere Box + Kinder werden hier gestylt. */
+#roleSettingsModal .role-set-box { background: var(--bg-panel); border: 1px solid var(--neon-cyan); box-shadow: var(--glow-cyan-m); border-radius: var(--radius); padding: var(--sp-5); max-width: 320px; width: 90%; }
+#roleSettingsModal .role-set-title { font-family: var(--font-heading); font-weight: 600; font-size: .75rem; color: var(--neon-cyan); letter-spacing: .1em; text-transform: uppercase; margin-bottom: var(--sp-4); }
+#roleSettingsModal .role-set-label { font-size: .78rem; color: var(--text-muted); display: block; margin-bottom: var(--sp-1); }
+#roleSettingsModal .role-set-input { width: 100%; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); color: var(--text-main); border-radius: var(--radius); padding: var(--sp-2); font-size: .82rem; font-family: var(--font-body); margin-bottom: var(--sp-3); }
+#roleSettingsModal .role-set-input:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+#roleSettingsModal .role-set-divider { border-top: 1px solid var(--border-dark); margin-bottom: var(--sp-3); padding-top: var(--sp-3); }
+#roleSettingsModal .role-set-help { font-size: .72rem; color: var(--text-muted); margin-bottom: var(--sp-2); line-height: 1.5; }
+#roleSettingsModal .role-set-help strong { color: var(--text-main); }
+#roleSettingsModal .role-set-msg { font-size: .7rem; color: var(--success-green); margin-top: var(--sp-1); min-height: .9rem; }
+#roleSettingsModal #roleSettingsReset { margin-top: var(--sp-1); }
+#roleSettingsModal .role-set-actions { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+
 /* ════════════════════════════════════════════════════════════════
    BUTTON-SYSTEM (Phase 4d-1) — cyber-button-Look auf bestehende Buttons
    Variante A: gemeinsame Look-/Größen-/Varianten-Regeln, angewandt über
@@ -1845,8 +1907,8 @@ body.timer-active { padding-top: 50px; }
    .skill-fav-btn = ghost-icon sm30, .active = warning-yellow) nach Skill-Grid-Relayout;
    #weaponDistMapBtn (Distanz-Bar = primary md); #tab-armor .unequip-btn (📦 = ghost-icon sm30,
    löst den 4d-1-Größen-Mismatch mit dem ✕ auf).
-   NICHT hier:
-     · Rolle-Tab-Buttons (.role-dice-btn via geteilter roles.css → späterer Pass).
+   Rolle-Tab-Buttons (.role-dice-btn / #roleRankUpBtn / #roleSettingsModal) → eigener
+   4d-3-Block am Dateiende (selbständig, gefüllter Pro-Rollen-Akzent).
    .death-save-btn bleibt absichtlich OHNE Clip (death-pulse nutzt box-shadow,
    würde vom clip-path geschnitten) — nur combat-lg-Größe angeglichen.
    ════════════════════════════════════════════════════════════════ */
@@ -2080,4 +2142,97 @@ body.timer-active { padding-top: 50px; }
   #tab-gear .gear-action-btn, #tab-cyberware .gear-action-btn, #tab-raum .ctrl-btn,
   #critModalBox .btn-ghost, #dmgApplyBox .btn-ghost,
   .skill-row .roll-btn, .skill-up-btn, #weaponDistMapBtn { --btn-h: 44px; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BUTTON-SYSTEM (4d-3) — Rolle-Tab-Buttons. SELBSTÄNDIGER Block, damit die
+   geteilten 4d-1/4d-2-Listen unangetastet bleiben. role-dice-btn kommt aus
+   der geteilten roles.css → NUR unter #tab-role gescopt (body-portaliertes
+   .role-modal bleibt roles.css-Default, bestehendes 4c-Verhalten). User-Wahl:
+   GEFÜLLTER Akzent — role-dice-btn behält Pro-Rollen-Akzent (--role-accent),
+   Rank-Up = gefülltes Cyan (sitzt außerhalb des Theme-Containers).
+   ════════════════════════════════════════════════════════════════ */
+#tab-role .role-dice-btn, #roleRankUpBtn, #roleSettingsModal button {
+  --btn-border: var(--cyan-soft);
+  --btn-fill: var(--bg-panel-soft);
+  --btn-fill-hover: var(--bg-panel-cyan);
+  --btn-color: var(--neon-cyan);
+  --btn-glow: var(--glow-cyan-s);
+  --btn-h: 40px;
+  --btn-px: var(--sp-4);
+  --btn-fs: var(--fs-sm);
+  position: relative; isolation: isolate;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  min-height: var(--btn-h); height: auto; padding: 0 var(--btn-px);
+  background: transparent; border: none; color: var(--btn-color);
+  font-family: var(--font-heading); font-size: var(--btn-fs); font-weight: 600;
+  letter-spacing: var(--tracking); text-transform: uppercase; line-height: 1;
+  cursor: pointer; opacity: 1; box-shadow: none; border-radius: var(--radius);
+  clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
+                     calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm));
+  transition: color var(--t-fast) var(--ease), filter var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease);
+}
+#tab-role .role-dice-btn::before, #roleRankUpBtn::before, #roleSettingsModal button::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; background: var(--btn-border); clip-path: inherit;
+}
+#tab-role .role-dice-btn::after, #roleRankUpBtn::after, #roleSettingsModal button::after {
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1; background: var(--btn-fill); clip-path: inherit;
+  transition: background var(--t-fast) var(--ease);
+}
+#tab-role .role-dice-btn:hover, #roleRankUpBtn:hover, #roleSettingsModal button:hover {
+  background: transparent; box-shadow: none; filter: drop-shadow(var(--btn-glow)); transform: translateY(-1px);
+}
+#tab-role .role-dice-btn:hover::after, #roleRankUpBtn:hover::after, #roleSettingsModal button:hover::after {
+  background: var(--btn-fill-hover);
+}
+#tab-role .role-dice-btn:active, #roleRankUpBtn:active, #roleSettingsModal button:active { transform: translateY(0); }
+#tab-role .role-dice-btn:focus-visible, #roleRankUpBtn:focus-visible, #roleSettingsModal button:focus-visible {
+  outline: none; filter: drop-shadow(var(--btn-glow));
+}
+#roleRankUpBtn:disabled { opacity: .4; cursor: not-allowed; filter: none; transform: none; }
+
+/* — Größen / Breite — */
+#roleRankUpBtn { width: 100%; }
+#roleSettingsModal button { flex: 1; --btn-px: var(--sp-3); }
+#roleSettingsModal #roleSettingsReset { width: 100%; flex: none; }
+
+/* — Varianten — */
+/* role-dice-btn = gefüllter Pro-Rollen-Akzent */
+#tab-role .role-dice-btn {
+  --btn-border: var(--role-accent); --btn-fill: var(--role-accent);
+  --btn-fill-hover: var(--role-accent); --btn-color: var(--role-bg);
+  --btn-glow: 0 0 8px var(--role-accent-glow);
+  filter: drop-shadow(var(--btn-glow));
+}
+#tab-role .role-dice-btn:hover { color: var(--role-bg); }
+/* .secondary = Ghost-Akzent (transparent, Akzent-Rand/Text) */
+#tab-role .role-dice-btn.secondary {
+  --btn-fill: transparent; --btn-color: var(--role-accent);
+  --btn-fill-hover: var(--role-accent-soft);
+  filter: none;
+}
+#tab-role .role-dice-btn.secondary:hover { color: var(--role-accent); }
+/* Rank-Up = gefülltes Cyan */
+#roleRankUpBtn {
+  --btn-border: var(--neon-cyan); --btn-fill: var(--neon-cyan);
+  --btn-fill-hover: var(--neon-cyan); --btn-color: var(--bg-main);
+  --btn-glow: var(--glow-cyan-s);
+  filter: drop-shadow(var(--btn-glow));
+}
+#roleRankUpBtn:hover { color: var(--bg-main); }
+#roleRankUpBtn:disabled { filter: none; }
+/* Settings: Save = combat, Cancel/Reset = ghost */
+#roleSettingsSave {
+  --btn-border: var(--red-soft); --btn-fill-hover: var(--bg-panel-red);
+  --btn-color: var(--neon-red); --btn-glow: var(--glow-red-s);
+}
+#roleSettingsCancel, #roleSettingsReset {
+  --btn-border: var(--border-dark); --btn-color: var(--text-muted);
+  --btn-fill-hover: var(--bg-panel-cyan); --btn-glow: var(--glow-cyan-s);
+}
+#roleSettingsCancel:hover, #roleSettingsReset:hover { color: var(--neon-cyan); }
+
+@media (pointer: coarse) {
+  #tab-role .role-dice-btn, #roleRankUpBtn, #roleSettingsModal button { --btn-h: 44px; }
 }

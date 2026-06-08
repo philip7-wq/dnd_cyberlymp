@@ -66,10 +66,10 @@
 
 <!-- Role Settings Modal -->
 <div id="roleSettingsModal" hidden style="position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center">
-  <div style="background:var(--bg-panel);border:1px solid var(--neon-cyan);box-shadow:var(--glow-cyan-m);border-radius:var(--radius);padding:1.5rem;max-width:300px;width:90%">
-    <div style="font-family:var(--font-heading);font-weight:600;font-size:.75rem;color:var(--neon-cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem">Rollen-Einstellungen</div>
-    <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.25rem">Rolle</label>
-    <select id="roleSettingsRole" style="width:100%;background:var(--bg-panel-soft);border:1px solid var(--border-dark);color:var(--text-main);border-radius:var(--radius);padding:.4rem;font-size:.82rem;margin-bottom:.75rem">
+  <div class="role-set-box">
+    <div class="role-set-title">Rollen-Einstellungen</div>
+    <label class="role-set-label">Rolle</label>
+    <select id="roleSettingsRole" class="role-set-input">
       <option value="">— Keine —</option>
       <option value="solo">Solo</option>
       <option value="netrunner">Netrunner</option>
@@ -82,16 +82,16 @@
       <option value="nomad">Nomad</option>
       <option value="rockerboy">Rockerboy</option>
     </select>
-    <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.25rem">Rank (1–10)</label>
-    <input type="number" id="roleSettingsRank" min="1" max="10" style="width:100%;background:var(--bg-panel-soft);border:1px solid var(--border-dark);color:var(--text-main);border-radius:var(--radius);padding:.4rem;font-size:.82rem;margin-bottom:1rem">
-    <div style="border-top:1px solid var(--border-dark);margin-bottom:.75rem;padding-top:.75rem">
-      <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.4rem">Punkteverteilung (Combat Awareness, Specialties, etc.) wird im <strong style="color:var(--text-main)">Rollen-Tab</strong> vergeben. Hier zurücksetzen um neu zu verteilen:</div>
-      <button id="roleSettingsReset" style="width:100%;background:none;border:1px solid var(--border-dark);color:var(--text-muted);border-radius:var(--radius);padding:.35rem;cursor:pointer;font-size:.75rem">↺ Punkte zurücksetzen</button>
-      <div id="roleSettingsResetMsg" style="font-size:.7rem;color:var(--success-green);margin-top:.3rem;min-height:.9rem"></div>
+    <label class="role-set-label">Rank (1–10)</label>
+    <input type="number" id="roleSettingsRank" min="1" max="10" class="role-set-input">
+    <div class="role-set-divider">
+      <div class="role-set-help">Punkteverteilung (Combat Awareness, Specialties, etc.) wird im <strong>Rollen-Tab</strong> vergeben. Hier zurücksetzen um neu zu verteilen:</div>
+      <button id="roleSettingsReset">↺ Punkte zurücksetzen</button>
+      <div id="roleSettingsResetMsg" class="role-set-msg"></div>
     </div>
-    <div style="display:flex;gap:.5rem">
-      <button id="roleSettingsSave" style="flex:1;background:var(--neon-red);border:none;color:var(--bg-main);border-radius:var(--radius);padding:.5rem;cursor:pointer;font-family:var(--font-heading);font-weight:600;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase">Speichern</button>
-      <button id="roleSettingsCancel" style="flex:1;background:none;border:1px solid var(--border-dark);color:var(--text-muted);border-radius:var(--radius);padding:.5rem;cursor:pointer;font-size:.78rem">Abbrechen</button>
+    <div class="role-set-actions">
+      <button id="roleSettingsSave">Speichern</button>
+      <button id="roleSettingsCancel">Abbrechen</button>
     </div>
   </div>
 </div>
@@ -259,11 +259,10 @@
 <div class="tab-panel" id="tab-lifepath"></div>
 <div class="tab-panel" id="tab-injuries"></div>
 <div class="tab-panel" id="tab-raum">
-  <div style="padding:.5rem 0 .25rem">
-    <div id="raumBeschreibung" style="font-family:var(--font-heading);font-weight:600;font-size:.7rem;color:var(--neon-cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem"></div>
-    <div id="raumListe" style="display:flex;flex-direction:column;gap:.4rem"></div>
-    <p class="empty-state" id="raumEmpty">Keine Items im Raum.</p>
-  </div>
+  <div class="sec-head">Raum</div>
+  <div id="raumBeschreibung" class="raum-desc"></div>
+  <div id="raumListe" class="raum-grid"></div>
+  <p class="empty-state" id="raumEmpty">Keine Items im Raum.</p>
 </div>
 <div class="tab-panel" id="tab-notes">
   <div class="notes-wrap">
@@ -2300,9 +2299,11 @@ function renderRaumTab() {
   }
   if (emptyEl) emptyEl.style.display = 'none';
   lista.innerHTML = _roomItems.map(r => `
-    <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:var(--bg-panel);border-radius:var(--radius);border:1px solid var(--border-dark)">
-      <span style="flex:1;font-size:.82rem;color:var(--text-main)">${r.item_name}${r.placed_by ? `<span style="color:var(--text-muted);font-size:.7rem"> (von ${r.placed_by})</span>` : ''}</span>
-      <button class="ctrl-btn" data-pickup="${r.id}" data-name="${r.item_name}" style="font-size:.7rem;padding:.2rem .5rem">Aufheben</button>
+    <div class="raum-item">
+      <div class="raum-item-name">${r.item_name}${r.placed_by ? `<span class="raum-item-by"> (von ${r.placed_by})</span>` : ''}</div>
+      <div class="raum-item-actions">
+        <button class="ctrl-btn" data-pickup="${r.id}" data-name="${r.item_name}">Aufheben</button>
+      </div>
     </div>`).join('');
 
   lista.querySelectorAll('[data-pickup]').forEach(btn => {
@@ -2343,7 +2344,7 @@ function renderLifepath() {
     ['Enemy Cause',      lp.enemies?.whatCausedIt],
   ];
 
-  el.innerHTML = `<div class="lp-grid">${fields.filter(([,v]) => v).map(([k,v]) =>
+  el.innerHTML = `<div class="sec-head">Lifepath</div><div class="lp-grid">${fields.filter(([,v]) => v).map(([k,v]) =>
     `<div class="lp-item">
       <div class="lp-key">${k}</div>
       <div class="lp-val">${v}</div>
@@ -2375,21 +2376,14 @@ async function renderRoleTab() {
       };
       const abilityName = ROLE_LABELS[(char.role||'').toLowerCase()] || 'Role Ability';
       const wrap = document.createElement('div');
-      wrap.style.cssText = 'padding:.75rem 1rem 1rem; border-top:1px solid var(--border-dark); margin-top:.5rem;';
+      wrap.className = 'role-rankup';
       if (nextRank <= 10) {
         const canAfford = ip >= cost;
         wrap.innerHTML = `
-          <div style="font-size:.55rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;
-            font-family:var(--font-heading);font-weight:600;margin-bottom:.45rem">${abilityName} — Rang aufleveln</div>
-          <button id="roleRankUpBtn" style="width:100%;padding:.5rem .75rem;font-family:var(--font-heading);font-weight:600;
-            font-size:.72rem;letter-spacing:.05em;
-            background:${canAfford ? 'var(--bg-panel-cyan)' : 'rgba(60,60,60,.08)'};
-            border:1px solid ${canAfford ? 'var(--neon-cyan)' : 'var(--border-dark)'};
-            color:${canAfford ? 'var(--neon-cyan)' : 'var(--text-dim)'};border-radius:var(--radius);
-            cursor:${canAfford ? 'pointer' : 'not-allowed'};transition:background .15s;"
-            ${!canAfford ? 'disabled' : ''}>
+          <div class="role-rankup-label">${abilityName} — Rang aufleveln</div>
+          <button id="roleRankUpBtn"${!canAfford ? ' disabled' : ''}>
             ▲ Rang ${rank} → ${nextRank} &nbsp;·&nbsp; ${cost} IP
-            ${!canAfford ? `<span style="font-size:.6rem;color:var(--neon-red);margin-left:.5rem">(${cost - ip} IP fehlen)</span>` : ''}
+            ${!canAfford ? `<span class="role-rankup-missing">(${cost - ip} IP fehlen)</span>` : ''}
           </button>`;
         container.appendChild(wrap);
         if (canAfford) {
@@ -2405,8 +2399,7 @@ async function renderRoleTab() {
           });
         }
       } else {
-        wrap.innerHTML = `<div style="font-size:.62rem;color:var(--text-dim);text-align:center;font-family:var(--font-heading);font-weight:600">
-          ${abilityName} — Max Rang erreicht</div>`;
+        wrap.innerHTML = `<div class="role-rankup-max">${abilityName} — Max Rang erreicht</div>`;
         container.appendChild(wrap);
       }
     }
@@ -3073,9 +3066,9 @@ async function showCritInjuryFlow() {
   box.innerHTML = `
     <div class="crit-modal-title">CRITICAL INJURY!</div>
     <div class="crit-modal-sub">≥2 Sechsen gewürfelt.</div>
-    <div style="margin:.5rem 0">
-      <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);margin-bottom:.3rem">Ziel</div>
-      <select id="critTargetSelect" style="width:100%;padding:.4rem .6rem;background:var(--bg-panel-soft);border:1px solid var(--border-dark);border-radius:var(--radius);color:var(--text-main);font-size:.82rem">
+    <div class="crit-target-row">
+      <div class="crit-field-key">Ziel</div>
+      <select id="critTargetSelect" class="crit-target-select">
         ${targetOptions}
       </select>
     </div>
@@ -3144,7 +3137,6 @@ async function applyInjury(injury, table) {
     if (!warn) {
       warn = document.createElement('div');
       warn.className = 'crit-no-target';
-      warn.style.cssText = 'color:var(--neon-red);font-size:.75rem;margin-top:.4rem';
       box.appendChild(warn);
     }
     warn.textContent = 'Bitte erst ein Ziel auswählen.';
@@ -3221,7 +3213,7 @@ function renderCritInjuries() {
       quickfixByName[e.meta.covered_injury_name] = e;
     }
   }
-  el.innerHTML = injuries.map((inj, i) => {
+  el.innerHTML = '<div class="sec-head">Critical Injuries</div><div class="injury-grid">' + injuries.map((inj, i) => {
     const qfEffect = quickfixByName[inj.name];
     if (qfEffect && qfEffect.expires_at_ingame && new Date(qfEffect.expires_at_ingame) > nowIngame) {
       const remainingMs = new Date(qfEffect.expires_at_ingame) - nowIngame;
@@ -3245,7 +3237,7 @@ function renderCritInjuries() {
       <div class="injury-meta"><span class="inj-key">Quick Fix</span>${inj.quick_fix || '—'}</div>
       <div class="injury-meta"><span class="inj-key">Treatment</span>${inj.treatment || '—'}</div>
     </div>`;
-  }).join('');
+  }).join('') + '</div>';
 
   const qfCards = [...el.querySelectorAll('[data-qf-until]')];
   if (qfCards.length) {

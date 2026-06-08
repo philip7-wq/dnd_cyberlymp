@@ -18,7 +18,7 @@
 | 4a player Header/Stats/Skills | ✅ fertig | + Cash im Bogen; in-place restyle; Würfel-Box-Fix |
 | 4b player Weapons/Armor/Cyberware | ✅ fertig | In-Place-CSS; .roll/.gear-action/.remove gescopt; #dmgApplyBox-Scoping; Autofire→Combat-Rot |
 | 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ✅ fertig | In-Place-Reskin; #tab-gear/#tab-raum/#critModalBox/#tab-injuries gescopt; Rollen-Body via #tab-role-Override (roles.css unangetastet) |
-| 4d player Layout-Pass | 🟡 läuft | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2 ✅ (Stats/Skills/Karten/Distanz-Bar); 4d-3 offen (Lifepath/Notes/Injuries/Raum/Rolle) |
+| 4d player Layout-Pass | ✅ fertig | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2 ✅ (Stats/Skills/Karten/Distanz-Bar); 4d-3 ✅ (Lifepath/Notes/Injuries/Raum/Rolle) → **player.html KOMPLETT** |
 | 5 dm.html | ⬜ offen | Opus xhigh |
 | 6 shop.html | ⬜ offen | |
 | 7 map.html | ⬜ offen | Opus xhigh; Canvas unantastbar; Nav-Sidebar hier |
@@ -418,6 +418,66 @@ Damage/Autofire/Reload/Ammo/Equip/Unequip/Sell/Drop/Armor-Ablation/Cyberware-SVG
 Realtime identisch) steht aus (kein Browser in dieser Session). Weapon-Karten mit offenem Autofire-
 Rechner werden im Grid zu höheren Zeilen (auto-rows, akzeptabel). **4d-3** offen: Lifepath/Notes/
 Injuries/Raum/Rolle (+ Rolle-Tab-Buttons `.role-dice-btn` via geteilter roles.css).
+
+---
+
+## Phase 4d-3 — Relayout: Lifepath/Notes/Injuries/Raum/Rolle ✅ → **player.html KOMPLETT**
+**Geändert (nur 2 Dateien):** `player.css` (4d-3-Zonen + selbständiger Rolle-Button-Block; Braces
+**783/783**, vorher 720), `player.html` (Render-Funktionen + statisches Markup der 5 Rest-Tabs;
++74 Z. netto). **Nur CSS + Markup-Relayout, keine JS-Logik/IDs/Events/Handler/Berechnungen.**
+`roles.css` / `npc-sheet.html` **unangetastet** (git verifiziert).
+
+**User-Entscheidungen (2026-06-08):** Rolle = **leicht proportionieren** (gescopt `#tab-role`,
+roles.css-Geometrie bleibt); Rolle-Buttons = **gefüllter Pro-Rollen-Akzent** + HUD-Geometrie.
+
+**Relayout-Werte pro Tab:**
+- **Lifepath** (`renderLifepath`): `.sec-head` "Lifepath" + `.lp-grid` flex-column →
+  `repeat(auto-fit,minmax(280px,1fr))` gap `--sp-3`; `.lp-item` flex-column, `.lp-val` `flex:1`
+  (gleich hohe Karten je Reihe), Abstände auf `--sp`.
+- **Notes** (statisch + `setupNotes` UNVERÄNDERT): `.notes-header` auf `.sec-head`-Look angeglichen
+  (border-bottom/cyan/tracking), `.notes-wrap`/`.player-notes-area` auf `--sp`; Textarea behält
+  **echte border** (Input-Ausnahme, Gotcha #2). Reines CSS — kein Markup-/JS-Eingriff.
+- **Injuries** (`renderCritInjuries`): `.sec-head` "Critical Injuries" + Karten in
+  `.injury-grid` (`repeat(auto-fit,minmax(300px,1fr))` gap `--sp-3`, analog Gear/Weapons);
+  `.injury-card margin-bottom:0`, Padding `--sp-4`, Header/Meta `--sp`. `.remove-btn` (✕ = Heal)
+  bleibt im Button-System (danger/icon-sm).
+- **Crit-Injury-Modal** (`showCritInjuryFlow`/`applyInjury`): inline-Styles → **nur via
+  `#critModalBox`** gescopt — `#critTargetSelect` inline-`style` → `.crit-target-select` (HUD-Select,
+  full-width, Focus-Glow) + `.crit-target-row`; „Ziel"-Label → `.crit-field-key`; `.crit-no-target`-
+  Warn-`style.cssText`-Zeile entfernt → CSS-Regel; `.crit-field-row`/`.crit-modal-btns`-Abstände auf
+  `--sp`. **Neutrale `.crit-modal-*`-Basis unberührt → `#dmgApplyBox`/4b unverändert.**
+- **Raum** (`renderRaumTab` + statisches Panel): statisch `#raumBeschreibung` inline → `.sec-head`
+  "Raum" + `.raum-desc` (ID behalten, `:empty{display:none}`); inline-Flat-Rows → **`.raum-grid`
+  Karten am Gear-Grid** (`repeat(auto-fit,minmax(280px,1fr))`, Pseudo-Border-Clip wie `.gear-item`),
+  `.ctrl-btn` inline-Style raus (Button-System `#tab-raum .ctrl-btn` primary). **`data-pickup`/
+  `data-name` + Pickup-Handler (removeRoomItem→patchCharacter→renderGear→logRoll) IDENTISCH.**
+- **Rolle** (`renderRoleTab` async + Settings-Modal): `#tab-role .role-panel` Eigenpadding raus
+  (Cap+Padding kommt vom `.tab-panel`), gap `--sp-4`. Rank-Up `#roleRankUpBtn` inline-Style →
+  `.role-rankup`-Wrapper-Klassen + Button-System; `disabled`-Attribut bleibt (CSS-`:disabled`-Look).
+  **Kostenrechnung/IP-Check/Click-Handler (patchCharacter→renderRoleTab→renderSkills) + async
+  mountRoleInterface IDENTISCH.** Settings-Modal: innere Box + Kinder inline → `#roleSettingsModal`-
+  gescopte Klassen (`.role-set-box/-title/-label/-input/-divider/-help/-msg/-actions`); Overlay-
+  Element behält seinen inline-`style` (display per JS getoggelt). Alle IDs + Handler unverändert.
+
+**Button-Größen-Mapping (4d-3):** Selbständiger Rolle-Button-Block am `player.css`-Ende (damit die
+geteilten 4d-1/4d-2-Listen unberührt bleiben). `#tab-role .role-dice-btn` = **gefüllter Akzent**
+(`--btn-*` = `--role-accent*`, `--btn-color: var(--role-bg)`, md40), `.secondary` = Ghost-Akzent;
+`#roleRankUpBtn` = **gefülltes Cyan** (md40, `width:100%`, `:disabled` opacity .4 — sitzt außerhalb
+des Theme-Containers → `--role-accent` = Default-Cyan); `#roleSettingsModal button` = md40 `flex:1`
+(`#roleSettingsReset` full-width), Save = combat, Cancel/Reset = ghost. coarse → 44px. Der 4d-1-
+„NICHT hier"-Kommentar entsprechend aktualisiert.
+
+**Scoping bestätigt:** neutrale `.crit-modal-*`-Basis + globale `.remove-btn`-Basis + `#dmgApplyBox`
+(20 Refs) unberührt; alle 4d-3-Stile gescopt (`#critModalBox`/`#tab-raum`/`.injury-grid`/`#tab-role`/
+`#roleSettingsModal`); `.role-dice-btn` NUR unter `#tab-role` (body-portaliertes `.role-modal` bleibt
+roles.css-Default = bestehendes 4c-Verhalten); **Pro-Rollen-Akzent erhalten** (`#tab-role`-Overrides
+fassen `--role-accent*` nicht an).
+
+**Verifiziert:** `player.css` Braces 783/783; Haupt-Inline-Modul + Sub-Modul `node --check` sauber;
+`git diff` = nur `player.html` + `player.css`; `roles.css`/`npc-sheet.html` unverändert; keine
+Reste der entfernten inline-Styles. **Interaktionen IDENTISCH** (Lifepath-Anzeige, Notes-Autosave,
+Injury Add/Heal/Assign + No-Target-Warn, Raum-Aufheben, Rolle-Load/Rank-Up/role-dice/Settings-Modal),
+**4a–4d-2 unberührt**. **Offen:** manueller Browser-Durchklick (kein Browser in dieser Session).
 
 ---
 
