@@ -38,100 +38,105 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 /* ── Bottom chat panel ── */
 .dm-chat-bottom {
   height: 38vh; min-height: 180px; flex-shrink: 0;
-  border-top: 2px solid var(--red);
+  border-top: 2px solid var(--neon-red);
+  box-shadow: 0 -6px 20px rgba(255,49,88,.06);
   display: flex; overflow: hidden;
 }
 .dm-chat-bottom-left {
-  flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: .5rem 1rem .6rem;
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  padding: var(--sp-3) var(--sp-4);
 }
 
 /* ── Main column (Characters + NPCs tabbed) ── */
 .dm-main-col { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
-.dm-content-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.dm-content-tab { padding: .5rem 1.25rem; font-family: var(--font-display); font-size: .65rem;
-  letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); background: none;
-  border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s; }
-.dm-content-tab:hover { color: var(--text); }
-.dm-content-tab.active { color: var(--red); border-bottom-color: var(--red); }
+.dm-content-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-dark); flex-shrink: 0; }
+.dm-content-tab { padding: var(--sp-2) var(--sp-4); font-family: var(--font-display); font-size: var(--fs-xs);
+  letter-spacing: var(--tracking); text-transform: uppercase; color: var(--text-muted); background: none;
+  border: none; border-bottom: 2px solid transparent; cursor: pointer;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease); }
+.dm-content-tab:hover { color: var(--text-main); }
+.dm-content-tab.active { color: var(--neon-red); border-bottom-color: var(--neon-red); }
 
 .dm-npc-panel { flex: 1; overflow-y: auto; min-height: 0; }
 
 /* ── Sidebar (Roll Log + DM Notes stacked) ── */
 .dm-sidebar {
   display: flex; flex-direction: column;
-  border-left: 1px solid var(--border); overflow-y: auto; overflow-x: hidden;
+  border-left: 1px solid var(--border-dark); overflow-y: auto; overflow-x: hidden;
   height: 100%;
 }
 
 /* ── Character Grid ── */
 .dm-grid-wrap {
-  flex: 1; overflow-y: auto; padding: 1rem; min-height: 0;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: .75rem; align-content: start;
+  flex: 1; overflow-y: auto; padding: var(--sp-4); min-height: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 320px));
+  gap: var(--sp-3); align-content: start; justify-content: start;
 }
 .dm-card {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .75rem; cursor: pointer;
-  transition: var(--transition); display: flex; flex-direction: column; gap: .4rem;
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-4); cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+  display: flex; flex-direction: column; gap: var(--sp-2);
 }
-.dm-card:hover { border-color: var(--cyan); }
-.dm-card--dying { border-color: var(--red) !important; box-shadow: 0 0 0 1px var(--red), 0 0 12px rgba(255,45,45,.35); animation: dying-pulse 1.6s ease-in-out infinite; }
-@keyframes dying-pulse { 0%,100% { box-shadow: 0 0 0 1px var(--red), 0 0 12px rgba(255,45,45,.35); } 50% { box-shadow: 0 0 0 1px var(--red), 0 0 22px rgba(255,45,45,.6); } }
-.dm-card-header { display: flex; gap: .6rem; align-items: center; }
+.dm-card:hover { border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+.dm-card--dying { border-color: var(--neon-red) !important; box-shadow: 0 0 0 1px var(--neon-red), 0 0 12px rgba(255,49,88,.35); animation: dying-pulse 1.6s ease-in-out infinite; }
+@keyframes dying-pulse { 0%,100% { box-shadow: 0 0 0 1px var(--neon-red), 0 0 12px rgba(255,49,88,.35); } 50% { box-shadow: 0 0 0 1px var(--neon-red), 0 0 22px rgba(255,49,88,.6); } }
+.dm-card-header { display: flex; gap: var(--sp-2); align-items: center; }
 .dm-card-portrait {
-  width: 40px; height: 40px; border-radius: 2px;
-  object-fit: cover; background: var(--bg-input); flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: var(--radius);
+  object-fit: cover; background: var(--bg-panel-soft); flex-shrink: 0;
+  border: 1px solid var(--border-dark);
 }
 .dm-card-meta { flex: 1; min-width: 0; }
 .dm-card-name {
   font-family: var(--font-display); font-size: .82rem;
-  color: var(--text-head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.dm-card-role { font-size: .68rem; color: var(--text-muted); }
+.dm-card-role { font-size: var(--fs-xs); color: var(--text-muted); }
 
 /* HP + Humanity bars */
-.bar-wrap { height: 5px; background: var(--bg-input); border-radius: 2px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 2px; transition: width .3s ease, background .3s ease; }
+.bar-wrap { height: 6px; background: var(--bg-panel-soft); border-radius: var(--radius); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: var(--radius); transition: width var(--t-slow) var(--ease), background var(--t-slow) var(--ease); }
 .dm-card-stats {
-  display: flex; gap: .75rem; font-size: .68rem; color: var(--text-muted);
+  display: flex; gap: var(--sp-3); font-size: var(--fs-xs); color: var(--text-muted);
   align-items: center;
 }
-.dm-card-stat { display: flex; flex-direction: column; gap: .15rem; flex: 1; }
-.dm-card-stat-label { font-size: .55rem; text-transform: uppercase; letter-spacing: .1em; }
+.dm-card-stat { display: flex; flex-direction: column; gap: var(--sp-1); flex: 1; }
+.dm-card-stat-label { font-size: .55rem; text-transform: uppercase; letter-spacing: var(--tracking); }
 .inj-badge {
-  font-size: .62rem; color: var(--red); border: 1px solid var(--red);
-  border-radius: 2px; padding: .1rem .4rem; width: fit-content;
+  font-size: .62rem; color: var(--neon-red); border: 1px solid var(--red-soft);
+  border-radius: var(--radius); padding: .1rem var(--sp-2); width: fit-content;
   font-family: var(--font-display);
 }
-.dm-card-weapons { font-size: .68rem; color: var(--text-muted); margin-top: .1rem; }
+.dm-card-weapons { font-size: var(--fs-xs); color: var(--text-muted); margin-top: .1rem; }
 
 /* ── Roll Log ── */
 .roll-log {
-  background: var(--bg-card);
+  background: var(--bg-panel);
   overflow-y: auto; display: flex; flex-direction: column;
   flex: 0 0 200px; min-height: 0;
 }
 .roll-log-head {
-  font-family: var(--font-display); font-size: .65rem; letter-spacing: .2em;
-  color: var(--text-muted); padding: .75rem 1rem .5rem;
-  border-bottom: 1px solid var(--border); position: sticky; top: 0;
-  background: var(--bg-card); flex-shrink: 0;
+  font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: var(--tracking);
+  text-transform: uppercase; color: var(--neon-cyan); padding: var(--sp-3) var(--sp-4) var(--sp-2);
+  border-bottom: 1px solid var(--border-dark); position: sticky; top: 0;
+  background: var(--bg-panel); flex-shrink: 0;
 }
 .roll-entry {
-  padding: .4rem 1rem; border-bottom: 1px solid rgba(42,42,62,.5);
-  display: grid; grid-template-columns: 1fr auto; gap: 0 .5rem;
-  font-size: .75rem;
+  padding: var(--sp-2) var(--sp-4); border-bottom: 1px solid var(--border-dark);
+  display: grid; grid-template-columns: 1fr auto; gap: 0 var(--sp-2);
+  font-size: var(--fs-sm);
 }
-.roll-entry-top { display: flex; gap: .4rem; align-items: baseline; }
-.roll-char { color: var(--cyan); font-family: var(--font-display); font-size: .65rem; }
-.roll-expr { color: var(--text-muted); font-size: .7rem; }
-.roll-total { font-family: var(--font-display); color: var(--text-head); font-size: .9rem; margin-left: auto; }
-.roll-ctx { font-size: .65rem; color: var(--text-muted); }
-.roll-time { font-size: .6rem; color: var(--text-muted); grid-column: 2; grid-row: 1 / 3; align-self: center; }
-.crit-success .roll-total { color: var(--cyan); }
-.crit-fail    .roll-total { color: var(--red); }
-.roll-empty { font-size: .8rem; color: var(--text-muted); padding: 1rem; text-align: center; }
+.roll-entry-top { display: flex; gap: var(--sp-2); align-items: baseline; }
+.roll-char { color: var(--neon-cyan); font-family: var(--font-display); font-size: var(--fs-xs); }
+.roll-expr { color: var(--text-muted); font-size: var(--fs-xs); font-family: var(--font-mono); }
+.roll-total { font-family: var(--font-mono); color: var(--text-main); font-size: 1rem; margin-left: auto; }
+.roll-ctx { font-size: var(--fs-xs); color: var(--text-muted); }
+.roll-time { font-size: .6rem; color: var(--text-dim); grid-column: 2; grid-row: 1 / 3; align-self: center; }
+.crit-success .roll-total { color: var(--neon-cyan); }
+.crit-fail    .roll-total { color: var(--neon-red); }
+.roll-empty { font-size: var(--fs-sm); color: var(--text-muted); padding: var(--sp-4); text-align: center; }
 
 /* ── DM Modal Overlay ── */
 .dm-modal-overlay {
@@ -261,26 +266,23 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 }
 .ctrl-row { display: flex; gap: .4rem; align-items: center; margin-bottom: .35rem; flex-wrap: wrap; }
 .ctrl-label { font-size: .72rem; color: var(--text-muted); width: 80px; flex-shrink: 0; }
+/* Shared HUD inputs/selects (global — neutral, used across dashboard + modals) */
 .ctrl-input {
-  flex: 1; min-width: 60px; padding: .38rem .6rem; background: var(--bg-input);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  color: var(--text); font-size: .8rem;
+  flex: 1; min-width: 60px; padding: var(--sp-2) var(--sp-3); background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark); border-radius: var(--radius);
+  color: var(--text-main); font-size: var(--fs-sm);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
-.ctrl-input:focus { outline: none; border-color: var(--cyan); }
+.ctrl-input:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 .ctrl-select {
-  flex: 1; padding: .38rem .6rem; background: var(--bg-input);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  color: var(--text); font-size: .8rem;
+  flex: 1; padding: var(--sp-2) var(--sp-3); background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark); border-radius: var(--radius);
+  color: var(--text-main); font-size: var(--fs-sm);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
-.ctrl-btn {
-  padding: .35rem .7rem; background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--cyan); font-size: .72rem;
-  cursor: pointer; transition: var(--transition); white-space: nowrap;
-}
-.ctrl-btn:hover { border-color: var(--cyan); background: var(--bg-card); }
-.ctrl-btn-red { color: var(--red); }
-.ctrl-btn-red:hover { border-color: var(--red); }
-.ctrl-msg { font-size: .7rem; color: var(--cyan); min-height: 1em; margin: .15rem 0 .5rem; }
+.ctrl-select:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+/* .ctrl-btn / .ctrl-btn-red → look from BUTTON-SYSTEM block (file end, global) */
+.ctrl-msg { font-size: var(--fs-xs); color: var(--neon-cyan); min-height: 1em; margin: .15rem 0 var(--sp-2); }
 
 /* Injury list in controls */
 .ctrl-inj-list { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .5rem; }
@@ -326,24 +328,25 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .npc-crit-hint  { font-size: .75rem; color: var(--red); display: flex; align-items: center; margin-bottom: .4rem; flex-wrap: wrap; gap: .3rem; }
 .npc-dmg-preview { font-size: .78rem; color: var(--cyan); margin-top: .25rem; min-height: 1.2em; }
 
-/* ── Card Delete Button ── */
+/* ── Card Delete Button (subtle ghost-icon affordance) ── */
 .dm-card-delete {
   align-self: flex-end; margin-top: .2rem;
   background: transparent; border: none;
   font-size: .7rem; color: var(--text-muted); cursor: pointer;
-  padding: .15rem .3rem; opacity: .35; transition: opacity .15s, color .15s;
+  padding: .15rem .3rem; opacity: .35;
+  transition: opacity var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
   line-height: 1;
 }
-.dm-card-delete:hover { opacity: 1; color: var(--red); }
+.dm-card-delete:hover { opacity: 1; color: var(--neon-red); }
 
 /* ── Roll Log Header with Clear ── */
 .roll-log-head { display: flex; justify-content: space-between; align-items: center; }
 .roll-log-clear {
   background: transparent; border: none; color: var(--text-muted);
-  font-size: .8rem; cursor: pointer; opacity: .4;
-  transition: opacity .15s, color .15s; padding: 0;
+  font-size: var(--fs-sm); cursor: pointer; opacity: .4;
+  transition: opacity var(--t-fast) var(--ease), color var(--t-fast) var(--ease); padding: 0;
 }
-.roll-log-clear:hover { opacity: 1; color: var(--red); }
+.roll-log-clear:hover { opacity: 1; color: var(--neon-red); }
 
 /* ── DM Dice FAB (mirrors player.html) ── */
 .dice-fab { position: fixed; bottom: calc(38vh + .75rem); left: 1.5rem; width: 52px; height: 52px; border-radius: 50%; background: var(--red); border: none; color: #fff; font-size: 1.3rem; cursor: pointer; box-shadow: 0 4px 16px rgba(255,45,45,.45); z-index: 100; display: flex; align-items: center; justify-content: center; transition: transform .15s, background .15s; }
@@ -448,8 +451,8 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 }
 
 /* ── Conditions on DM Cards ── */
-.dm-card-conditions { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .25rem; }
-.dm-cond-badge { font-size: .58rem; background: rgba(255,45,45,.1); color: var(--red); border: 1px solid rgba(255,45,45,.3); border-radius: 2px; padding: .08rem .28rem; }
+.dm-card-conditions { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-1); }
+.dm-cond-badge { font-size: .58rem; background: rgba(255,49,88,.1); color: var(--neon-red); border: 1px solid rgba(255,49,88,.3); border-radius: var(--radius); padding: .08rem .28rem; }
 
 /* ── Condition Toggle Buttons (DM Controls) ── */
 .condition-toggle-grid { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .4rem; }
@@ -471,11 +474,11 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 }
 
 /* ── DM Card Footer ── */
-.dm-card-footer { display: flex; align-items: center; justify-content: flex-end; gap: .3rem; margin-top: .2rem; }
+.dm-card-footer { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-1); margin-top: var(--sp-1); }
 
 /* ── DM Card Buffs ── */
-.dm-card-buffs { display: flex; flex-wrap: wrap; gap: .2rem; margin-top: .2rem; }
-.dm-buff-badge { font-size: .55rem; padding: .06rem .26rem; background: rgba(0,229,255,.09); border: 1px solid rgba(0,229,255,.4); border-radius: 2px; color: var(--cyan); }
+.dm-card-buffs { display: flex; flex-wrap: wrap; gap: .2rem; margin-top: var(--sp-1); }
+.dm-buff-badge { font-size: .55rem; padding: .06rem .26rem; background: rgba(34,247,255,.09); border: 1px solid rgba(34,247,255,.4); border-radius: var(--radius); color: var(--neon-cyan); }
 
 /* ── Buff Preset Grid (DM Controls) ── */
 .buff-preset-grid { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .45rem; }
@@ -492,9 +495,9 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .ctrl-buff-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .7rem; padding: 0; line-height: 1; }
 .ctrl-buff-remove:hover { color: var(--red); }
 
-/* ── DM Notes Icon ── */
-.dm-notes-icon { background: none; border: none; cursor: pointer; font-size: .82rem; color: var(--text-muted); padding: 0; line-height: 1; }
-.dm-notes-icon:hover { color: var(--cyan); }
+/* ── DM Notes Icon (subtle ghost-icon affordance) ── */
+.dm-notes-icon { background: none; border: none; cursor: pointer; font-size: .82rem; color: var(--text-muted); padding: 0; line-height: 1; transition: color var(--t-fast) var(--ease); }
+.dm-notes-icon:hover { color: var(--neon-cyan); }
 
 /* ── Player Notes Read-only Overlay ── */
 .dm-notes-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 1500; display: flex; align-items: center; justify-content: center; }
@@ -503,35 +506,41 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .dm-notes-box-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
 
 /* ── DM Own Notes ── */
-.dm-own-notes-wrap { border-top: 1px solid var(--border); padding: 0; display: flex; flex-direction: column; }
-.player-notes-area { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: .85rem; padding: .65rem; resize: vertical; line-height: 1.6; width: 100%; box-sizing: border-box; }
-.player-notes-area:focus { outline: none; border-color: var(--cyan); }
-.dm-own-notes-area { min-height: 150px; border: none; border-top: 1px solid var(--border); border-radius: 0; resize: none; }
+.dm-own-notes-wrap { border-top: 1px solid var(--border-dark); padding: 0; display: flex; flex-direction: column; }
+.player-notes-area { background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); font-family: var(--font-body); font-size: var(--fs-sm); padding: var(--sp-3); resize: vertical; line-height: 1.6; width: 100%; box-sizing: border-box; transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
+.player-notes-area:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+.dm-own-notes-area { min-height: 150px; border: none; border-top: 1px solid var(--border-dark); border-radius: 0; resize: none; }
+.dm-own-notes-area:focus { box-shadow: none; }
 
 /* ── DM Chat ── */
-.dm-chat-head { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .3rem; flex-shrink: 0; }
-.dm-chat-img-label { cursor: pointer; font-size: .95rem; color: var(--text-muted); }
-.dm-chat-img-label:hover { color: var(--cyan); }
-.dm-chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: .35rem; min-height: 0; }
-.dm-chat-messages .chat-msg--dm     { border-left: 3px solid var(--red);  background: rgba(255,45,45,.06); }
-.dm-chat-messages .chat-msg--player { border-left: 3px solid var(--cyan); background: rgba(0,229,255,.05); }
+.dm-chat-head { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase; color: var(--neon-cyan); margin-bottom: var(--sp-2); padding-bottom: var(--sp-2); border-bottom: 1px solid var(--border-dark); flex-shrink: 0; }
+.dm-chat-img-label { cursor: pointer; font-size: .95rem; color: var(--text-muted); transition: color var(--t-fast) var(--ease); }
+.dm-chat-img-label:hover { color: var(--neon-cyan); }
+.dm-chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sp-2); min-height: 0; }
+/* Base chat-message look (player.css defines these but dm.html doesn't load it) */
+.dm-chat-messages .chat-msg { padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); }
+.dm-chat-messages .chat-msg-header { display: flex; justify-content: space-between; margin-bottom: .12rem; }
+.dm-chat-messages .chat-sender { font-size: var(--fs-xs); font-family: var(--font-display); color: var(--neon-cyan); }
+.dm-chat-messages .chat-sender--dm { color: var(--neon-red); }
+.dm-chat-messages .chat-time { font-size: .58rem; color: var(--text-dim); }
+.dm-chat-messages .chat-text { font-size: var(--fs-sm); color: var(--text-main); white-space: pre-wrap; word-break: break-word; }
+.dm-chat-messages .chat-msg--dm     { border-left: 3px solid var(--neon-red);  background: rgba(255,49,88,.06); }
+.dm-chat-messages .chat-msg--player { border-left: 3px solid var(--neon-cyan); background: rgba(34,247,255,.05); }
 .dm-chat-img-preview { flex-shrink: 0; }
-.dm-chat-img-preview img { max-width: 80px; max-height: 60px; object-fit: contain; border-radius: 3px; }
-.dm-chat-messages .chat-img { max-width: 100%; max-height: 180px; object-fit: contain; border-radius: var(--radius); margin-top: .3rem; display: block; cursor: zoom-in; }
+.dm-chat-img-preview img { max-width: 80px; max-height: 60px; object-fit: contain; border-radius: var(--radius); }
+.dm-chat-messages .chat-img { max-width: 100%; max-height: 180px; object-fit: contain; border-radius: var(--radius); margin-top: var(--sp-1); display: block; cursor: zoom-in; }
 .chat-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.88); z-index: 9000; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
-.chat-lightbox img { max-width: 92vw; max-height: 88vh; object-fit: contain; border-radius: 4px; box-shadow: 0 0 40px rgba(0,0,0,.8); }
-.dm-chat-input-row { display: flex; gap: .3rem; align-items: flex-end; flex-shrink: 0; margin-top: .3rem; }
-.dm-chat-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: .82rem; padding: .4rem .5rem; resize: none; }
-.dm-chat-input:focus { outline: none; border-color: var(--cyan); }
-.dm-chat-send-btn { padding: .45rem .65rem; background: rgba(255,45,45,.1); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-size: .9rem; font-family: var(--font-display); }
-.dm-chat-send-btn:hover { background: rgba(255,45,45,.2); }
+.chat-lightbox img { max-width: 92vw; max-height: 88vh; object-fit: contain; border-radius: var(--radius); box-shadow: 0 0 40px rgba(0,0,0,.8); }
+.dm-chat-input-row { display: flex; gap: var(--sp-2); align-items: flex-end; flex-shrink: 0; margin-top: var(--sp-2); }
+.dm-chat-input { flex: 1; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); font-family: var(--font-body); font-size: var(--fs-sm); padding: var(--sp-2) var(--sp-3); resize: none; transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
+.dm-chat-input:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+/* .dm-chat-send-btn → look from BUTTON-SYSTEM block (combat) */
 
 /* ── NPC Section ── */
-.npc-section { padding: 1.5rem 2rem; border-top: 2px solid var(--border); }
-.npc-section-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-.npc-section-title { font-family: var(--font-display); font-size: .75rem; letter-spacing: .15em; text-transform: uppercase; color: var(--red); }
-.npc-add-btn { padding: .3rem .7rem; background: rgba(255,45,45,.12); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-size: .75rem; }
-.npc-add-btn:hover { background: rgba(255,45,45,.25); }
+.npc-section { padding: var(--sp-5) var(--sp-6); border-top: 2px solid var(--border-dark); }
+.npc-section-head { display: flex; align-items: center; gap: var(--sp-4); margin-bottom: var(--sp-4); }
+.npc-section-title { font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase; color: var(--neon-red); }
+/* .npc-add-btn → look from BUTTON-SYSTEM block (combat, sm) */
 
 .npc-grid { display: flex; flex-direction: column; gap: 0; max-width: 760px; margin: 0 auto; }
 
@@ -558,57 +567,55 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .combat-char-hp { font-size: .68rem; }
 .npc-eliminated { opacity: .5; }
 
-/* ── NPC Modal ── */
-.npc-modal-content { background: var(--bg-card); border: 1px solid var(--red); border-radius: var(--radius); max-width: 620px; width: 90%; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; }
-.npc-modal-header { padding: .75rem 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-size: .75rem; letter-spacing: .1em; color: var(--red); }
-.npc-modal-body { display: flex; gap: 1.25rem; padding: 1rem; }
-.npc-modal-img-col { display: flex; flex-direction: column; gap: .5rem; align-items: center; flex-shrink: 0; }
-.npc-img-preview { width: 110px; height: 110px; border: 1px solid var(--border); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 3rem; overflow: hidden; background: var(--bg-input); }
+/* ── NPC Modal (in 5a) ── */
+.npc-modal-content { background: var(--bg-panel); border: 1px solid var(--red-soft); border-radius: var(--radius); max-width: 620px; width: 90%; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; }
+.npc-modal-header { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase; color: var(--neon-red); }
+.npc-modal-body { display: flex; gap: var(--sp-5); padding: var(--sp-4); }
+.npc-modal-img-col { display: flex; flex-direction: column; gap: var(--sp-2); align-items: center; flex-shrink: 0; }
+.npc-img-preview { width: 110px; height: 110px; border: 1px solid var(--border-dark); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 3rem; overflow: hidden; background: var(--bg-panel-soft); }
 .npc-img-preview img { width: 100%; height: 100%; object-fit: cover; }
-.npc-img-upload-label { font-size: .7rem; color: var(--cyan); cursor: pointer; border: 1px solid var(--cyan); padding: .25rem .5rem; border-radius: var(--radius); text-align: center; display: block; }
-.npc-img-upload-label:hover { background: rgba(0,229,255,.1); }
-.npc-modal-fields { flex: 1; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
-.npc-field { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: .85rem; padding: .45rem .6rem; width: 100%; box-sizing: border-box; }
-.npc-field:focus { outline: none; border-color: var(--red); }
+.npc-img-upload-label { font-size: var(--fs-xs); color: var(--neon-cyan); cursor: pointer; border: 1px solid var(--cyan-soft); padding: var(--sp-1) var(--sp-2); border-radius: var(--radius); text-align: center; display: block; transition: background var(--t-fast) var(--ease); }
+.npc-img-upload-label:hover { background: var(--bg-panel-cyan); }
+.npc-modal-fields { flex: 1; display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.npc-field { background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); font-family: var(--font-body); font-size: var(--fs-sm); padding: var(--sp-2) var(--sp-3); width: 100%; box-sizing: border-box; transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
+.npc-field:focus { outline: none; border-color: var(--neon-red); box-shadow: var(--glow-red-s); }
 .npc-field--notes { resize: none; }
 .npc-field--hp { width: 65px !important; }
-.npc-hp-row { display: flex; align-items: center; gap: .4rem; }
-.npc-stats-details { font-size: .8rem; color: var(--text); }
-.npc-stats-details summary { color: var(--text-muted); cursor: pointer; margin: .25rem 0; user-select: none; }
-.npc-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .3rem; margin-top: .5rem; }
+.npc-hp-row { display: flex; align-items: center; gap: var(--sp-2); }
+.npc-stats-details { font-size: var(--fs-sm); color: var(--text-main); }
+.npc-stats-details summary { color: var(--text-muted); cursor: pointer; margin: var(--sp-1) 0; user-select: none; }
+.npc-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-1); margin-top: var(--sp-2); }
 .npc-stat-entry { display: flex; flex-direction: column; gap: .1rem; }
 .npc-stat-entry label { font-size: .6rem; color: var(--text-muted); }
-.npc-stat-entry input { background: var(--bg-input); border: 1px solid var(--border); border-radius: 3px; color: var(--text); text-align: center; font-size: .8rem; padding: .2rem; width: 100%; box-sizing: border-box; }
-.npc-weapons-wrap { display: flex; flex-direction: column; gap: .4rem; }
-.npc-weapons-head { display: flex; justify-content: space-between; align-items: center; font-size: .72rem; color: var(--text-muted); }
-.npc-add-weapon-btn { font-size: .65rem; color: var(--cyan); border: 1px solid var(--cyan); background: none; border-radius: 3px; padding: .15rem .4rem; cursor: pointer; }
-.npc-weapon-row { display: flex; gap: .3rem; align-items: center; }
+.npc-stat-entry input { background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); text-align: center; font-size: var(--fs-xs); padding: var(--sp-1); width: 100%; box-sizing: border-box; font-family: var(--font-mono); }
+.npc-stat-entry input:focus { outline: none; border-color: var(--neon-red); }
+.npc-weapons-wrap { display: flex; flex-direction: column; gap: var(--sp-2); }
+.npc-weapons-head { display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-xs); color: var(--text-muted); }
+/* .npc-add-weapon-btn → BUTTON-SYSTEM (primary sm) */
+.npc-weapon-row { display: flex; gap: var(--sp-1); align-items: center; }
 .npc-weapon-row input { flex: 1; }
-.npc-weapon-remove { background: none; border: 1px solid var(--border); border-radius: 3px; color: var(--text-muted); cursor: pointer; padding: .15rem .4rem; flex-shrink: 0; }
-.npc-modal-footer { padding: .75rem 1rem; border-top: 1px solid var(--border); display: flex; gap: .5rem; justify-content: flex-end; }
-.npc-save-btn { padding: .4rem .9rem; background: rgba(255,45,45,.15); border: 1px solid var(--red); border-radius: var(--radius); color: var(--red); cursor: pointer; font-family: var(--font-display); font-size: .75rem; }
-.npc-save-btn:hover { background: rgba(255,45,45,.3); }
-.npc-delete-btn { padding: .4rem .9rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-muted); cursor: pointer; font-size: .75rem; }
-.npc-delete-btn:hover { border-color: var(--red); color: var(--red); }
+/* .npc-weapon-remove → BUTTON-SYSTEM (danger icon-sm) */
+.npc-modal-footer { padding: var(--sp-3) var(--sp-4); border-top: 1px solid var(--border-dark); display: flex; gap: var(--sp-2); justify-content: flex-end; }
+/* .npc-save-btn / .npc-delete-btn → BUTTON-SYSTEM (combat / ghost) */
 
 /* ── NPC item search dropdown ── */
-.npc-item-search-wrap { margin-bottom: .3rem; }
+.npc-item-search-wrap { margin-bottom: var(--sp-1); }
 .npc-shop-trigger { width: 100%; display: flex; align-items: center; justify-content: space-between;
-  padding: .38rem .65rem; background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--cyan); font-size: .78rem; cursor: pointer;
-  transition: border-color .15s, background .15s; }
-.npc-shop-trigger:hover, .npc-shop-trigger.open { border-color: var(--cyan); background: rgba(0,229,255,.06); }
-.npc-shop-arrow { font-size: .7rem; transition: transform .15s; }
+  padding: var(--sp-2) var(--sp-3); background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); color: var(--neon-cyan); font-size: var(--fs-sm); cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
+.npc-shop-trigger:hover, .npc-shop-trigger.open { border-color: var(--neon-cyan); background: var(--bg-panel-cyan); }
+.npc-shop-arrow { font-size: var(--fs-xs); transition: transform var(--t-fast) var(--ease); }
 .npc-shop-trigger.open .npc-shop-arrow { transform: rotate(180deg); }
-.npc-shop-dropdown { border: 1px solid var(--border); border-top: none;
-  border-radius: 0 0 var(--radius) var(--radius); background: var(--bg-card); overflow: hidden; }
-.npc-item-search-input { border-radius: 0 !important; border: none !important; border-bottom: 1px solid var(--border) !important; width: 100%; box-sizing: border-box; }
+.npc-shop-dropdown { border: 1px solid var(--border-dark); border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius); background: var(--bg-panel); overflow: hidden; }
+.npc-item-search-input { border-radius: 0 !important; border: none !important; border-bottom: 1px solid var(--border-dark) !important; width: 100%; box-sizing: border-box; }
 .npc-item-results { max-height: 180px; overflow-y: auto; }
-.npc-item-row { display: flex; align-items: center; gap: .5rem; padding: .35rem .6rem;
-  cursor: pointer; font-size: .8rem; }
+.npc-item-row { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3);
+  cursor: pointer; font-size: var(--fs-sm); }
 .npc-item-row:hover { background: rgba(255,255,255,.06); }
-.npc-item-name { flex: 1; color: var(--text); }
-.npc-item-dmg { color: var(--red); font-family: var(--font-display); font-size: .72rem; }
+.npc-item-name { flex: 1; color: var(--text-main); }
+.npc-item-dmg { color: var(--neon-red); font-family: var(--font-display); font-size: var(--fs-xs); }
 .npc-item-cat { font-size: .62rem; color: var(--text-muted); }
 
 /* ── DM modal cash display ── */
@@ -616,28 +623,29 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
   padding: .15rem .45rem; border: 1px solid rgba(0,229,255,.25); border-radius: var(--radius);
   background: rgba(0,229,255,.07); letter-spacing: .05em; }
 
-/* ── Chat message rows + highlight button ── */
-.chat-msg-row { display: flex; align-items: flex-start; gap: .25rem; }
+/* ── Chat message rows + highlight button (subtle ghost-icon) ── */
+.chat-msg-row { display: flex; align-items: flex-start; gap: var(--sp-1); }
 .dm-msg-highlight-btn { flex-shrink: 0; width: 22px; height: 22px; background: none;
-  border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-size: .75rem;
+  border: 1px solid var(--border-dark); border-radius: var(--radius); cursor: pointer; font-size: .75rem;
   color: var(--text-muted); display: flex; align-items: center; justify-content: center;
-  margin-top: .3rem; opacity: .5; transition: opacity .15s, border-color .15s; padding: 0; }
-.dm-msg-highlight-btn:hover { opacity: 1; border-color: #f39c12; }
-.dm-msg-highlight-btn.active { opacity: 1; border-color: #f39c12; color: #f39c12; }
-.chat-msg--highlighted { border-color: #f39c12 !important; background: rgba(243,156,18,.08) !important;
-  box-shadow: 0 0 8px rgba(243,156,18,.2); }
+  margin-top: var(--sp-1); opacity: .5;
+  transition: opacity var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease); padding: 0; }
+.dm-msg-highlight-btn:hover { opacity: 1; border-color: var(--warning-yellow); }
+.dm-msg-highlight-btn.active { opacity: 1; border-color: var(--warning-yellow); color: var(--warning-yellow); }
+.chat-msg--highlighted { border-color: var(--warning-yellow) !important; background: rgba(255,209,102,.08) !important;
+  box-shadow: 0 0 8px rgba(255,209,102,.2); }
 
 /* ── Chat Collapse ── */
 .dm-chat-collapse-btn {
   background: none; border: none; color: var(--text-muted); cursor: pointer;
-  font-size: 1rem; padding: 0 .1rem; line-height: 1; margin-left: .3rem;
-  transition: color .12s;
+  font-size: 1rem; padding: 0 .1rem; line-height: 1; margin-left: var(--sp-1);
+  transition: color var(--t-fast) var(--ease);
 }
-.dm-chat-collapse-btn:hover { color: var(--cyan); }
+.dm-chat-collapse-btn:hover { color: var(--neon-cyan); }
 
 .chat-unread-badge {
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--red); color: #fff; font-size: .52rem;
+  background: var(--neon-red); color: var(--bg-main); font-size: .52rem;
   border-radius: 50%; width: 14px; height: 14px;
   font-family: var(--font-display); vertical-align: middle; margin-left: .2rem;
 }
@@ -720,18 +728,19 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   background: rgba(0,0,0,.55); padding: .1rem .4rem; border-radius: 2px;
 }
 
-/* ── NPC-Gruppen (Karten-Grid) ── */
+/* ── NPC-Gruppen (Karten-Grid) — Rollen-Akzent (border-left-color + name color) inline, ERHALTEN ── */
 .npc-section-header {
-  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
-  padding: .45rem .75rem; background: rgba(255,255,255,.03);
-  border-left: 3px solid var(--border); border-bottom: 1px solid var(--border);
-  margin-top: .6rem; cursor: pointer;
+  display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3); background: rgba(255,255,255,.03);
+  border-left: 3px solid var(--border-dark); border-bottom: 1px solid var(--border-dark);
+  margin-top: var(--sp-2); cursor: pointer;
+  transition: background var(--t-fast) var(--ease);
 }
 .npc-section-header:first-child { margin-top: 0; }
 .npc-section-header:hover { background: rgba(255,255,255,.05); }
-.npc-section-name { font-family: Audiowide,sans-serif; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.npc-section-count { font-size: .6rem; color: var(--text-muted); padding: .1rem .35rem; background: var(--bg-input); border-radius: 3px; flex-shrink: 0; }
-.npc-section-actions { margin-left: auto; display: flex; gap: .3rem; flex-shrink: 0; flex-wrap: wrap; }
+.npc-section-name { font-family: Audiowide,sans-serif; font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.npc-section-count { font-size: .6rem; color: var(--text-muted); padding: .1rem var(--sp-2); background: var(--bg-panel-soft); border-radius: var(--radius); flex-shrink: 0; }
+.npc-section-actions { margin-left: auto; display: flex; gap: var(--sp-1); flex-shrink: 0; flex-wrap: wrap; }
 .npc-card-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr));
   gap: .45rem; padding: .5rem .75rem .6rem;
@@ -755,27 +764,28 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 .npc-card-actions-med button:hover { opacity: 1; }
 
 /* ── DM Raum-Sektion ── */
-.dm-room-panel { border-top: 1px solid var(--border); }
+.dm-room-panel { border-top: 1px solid var(--border-dark); }
 .dm-room-header {
-  display: flex; align-items: center; gap: .4rem;
-  padding: .5rem .75rem; cursor: pointer;
-  font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted);
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3); cursor: pointer;
+  font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase; color: var(--neon-cyan);
+  transition: color var(--t-fast) var(--ease);
 }
-.dm-room-header:hover { color: var(--text); }
-.dm-room-count { font-size: .6rem; color: var(--cyan); }
-.dm-room-chevron { font-size: .65rem; transition: transform .2s; }
-.dm-room-body { padding: .4rem .75rem .6rem; display: flex; flex-direction: column; gap: .35rem; }
-.dm-room-inputs { display: flex; gap: .3rem; }
-.dm-room-results { max-height: 100px; overflow-y: auto; font-size: .72rem; }
-.dm-room-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: .25rem; }
+.dm-room-header:hover { color: var(--text-main); }
+.dm-room-count { font-size: .6rem; color: var(--neon-cyan); }
+.dm-room-chevron { font-size: var(--fs-xs); transition: transform var(--t-med) var(--ease); }
+.dm-room-body { padding: var(--sp-2) var(--sp-3) var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-2); }
+.dm-room-inputs { display: flex; gap: var(--sp-1); }
+.dm-room-results { max-height: 100px; overflow-y: auto; font-size: var(--fs-xs); }
+.dm-room-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sp-1); }
 .dm-room-item-row {
-  display: flex; align-items: center; gap: .4rem;
-  padding: .3rem .5rem; background: var(--bg-input); border-radius: 3px; font-size: .75rem;
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2); background: var(--bg-panel-soft); border-radius: var(--radius); font-size: var(--fs-sm);
 }
-.dm-room-item-name { flex: 1; color: var(--text); }
+.dm-room-item-name { flex: 1; color: var(--text-main); }
 .dm-room-item-by { font-size: .62rem; color: var(--text-muted); }
-.dm-room-item-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: .75rem; opacity: .5; padding: 0 .2rem; }
-.dm-room-item-del:hover { opacity: 1; color: var(--red); }
+.dm-room-item-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: var(--fs-sm); opacity: .5; padding: 0 .2rem; transition: opacity var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.dm-room-item-del:hover { opacity: 1; color: var(--neon-red); }
 
 /* ── Psychosis card ── */
 .dm-card--psycho { border-color: #7B2FBE !important; }
@@ -786,14 +796,14 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 
 /* ── DM Ammo Summary ── */
 .char-card-ammo {
-  display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .3rem;
+  display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-1);
 }
 .dm-ammo-chip {
-  font-size: .6rem; padding: .1rem .3rem; border-radius: 3px;
-  background: var(--bg-input); color: var(--text-muted);
-  border: 1px solid var(--border);
+  font-size: .6rem; padding: .1rem var(--sp-1); border-radius: var(--radius);
+  background: var(--bg-panel-soft); color: var(--text-muted);
+  border: 1px solid var(--border-dark);
 }
-.dm-ammo-chip.warn { color: var(--red); border-color: var(--red); }
+.dm-ammo-chip.warn { color: var(--neon-red); border-color: var(--red-soft); }
 
 /* ── DM Timer Bar (top of page when active) ── */
 .dm-timer-bar {
@@ -1047,81 +1057,82 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 
 /* ── Session Timer ── */
 .dm-session-timer {
-  background: #0d0d0d;
-  border: 1px solid rgba(255,255,255,.07);
-  border-radius: 6px;
-  padding: .55rem .75rem;
-  margin-bottom: .6rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-2);
 }
 .sst-header {
   display: flex;
   align-items: center;
-  gap: .45rem;
-  font-size: .75rem;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
 }
 .sst-header > span:first-child {
   color: var(--text-muted);
   flex: 1;
-  font-size: .68rem;
-  letter-spacing: .06em;
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking);
   text-transform: uppercase;
 }
 #sstDisplay {
   font-family: Audiowide, monospace;
   font-size: .82rem;
-  color: var(--text);
+  color: var(--text-main);
   letter-spacing: .05em;
 }
 .sst-header button {
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-dark);
   color: var(--text-muted);
-  border-radius: 3px;
-  padding: .1rem .35rem;
+  border-radius: var(--radius);
+  padding: .1rem var(--sp-2);
   cursor: pointer;
-  font-size: .72rem;
+  font-size: var(--fs-xs);
   line-height: 1.4;
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
-.sst-header button:hover { border-color: var(--text-muted); color: var(--text); }
+.sst-header button:hover { border-color: var(--cyan-soft); color: var(--neon-cyan); }
 .sst-setup {
   display: flex;
-  gap: .35rem;
+  gap: var(--sp-1);
   align-items: center;
-  margin-top: .4rem;
+  margin-top: var(--sp-2);
 }
 #sstProgressWrap {
   height: 4px;
-  background: rgba(255,255,255,.08);
-  border-radius: 2px;
+  background: var(--bg-panel-soft);
+  border-radius: var(--radius);
   overflow: hidden;
-  margin: .35rem 0 .15rem;
+  margin: var(--sp-2) 0 var(--sp-1);
 }
 #sstProgressFill {
   height: 100%;
   width: 0;
-  background: var(--red);
-  border-radius: 2px;
+  background: var(--neon-red);
+  border-radius: var(--radius);
   transition: width .9s linear;
 }
-#sstWarning { font-size: .67rem; display: block; }
-.sst-warn-yellow { color: #FFA000; }
-.sst-warn-red    { color: var(--red); font-weight: 600; }
+#sstWarning { font-size: var(--fs-xs); display: block; }
+.sst-warn-yellow { color: var(--warning-yellow); }
+.sst-warn-red    { color: var(--neon-red); font-weight: 600; }
 
 /* ── NPC Row Layout (replaces horizontal card grid) ── */
 .npc-group-rows {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-bottom: .75rem;
+  margin-bottom: var(--sp-3);
 }
 .npc-row {
   display: flex;
   align-items: center;
-  gap: .55rem;
-  padding: .35rem .5rem;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
   background: rgba(255,255,255,.02);
-  border-radius: 4px;
-  transition: background .15s;
+  border-radius: var(--radius);
+  transition: background var(--t-fast) var(--ease);
 }
 .npc-row:hover { background: rgba(255,255,255,.045); }
 .npc-row.eliminated { opacity: .45; }
@@ -1131,8 +1142,8 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  background: #1a1a1a;
-  border: 1px solid rgba(255,255,255,.06);
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark);
 }
 .npc-row-info {
   display: flex;
@@ -1142,9 +1153,9 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   overflow: hidden;
 }
 .npc-row-name {
-  font-size: .78rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
-  color: var(--text);
+  color: var(--text-main);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1168,40 +1179,176 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 .npc-row-bar-wrap {
   flex: 0 0 60px;
   height: 6px;
-  background: rgba(255,255,255,.07);
-  border-radius: 3px;
+  background: var(--bg-panel-soft);
+  border-radius: var(--radius);
   overflow: hidden;
 }
 .npc-row-bar {
   height: 100%;
-  border-radius: 3px;
-  transition: width .3s, background .3s;
+  border-radius: var(--radius);
+  transition: width var(--t-slow) var(--ease), background var(--t-slow) var(--ease);
 }
 .npc-row-hp-text {
-  font-size: .65rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   white-space: nowrap;
   flex-shrink: 0;
   min-width: 48px;
   text-align: right;
+  font-family: var(--font-mono);
 }
+/* Row action icons stay subtle ghost-icons (dense rows) */
 .npc-row-actions {
   display: flex;
-  gap: .2rem;
+  gap: var(--sp-1);
   flex-shrink: 0;
 }
 .npc-row-actions button {
   background: none;
   border: 1px solid transparent;
   color: var(--text-muted);
-  border-radius: 4px;
+  border-radius: var(--radius);
   padding: .25rem .4rem;
   cursor: pointer;
   font-size: 1rem;
   line-height: 1.2;
   min-width: 30px;
   text-align: center;
-  transition: border-color .15s, color .15s;
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
-.npc-row-actions button:hover { border-color: var(--border); color: var(--text); }
-.npc-row-actions .npc-visibility-btn.active { color: var(--cyan); }
+.npc-row-actions button:hover { border-color: var(--border-dark); color: var(--text-main); }
+.npc-row-actions .npc-dice-btn:hover { border-color: var(--cyan-soft); color: var(--neon-cyan); }
+.npc-row-actions .npc-visibility-btn.active { color: var(--neon-cyan); }
+@media (pointer: coarse) { .npc-row-actions button { min-width: 40px; padding: var(--sp-2) var(--sp-2); } }
+
+/* ════════════════════════════════════════════════════════════════
+   BUTTON-SYSTEM (Phase 5a) — cyber-button-Look auf bestehende DM-Buttons
+   Gespiegelt von player.css (Phase 4d): custom-property-getrieben
+   (--btn-border/-fill/-fill-hover/-color/-glow/-h/-px/-fs), Muster wie
+   .cyber-button: Border via ::before, Füllung via ::after, Glow via
+   filter:drop-shadow, Clip-sm (Gotcha #2). Quellordnung am Dateiende →
+   gewinnt bei gleicher Spezifität.
+   .ctrl-btn ist GLOBAL (Nutzer-Entscheidung 2026-06-08) → der Basis-Look
+   fließt bewusst in 5b–5d-Bereiche, die .ctrl-btn teilen. Subsystem-eigene
+   Button-Klassen (.dm-tab-btn, .cbt-, .bm-, .combat-, .die-btn, .timer-,
+   .cond-toggle-btn, .buff-preset-btn, .dm-left-ip-btn) bleiben UNANGETASTET
+   (kommen in 5b–5d). Schrift NICHT migriert außer hier (font-heading = Teil
+   des Komponenten-Looks, konsistent mit player).
+   Größenskala: md38 / sm32 / icon-sm30 (→44 @pointer:coarse).
+   ════════════════════════════════════════════════════════════════ */
+
+/* — Basis-Look (Default = primary/cyan, md38). --btn-*-Props steuern Variante/Größe — */
+.ctrl-btn, .ctrl-btn-red,
+.npc-add-btn, .dm-chat-send-btn,
+.npc-save-btn, .npc-delete-btn, .npc-add-weapon-btn, .npc-weapon-remove {
+  --btn-border: var(--cyan-soft);
+  --btn-fill: var(--bg-panel-soft);
+  --btn-fill-hover: var(--bg-panel-cyan);
+  --btn-color: var(--neon-cyan);
+  --btn-glow: var(--glow-cyan-s);
+  --btn-h: 38px;
+  --btn-px: var(--sp-4);
+  --btn-fs: var(--fs-sm);
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--btn-h);
+  height: auto;
+  padding: 0 var(--btn-px);
+  background: transparent;
+  border: none;
+  color: var(--btn-color);
+  font-family: var(--font-heading);
+  font-size: var(--btn-fs);
+  font-weight: 600;
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 1;
+  box-shadow: none;
+  border-radius: var(--radius);
+  clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
+                     calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm));
+  transition: color var(--t-fast) var(--ease), filter var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease);
+}
+/* Border-Layer (::before) + Füllung (::after, um border-w eingerückt) */
+.ctrl-btn::before, .ctrl-btn-red::before,
+.npc-add-btn::before, .dm-chat-send-btn::before,
+.npc-save-btn::before, .npc-delete-btn::before, .npc-add-weapon-btn::before, .npc-weapon-remove::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--btn-border); clip-path: inherit;
+}
+.ctrl-btn::after, .ctrl-btn-red::after,
+.npc-add-btn::after, .dm-chat-send-btn::after,
+.npc-save-btn::after, .npc-delete-btn::after, .npc-add-weapon-btn::after, .npc-weapon-remove::after {
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--btn-fill); clip-path: inherit;
+  transition: background var(--t-fast) var(--ease);
+}
+/* States */
+.ctrl-btn:hover, .ctrl-btn-red:hover,
+.npc-add-btn:hover, .dm-chat-send-btn:hover,
+.npc-save-btn:hover, .npc-delete-btn:hover, .npc-add-weapon-btn:hover, .npc-weapon-remove:hover {
+  background: transparent; box-shadow: none;
+  filter: drop-shadow(var(--btn-glow)); transform: translateY(-1px);
+}
+.ctrl-btn:hover::after, .ctrl-btn-red:hover::after,
+.npc-add-btn:hover::after, .dm-chat-send-btn:hover::after,
+.npc-save-btn:hover::after, .npc-delete-btn:hover::after, .npc-add-weapon-btn:hover::after, .npc-weapon-remove:hover::after {
+  background: var(--btn-fill-hover);
+}
+.ctrl-btn:active, .ctrl-btn-red:active,
+.npc-add-btn:active, .dm-chat-send-btn:active,
+.npc-save-btn:active, .npc-delete-btn:active, .npc-add-weapon-btn:active, .npc-weapon-remove:active { transform: translateY(0); }
+.ctrl-btn:focus-visible, .ctrl-btn-red:focus-visible,
+.npc-add-btn:focus-visible, .dm-chat-send-btn:focus-visible,
+.npc-save-btn:focus-visible, .npc-delete-btn:focus-visible, .npc-add-weapon-btn:focus-visible, .npc-weapon-remove:focus-visible {
+  outline: none; filter: drop-shadow(var(--btn-glow));
+}
+.ctrl-btn:disabled, .ctrl-btn-red:disabled,
+.npc-add-btn:disabled, .dm-chat-send-btn:disabled,
+.npc-save-btn:disabled, .npc-add-weapon-btn:disabled {
+  opacity: .4; cursor: not-allowed; filter: none; transform: none;
+}
+
+/* — Größen — */
+/* sm 32 (kompakte Header-/Cluster-Buttons) */
+.npc-add-btn, .npc-add-weapon-btn, .npc-section-actions .ctrl-btn {
+  --btn-h: 32px; --btn-px: var(--sp-2); --btn-fs: var(--fs-xs);
+  width: auto; min-width: 32px;
+}
+/* icon-sm 30×30 */
+.npc-weapon-remove {
+  --btn-h: 30px; width: 30px; min-width: 30px; padding: 0; font-size: .8rem; gap: 0;
+}
+
+/* — Varianten (setzen nur die --btn-*-Props; Default = primary/cyan) — */
+/* combat / red */
+.ctrl-btn-red, .dm-chat-send-btn, .npc-add-btn, .npc-save-btn {
+  --btn-border: var(--red-soft); --btn-fill-hover: var(--bg-panel-red);
+  --btn-color: var(--neon-red); --btn-glow: var(--glow-red-s);
+}
+/* danger / rot (✕ Waffe entfernen) */
+.npc-weapon-remove {
+  --btn-border: var(--red-soft); --btn-fill-hover: var(--bg-panel-red);
+  --btn-color: var(--neon-red); --btn-glow: var(--glow-red-s);
+}
+/* ghost (NPC löschen) — neutral, Hover → danger */
+.npc-delete-btn {
+  --btn-border: var(--border-dark); --btn-color: var(--text-muted);
+  --btn-fill-hover: var(--bg-panel-red); --btn-glow: var(--glow-red-s);
+}
+.npc-delete-btn:hover { color: var(--neon-red); }
+
+/* — Touch: alle System-Buttons ≥44px — */
+@media (pointer: coarse) {
+  .ctrl-btn, .ctrl-btn-red,
+  .npc-add-btn, .dm-chat-send-btn,
+  .npc-save-btn, .npc-delete-btn, .npc-add-weapon-btn, .npc-section-actions .ctrl-btn { --btn-h: 44px; }
+  .npc-weapon-remove { --btn-h: 44px; width: 44px; min-width: 44px; }
+}

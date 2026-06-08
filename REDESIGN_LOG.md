@@ -19,7 +19,7 @@
 | 4b player Weapons/Armor/Cyberware | ✅ fertig | In-Place-CSS; .roll/.gear-action/.remove gescopt; #dmgApplyBox-Scoping; Autofire→Combat-Rot |
 | 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ✅ fertig | In-Place-Reskin; #tab-gear/#tab-raum/#critModalBox/#tab-injuries gescopt; Rollen-Body via #tab-role-Override (roles.css unangetastet) |
 | 4d player Layout-Pass | ✅ fertig | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2 ✅ (Stats/Skills/Karten/Distanz-Bar); 4d-3 ✅ (Lifepath/Notes/Injuries/Raum/Rolle) → **player.html KOMPLETT** |
-| 5 dm.html | ⬜ offen | Opus xhigh |
+| 5 dm.html | 🟡 5a ✅ | Opus xhigh; 5a (Basis/Button-System/Haupt-Dashboard) fertig; 5b Kontroll-Modal / 5c Combat+Items / 5d Schwarzmarkt offen |
 | 6 shop.html | ⬜ offen | |
 | 7 map.html | ⬜ offen | Opus xhigh; Canvas unantastbar; Nav-Sidebar hier |
 | 8 create/upload/npc-sheet/radio | ⬜ offen | |
@@ -655,6 +655,112 @@ unberührt. Radio-Wiedergabe/Power/Seek/Web-Audio unverändert. Geändert: `cybe
 `radio-ui.js`, `radio.css`.
 
 ---
+
+## Phase 5a — dm.html: Basis + Button-System + Haupt-Dashboard ✅
+**Geändert (nur 2 Dateien):** `public/assets/css/dm.css` (Reskin+Relayout der 5a-Zonen + Button-
+System am Dateiende; Braces **498/498**, vorher 483; Cache-Bust `?v=6`), `public/dm.html`
+(Inline-Style→Token-Swaps in den 5a-Render-Funktionen + Farb-Literale in den Helfern; 24 Z.).
+**Nur CSS + Inline-Token/Markup, keine JS-Logik/IDs/Events/Handler/data-*/Berechnungen.**
+dm.css ist die DM-CSS-Datei (lädt nur auf dm.html).
+
+**Scope-Entscheidungen (Nutzer 2026-06-08):** **Button-System global auf `.ctrl-btn`/`.ctrl-btn-red`**
+(fließt bewusst in 5b–5d, die die Klasse teilen — erlaubt); **NPC-Edit-Modal in 5a** (NPC-Subsystem
+komplett). **Content-Cap:** **KEIN** globaler 1280-Cap — DM ist bewusst eine breite Ops-Konsole
+(MASTER „Grid darf breiter sein, kontrolliert"); Dichte via Grid-`minmax`-Cap + `--sp`. Volle-
+Höhe-Shell (body 100vh, `.dm-layout` 1fr/400px, Chat 38vh) **unverändert** (null Funktionsänderung).
+
+**Token-Migration (Gotcha base.css-Override):** alle 5a-Zonen auf neue HUD-Tokens
+(`--neon-cyan/-red`, `--bg-panel/-soft/-cyan/-red`, `--border-dark`, `--text-main/-dim/-muted`,
+`--clip-*`, `--glow-*`, `--sp-*`, `--t-fast/--ease`, `--radius`). Schrift NICHT migriert
+(`--font-display`/Audiowide bleibt) — **Ausnahme Button-System** (`--font-heading`, Teil des
+Komponenten-Looks, konsistent mit player).
+
+**DM-Basis (Scope A):** Page-Shell/Layout/Tab-Bar (`.dm-content-tab` aktiv=rot), `.dm-sidebar`,
+`.dm-chat-bottom` (rote Oberkante + subtiler Glow), Spacing auf `--sp`. **Einheitlicher HUD-
+Section-Header** (fs-xs, tracking, uppercase, cyan, border-bottom) auf `.roll-log-head`/
+`.dm-chat-head`/`.dm-room-header`/`.sst-header`; `.npc-section-title` rot (Combat/Rolle).
+Geteilte HUD-Inputs **global**: `.ctrl-input`/`.ctrl-select` (+ `.dm-chat-input`/`.player-notes-area`/
+`.npc-field` etc.) → Token-Look, echte border (Gotcha #2). Sidebar-Basis (Session-Timer/Raum/
+Own-Notes) token-migriert.
+
+**Button-System (Scope B, Variante A gespiegelt von player.css):** custom-property-getriebener
+Block am Dateiende (`--btn-*`, `::before`-Border/`::after`-Füllung, clip-sm, drop-shadow-Glow,
+md38/sm32/icon-sm30, →44 @coarse). **Mapping:** `.ctrl-btn`=primary/cyan md38 (**global**),
+`.ctrl-btn-red`=combat (global), `.npc-add-btn`/`.npc-section-actions .ctrl-btn`=combat/primary **sm**
+(Inline-Größe der Gruppen-Buttons in `renderNpcGrid` entfernt), `.dm-chat-send-btn`=combat,
+`.npc-save-btn`=combat, `.npc-delete-btn`=ghost(Hover danger), `.npc-add-weapon-btn`=primary sm,
+`.npc-weapon-remove`=danger icon-sm. **Alte Look-Regeln** von `.ctrl-btn`/`.ctrl-btn-red`/
+`.npc-add-btn`/`.npc-save-btn`/`.npc-delete-btn`/`.npc-add-weapon-btn`/`.npc-weapon-remove`
+**entfernt** → System ist Single Source (keine Duplikate, kein `!important`).
+- **Subtile Icon-Affordances NICHT ins borderige System** (bewusste Abweichung vom Plan-Mapping,
+  besser für Dichte/Hover-Reveal): `.dm-card-delete`/`.dm-notes-icon`/`.roll-log-clear`/
+  `.dm-room-item-del`/`.dm-chat-collapse-btn`/`.dm-msg-highlight-btn`/`.sst-header button`/
+  NPC-Zeilen-Actions (`.npc-row-actions button` inkl. edit/visibility/dice/play) — nur token-
+  migriert als leichte Ghost-Icons (📌-Highlight amber→`--warning-yellow`).
+
+**Haupt-Dashboard (Scope C):**
+- **Char-Grid** (`renderGrid`): `.dm-grid-wrap` `auto-fill minmax(240px,320px)` + `justify-content:start`
+  (Karten blasen auf breiten Screens nicht auf), Gap/Pad `--sp`. `.dm-card` **echte border (KEIN clip)** —
+  `.dm-card--dying`-box-shadow-Puls + JS-Live-Zustand bleiben intakt (Gotcha #2+#4); dying/psycho-
+  Farben auf Tokens (psycho-Lila `#7B2FBE` bewusst belassen, kein Palette-Token). Bars/Badges/Ammo
+  token. `renderGrid`-Inline-Farben + `hpColor` → Tokens (Hum.-Gradient-Orange `#FF8C00` belassen).
+- **NPC-Grid** (`renderNpcGrid`/`buildCompactNpcCard`): `.npc-section-header`-Chrome HUD,
+  **Rollen-Akzent (inline `border-left-color` + `.npc-section-name` color) ERHALTEN** (verifiziert
+  dm.html:1079–1080); `.npc-group-rows`/`.npc-row*` dichte HUD-Liste; Bar-Farbe `npcHpColor`→Tokens.
+- **Roll-Log**: Head + Entry token, `.roll-total` mono, crit cyan/rot.
+- **DM-Chat**: `.chat-msg`/`-header`/`.chat-sender(-dm)`/`.chat-time`/`.chat-text` **neu in dm.css
+  definiert** (lagen nur in player.css, das dm.html NICHT lädt → waren ungestylt), gescopt unter
+  `.dm-chat-messages`; Akzentränder + Highlight token.
+- **NPC-Modal** (Q2): Felder/Inputs/Item-Suche token (Focus-Glow rot), Buttons → System.
+
+**Gescopt/unangetastet für 5b–5d (verifiziert, 84 Treffer im Diff unverändert):** 5b `.dm-modal-*`/
+`.dm-tab-btn`/`.ctrl-section(-head)`/`.ctrl-row`/`.ctrl-label`/`.dm-stats-grid`/`.ctrl-inj-*`/
+`.buff-*`/`.ctrl-buff-*`/`.cond-toggle-btn`/`.dm-left-ip-btn`/`.dm-modal-cash`; 5c `.combat-*`/
+`.cbt-*`/`.dm-timer-*`/`.timer-*`/`.dm-npc-quick-*`/`#dmItemsModal`/`.dm-ammo-*`(Modal)/`.item-search-*`/
+`.npc-result`/`.npc-roll-*`; 5d `.bm-*`; „bleibt" Dice-FAB/Popup/3D-Overlay (`.dice-*`/`.die-btn`),
+PIN-Overlay, Player-Notes-Overlay, Raum-Expand-Overlay. **Dead CSS** (`.npc-card*` vertikal =
+`buildNpcCard` nie aufgerufen; `.npc-card-med`/`-grid`) bewusst nicht angefasst.
+
+**Verifiziert:** dm.css Braces 498/498; `git status` = nur `dm.css` + `dm.html`; beide Inline-Module
+`node --check` sauber (Template-Literale intakt); keine Alt-Token-Reste in den 5a-Zonen (Reste nur
+in 5b/5c/5d/dead/dice/pin); System-Button-Klassen single-source (keine Duplikate); Rollen-Akzent
+erhalten; `buildNpcCard` weiter ohne Aufrufer. **Offen:** manueller Browser-Durchklick (kein Browser
+in dieser Session) — Grid-Klick→Kontroll-Modal (5b-Look noch alt, funktional), Chat senden/Bild/
+Highlight, Roll-Log-Realtime, NPC Gruppen-Toggle/+NPC/Edit/Visibility/Dice/Play, NPC-Modal Save/
+Delete/Waffen, Raum/Session-Timer, Content-Tabs, Combat-Setup (Buttons neuer Look, Funktion intakt).
+**Bekannte Mini-Inkonsistenzen (5c-Feinschliff):** `.ctrl-btn` mit Inline-`color`/`font-size`/`padding`
+(z.B. „▶ Kampf starten") behalten ihren Inline-Wert über dem System (akzeptabel, da 5c relayoutet);
+aktive NPC-Visibility-Zeile = grüner Rand + cyan Text (vorbestehend, nicht reskin-bedingt).
+
+### Phase 5a — Bugfix: kompletter Hintergrund rot ✅
+**Symptom:** Nach 5a war auf dm.html der gesamte Seitenhintergrund rot.
+**Ursache:** Im neuen BUTTON-SYSTEM-Banner-Kommentar stand die Klassenliste
+`(.dm-tab-btn/.cbt-*/.bm-*/.combat-*/.die-btn/.timer-*/ …)` — die Sequenz **`*/`** (Glob-Stern
+direkt gefolgt von Slash, z.B. `.cbt-*/`) **schloss den CSS-Kommentar vorzeitig**. Der Resttext
+wurde als Live-CSS geparst und verschluckte die **Basis-Button-Regel** (`.ctrl-btn, …{ position:
+relative; isolation:isolate; clip-path; … }`) komplett. Dadurch waren die System-Buttons
+`position:static` → ihr `::before` (`position:absolute; inset:0; z-index:-1`,
+`background:var(--btn-border)`) dimensionierte sich gegen das **Viewport** statt den Button und
+malte ganzflächig rot HINTER die Seite (bestätigt per Headless-Chrome-Screenshot + Computed-Style-
+Probe: `.dm-chat-send-btn` host `position:static`, `::before` 900×288).
+**Fix:** Banner-Kommentar-Klassenliste auf Kommas umgestellt (`.cbt-, .bm-, .combat-, .timer-, …`)
+→ kein `*/` mehr im Kommentar. **1 Zeile in dm.css**, keine Regel-/Selektor-/Funktionsänderung.
+**Verifiziert:** Kommentar-Balance dm.css 80/80 `/* `=`*/`; Braces 498/498; Headless-Render zeigt
+dunklen HUD-Hintergrund, Buttons korrekt geclippt (Pseudo-Layer button-lokal). **Lehre:** in
+CSS-Kommentaren nie Glob-Klassenlisten mit `*/`-Sequenz (Stern+Slash) — Kommas/Spaces verwenden.
+
+### Phase 5a — Bugfix: Charakter-Grid wechselt Layout beim Tab-Switch ✅
+**Symptom:** Charakter-Karten initial korrekt als Karten-Grid; nach NPCS → zurück zu CHARAKTERE
+plötzlich Vollbreite-Zeilen.
+**Ursache:** `setupMainTabs()` (dm.html) setzte beim Tab-Wechsel `#dmGrid.style.display =
+panel==='chars' ? 'block' : 'none'`. `#dmGrid` ist `.dm-grid-wrap { display:grid }` — beim
+Initial-Load greift die CSS-Grid-Regel (kein Inline-Style), nach dem Tab-Switch überschreibt der
+**Inline-`display:block`** das `display:grid` → Karten stapeln vollbreit. `renderGrid` erzeugt in
+beiden Fällen identisches Markup; nur der Inline-Display-Wert war falsch.
+**Fix:** `'block'` → `'grid'` (1 Zeichen-Wert in dm.html). Keine Render-Logik/Daten/IDs/Events/
+Tab-Switch-Funktion geändert.
+**Verifiziert:** Einzige `#dmGrid`-Display-Zuweisung; `node --check` sauber; Headless-Render nach
+simuliertem Tab-Return = Karten-Grid nebeneinander, `computed display=grid` (identisch zum Initial).
 
 ## Offene Punkte / To-do bis Ende
 - **Phase 5–10** wie Status-Tabelle.

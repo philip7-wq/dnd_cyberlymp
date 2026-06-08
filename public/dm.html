@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
   <link rel="stylesheet" href="assets/css/cyber-components.css">
   <link rel="stylesheet" href="assets/css/base.css?v=2">
-  <link rel="stylesheet" href="assets/css/dm.css?v=5">
+  <link rel="stylesheet" href="assets/css/dm.css?v=6">
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/sound.css">
   <link rel="stylesheet" href="assets/css/radio.css?v=4">
@@ -753,9 +753,9 @@ async function boot() {
 function hpColor(cur, max) {
   if (!max) return 'var(--text-muted)';
   const pct = cur / max;
-  if (pct > 0.5) return 'var(--cyan)';
-  if (pct > 0.25) return '#FFD600';
-  return 'var(--red)';
+  if (pct > 0.5) return 'var(--neon-cyan)';
+  if (pct > 0.25) return 'var(--warning-yellow)';
+  return 'var(--neon-red)';
 }
 
 function parseInjuries(str) {
@@ -813,16 +813,16 @@ function renderGrid() {
         </div>
         <div class="dm-card-stat">
           <div class="dm-card-stat-label">Humanity</div>
-          <div class="bar-wrap"><div class="bar-fill" style="width:${humPct}%;background:${humPct>60?'var(--cyan)':humPct>40?'#FFD700':humPct>20?'#FF8C00':'#FF2D2D'}"></div></div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${humPct}%;background:${humPct>60?'var(--neon-cyan)':humPct>40?'var(--warning-yellow)':humPct>20?'#FF8C00':'var(--neon-red)'}"></div></div>
           <div>${c.current_humanity ?? 0} / ${c.max_humanity ?? 0}</div>
-          ${(() => { const h = c.current_humanity ?? 0; if (h <= 0) return '<div style="font-size:.58rem;color:#FF0000;letter-spacing:.06em;font-weight:700">CYBERPSYCHOSIS</div>'; if (h <= 5) return '<div style="font-size:.58rem;color:#FF2D2D">Psychosis-Risiko</div>'; if (h <= 20) return '<div style="font-size:.58rem;color:#FF8C00">Instabilität</div>'; if (h <= 35) return '<div style="font-size:.58rem;color:#FFD700">Hum. sinkt</div>'; return ''; })()}
+          ${(() => { const h = c.current_humanity ?? 0; if (h <= 0) return '<div style="font-size:.58rem;color:var(--neon-red);letter-spacing:.06em;font-weight:700">CYBERPSYCHOSIS</div>'; if (h <= 5) return '<div style="font-size:.58rem;color:var(--neon-red)">Psychosis-Risiko</div>'; if (h <= 20) return '<div style="font-size:.58rem;color:#FF8C00">Instabilität</div>'; if (h <= 35) return '<div style="font-size:.58rem;color:var(--warning-yellow)">Hum. sinkt</div>'; return ''; })()}
         </div>
         <div class="dm-card-stat">
           <div class="dm-card-stat-label">Luck</div>
           <div style="font-family:var(--font-display);font-size:.8rem">${c.current_luck ?? 0}</div>
         </div>
       </div>
-      ${(c.cash ?? 0) < 0 ? `<div style="font-size:.62rem;color:var(--red);margin:.1rem 0">💸 Schulden: ${(c.cash).toLocaleString('de-DE')} eb</div>` : ''}
+      ${(c.cash ?? 0) < 0 ? `<div style="font-size:.62rem;color:var(--neon-red);margin:.1rem 0">💸 Schulden: ${(c.cash).toLocaleString('de-DE')} eb</div>` : ''}
       ${injuries.length ? `<div class="inj-badge">${injuries.length} Injur${injuries.length === 1 ? 'y' : 'ies'}</div>` : ''}
       ${(c.conditions||[]).length
         ? `<div class="dm-card-conditions">${(c.conditions||[]).map(cd =>
@@ -974,7 +974,7 @@ function setupDmChat() {
     if (!url) return;
     _dmChatPendingImageUrl = url;
     preview.style.display = 'block';
-    preview.innerHTML = `<img src="${url}" alt="Vorschau"><button id="dmChatImgRemove" style="margin-left:.3rem;background:none;border:none;color:var(--red);cursor:pointer">✕</button>`;
+    preview.innerHTML = `<img src="${url}" alt="Vorschau"><button id="dmChatImgRemove" style="margin-left:.3rem;background:none;border:none;color:var(--neon-red);cursor:pointer">✕</button>`;
     document.getElementById('dmChatImgRemove').addEventListener('click', () => {
       _dmChatPendingImageUrl = null;
       preview.style.display = 'none';
@@ -1015,7 +1015,7 @@ function buildNpcCard(n) {
 
 function npcHpColor(hp, maxHp) {
   const pct = maxHp > 0 ? hp / maxHp : 0;
-  return pct > 0.5 ? '#00cc66' : pct > 0.2 ? '#FFA000' : '#FF2D2D';
+  return pct > 0.5 ? 'var(--success-green)' : pct > 0.2 ? 'var(--warning-yellow)' : 'var(--neon-red)';
 }
 
 function buildCompactNpcCard(n) {
@@ -1080,9 +1080,9 @@ function renderNpcGrid() {
       <span class="npc-section-name" style="color:${color}">${escapeHtml(label)}</span>
       <span class="npc-section-count">${members.length}</span>
       <div class="npc-section-actions" onclick="event.stopPropagation()">
-        ${groupName ? `<button class="ctrl-btn group-combat-btn" data-group="${escapeHtml(groupName)}" style="font-size:.6rem;padding:.15rem .4rem">▶ Kampf</button>
-        <button class="ctrl-btn group-toggle-btn" data-group="${escapeHtml(groupName)}" data-visible="${members.every(m => m.is_visible_to_players) ? '1' : '0'}" style="font-size:.6rem;padding:.15rem .4rem" title="Alle sichtbar schalten">👁</button>
-        <button class="ctrl-btn" onclick="openNpcModal({group_name:'${groupName}',group_color:'${color}'})" style="font-size:.6rem;padding:.15rem .4rem">+ NPC</button>` : ''}
+        ${groupName ? `<button class="ctrl-btn group-combat-btn" data-group="${escapeHtml(groupName)}">▶ Kampf</button>
+        <button class="ctrl-btn group-toggle-btn" data-group="${escapeHtml(groupName)}" data-visible="${members.every(m => m.is_visible_to_players) ? '1' : '0'}" title="Alle sichtbar schalten">👁</button>
+        <button class="ctrl-btn" onclick="openNpcModal({group_name:'${groupName}',group_color:'${color}'})">+ NPC</button>` : ''}
       </div>
       <span class="dm-room-chevron" style="margin-left:${groupName ? '' : 'auto'}">${chevron}</span>
     </div>
@@ -1599,7 +1599,7 @@ function setupMainTabs() {
       document.querySelectorAll('.dm-content-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const panel = btn.dataset.panel;
-      document.getElementById('dmGrid').style.display    = panel === 'chars' ? 'block' : 'none';
+      document.getElementById('dmGrid').style.display    = panel === 'chars' ? 'grid' : 'none';
       document.getElementById('npcPanel').style.display  = panel === 'npcs'  ? 'block' : 'none';
       document.getElementById('soundPanel').style.display= panel === 'sound' ? 'block' : 'none';
       if (panel === 'sound' && !_soundMounted) {
