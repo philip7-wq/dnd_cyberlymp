@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
   <link rel="stylesheet" href="assets/css/cyber-components.css">
   <link rel="stylesheet" href="assets/css/base.css?v=2">
-  <link rel="stylesheet" href="assets/css/dm.css?v=6">
+  <link rel="stylesheet" href="assets/css/dm.css?v=7">
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/sound.css">
   <link rel="stylesheet" href="assets/css/radio.css?v=4">
@@ -1645,12 +1645,12 @@ function renderModalHeader() {
   document.getElementById('dmModalHeader').innerHTML = `
     ${c.image_url
       ? `<img class="dm-modal-portrait" src="${c.image_url}" alt="" onerror="this.style.display='none'">`
-      : `<div class="dm-modal-portrait" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem">🤖</div>`}
+      : `<div class="dm-modal-portrait dm-modal-portrait--empty">🤖</div>`}
     <div class="dm-modal-title-wrap">
       <div class="dm-modal-name">${c.name}</div>
       <div class="dm-modal-sub">${[c.role, c.handle, c.player_name].filter(Boolean).join(' · ')}</div>
     </div>
-    <div class="dm-modal-cash">${(c.cash ?? 0).toLocaleString('de-DE')} eb</div>
+    <div class="dm-modal-cash${(c.cash ?? 0) < 0 ? ' dm-modal-cash--neg' : ''}">${(c.cash ?? 0).toLocaleString('de-DE')} eb</div>
     <a href="player.html?id=${c.id}" target="_blank" class="dm-modal-player-link">↗ Player View</a>
     <button class="dm-modal-close" id="dmModalClose">✕</button>
   `;
@@ -1703,7 +1703,7 @@ function renderModalLeft() {
 function buildLeftPanelHtml() {
   const c = openChar;
   const hpPct = c.max_hp ? Math.round((c.current_hp ?? 0) / c.max_hp * 100) : 0;
-  const hpBarColor = hpPct > 50 ? 'var(--cyan)' : hpPct > 20 ? '#FFD600' : 'var(--red)';
+  const hpBarColor = hpPct > 50 ? 'var(--neon-cyan)' : hpPct > 20 ? 'var(--warning-yellow)' : 'var(--neon-red)';
 
   const condButtons = CONDITIONS.map(cond => {
     const active = (openChar.conditions || []).includes(cond);
@@ -1729,9 +1729,9 @@ function buildLeftPanelHtml() {
       <div class="ctrl-section-head">HP</div>
       <div class="dm-left-hp-bar"><div class="dm-left-hp-fill" style="width:${hpPct}%;background:${hpBarColor}"></div></div>
       <div class="dm-left-hp-label">${c.current_hp ?? 0} / ${c.max_hp ?? 0}</div>
-      <div class="ctrl-row" style="margin-top:.4rem">
+      <div class="ctrl-row">
         <input type="number" class="ctrl-input" id="dmLeftHp" value="${c.current_hp ?? 0}" min="0" max="${c.max_hp ?? 999}">
-        <button class="ctrl-btn" id="dmLeftHpSave">↵</button>
+        <button class="ctrl-btn ctrl-btn--icon" id="dmLeftHpSave" title="HP setzen">↵</button>
       </div>
       <div class="ctrl-msg" id="dmLeftHpMsg"></div>
     </div>
@@ -1742,19 +1742,19 @@ function buildLeftPanelHtml() {
         const s = c.armor?.[key] || {};
         if (!s.name) return '';
         const cur = s.sp ?? 0; const max = s.max_sp ?? s.sp ?? 0;
-        return `<div class="ctrl-row" style="margin-bottom:.25rem;align-items:center">
-          <span style="font-size:.65rem;color:var(--text-muted);min-width:42px">${lbl}</span>
-          <input type="number" class="ctrl-input" id="dmSpInput_${key}" value="${cur}" min="0" max="${max||99}" style="max-width:55px">
-          <span style="font-size:.65rem;color:var(--text-muted)">/ ${max}</span>
-          <button class="ctrl-btn" data-sp-key="${key}" style="font-size:.65rem;padding:.15rem .35rem;flex-shrink:0" id="dmSpSave_${key}">↵</button>
-          <button class="ctrl-btn" data-sp-reset="${key}" style="font-size:.65rem;padding:.15rem .35rem;flex-shrink:0;color:var(--cyan)">↺ Reset</button>
+        return `<div class="ctrl-row">
+          <span class="ctrl-sp-slot">${lbl}</span>
+          <input type="number" class="ctrl-input ctrl-input--num" id="dmSpInput_${key}" value="${cur}" min="0" max="${max||99}">
+          <span class="ctrl-sp-max">/ ${max}</span>
+          <button class="ctrl-btn ctrl-btn--icon" data-sp-key="${key}" id="dmSpSave_${key}" title="SP setzen">↵</button>
+          <button class="ctrl-btn ctrl-btn--icon ctrl-btn--ghost" data-sp-reset="${key}" title="SP zurücksetzen">↺</button>
         </div>`;
       }).join('')}
       <div class="ctrl-msg" id="dmSpMsg"></div>
     </div>
 
     <div class="dm-left-section">
-      <div class="ctrl-section-head">IP <span id="dmLeftIpVal" style="float:right;color:var(--cyan);font-family:var(--font-display)">${c.improvement_points ?? 0}</span></div>
+      <div class="ctrl-section-head">IP <span class="ctrl-head-val" id="dmLeftIpVal">${c.improvement_points ?? 0}</span></div>
       <div class="dm-left-ip-btns">
         <button class="dm-left-ip-btn" data-amt="5">+5</button>
         <button class="dm-left-ip-btn" data-amt="10">+10</button>
@@ -1765,15 +1765,17 @@ function buildLeftPanelHtml() {
     </div>
 
     <div class="dm-left-section">
-      <div class="ctrl-section-head">Cash <span id="dmLeftCashVal" style="float:right;color:${(c.cash??0)<0?'var(--red)':'var(--cyan)'};font-family:var(--font-display)">${(c.cash ?? 0) < 0 ? '💸 ' : ''}${(c.cash ?? 0).toLocaleString('de-DE')} eb</span></div>
+      <div class="ctrl-section-head">Cash <span class="ctrl-head-val" id="dmLeftCashVal" style="color:${(c.cash??0)<0?'var(--neon-red)':'var(--neon-cyan)'}">${(c.cash ?? 0) < 0 ? '💸 ' : ''}${(c.cash ?? 0).toLocaleString('de-DE')} eb</span></div>
       <div class="ctrl-row">
-        <input type="number" class="ctrl-input" id="dmLeftCashAmt" placeholder="500" style="max-width:80px">
-        <input type="text"   class="ctrl-input" id="dmLeftCashReason" placeholder="Grund (opt.)" style="max-width:110px;font-size:.7rem">
+        <input type="number" class="ctrl-input ctrl-input--num" id="dmLeftCashAmt" placeholder="500">
         <button class="dm-left-ip-btn" id="dmLeftCashAdd">+ eb</button>
-        <button class="dm-left-ip-btn" id="dmLeftCashSub" style="color:var(--red)">− eb</button>
+        <button class="dm-left-ip-btn dm-left-ip-btn--sub" id="dmLeftCashSub">− eb</button>
+      </div>
+      <div class="ctrl-row">
+        <input type="text" class="ctrl-input ctrl-input--reason" id="dmLeftCashReason" placeholder="Grund (opt.)">
       </div>
       <div class="ctrl-msg" id="dmLeftCashMsg"></div>
-      <div id="dmLeftCashLog" style="font-size:.65rem;color:var(--text-muted);margin-top:.3rem;max-height:80px;overflow-y:auto"></div>
+      <div class="dm-left-cashlog" id="dmLeftCashLog"></div>
     </div>
 
     <div class="dm-left-section">
@@ -1822,7 +1824,7 @@ function setupLeftPanel() {
     if (isNaN(val)) return;
     const max = openChar.max_hp ?? 0;
     const pct = max ? Math.round(val / max * 100) : 0;
-    const barColor = pct > 50 ? 'var(--cyan)' : pct > 20 ? '#FFD600' : 'var(--red)';
+    const barColor = pct > 50 ? 'var(--neon-cyan)' : pct > 20 ? 'var(--warning-yellow)' : 'var(--neon-red)';
     const _gt = await import('./assets/js/game-time.js').catch(() => null);
     const _nowIso = _gt ? _gt.getCurrentIngameTime().toISOString() : new Date().toISOString();
     await ctrlPatch({ current_hp: val, last_hp_tick_at_ingame: _nowIso }, 'dmLeftHpMsg', `HP → ${val}`);
@@ -1854,7 +1856,7 @@ function setupLeftPanel() {
       const el = document.getElementById('dmLeftCashVal');
       if (el) {
         el.textContent = (newCash < 0 ? '💸 ' : '') + newCash.toLocaleString('de-DE') + ' eb';
-        el.style.color = newCash < 0 ? 'var(--red)' : 'var(--cyan)';
+        el.style.color = newCash < 0 ? 'var(--neon-red)' : 'var(--neon-cyan)';
       }
       renderLeftCashLog();
       const msg = document.getElementById('dmLeftCashMsg');
@@ -1898,9 +1900,9 @@ function renderLeftCashLog() {
   if (!log.length) { el.innerHTML = ''; return; }
   el.innerHTML = log.slice(0, 8).map(e => {
     const sign    = e.delta >= 0 ? '+' : '';
-    const color   = e.delta >= 0 ? '#2ecc71' : 'var(--red)';
+    const color   = e.delta >= 0 ? 'var(--success-green)' : 'var(--neon-red)';
     const timeStr = new Date(e.ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    return `<div style="color:${color}">${sign}${e.delta} eb${e.reason ? ` — ${e.reason}` : ''} <span style="color:#555">${timeStr}</span></div>`;
+    return `<div style="color:${color}">${sign}${e.delta} eb${e.reason ? ` — ${e.reason}` : ''} <span style="color:var(--text-dim)">${timeStr}</span></div>`;
   }).join('');
 }
 

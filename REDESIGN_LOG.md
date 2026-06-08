@@ -19,7 +19,7 @@
 | 4b player Weapons/Armor/Cyberware | ✅ fertig | In-Place-CSS; .roll/.gear-action/.remove gescopt; #dmgApplyBox-Scoping; Autofire→Combat-Rot |
 | 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ✅ fertig | In-Place-Reskin; #tab-gear/#tab-raum/#critModalBox/#tab-injuries gescopt; Rollen-Body via #tab-role-Override (roles.css unangetastet) |
 | 4d player Layout-Pass | ✅ fertig | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2 ✅ (Stats/Skills/Karten/Distanz-Bar); 4d-3 ✅ (Lifepath/Notes/Injuries/Raum/Rolle) → **player.html KOMPLETT** |
-| 5 dm.html | 🟡 5a ✅ | Opus xhigh; 5a (Basis/Button-System/Haupt-Dashboard) fertig; 5b Kontroll-Modal / 5c Combat+Items / 5d Schwarzmarkt offen |
+| 5 dm.html | 🟡 5a ✅ · 5b-1 ✅ | Opus xhigh; 5a (Basis/Button-System/Haupt-Dashboard) + 5b-1 (Kontroll-Modal: Foundation/Header/Left-Panel) fertig; 5b-2 Body-Tabs / 5b-3 Rollen-UIs+NPC-Quick / 5c Combat+Items / 5d Schwarzmarkt offen |
 | 6 shop.html | ⬜ offen | |
 | 7 map.html | ⬜ offen | Opus xhigh; Canvas unantastbar; Nav-Sidebar hier |
 | 8 create/upload/npc-sheet/radio | ⬜ offen | |
@@ -761,6 +761,56 @@ beiden Fällen identisches Markup; nur der Inline-Display-Wert war falsch.
 Tab-Switch-Funktion geändert.
 **Verifiziert:** Einzige `#dmGrid`-Display-Zuweisung; `node --check` sauber; Headless-Render nach
 simuliertem Tab-Return = Karten-Grid nebeneinander, `computed display=grid` (identisch zum Initial).
+
+---
+
+## Phase 5b — DM-Kontroll-Modal (Konzept ✅, Umsetzung 3er-Split)
+**Konzept freigegeben** (Nutzer 2026-06-09, `_dev/phase5b-concept.md`). 3 Entscheidungen:
+2-Zonen behalten + „Mehr"→Karten-Grid; geteilte `.ctrl-row`/`.ctrl-label` **konservativ global**
+mit-redesignen (Flex bleibt — Combat-Setup `dm.html:66` hat 3 label-lose Controls); 3er-Split
+(5b-1 Foundation/Header/Left · 5b-2 Body-Tabs · 5b-3 Rollen-UIs+NPC-Quick).
+
+### Phase 5b-1 — Foundation + Header + Left-Panel ✅
+**Geändert (nur 2 Dateien):** `public/assets/css/dm.css` (Modal-/Left-/geteilte Primitive-Regeln
++ neue Modifier; Braces **511/511**, Kommentare **87/87**; Cache-Bust `?v=6`→`?v=7`), `public/dm.html`
+(`renderModalHeader` + `buildLeftPanelHtml`-Markup + Farb-Literale in `setupLeftPanel`/`renderLeftCashLog`).
+**Nur CSS + Markup/Inline-Token-Swaps — keine JS-Logik/IDs/`data-*`/Events/Handler/Berechnungen.**
+
+**A) Foundation:** Box `min(960px)`→`min(1100px,96vw)`; Left-Rail `200px`→`260px` (padding `--sp-4`).
+Geteilte Primitive konservativ global: `.ctrl-row` **bleibt FLEX** (nur `--sp-2` gap/margin),
+`.ctrl-label` `80px`→`96px` + HUD-Look (uppercase/tracking/fs-xs/muted). Neue **additive Modifier**:
+`.ctrl-input--num` (`6ch`, mono, rechtsbündig — ersetzt `max-width:55/60/65/70/80px`),
+`.ctrl-input--reason` (eigene Zeile, voll); im Button-System `.ctrl-btn--icon` (icon-sm 30, →44),
+`.ctrl-btn--sm` (32), `.ctrl-btn--ghost` (neutral, Hover cyan). Single-source, keine Duplikate.
+
+**B) Header (`renderModalHeader`):** Portrait 52→56px (Token + border), Emoji-Fallback Inline→
+`.dm-modal-portrait--empty`; Name `fs-lg`/Sub `fs-xs` muted tracking; `.dm-modal-cash` mono-Readout
++ **`.dm-modal-cash--neg`** (rot bei <0, konditionale Klasse im Template); Player-Link = Ghost-Button;
+Close = Icon-Button; Header-Unterkante border + dezenter cyan-Glow (drop-shadow). IDs/Handler
+(`dmModalClose`, Overlay-Click) unverändert.
+
+**C) Left-Panel (`buildLeftPanelHtml`):** Alle Inline-Styles raus → Klassen, `--sp`-Rhythmus
+(Sektion `--sp-5`). HP-Bar 5→6px Token (Live-Update-Klassen `.dm-left-hp-fill/-label` erhalten);
+**Rüstung SP** (größter Inline-Sünder) auf Zeilen-Pattern `.ctrl-sp-slot`/`.ctrl-input--num`/
+`.ctrl-sp-max`/↵(`.ctrl-btn--icon`)/↺(`.ctrl-btn--icon.ctrl-btn--ghost`, Label „↺ Reset"→„↺"+title);
+IP-/Cash-Kopfwerte → `.ctrl-head-val`; Cash-Grund eigene Zeile (`.ctrl-input--reason`), Log
+`.dm-left-cashlog`, `−eb`→`.dm-left-ip-btn--sub`. `.dm-left-ip-btn` (IP+Cash geteilt) auf Chip-
+Rezeptur (cyan-Ghost). `.cond-toggle-btn` (aktiv=`neon-red`, →44 @coarse) + `.ctrl-buff-*` token.
+**Token-Migration** wie 5a (HUD-Set; `--font-display` bleibt). JS-Literale→Token (verhaltensgleich):
+`#FFD600`→`--warning-yellow` (HP-Mid, build + save-Handler), `#2ecc71`→`--success-green`,
+`#555`→`--text-dim`, `var(--cyan/red)`→`var(--neon-cyan/red)`.
+
+**Gescopt/unangetastet (5b-2/5b-3):** `.dm-modal-tabs`/`.dm-tab-btn`/`.dm-modal-body`-Inhalt,
+`.ctrl-section(-head)` (geteilt mit Mehr/Rollen), `.ctrl-inj-*`, `.buff-preset*`/`.buff-add-form`,
+`.dm-stats/res/skill/inv-*`, `buildStats/Skills/Inventory/ControlsHtml`, `buildRoleAbilityDataSection`,
+NPC-Quick-Feinschliff. Tab-Leiste/Body bleiben im Alt-Look (funktional).
+
+**Verifiziert:** dm.css Braces 511/511 + Kommentare 87/87 (keine `*/`-Glob-Falle); beide Inline-
+Module `node --check` sauber; `git status` = nur `dm.html`+`dm.css`; **alle 31 JS-Hooks**
+(IDs/`data-*`/Live-Klassen) im neuen Markup vorhanden + **alle 11 neuen CSS-Klassen** definiert;
+keine Alt-Hardcodes/Inline-Magic mehr in der 5b-1-Zone. **Offen:** manueller Browser-Durchklick
+(kein Browser/Supabase-Char in der Session) — HP/SP/IP/Cash/Conditions/Buffs-Interaktion, Close,
+und Gegenprüfung Combat-Setup/NPC-Quick/Timer/Items (geteilte `.ctrl-row`/`.ctrl-label`).
 
 ## Offene Punkte / To-do bis Ende
 - **Phase 5–10** wie Status-Tabelle.

@@ -145,13 +145,15 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 }
 .dm-modal-overlay[hidden] { display: none; }
 .dm-modal-box {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); width: min(960px, 96vw);
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); width: min(1100px, 96vw);
   max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;
 }
 .dm-modal-header {
-  display: flex; gap: .75rem; align-items: center;
-  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  display: flex; gap: var(--sp-3); align-items: center;
+  padding: var(--sp-4) var(--sp-5); flex-shrink: 0;
+  border-bottom: 1px solid var(--border-dark);
+  filter: drop-shadow(0 1px 0 rgba(34,247,255,.12));
 }
 
 /* 2-column modal layout */
@@ -159,45 +161,61 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
   display: flex; flex: 1; min-height: 0; overflow: hidden;
 }
 .dm-modal-left {
-  width: 200px; flex-shrink: 0; border-right: 1px solid var(--border);
-  overflow-y: auto; padding: .75rem .8rem;
-  background: rgba(0,0,0,.15);
+  width: 260px; flex-shrink: 0; border-right: 1px solid var(--border-dark);
+  overflow-y: auto; padding: var(--sp-4);
+  background: rgba(0,0,0,.18);
 }
 .dm-modal-right {
   flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
 }
 
 /* Left panel sections */
-.dm-left-section { margin-bottom: .9rem; }
-.dm-left-hp-bar { height: 5px; background: var(--bg-input); border-radius: 3px; overflow: hidden; margin: .3rem 0 .2rem; }
-.dm-left-hp-fill { height: 100%; border-radius: 3px; transition: width .4s; }
-.dm-left-hp-label { font-size: .68rem; color: var(--text-muted); margin-bottom: .25rem; }
+.dm-left-section { margin-bottom: var(--sp-5); }
+.dm-left-hp-bar { height: 6px; background: var(--bg-panel-soft); border-radius: var(--radius); overflow: hidden; margin: var(--sp-2) 0 var(--sp-1); }
+.dm-left-hp-fill { height: 100%; border-radius: var(--radius); transition: width .4s var(--ease), background var(--t-med) var(--ease); }
+.dm-left-hp-label { font-size: var(--fs-xs); color: var(--text-muted); font-family: var(--font-mono); margin-bottom: var(--sp-2); }
 .dm-left-ip-btns {
-  display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; margin-top: .3rem;
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin-top: var(--sp-2);
 }
+/* Chip-Button (cyan-Ghost) — IP-Quick + Cash +/− */
 .dm-left-ip-btn {
-  padding: .32rem; font-size: .75rem; background: rgba(0,229,255,.08);
-  border: 1px solid rgba(0,229,255,.4); border-radius: var(--radius);
-  color: var(--cyan); cursor: pointer; font-family: var(--font-display);
-  text-align: center; transition: background .12s;
+  padding: var(--sp-2); font-size: var(--fs-xs); background: var(--bg-panel-soft);
+  border: 1px solid var(--cyan-dark); border-radius: var(--radius);
+  color: var(--neon-cyan); cursor: pointer; font-family: var(--font-heading);
+  text-transform: uppercase; letter-spacing: var(--tracking);
+  text-align: center; transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
-.dm-left-ip-btn:hover { background: rgba(0,229,255,.2); }
-.dm-left-empty { font-size: .7rem; color: var(--text-muted); }
-.dm-modal-portrait { width: 52px; height: 52px; border-radius: 2px; object-fit: cover; background: var(--bg-input); }
+.dm-left-ip-btn:hover { border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+.dm-left-ip-btn--sub { color: var(--neon-red); border-color: var(--red-dark); }
+.dm-left-ip-btn--sub:hover { border-color: var(--neon-red); box-shadow: var(--glow-red-s); }
+.dm-left-empty { font-size: var(--fs-xs); color: var(--text-muted); }
+/* Section-head Inline-Wert (IP/Cash, rechtsbündig) */
+.ctrl-head-val { float: right; font-family: var(--font-display); color: var(--neon-cyan); }
+/* SP-Zeilen-Bausteine */
+.ctrl-sp-slot { flex: 0 0 46px; font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.ctrl-sp-max { font-size: var(--fs-xs); color: var(--text-dim); font-family: var(--font-mono); }
+/* Cash-Log */
+.dm-left-cashlog { font-size: var(--fs-xs); color: var(--text-muted); font-family: var(--font-mono); margin-top: var(--sp-2); max-height: 80px; overflow-y: auto; }
+.dm-modal-portrait { width: 56px; height: 56px; border-radius: var(--radius); object-fit: cover; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); }
+.dm-modal-portrait--empty { display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
 .dm-modal-title-wrap { flex: 1; min-width: 0; }
-.dm-modal-name { font-family: var(--font-display); font-size: 1.1rem; color: var(--text-head); }
-.dm-modal-sub { font-size: .72rem; color: var(--text-muted); margin-top: .1rem; }
+.dm-modal-name { font-family: var(--font-display); font-size: var(--fs-lg); color: var(--text-main); }
+.dm-modal-sub { font-size: var(--fs-xs); color: var(--text-muted); letter-spacing: var(--tracking); margin-top: .15rem; }
 .dm-modal-player-link {
-  font-size: .72rem; color: var(--cyan); text-decoration: none;
-  border: 1px solid var(--border); border-radius: var(--radius);
-  padding: .25rem .6rem; transition: var(--transition); white-space: nowrap;
+  font-size: var(--fs-xs); color: var(--neon-cyan); text-decoration: none;
+  border: 1px solid var(--cyan-dark); border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-3); white-space: nowrap; text-transform: uppercase;
+  letter-spacing: var(--tracking);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
-.dm-modal-player-link:hover { border-color: var(--cyan); }
+.dm-modal-player-link:hover { border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 .dm-modal-close {
-  background: transparent; border: none; font-size: 1.3rem;
-  color: var(--text-muted); cursor: pointer; padding: 0 .25rem; transition: var(--transition);
+  background: transparent; border: none; font-size: 1.3rem; line-height: 1;
+  color: var(--text-muted); cursor: pointer;
+  width: 30px; min-width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  transition: color var(--t-fast) var(--ease);
 }
-.dm-modal-close:hover { color: var(--text); }
+.dm-modal-close:hover { color: var(--neon-red); }
 
 /* Modal tabs */
 .dm-modal-tabs {
@@ -264,8 +282,12 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
   color: var(--text-muted); margin-bottom: .5rem; padding-bottom: .25rem;
   border-bottom: 1px solid var(--border);
 }
-.ctrl-row { display: flex; gap: .4rem; align-items: center; margin-bottom: .35rem; flex-wrap: wrap; }
-.ctrl-label { font-size: .72rem; color: var(--text-muted); width: 80px; flex-shrink: 0; }
+/* Shared control row — bleibt FLEX (auch label-lose Multi-Control-Zeilen wie Combat-Setup) */
+.ctrl-row { display: flex; gap: var(--sp-2); align-items: center; margin-bottom: var(--sp-2); flex-wrap: wrap; }
+.ctrl-label {
+  width: 96px; flex: 0 0 96px; font-size: var(--fs-xs); color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: var(--tracking);
+}
 /* Shared HUD inputs/selects (global — neutral, used across dashboard + modals) */
 .ctrl-input {
   flex: 1; min-width: 60px; padding: var(--sp-2) var(--sp-3); background: var(--bg-panel-soft);
@@ -274,6 +296,23 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
   transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
 .ctrl-input:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+/* Feld-Modifier (ersetzen Inline-Magic-Numbers) */
+/* --num: schmal, rechtsbündig mono. Reduziertes H-Padding, da border-box (sonst frisst Padding
+   die Ziffern). Breite reicht für 3–4-stellige Werte (SP/Stats/Specialties). */
+.ctrl-input--num {
+  width: 7ch; flex: none; min-width: 0; text-align: right; font-family: var(--font-mono);
+  padding-left: var(--sp-2); padding-right: var(--sp-2);
+}
+.ctrl-input--reason { flex: 1 1 100%; min-width: 0; font-size: var(--fs-xs); }
+/* Cash-Betrag kann 4–6-stellig (auch negativ) sein → breiter als der --num-Default. */
+#dmLeftCashAmt { width: 10ch; }
+
+/* Native Number-Spinner ausblenden (cross-browser). dm.css lädt NUR auf dm.html und alle
+   <input type=number> hier sind schmale HUD-Felder — die ▲▼-Pfeile überdeckten die Zahl.
+   type=number bleibt (Eingabe/Wert-Logik unverändert), nur die Pfeil-UI verschwindet. */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .ctrl-select {
   flex: 1; padding: var(--sp-2) var(--sp-3); background: var(--bg-panel-soft);
   border: 1px solid var(--border-dark); border-radius: var(--radius);
@@ -455,10 +494,10 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .dm-cond-badge { font-size: .58rem; background: rgba(255,49,88,.1); color: var(--neon-red); border: 1px solid rgba(255,49,88,.3); border-radius: var(--radius); padding: .08rem .28rem; }
 
 /* ── Condition Toggle Buttons (DM Controls) ── */
-.condition-toggle-grid { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .4rem; }
-.cond-toggle-btn { padding: .25rem .5rem; font-size: .68rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 2px; color: var(--text-muted); cursor: pointer; transition: var(--transition); }
-.cond-toggle-btn:hover { border-color: var(--red); color: var(--text); }
-.cond-toggle-btn.active { background: rgba(255,45,45,.14); border-color: var(--red); color: var(--red); }
+.condition-toggle-grid { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.cond-toggle-btn { padding: var(--sp-1) var(--sp-2); min-height: 30px; font-size: var(--fs-xs); background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-muted); cursor: pointer; transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.cond-toggle-btn:hover { border-color: var(--neon-red); color: var(--text-main); }
+.cond-toggle-btn.active { background: var(--bg-panel-red); border-color: var(--neon-red); color: var(--neon-red); }
 
 /* ── Responsive ── */
 @media (max-width: 800px) {
@@ -489,11 +528,11 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .buff-add-form { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); padding: .55rem .65rem; margin-bottom: .45rem; display: flex; flex-direction: column; gap: .35rem; }
 
 /* ── Active Buff List (DM Controls) ── */
-.ctrl-buff-row { display: flex; align-items: center; gap: .35rem; padding: .18rem 0; font-size: .72rem; }
-.ctrl-buff-name { flex: 1; color: var(--text); }
-.ctrl-buff-time { font-family: var(--font-display); font-size: .62rem; color: var(--text-muted); }
-.ctrl-buff-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .7rem; padding: 0; line-height: 1; }
-.ctrl-buff-remove:hover { color: var(--red); }
+.ctrl-buff-row { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-1) 0; font-size: var(--fs-sm); }
+.ctrl-buff-name { flex: 1; color: var(--text-main); }
+.ctrl-buff-time { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-muted); }
+.ctrl-buff-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .7rem; padding: 0; line-height: 1; transition: color var(--t-fast) var(--ease); }
+.ctrl-buff-remove:hover { color: var(--neon-red); }
 
 /* ── DM Notes Icon (subtle ghost-icon affordance) ── */
 .dm-notes-icon { background: none; border: none; cursor: pointer; font-size: .82rem; color: var(--text-muted); padding: 0; line-height: 1; transition: color var(--t-fast) var(--ease); }
@@ -619,9 +658,10 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .npc-item-cat { font-size: .62rem; color: var(--text-muted); }
 
 /* ── DM modal cash display ── */
-.dm-modal-cash { font-family: var(--font-display); font-size: .72rem; color: var(--cyan);
-  padding: .15rem .45rem; border: 1px solid rgba(0,229,255,.25); border-radius: var(--radius);
-  background: rgba(0,229,255,.07); letter-spacing: .05em; }
+.dm-modal-cash { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--neon-cyan);
+  padding: var(--sp-1) var(--sp-3); border: 1px solid var(--cyan-dark); border-radius: var(--radius);
+  background: var(--bg-panel-cyan); letter-spacing: .05em; white-space: nowrap; }
+.dm-modal-cash--neg { color: var(--neon-red); border-color: var(--red-dark); background: var(--bg-panel-red); }
 
 /* ── Chat message rows + highlight button (subtle ghost-icon) ── */
 .chat-msg-row { display: flex; align-items: flex-start; gap: var(--sp-1); }
@@ -1318,14 +1358,20 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 
 /* — Größen — */
 /* sm 32 (kompakte Header-/Cluster-Buttons) */
-.npc-add-btn, .npc-add-weapon-btn, .npc-section-actions .ctrl-btn {
+.npc-add-btn, .npc-add-weapon-btn, .npc-section-actions .ctrl-btn, .ctrl-btn--sm {
   --btn-h: 32px; --btn-px: var(--sp-2); --btn-fs: var(--fs-xs);
   width: auto; min-width: 32px;
 }
-/* icon-sm 30×30 */
-.npc-weapon-remove {
+/* icon-sm 30×30 (quadratisch — ↵ / ↺ / ✕ im Modal) */
+.npc-weapon-remove, .ctrl-btn--icon {
   --btn-h: 30px; width: 30px; min-width: 30px; padding: 0; font-size: .8rem; gap: 0;
 }
+/* ghost-Variante (neutral, z.B. ↺ Reset) */
+.ctrl-btn--ghost {
+  --btn-border: var(--border-dark); --btn-color: var(--text-muted);
+  --btn-fill-hover: var(--bg-panel-cyan); --btn-glow: var(--glow-cyan-s);
+}
+.ctrl-btn--ghost:hover { color: var(--neon-cyan); }
 
 /* — Varianten (setzen nur die --btn-*-Props; Default = primary/cyan) — */
 /* combat / red */
@@ -1350,5 +1396,6 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   .ctrl-btn, .ctrl-btn-red,
   .npc-add-btn, .dm-chat-send-btn,
   .npc-save-btn, .npc-delete-btn, .npc-add-weapon-btn, .npc-section-actions .ctrl-btn { --btn-h: 44px; }
-  .npc-weapon-remove { --btn-h: 44px; width: 44px; min-width: 44px; }
+  .npc-weapon-remove, .ctrl-btn--icon { --btn-h: 44px; width: 44px; min-width: 44px; }
+  .cond-toggle-btn { min-height: 44px; }
 }
