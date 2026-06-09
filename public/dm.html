@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
   <link rel="stylesheet" href="assets/css/cyber-components.css">
   <link rel="stylesheet" href="assets/css/base.css?v=2">
-  <link rel="stylesheet" href="assets/css/dm.css?v=7">
+  <link rel="stylesheet" href="assets/css/dm.css?v=8">
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/sound.css">
   <link rel="stylesheet" href="assets/css/radio.css?v=4">
@@ -1949,7 +1949,7 @@ function buildStatsHtml() {
     ['Death Save', (() => {
       const cur = c.death_save_penalty ?? 0;
       let s = `${c.death_save ?? 0}`;
-      if (injPenalty) s += ` <small style="color:var(--red)">(Base +${injPenalty})</small>`;
+      if (injPenalty) s += ` <small style="color:var(--neon-red)">(Base +${injPenalty})</small>`;
       if (cur > injPenalty) s += ` <small style="color:#FF8C42">· DSP ${cur}</small>`;
       return s;
     })()],
@@ -1994,7 +1994,7 @@ function buildSkillsHtml() {
     });
     if (!rows.length) return '';
     return `<div class="dm-skill-section"><div class="dm-skill-head">${cat}</div>${rows.join('')}</div>`;
-  }).join('') || '<p style="color:var(--text-muted);font-size:.82rem">Keine Skills.</p>';
+  }).join('') || '<p class="dm-tab-empty">Keine Skills.</p>';
 }
 
 // ── Inventory Tab ─────────────────────────────────────────────
@@ -2026,7 +2026,7 @@ function buildInventoryHtml() {
 
   return section('Weapons', weaponRows) + section('Armor', armorRows) +
          section('Cyberware', cwRows) + section('Gear', gearRows) ||
-         '<p style="color:var(--text-muted);font-size:.82rem">Kein Inventar.</p>';
+         '<p class="dm-tab-empty">Kein Inventar.</p>';
 }
 
 // ── DM Controls ───────────────────────────────────────────────
@@ -2040,23 +2040,24 @@ function buildControlsHtml() {
           <span class="ctrl-inj-table">${(inj.table || '').toUpperCase()}</span>
           <button class="ctrl-inj-remove" data-idx="${i}" title="Entfernen">✕</button>
         </div>`).join('')
-    : '<div style="font-size:.75rem;color:var(--text-muted)">Keine aktiven Injuries.</div>';
+    : '<div class="dm-left-empty">Keine aktiven Injuries.</div>';
 
   const rankOptions = Array.from({length: 11}, (_, i) =>
     `<option value="${i}"${(c.role_ability_rank ?? 0) === i ? ' selected' : ''}>${i}</option>`
   ).join('');
 
   return `
+    <div class="ctrl-card-grid">
     <div class="ctrl-section">
-      <div class="ctrl-section-head">Cash <span style="float:right;color:${(c.cash??0)<0?'var(--red)':'var(--cyan)'};">${(c.cash??0).toLocaleString('de-DE')} eb</span></div>
+      <div class="ctrl-section-head">Cash <span class="ctrl-head-val${(c.cash??0)<0?' ctrl-head-val--neg':''}">${(c.cash??0).toLocaleString('de-DE')} eb</span></div>
       <div class="ctrl-row">
-        <input type="number" class="ctrl-input" id="ctrlCashAmt" placeholder="500" style="max-width:80px">
-        <input type="text"   class="ctrl-input" id="ctrlCashReason" placeholder="Grund (opt.)" style="flex:1;font-size:.7rem">
+        <input type="number" class="ctrl-input ctrl-input--num" id="ctrlCashAmt" placeholder="500">
+        <input type="text"   class="ctrl-input ctrl-input--reason" id="ctrlCashReason" placeholder="Grund (opt.)">
         <button class="ctrl-btn" id="ctrlCashAdd">+ eb</button>
         <button class="ctrl-btn ctrl-btn-red" id="ctrlCashSub">− eb</button>
       </div>
       <div class="ctrl-msg" id="ctrlCashMsg"></div>
-      <div id="ctrlCashLog" style="font-size:.65rem;color:var(--text-muted);margin-top:.3rem;max-height:80px;overflow-y:auto"></div>
+      <div class="dm-left-cashlog" id="ctrlCashLog"></div>
     </div>
 
     <div class="ctrl-section">
@@ -2092,13 +2093,13 @@ function buildControlsHtml() {
     <div class="ctrl-section">
       <div class="ctrl-section-head">Critical Injuries</div>
       <div class="ctrl-inj-list" id="ctrlInjList">${injList}</div>
-      <div class="ctrl-row" style="margin-top:.4rem">
+      <div class="ctrl-row">
         <button class="ctrl-btn" id="ctrlInjAdd">+ Injury hinzufügen</button>
       </div>
       <div class="ctrl-msg" id="ctrlInjMsg"></div>
     </div>
 
-    <div class="ctrl-section">
+    <div class="ctrl-section ctrl-section--full">
       <div class="ctrl-section-head">Buffs / Pharma</div>
       <div class="buff-preset-grid" id="ctrlBuffPresets">
         ${BUFF_PRESETS.map(p => `<button class="buff-preset-btn"
@@ -2107,31 +2108,27 @@ function buildControlsHtml() {
       </div>
       <!-- Buff-Formular (erscheint nach Klick auf Vorlage) -->
       <div class="buff-add-form" id="ctrlBuffForm" style="display:none">
-        <div class="ctrl-row" style="gap:.4rem;flex-wrap:wrap">
-          <input type="text" class="ctrl-input" id="ctrlBuffName" placeholder="Name" style="flex:1;min-width:100px">
+        <div class="ctrl-row">
+          <input type="text" class="ctrl-input" id="ctrlBuffName" placeholder="Name">
         </div>
-        <div class="ctrl-row" style="gap:.4rem;align-items:center">
+        <div class="ctrl-row">
           <span class="ctrl-label">Dauer (Min)</span>
-          <input type="number" class="ctrl-input" id="ctrlBuffDuration" placeholder="60" min="0" style="max-width:65px">
-          <span style="font-size:.68rem;color:var(--text-muted)">0 = unbegrenzt</span>
+          <input type="number" class="ctrl-input ctrl-input--num" id="ctrlBuffDuration" placeholder="60" min="0">
+          <span class="ctrl-hint">0 = unbegrenzt</span>
         </div>
-        <div style="margin:.25rem 0">
-          <textarea class="ctrl-input" id="ctrlBuffEffect" rows="2"
-            placeholder="Effekt…"
-            style="width:100%;resize:none;font-family:var(--font-body);font-size:.78rem;box-sizing:border-box"></textarea>
-        </div>
-        <div class="ctrl-row" style="gap:.4rem;align-items:center">
+        <textarea class="ctrl-input ctrl-textarea" id="ctrlBuffEffect" rows="2" placeholder="Effekt…"></textarea>
+        <div class="ctrl-row">
           <span class="ctrl-label">Stat-Bonus</span>
-          <select class="ctrl-input" id="ctrlBuffStat" style="max-width:80px;font-size:.75rem">
+          <select class="ctrl-input ctrl-select--sm" id="ctrlBuffStat">
             <option value="">—</option>
             <option>INT</option><option>REF</option><option>DEX</option><option>TECH</option>
             <option>COOL</option><option>WILL</option><option>MOVE</option><option>BODY</option><option>EMP</option>
           </select>
-          <input type="number" class="ctrl-input" id="ctrlBuffBonus" placeholder="±0" style="max-width:60px">
-          <span style="font-size:.68rem;color:var(--text-muted)">auf Würfe</span>
+          <input type="number" class="ctrl-input ctrl-input--num" id="ctrlBuffBonus" placeholder="±0">
+          <span class="ctrl-hint">auf Würfe</span>
         </div>
-        <div class="ctrl-row" style="gap:.4rem">
-          <button class="ctrl-btn" id="ctrlBuffStart" style="color:var(--cyan)">▶ Starten</button>
+        <div class="ctrl-row">
+          <button class="ctrl-btn" id="ctrlBuffStart">▶ Starten</button>
           <button class="ctrl-btn" id="ctrlBuffCancel">Abbrechen</button>
         </div>
       </div>
@@ -2161,7 +2158,9 @@ function buildControlsHtml() {
       </div>
       <div class="ctrl-msg" id="ctrlItemMsg"></div>
     </div>
-    ${buildRoleAbilityDataSection(openChar)}
+
+    <div class="ctrl-section--full">${buildRoleAbilityDataSection(openChar)}</div>
+    </div>
   `;
 }
 
@@ -2400,7 +2399,7 @@ function setupControls() {
             <span class="ctrl-inj-table">${(inj.table || '').toUpperCase()}</span>
             <button class="ctrl-inj-remove" data-idx="${i}" title="Entfernen">✕</button>
           </div>`).join('')
-      : '<div style="font-size:.75rem;color:var(--text-muted)">Keine aktiven Injuries.</div>';
+      : '<div class="dm-left-empty">Keine aktiven Injuries.</div>';
   });
 
   // Injury add

@@ -191,6 +191,7 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .dm-left-empty { font-size: var(--fs-xs); color: var(--text-muted); }
 /* Section-head Inline-Wert (IP/Cash, rechtsbündig) */
 .ctrl-head-val { float: right; font-family: var(--font-display); color: var(--neon-cyan); }
+.ctrl-head-val--neg { color: var(--neon-red); }
 /* SP-Zeilen-Bausteine */
 .ctrl-sp-slot { flex: 0 0 46px; font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
 .ctrl-sp-max { font-size: var(--fs-xs); color: var(--text-dim); font-family: var(--font-mono); }
@@ -219,68 +220,84 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
 /* Modal tabs */
 .dm-modal-tabs {
-  display: flex; border-bottom: 1px solid var(--border);
-  padding: 0 1.25rem; flex-shrink: 0;
+  display: flex; border-bottom: 1px solid var(--border-dark);
+  padding: 0 var(--sp-5); flex-shrink: 0;
 }
 .dm-tab-btn {
   background: transparent; border: none; border-bottom: 2px solid transparent;
-  padding: .55rem .85rem; font-family: var(--font-body); font-size: .78rem;
-  color: var(--text-muted); cursor: pointer; transition: var(--transition); margin-bottom: -1px;
+  padding: var(--sp-2) var(--sp-3); font-family: var(--font-body); font-size: var(--fs-sm);
+  text-transform: uppercase; letter-spacing: var(--tracking);
+  color: var(--text-muted); cursor: pointer; margin-bottom: -1px;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
 }
-.dm-tab-btn:hover { color: var(--text); }
-.dm-tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
-.dm-modal-body { overflow-y: auto; flex: 1; padding: 1rem 1.25rem; }
+.dm-tab-btn:hover { color: var(--text-main); filter: drop-shadow(0 0 6px rgba(34,247,255,.35)); }
+.dm-tab-btn.active {
+  color: var(--neon-cyan); border-bottom-color: var(--neon-cyan);
+  filter: drop-shadow(0 1px 4px rgba(34,247,255,.45));
+}
+.dm-modal-body { overflow-y: auto; flex: 1; padding: var(--sp-5); }
 .dm-tab-panel { display: none; }
 .dm-tab-panel.active { display: block; }
 
 /* Stats grid inside modal */
 .dm-stats-grid {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem; margin-bottom: 1rem;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--sp-2); margin-bottom: var(--sp-5);
 }
 .dm-stat-cell {
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .5rem; text-align: center;
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-3); text-align: center;
 }
-.dm-stat-key { font-size: .55rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
-.dm-stat-val { font-family: var(--font-display); font-size: 1.1rem; color: var(--cyan); margin-top: .15rem; }
+.dm-stat-key { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--tracking); color: var(--text-muted); }
+.dm-stat-val { font-family: var(--font-mono); font-size: var(--fs-lg); color: var(--neon-cyan); margin-top: var(--sp-1); }
 
 /* Resources row */
-.dm-res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .5rem; }
+.dm-res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: var(--sp-2); }
 .dm-res-cell {
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .45rem .6rem;
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-2) var(--sp-3);
 }
-.dm-res-key { font-size: .55rem; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); }
-.dm-res-val { font-size: .9rem; color: var(--text-head); margin-top: .1rem; }
+.dm-res-key { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--tracking); color: var(--text-muted); }
+.dm-res-val { font-size: var(--fs-sm); font-family: var(--font-mono); color: var(--text-main); margin-top: var(--sp-1); }
 
 /* Skills */
-.dm-skill-section { margin-bottom: .75rem; }
+.dm-skill-section { margin-bottom: var(--sp-5); }
 .dm-skill-head {
-  font-size: .58rem; text-transform: uppercase; letter-spacing: .15em;
-  color: var(--text-muted); border-bottom: 1px solid var(--border);
-  padding-bottom: .2rem; margin-bottom: .3rem;
+  font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--tracking);
+  color: var(--neon-cyan); border-bottom: 1px solid var(--border-dark);
+  padding-bottom: var(--sp-2); margin-bottom: var(--sp-3);
 }
-.dm-skill-row { display: flex; justify-content: space-between; font-size: .78rem; padding: .15rem 0; }
-.dm-skill-name { color: var(--text); }
-.dm-skill-val { color: var(--cyan); font-family: var(--font-display); }
+.dm-skill-row { display: flex; justify-content: space-between; font-size: var(--fs-sm); padding: var(--sp-1) 0; }
+.dm-skill-name { color: var(--text-main); }
+.dm-skill-val { color: var(--neon-cyan); font-family: var(--font-mono); }
 
 /* Inventory read-only */
-.dm-inv-section { margin-bottom: 1rem; }
+.dm-inv-section { margin-bottom: var(--sp-5); }
 .dm-inv-head {
-  font-size: .58rem; text-transform: uppercase; letter-spacing: .15em;
-  color: var(--text-muted); border-bottom: 1px solid var(--border);
-  padding-bottom: .2rem; margin-bottom: .4rem;
+  font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--tracking);
+  color: var(--neon-cyan); border-bottom: 1px solid var(--border-dark);
+  padding-bottom: var(--sp-2); margin-bottom: var(--sp-3);
 }
-.dm-inv-item { font-size: .78rem; color: var(--text); padding: .2rem 0; display: flex; gap: .5rem; }
+.dm-inv-item { font-size: var(--fs-sm); color: var(--text-main); padding: var(--sp-1) 0; display: flex; gap: var(--sp-2); }
 .dm-inv-name { flex: 1; }
-.dm-inv-sub { color: var(--text-muted); font-size: .7rem; }
+.dm-inv-sub { color: var(--text-muted); font-size: var(--fs-xs); }
+
+/* Shared empty-state for body tabs */
+.dm-tab-empty { font-size: var(--fs-sm); color: var(--text-muted); }
 
 /* ── DM Controls ── */
-.ctrl-section { margin-bottom: 1.25rem; }
+/* „Mehr"-Tab: Control-Cards in responsivem Karten-Grid (echte Border, KEIN clip — Gotcha #2/#4) */
+.ctrl-card-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-5);
+}
+.ctrl-section--full { grid-column: 1 / -1; }
+.ctrl-section {
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-4);
+}
 .ctrl-section-head {
-  font-size: .6rem; text-transform: uppercase; letter-spacing: .15em;
-  color: var(--text-muted); margin-bottom: .5rem; padding-bottom: .25rem;
-  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--tracking);
+  color: var(--neon-cyan); margin-bottom: var(--sp-3); padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border-dark);
 }
 /* Shared control row — bleibt FLEX (auch label-lose Multi-Control-Zeilen wie Combat-Setup) */
 .ctrl-row { display: flex; gap: var(--sp-2); align-items: center; margin-bottom: var(--sp-2); flex-wrap: wrap; }
@@ -305,7 +322,16 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 }
 .ctrl-input--reason { flex: 1 1 100%; min-width: 0; font-size: var(--fs-xs); }
 /* Cash-Betrag kann 4–6-stellig (auch negativ) sein → breiter als der --num-Default. */
-#dmLeftCashAmt { width: 10ch; }
+#dmLeftCashAmt, #ctrlCashAmt { width: 10ch; }
+/* Schmaler Select (Buff-Stat-Bonus) — ersetzt Inline max-width */
+.ctrl-select--sm { flex: none; width: 10ch; }
+/* Hint-Text neben Feldern (ersetzt Inline font-size+color) */
+.ctrl-hint { font-size: var(--fs-xs); color: var(--text-muted); }
+/* Vollbreite-Textarea im HUD-Input-Look (Buff-Effekt) */
+.ctrl-textarea {
+  flex: 1 1 100%; width: 100%; resize: none; box-sizing: border-box;
+  font-family: var(--font-body); font-size: var(--fs-sm);
+}
 
 /* Native Number-Spinner ausblenden (cross-browser). dm.css lädt NUR auf dm.html und alle
    <input type=number> hier sind schmale HUD-Felder — die ▲▼-Pfeile überdeckten die Zahl.
@@ -324,20 +350,20 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .ctrl-msg { font-size: var(--fs-xs); color: var(--neon-cyan); min-height: 1em; margin: .15rem 0 var(--sp-2); }
 
 /* Injury list in controls */
-.ctrl-inj-list { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .5rem; }
+.ctrl-inj-list { display: flex; flex-direction: column; gap: var(--sp-1); margin-bottom: var(--sp-3); }
 .ctrl-inj-row {
-  display: flex; align-items: center; gap: .5rem; font-size: .78rem;
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .3rem .6rem;
+  display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm);
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-2) var(--sp-3);
 }
-.ctrl-inj-name { flex: 1; color: var(--red); font-family: var(--font-display); font-size: .72rem; }
-.ctrl-inj-table { font-size: .6rem; color: var(--text-muted); }
+.ctrl-inj-name { flex: 1; color: var(--neon-red); font-family: var(--font-display); font-size: var(--fs-xs); }
+.ctrl-inj-table { font-size: var(--fs-xs); color: var(--text-muted); }
 .ctrl-inj-remove {
   background: transparent; border: none; color: var(--text-muted);
   cursor: pointer; font-size: .9rem; padding: 0; line-height: 1;
-  transition: var(--transition);
+  transition: color var(--t-fast) var(--ease);
 }
-.ctrl-inj-remove:hover { color: var(--red); }
+.ctrl-inj-remove:hover { color: var(--neon-red); }
 
 /* Item search */
 .ctrl-item-wrap { position: relative; flex: 1; }
@@ -509,7 +535,8 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
   .dm-stats-grid { grid-template-columns: repeat(3, 1fr); }
   .combat-setup-cols { grid-template-columns: 1fr; }
   .dm-modal-content { flex-direction: column; }
-  .dm-modal-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+  .dm-modal-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border-dark); }
+  .ctrl-card-grid { grid-template-columns: 1fr; }
 }
 
 /* ── DM Card Footer ── */
@@ -520,12 +547,18 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .dm-buff-badge { font-size: .55rem; padding: .06rem .26rem; background: rgba(34,247,255,.09); border: 1px solid rgba(34,247,255,.4); border-radius: var(--radius); color: var(--neon-cyan); }
 
 /* ── Buff Preset Grid (DM Controls) ── */
-.buff-preset-grid { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .45rem; }
-.buff-preset-btn { padding: .22rem .45rem; font-size: .67rem; background: var(--bg-input); border: 1px solid var(--cyan); border-radius: 2px; color: var(--cyan); cursor: pointer; transition: var(--transition); }
-.buff-preset-btn:hover { background: rgba(0,229,255,.14); }
+.buff-preset-grid { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+/* Chip-Button (cyan-Ghost) — gleiche Rezeptur wie .dm-left-ip-btn (IP-/Cash-Quick) */
+.buff-preset-btn {
+  padding: var(--sp-1) var(--sp-2); font-size: var(--fs-xs); background: var(--bg-panel-soft);
+  border: 1px solid var(--cyan-dark); border-radius: var(--radius); color: var(--neon-cyan);
+  cursor: pointer; font-family: var(--font-heading); text-transform: uppercase; letter-spacing: var(--tracking);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.buff-preset-btn:hover { border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 
 /* ── Buff Add Form ── */
-.buff-add-form { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); padding: .55rem .65rem; margin-bottom: .45rem; display: flex; flex-direction: column; gap: .35rem; }
+.buff-add-form { background: var(--bg-panel); border: 1px solid var(--border-dark); border-radius: var(--radius); padding: var(--sp-3); margin-bottom: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-2); }
 
 /* ── Active Buff List (DM Controls) ── */
 .ctrl-buff-row { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-1) 0; font-size: var(--fs-sm); }

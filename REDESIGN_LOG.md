@@ -19,7 +19,7 @@
 | 4b player Weapons/Armor/Cyberware | ✅ fertig | In-Place-CSS; .roll/.gear-action/.remove gescopt; #dmgApplyBox-Scoping; Autofire→Combat-Rot |
 | 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ✅ fertig | In-Place-Reskin; #tab-gear/#tab-raum/#critModalBox/#tab-injuries gescopt; Rollen-Body via #tab-role-Override (roles.css unangetastet) |
 | 4d player Layout-Pass | ✅ fertig | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2 ✅ (Stats/Skills/Karten/Distanz-Bar); 4d-3 ✅ (Lifepath/Notes/Injuries/Raum/Rolle) → **player.html KOMPLETT** |
-| 5 dm.html | 🟡 5a ✅ · 5b-1 ✅ | Opus xhigh; 5a (Basis/Button-System/Haupt-Dashboard) + 5b-1 (Kontroll-Modal: Foundation/Header/Left-Panel) fertig; 5b-2 Body-Tabs / 5b-3 Rollen-UIs+NPC-Quick / 5c Combat+Items / 5d Schwarzmarkt offen |
+| 5 dm.html | 🟡 5a ✅ · 5b-1 ✅ · 5b-2 ✅ | Opus xhigh; 5a (Basis/Button-System/Haupt-Dashboard) + 5b-1 (Modal: Foundation/Header/Left-Panel) + 5b-2 (Modal Body-Tabs: Tab-Leiste/Stats/Skills/Inventar + „Mehr"-Karten-Grid) fertig; 5b-3 Rollen-UIs+NPC-Quick / 5c Combat+Items / 5d Schwarzmarkt offen |
 | 6 shop.html | ⬜ offen | |
 | 7 map.html | ⬜ offen | Opus xhigh; Canvas unantastbar; Nav-Sidebar hier |
 | 8 create/upload/npc-sheet/radio | ⬜ offen | |
@@ -811,6 +811,47 @@ Module `node --check` sauber; `git status` = nur `dm.html`+`dm.css`; **alle 31 J
 keine Alt-Hardcodes/Inline-Magic mehr in der 5b-1-Zone. **Offen:** manueller Browser-Durchklick
 (kein Browser/Supabase-Char in der Session) — HP/SP/IP/Cash/Conditions/Buffs-Interaktion, Close,
 und Gegenprüfung Combat-Setup/NPC-Quick/Timer/Items (geteilte `.ctrl-row`/`.ctrl-label`).
+
+### Phase 5b-2 — Kontroll-Modal: Body-Tabs (Stats/Skills/Inventar + „Mehr"-Karten-Grid) ✅
+**Geändert (nur 2 Dateien):** `public/assets/css/dm.css` (Tab-Leiste/Stats/Skills/Inv/`.ctrl-section`-
+Cards/`.ctrl-inj-*`/Buff-Preset+Add-Form/Responsive + 7 neue Klassen; Braces **522/522**, Kommentare
+**96/96**; keine `*/`-Glob-Falle), `public/dm.html` (`buildControlsHtml`-Return komplett neu:
+Karten-Grid-Wrapper + gründliche Inline-Bereinigung; Cache-Bust `?v=7`→`?v=8`; Inline-Literal-Swaps
+in `buildStatsHtml`/`buildSkills/InventoryHtml` + Injury-Live-Re-render). **Nur CSS + Markup/Inline-
+Token-Swaps — keine JS-Logik/IDs/`data-*`/Events/Handler/Berechnungen.**
+
+**A) Tab-Leiste:** `.dm-modal-tabs`/`.dm-tab-btn` HUD-Tokens (uppercase+tracking, `--fs-sm`,
+aktiv = `--neon-cyan` Underline+Text + Underline-Glow via `drop-shadow`, Hover-Glow); Font-family
+`--font-body` bleibt. `.dm-modal-body`-Padding → `var(--sp-5)` (alle 4 Tabs). Tab-Switch-Logik unverändert.
+**B) Stats:** `.dm-stats-grid` 5 Spalten bleibt; Zellen Token-Swap (`--bg-panel-soft`/`--border-dark`);
+`.dm-stat-val` `--font-display`→**`--font-mono`** + `--fs-lg`/`--neon-cyan`; `.dm-res-*` analog
+(`--text-main`, mono). Death-Save-Inline `var(--red)`→`var(--neon-red)` (`#FF8C42` DSP-Orange bleibt).
+**C) Skills/Inventar:** `.dm-skill-head`/`.dm-inv-head` = 5a-HUD-Head (cyan uppercase tracking,
+`--border-dark`); Rows `--fs-sm`/`--text-main`, Werte `--font-mono`/`--neon-cyan`; Empty-States →
+neue Klasse `.dm-tab-empty`.
+**D) „Mehr"-Karten-Grid:** Body-Inhalt in **`.ctrl-card-grid`** (`repeat(auto-fit,minmax(300px,1fr))`,
+gap `--sp-5`; @≤800px → 1 Spalte). Jede `.ctrl-section` = **Control-Card** (echte Border `--border-dark`,
+`--radius`, padding `--sp-4`, **kein clip** — Gotcha #2/#4; `margin-bottom` raus = Grid-gap).
+`.ctrl-section-head` → HUD-Head (cyan, geteilt → upgradet Left-Panel-Heads mit). **Volle Breite
+(`.ctrl-section--full` = `grid-column:1/-1`):** Buffs/Pharma + Rollen-Specialty. Rollen-Section nur
+**als Karte platziert** (Wrapper `<div class="ctrl-section--full">${buildRoleAbilityDataSection}</div>`),
+**Innenleben unverändert** (= 5b-3, Alt-Look erlaubt). `.ctrl-inj-*` Token+`--bg-panel`-Nest;
+`.buff-preset-btn` → Chip-Rezeptur wie `.dm-left-ip-btn` (cyan-Ghost, hover Glow); `.buff-add-form`
+Token. **Gründliche Inline-Bereinigung** in buildControlsHtml: Cash-Head-Span → `.ctrl-head-val`
++ neue `.ctrl-head-val--neg` (Rot-bei-<0 erhalten), `#ctrlCashAmt`→`.ctrl-input--num` (10ch),
+`#ctrlCashReason`→`.ctrl-input--reason`, `#ctrlCashLog`→`.dm-left-cashlog`, Injury-Empty→`.dm-left-empty`,
+Buff-Form: `--num`-Inputs, neue `.ctrl-hint` (Hint-Spans), `.ctrl-textarea`, `.ctrl-select--sm`;
+`style="display:none"`-State-Hooks bleiben.
+
+**Neue CSS-Klassen (7):** `.ctrl-card-grid`, `.ctrl-section--full`, `.ctrl-head-val--neg`,
+`.ctrl-select--sm`, `.ctrl-hint`, `.ctrl-textarea`, `.dm-tab-empty`.
+**Verifiziert:** dm.css Braces 522/522 + Kommentare 96/96 (kein `*/`-Glob); alle 4 Inline-Script-Blöcke
+`node --check` sauber; `git status` = nur `dm.html`+`dm.css`; **alle 34 Mehr-Tab-Control-IDs**
+(Cash/Rank/Rep/Hum/Inj/Buff/NPC/Item) exakt 1× im neuen Markup; div-Balance Return 45/45;
+keine Alt-Token/Inline-Magic mehr in Stats/Skills/Inv + buildControlsHtml-Eigensektionen (Rollen-
+Section bewusst noch Alt-Inline → 5b-3). **Offen:** manueller Browser-Durchklick (kein Browser/Supabase-
+Char in der Session) — Tab-Wechsel, 2-Spalten-Grid @≥1100px, Role+Buffs volle Breite, alle Mehr-
+Controls + Cash-Dublette funktional; Rollen-Specialty-Innenleben + NPC-Quick-Feinschliff = **5b-3**.
 
 ## Offene Punkte / To-do bis Ende
 - **Phase 5–10** wie Status-Tabelle.
