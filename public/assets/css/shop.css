@@ -1,41 +1,63 @@
 /* ============================================================
-   shop.css — LZRV D&D Hub Item Shop
+   shop.css — LZRV D&D Hub · Night Market (Phase 6 Reskin+Relayout)
+   HUD-Tokens direkt (base.css überschreibt die Legacy-Aliase → neue
+   --neon-/--bg-panel-/--sp-/--clip-/--glow-Tokens verwenden).
+   shop.css ist shop-only → kein Cross-Page-Bleed.
+   Button-System (--btn-*) am Dateiende, gespiegelt von player.css/dm.css.
    ============================================================ */
+
+/* ── Top-Nav (shop-lokaler Reskin der base .nav) ── */
+.nav { background: var(--bg-panel); border-bottom: 1px solid var(--border-dark); }
+.nav-char-name {
+  font-family: var(--font-display); font-size: var(--fs-sm);
+  color: var(--neon-red); letter-spacing: .04em;
+}
+.nav-cash {
+  font-family: var(--font-mono); font-size: var(--fs-sm);
+  color: var(--neon-cyan); margin-left: auto;
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+}
 
 /* ── Layout ── */
 .shop-layout {
   display: grid;
-  grid-template-columns: 180px 1fr;
+  grid-template-columns: 200px 1fr;
   gap: 0;
   height: calc(100vh - 49px); /* below nav */
   overflow: hidden;
 }
 
-/* ── Sidebar ── */
+/* ── Sidebar (Kategorie-Chips, linke Leiste) ── */
 .shop-sidebar {
-  background: var(--bg-card);
-  border-right: 1px solid var(--border);
-  padding: 1rem 0;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-dark);
+  padding: var(--sp-4) var(--sp-2);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: .15rem;
+  gap: var(--sp-1);
 }
 .sidebar-label {
-  font-size: .58rem; letter-spacing: .18em; text-transform: uppercase;
-  color: var(--text-muted); padding: .5rem 1rem .25rem;
+  font-size: var(--fs-xs); letter-spacing: .18em; text-transform: uppercase;
+  color: var(--text-dim); padding: var(--sp-2) var(--sp-2) var(--sp-1);
 }
+#catButtons { display: flex; flex-direction: column; gap: var(--sp-1); }
 .cat-btn {
   display: block; width: 100%;
-  text-align: left; padding: .5rem 1rem;
-  background: transparent; border: none;
-  font-family: var(--font-body); font-size: .82rem;
+  text-align: left; padding: var(--sp-2) var(--sp-3);
+  background: transparent; border: 1px solid transparent;
+  border-left: 2px solid transparent; border-radius: var(--radius);
+  font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-sm);
+  letter-spacing: var(--tracking); text-transform: uppercase;
   color: var(--text-muted); cursor: pointer;
-  transition: var(--transition);
-  border-left: 2px solid transparent;
+  transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease);
 }
-.cat-btn:hover  { color: var(--text); background: var(--bg-input); }
-.cat-btn.active { color: var(--cyan); border-left-color: var(--cyan); background: var(--bg-input); }
+.cat-btn:hover  { color: var(--text-main); background: var(--bg-panel-soft); }
+.cat-btn.active {
+  color: var(--neon-cyan); border-left-color: var(--neon-cyan);
+  background: var(--bg-panel-cyan); box-shadow: var(--glow-cyan-s);
+}
 
 /* ── Main content ── */
 .shop-main {
@@ -44,157 +66,169 @@
   overflow: hidden;
 }
 .shop-main.detail-open {
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 340px;
   grid-template-rows: 1fr;
 }
 
 /* ── Item grid ── */
 .shop-grid-wrap {
   overflow-y: auto;
-  padding: 1.25rem;
+  padding: var(--sp-5);
   display: flex;
   flex-direction: column;
-  gap: .75rem;
+  gap: var(--sp-3);
 }
 .shop-section-head {
-  font-family: var(--font-display); font-size: .7rem;
-  letter-spacing: .15em; text-transform: uppercase;
-  color: var(--text-muted); padding: .25rem 0;
-  border-bottom: 1px solid var(--border); margin-bottom: .25rem;
+  font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-xs);
+  letter-spacing: var(--tracking); text-transform: uppercase;
+  color: var(--neon-cyan); padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border-dark); margin: var(--sp-3) 0 var(--sp-1);
 }
+.shop-section-head:first-child { margin-top: 0; }
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: .5rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-3);
 }
 .shop-card {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .7rem .9rem;
-  cursor: pointer; transition: var(--transition);
+  position: relative;
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-3) var(--sp-4);
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
 }
-.shop-card:hover  { border-color: var(--cyan); }
-.shop-card.active { border-color: var(--cyan); background: var(--bg-input); }
-.shop-card-name   { font-size: .85rem; color: var(--text-head); margin-bottom: .2rem; }
-.shop-card-price  { font-size: .72rem; color: var(--cyan); margin-bottom: .25rem; }
-.shop-card-notes  { font-size: .7rem; color: var(--text-muted); line-height: 1.4;
+.shop-card:hover  { border-color: var(--cyan-soft); box-shadow: var(--glow-cyan-s); }
+.shop-card.active { border-color: var(--neon-cyan); background: var(--bg-panel-cyan); box-shadow: var(--glow-cyan-s); }
+.shop-card-name   { font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-md); color: var(--text-main); margin-bottom: var(--sp-1); }
+.shop-card-price  { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--neon-cyan); margin-bottom: var(--sp-1); }
+.shop-card-notes  { font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.4;
                     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.shop-empty       { font-size: .85rem; color: var(--text-muted); padding: 1rem 0; }
+.shop-empty       { font-size: var(--fs-sm); color: var(--text-muted); padding: var(--sp-4) 0; }
+.slot-badge       { font-size: var(--fs-xs); color: var(--warning-yellow); margin-top: var(--sp-1); }
+
+/* ── Preis-/Seltenheits-Farben (Cheap → Super-Luxury), abgeleitet aus raw_cost ── */
+.price-tier-cheap, .price-tier-everyday          { color: var(--success-green); }
+.price-tier-costly, .price-tier-premium          { color: var(--neon-cyan); }
+.price-tier-expensive, .price-tier-veryexpensive { color: var(--warning-yellow); }
+.price-tier-luxury, .price-tier-superluxury      { color: var(--neon-red); }
 
 /* ── Detail panel ── */
 .shop-detail {
-  border-left: 1px solid var(--border);
-  background: var(--bg-card);
+  border-left: 1px solid var(--border-dark);
+  background: var(--bg-panel);
   overflow-y: auto;
-  padding: 1.25rem;
+  padding: var(--sp-5);
   display: none;
   flex-direction: column;
-  gap: .75rem;
+  gap: var(--sp-3);
 }
 .shop-detail.visible { display: flex; }
 
-.detail-name    { font-family: var(--font-display); font-size: 1rem; color: var(--text-head); }
-.detail-sub     { font-size: .72rem; color: var(--text-muted); margin-top: .1rem; }
-.detail-price   { font-size: 1.1rem; color: var(--cyan); font-family: var(--font-display); }
-.detail-fields  { display: flex; flex-direction: column; gap: .3rem; }
-.df-row         { display: flex; gap: .5rem; font-size: .78rem; }
-.df-key         { color: var(--text-muted); font-size: .65rem; text-transform: uppercase;
+.detail-name    { font-family: var(--font-heading); font-weight: 600; font-size: var(--fs-lg); color: var(--text-main); }
+.detail-sub     { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--sp-1); text-transform: uppercase; letter-spacing: .08em; }
+.detail-price   { font-family: var(--font-mono); font-size: var(--fs-xl); color: var(--neon-cyan); }
+.detail-fields  { display: flex; flex-direction: column; gap: var(--sp-1); }
+.df-row         { display: flex; gap: var(--sp-2); font-size: var(--fs-sm); }
+.df-key         { color: var(--text-dim); font-size: var(--fs-xs); text-transform: uppercase;
                   letter-spacing: .1em; width: 90px; flex-shrink: 0; padding-top: .1rem; }
-.df-val         { color: var(--text); }
-.detail-notes   { font-size: .78rem; color: var(--text-muted); line-height: 1.55;
-                  border-top: 1px solid var(--border); padding-top: .6rem; }
-.detail-source  { font-size: .68rem; color: var(--text-muted); }
+.df-val         { color: var(--text-main); font-family: var(--font-mono); }
+.detail-field-label { color: var(--text-dim); font-size: var(--fs-xs); text-transform: uppercase;
+                  letter-spacing: .1em; margin-bottom: var(--sp-2); }
+.detail-notes   { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.55;
+                  border-top: 1px solid var(--border-dark); padding-top: var(--sp-3); }
+.detail-source  { font-size: var(--fs-xs); color: var(--text-muted); }
+.detail-buy-zone { margin-top: auto; }
+.detail-debt-warn { font-size: var(--fs-xs); color: var(--warning-yellow); margin-bottom: var(--sp-2); }
 
 /* Armor slot selector */
-.armor-slots    { display: flex; gap: .4rem; flex-wrap: wrap; }
-.slot-btn {
-  padding: .3rem .7rem; font-size: .72rem; border-radius: var(--radius);
-  border: 1px solid var(--border); background: transparent;
-  color: var(--text-muted); cursor: pointer; transition: var(--transition);
-}
-.slot-btn.active { border-color: var(--cyan); color: var(--cyan); background: var(--bg-input); }
+.armor-slots    { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 
-/* Buy button */
-.buy-btn {
-  width: 100%; padding: .65rem; margin-top: auto;
-  background: var(--red); border: none; border-radius: var(--radius);
-  font-family: var(--font-display); font-size: .85rem; letter-spacing: .08em;
-  text-transform: uppercase; color: #fff; cursor: pointer;
-  transition: var(--transition);
-}
-.buy-btn:hover:not(:disabled) { background: var(--red-dim); }
-.buy-btn.no-cash {
-  background: transparent; border: 1px solid var(--red);
-  color: var(--red); cursor: default;
-}
-.buy-msg { font-size: .75rem; color: var(--red); text-align: center; min-height: 1.2em; }
-.buy-success { color: var(--cyan); }
+/* Buy / Override message */
+.buy-msg { font-size: var(--fs-xs); color: var(--neon-red); text-align: center; min-height: 1.2em; margin-top: var(--sp-2); }
+.buy-success { color: var(--neon-cyan); }
 
-/* ── Nav cash display ── */
-.nav-cash {
-  font-family: var(--font-display); font-size: .8rem;
-  color: var(--cyan); margin-left: auto;
-}
-
-/* ── Gating: Cash (50% opacity) ── */
+/* ── Gating: Cash (gedimmt) ── */
 .shop-card.card-no-cash { opacity: .5; }
 .shop-card.card-no-cash:not(.active):hover {
-  border-color: var(--border); cursor: not-allowed;
+  border-color: var(--border-dark); box-shadow: none; cursor: not-allowed;
 }
 
 /* ── Gating: Lock Icon ── */
-.shop-card { position: relative; }
 .lock-icon {
-  position: absolute; bottom: .45rem; right: .5rem;
-  font-size: .8rem; line-height: 1; cursor: help;
+  position: absolute; bottom: var(--sp-2); right: var(--sp-2);
+  font-size: .8rem; line-height: 1; cursor: help; color: var(--neon-red);
 }
 
-/* ── Buy-Button: Rank / Humanity Gates ── */
-.buy-btn.no-rank,
-.buy-btn.no-humanity {
-  background: transparent; border: 1px solid var(--red);
-  color: var(--red); cursor: default; opacity: .7;
-}
-
-/* ── DM Override Button ── */
-.override-btn {
-  width: 100%; padding: .45rem; margin-top: .4rem;
-  background: transparent; border: 1px solid var(--text-muted);
-  border-radius: var(--radius); font-family: var(--font-body);
-  font-size: .72rem; color: var(--text-muted); cursor: pointer;
-  transition: var(--transition);
-}
-.override-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+/* ── DM Override Button (Ghost — Look aus BUTTON-SYSTEM) ── */
+.override-btn { width: 100%; margin-top: var(--sp-2); }
 
 /* ── Loading / error state ── */
 .shop-loader {
   display: flex; align-items: center; justify-content: center;
-  height: 100%; font-family: var(--font-display);
-  font-size: .85rem; color: var(--text-muted); letter-spacing: .1em;
+  height: 100%; font-family: var(--font-heading); font-weight: 600;
+  font-size: var(--fs-sm); color: var(--text-muted); letter-spacing: .1em;
 }
 
 /* ── Role Highlight ── */
-.shop-card.role-highlight { background: #1c1a10; border-color: #8a7800; }
-.shop-card.role-highlight:hover { border-color: #FFD700; }
-.role-badge { position: absolute; top: .3rem; right: .3rem; font-size: .75rem; cursor: help; line-height: 1; }
+.shop-card.role-highlight { background: var(--bg-panel-soft); border-color: var(--warning-yellow); }
+.shop-card.role-highlight:hover { border-color: var(--warning-yellow); box-shadow: 0 0 8px rgba(255,209,102,.4); }
+.role-badge { position: absolute; top: var(--sp-1); right: var(--sp-1); font-size: .75rem; cursor: help; line-height: 1; color: var(--warning-yellow); }
 
 /* ── Install Badges ── */
-.install-badge { font-size: .62rem; padding: .1rem .4rem; border-radius: 3px; display: inline-block; margin-top: .2rem; line-height: 1.4; }
-.install-clinic   { color: #00E5FF; border: 1px solid #00E5FF; background: rgba(0,229,255,.07); }
-.install-hospital { color: #FF8C00; border: 1px solid #FF8C00; background: rgba(255,140,0,.07); }
+.install-badge { font-size: var(--fs-xs); padding: .1rem .4rem; border-radius: var(--radius); display: inline-block; margin-top: var(--sp-1); line-height: 1.4; }
+.install-clinic   { color: var(--neon-cyan); border: 1px solid var(--cyan-soft); background: var(--bg-panel-cyan); }
+.install-hospital { color: var(--warning-yellow); border: 1px solid var(--warning-yellow); background: rgba(255,209,102,.07); }
 
 /* ── Humanity Cost Preview ── */
 .humanity-cost-preview {
-  font-size: .8rem; color: #aaa; margin: .4rem 0;
-  padding: .35rem .6rem; background: #1a1010;
-  border-left: 2px solid var(--red); border-radius: 0 3px 3px 0;
+  font-size: var(--fs-sm); color: var(--text-muted); margin: var(--sp-2) 0;
+  padding: var(--sp-2) var(--sp-3); background: var(--bg-panel-red);
+  border-left: 2px solid var(--neon-red); border-radius: 0 var(--radius) var(--radius) 0;
 }
-.humanity-cost-preview strong { color: var(--red); }
+.humanity-cost-preview strong { color: var(--neon-red); }
 
 /* ── Slot Info ── */
-.slot-info { font-size: .68rem; color: var(--text-muted); margin: .25rem 0 .1rem; }
-.slot-info.slot-warn { color: #FF8C00; }
+.slot-info { font-size: var(--fs-xs); color: var(--text-muted); margin: var(--sp-1) 0; }
+.slot-info.slot-warn { color: var(--warning-yellow); }
 .shop-card.slot-full { opacity: .45; }
-.shop-card.slot-full:not(.active):hover { border-color: var(--border); cursor: not-allowed; }
+.shop-card.slot-full:not(.active):hover { border-color: var(--border-dark); box-shadow: none; cursor: not-allowed; }
+
+/* ── Modals (HUD-Panel: echte Border + box-shadow/Glow, KEIN clip — Gotcha #2) ──
+   Overlay-Klasse setzt KEIN display (JS toggelt style.display='flex' + [hidden];
+   sonst überschriebe display:flex die UA-[hidden]-Regel). */
+.shop-modal-overlay {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  background: rgba(0,0,0,.7);
+  align-items: center; justify-content: center;
+}
+.shop-modal-overlay--top { z-index: calc(var(--z-modal) + 1); }
+.shop-modal-box {
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); box-shadow: var(--glow-cyan-m);
+  padding: var(--sp-5); max-width: 340px; width: 90%;
+}
+.shop-modal-box--danger { border-color: var(--red-soft); box-shadow: var(--glow-red-m); }
+.shop-modal-box--wide   { max-width: 400px; }
+.shop-modal-box--center { text-align: center; }
+.shop-modal-title {
+  font-family: var(--font-display); font-size: var(--fs-sm); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--neon-cyan); margin-bottom: var(--sp-4);
+}
+.shop-modal-label {
+  font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: var(--sp-2);
+}
+.shop-modal-label--danger { color: var(--neon-red); margin-bottom: var(--sp-3); }
+.shop-modal-text { font-size: var(--fs-sm); color: var(--text-main); margin-bottom: var(--sp-4); line-height: 1.5; }
+.shop-modal-sub  { color: var(--text-muted); font-size: var(--fs-xs); margin-bottom: var(--sp-4); }
+.shop-modal-btns { display: flex; gap: var(--sp-2); }
+.slot-pick-list  { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+/* Buy-Confirm-Inhalt */
+.buy-confirm-name  { color: var(--text-main); }
+.buy-confirm-price { color: var(--neon-cyan); font-family: var(--font-mono); }
+.buy-confirm-extra { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--sp-1); display: block; }
 
 /* ── Cyberpsychosis Pulse ── */
 @keyframes psychosis-pulse {
@@ -205,84 +239,215 @@
 
 /* ── Psychosis Modal ── */
 #psychosisModal .psychosis-title {
-  font-family: Audiowide, sans-serif; font-size: 1.1rem;
+  font-family: Audiowide, sans-serif; font-size: var(--fs-lg);
   letter-spacing: .12em; text-transform: uppercase;
-  color: #FF0000; margin-bottom: .5rem;
+  color: var(--neon-red); margin-bottom: var(--sp-2);
   animation: psychosis-pulse .8s ease-in-out infinite;
 }
+.psychosis-body { color: var(--neon-red); font-size: var(--fs-sm); margin-bottom: var(--sp-4); line-height: 1.6; }
+
+/* ── Ammo Shop ── */
+.ammo-inventory-bar {
+  font-size: var(--fs-sm); color: var(--text-muted);
+  padding: var(--sp-2) var(--sp-3); background: var(--bg-panel-soft);
+  border-radius: var(--radius); margin-bottom: var(--sp-2);
+  border: 1px solid var(--border-dark); display: flex; gap: var(--sp-3); flex-wrap: wrap;
+}
+.ammo-card {
+  position: relative;
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-3) var(--sp-4);
+}
+.shop-card-name + .ammo-type-badge { margin-top: var(--sp-1); }
+.ammo-type-badge {
+  display: inline-block; font-size: var(--fs-xs); padding: .1rem .35rem;
+  border-radius: var(--radius); text-transform: uppercase;
+  letter-spacing: .06em; font-family: var(--font-display); margin: var(--sp-1) 0;
+}
+.ammo-pistol   { background: var(--bg-panel-cyan);          color: var(--neon-cyan); }
+.ammo-rifle    { background: var(--bg-panel-red);           color: var(--neon-red); }
+.ammo-shotgun  { background: rgba(255,209,102,.15);         color: var(--warning-yellow); }
+.ammo-arrow    { background: rgba(54,255,159,.15);          color: var(--success-green); }
+.ammo-grenade  { background: rgba(200,100,255,.15);         color: #c864ff; }
+.ammo-rocket   { background: rgba(255,140,0,.15);           color: #ff8c00; }
+.ammo-special-badge {
+  font-size: var(--fs-xs); color: var(--neon-cyan); border: 1px solid var(--cyan-soft);
+  padding: .1rem .3rem; border-radius: var(--radius); display: inline-block; margin: var(--sp-1) 0;
+}
+.ammo-effect { font-size: var(--fs-xs); color: var(--text-muted); margin: var(--sp-1) 0; line-height: 1.4; }
+.ammo-stock { font-size: var(--fs-xs); color: var(--text-muted); margin: var(--sp-1) 0; }
+
+/* ── Ammo Pack Selector ── */
+.ammo-buy-section { margin-top: var(--sp-3); }
+.ammo-price-per-pack { font-size: var(--fs-xs); color: var(--text-muted); margin-bottom: var(--sp-2); }
+.ammo-buy-controls {
+  display: flex; align-items: center; gap: var(--sp-2);
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-2);
+}
+.ammo-qty-display { flex: 1; text-align: center; }
+.ammo-qty-num {
+  display: block; font-size: 1.15rem;
+  font-family: var(--font-mono); color: var(--neon-cyan);
+}
+.ammo-qty-sub { display: block; font-size: var(--fs-xs); color: var(--text-muted); }
+.ammo-buy-total {
+  font-family: var(--font-mono); font-size: var(--fs-md);
+  text-align: center; margin-top: var(--sp-2);
+}
+.ammo-buy-btn { width: 100%; margin-top: var(--sp-2); }
 
 /* ── Responsive: stack on narrow screens ── */
 @media (max-width: 600px) {
   .shop-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .shop-sidebar {
     flex-direction: row; flex-wrap: wrap;
-    border-right: none; border-bottom: 1px solid var(--border);
-    padding: .5rem; gap: .25rem; overflow-x: auto; height: auto;
+    border-right: none; border-bottom: 1px solid var(--border-dark);
+    padding: var(--sp-2); gap: var(--sp-1); overflow-x: auto; height: auto;
   }
   .sidebar-label { display: none; }
+  #catButtons { flex-direction: row; flex-wrap: wrap; }
   .cat-btn { width: auto; border-left: none; border-bottom: 2px solid transparent;
-             padding: .35rem .75rem; font-size: .75rem; border-radius: var(--radius); }
-  .cat-btn.active { border-bottom-color: var(--cyan); border-left-color: transparent; }
+             padding: var(--sp-1) var(--sp-3); font-size: var(--fs-xs); }
+  .cat-btn.active { border-bottom-color: var(--neon-cyan); border-left-color: transparent; }
   .shop-main.detail-open { grid-template-columns: 1fr; grid-template-rows: 1fr 360px; }
-  .shop-detail { border-left: none; border-top: 1px solid var(--border); }
+  .shop-detail { border-left: none; border-top: 1px solid var(--border-dark); }
 }
 
-/* ── Ammo Shop ── */
-.ammo-inventory-bar {
-  font-size: .72rem; color: var(--text-muted);
-  padding: .5rem .75rem; background: var(--bg-card);
-  border-radius: var(--radius); margin-bottom: .5rem;
-  border: 1px solid var(--border); display: flex; gap: .75rem; flex-wrap: wrap;
+/* ════════════════════════════════════════════════════════════════
+   BUTTON-SYSTEM (Phase 6) — cyber-button-Look auf die Shop-Buttons.
+   Gespiegelt von player.css/dm.css: custom-property-getrieben
+   (--btn-border, -fill, -fill-hover, -color, -glow, -h, -px, -fs),
+   Muster wie .cyber-button: Border via ::before, Füllung via ::after,
+   Glow via filter:drop-shadow, Clip-sm (Gotcha #2). Quellordnung am
+   Dateiende → gewinnt bei gleicher Spezifität.
+   Klassenlisten KOMMA-getrennt (nie *-Slash-Glob im Kommentar).
+   Größen: lg44 / md38 / sm32 / icon40 (→44 @pointer:coarse).
+   ════════════════════════════════════════════════════════════════ */
+
+/* — Basis-Look (Default = primary/cyan, md38). --btn-*-Props steuern Variante/Größe — */
+.buy-btn, .override-btn, .ammo-buy-btn, .ammo-qty-btn,
+.slot-btn, .slot-pick-btn, .nav-back-btn, .shop-modal-cancel,
+#buyConfirmOk, #buyConfirmCancel, #humanityModalConfirm, #humanityModalCancel, #psychosisModalClose {
+  --btn-border: var(--cyan-soft);
+  --btn-fill: var(--bg-panel-soft);
+  --btn-fill-hover: var(--bg-panel-cyan);
+  --btn-color: var(--neon-cyan);
+  --btn-glow: var(--glow-cyan-s);
+  --btn-h: 38px;
+  --btn-px: var(--sp-4);
+  --btn-fs: var(--fs-sm);
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--btn-h);
+  height: auto;
+  padding: 0 var(--btn-px);
+  background: transparent;
+  border: none;
+  color: var(--btn-color);
+  font-family: var(--font-heading);
+  font-size: var(--btn-fs);
+  font-weight: 600;
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 1;
+  box-shadow: none;
+  border-radius: var(--radius);
+  clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
+                     calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm));
+  transition: color var(--t-fast) var(--ease), filter var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease);
 }
-.ammo-type-badge {
-  display: inline-block; font-size: .6rem; padding: .1rem .35rem;
-  border-radius: 3px; text-transform: uppercase;
-  letter-spacing: .06em; font-family: Audiowide, sans-serif; margin: .2rem 0;
+/* Border-Layer (::before) + Füllung (::after, um border-w eingerückt) */
+.buy-btn::before, .override-btn::before, .ammo-buy-btn::before, .ammo-qty-btn::before,
+.slot-btn::before, .slot-pick-btn::before, .nav-back-btn::before, .shop-modal-cancel::before,
+#buyConfirmOk::before, #buyConfirmCancel::before, #humanityModalConfirm::before, #humanityModalCancel::before, #psychosisModalClose::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--btn-border); clip-path: inherit;
 }
-.ammo-pistol   { background: rgba(0,229,255,.15);   color: var(--cyan); }
-.ammo-rifle    { background: rgba(255,45,45,.15);    color: var(--red); }
-.ammo-shotgun  { background: rgba(255,160,0,.15);    color: #ffa000; }
-.ammo-arrow    { background: rgba(100,220,100,.15);  color: #64dc64; }
-.ammo-grenade  { background: rgba(200,100,255,.15);  color: #c864ff; }
-.ammo-rocket   { background: rgba(255,100,0,.15);    color: #ff6400; }
-.ammo-special-badge {
-  font-size: .62rem; color: var(--cyan); border: 1px solid var(--cyan);
-  padding: .1rem .3rem; border-radius: 3px; display: inline-block; margin-top: .2rem;
+.buy-btn::after, .override-btn::after, .ammo-buy-btn::after, .ammo-qty-btn::after,
+.slot-btn::after, .slot-pick-btn::after, .nav-back-btn::after, .shop-modal-cancel::after,
+#buyConfirmOk::after, #buyConfirmCancel::after, #humanityModalConfirm::after, #humanityModalCancel::after, #psychosisModalClose::after {
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--btn-fill); clip-path: inherit;
+  transition: background var(--t-fast) var(--ease);
 }
-.ammo-buy-row {
-  display: flex; align-items: center; gap: .4rem; margin-top: .5rem;
+/* States */
+.buy-btn:hover, .override-btn:hover, .ammo-buy-btn:hover, .ammo-qty-btn:hover,
+.slot-btn:hover, .slot-pick-btn:hover, .nav-back-btn:hover, .shop-modal-cancel:hover,
+#buyConfirmOk:hover, #buyConfirmCancel:hover, #humanityModalConfirm:hover, #humanityModalCancel:hover, #psychosisModalClose:hover {
+  background: transparent; box-shadow: none;
+  filter: drop-shadow(var(--btn-glow)); transform: translateY(-1px);
 }
-.ammo-qty-input {
-  width: 50px; padding: .2rem .4rem; font-size: .8rem;
-  background: var(--bg-input); border: 1px solid var(--border);
-  color: var(--text); border-radius: var(--radius);
+.buy-btn:hover::after, .override-btn:hover::after, .ammo-buy-btn:hover::after, .ammo-qty-btn:hover::after,
+.slot-btn:hover::after, .slot-pick-btn:hover::after, .nav-back-btn:hover::after, .shop-modal-cancel:hover::after,
+#buyConfirmOk:hover::after, #buyConfirmCancel:hover::after, #humanityModalConfirm:hover::after, #humanityModalCancel:hover::after, #psychosisModalClose:hover::after {
+  background: var(--btn-fill-hover);
+}
+.buy-btn:active, .override-btn:active, .ammo-buy-btn:active, .ammo-qty-btn:active,
+.slot-btn:active, .slot-pick-btn:active, .nav-back-btn:active, .shop-modal-cancel:active,
+#buyConfirmOk:active, #buyConfirmCancel:active, #humanityModalConfirm:active, #humanityModalCancel:active, #psychosisModalClose:active { transform: translateY(0); }
+.buy-btn:focus-visible, .override-btn:focus-visible, .ammo-buy-btn:focus-visible, .ammo-qty-btn:focus-visible,
+.slot-btn:focus-visible, .slot-pick-btn:focus-visible, .nav-back-btn:focus-visible, .shop-modal-cancel:focus-visible,
+#buyConfirmOk:focus-visible, #buyConfirmCancel:focus-visible, #humanityModalConfirm:focus-visible, #humanityModalCancel:focus-visible, #psychosisModalClose:focus-visible {
+  outline: none; filter: drop-shadow(var(--btn-glow));
+}
+.buy-btn:disabled, .ammo-buy-btn:disabled { cursor: default; filter: none; transform: none; }
+.ammo-buy-btn:disabled { opacity: .4; }
+/* Locked Buy-Button: rotes Ghost, lesbar (kein .4-Dim) */
+.buy-btn.no-cash, .buy-btn.no-rank, .buy-btn.no-humanity {
+  --btn-fill: transparent; --btn-fill-hover: transparent;
+  --btn-border: var(--red-soft); --btn-color: var(--neon-red);
+  opacity: .75; cursor: default;
 }
 
-/* ── Ammo Pack Selector ── */
-.ammo-buy-section { margin-top: .6rem; }
-.ammo-price-per-pack { font-size: .65rem; color: var(--text-muted); margin-bottom: .35rem; }
-.ammo-buy-controls {
-  display: flex; align-items: center; gap: .4rem;
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: .35rem .5rem;
+/* — Größen — */
+/* lg 44 — primärer Kauf-CTA, volle Breite */
+.buy-btn { --btn-h: 44px; --btn-fs: var(--fs-md); width: 100%; }
+/* sm 32 (kompakte Buttons) */
+.override-btn, .nav-back-btn, .slot-btn, .slot-pick-btn, .shop-modal-cancel {
+  --btn-h: 32px; --btn-px: var(--sp-3); --btn-fs: var(--fs-xs);
 }
+/* icon 40×40 (quadratisch — Ammo − / +) */
 .ammo-qty-btn {
-  width: 40px; height: 40px; flex-shrink: 0;
-  border: 1px solid var(--border); background: var(--bg-card);
-  color: var(--text); border-radius: 6px; cursor: pointer;
-  font-size: 1.4rem; line-height: 1; display: flex;
-  align-items: center; justify-content: center;
-  transition: var(--transition);
+  --btn-h: 40px; width: 40px; min-width: 40px; flex-shrink: 0;
+  padding: 0; gap: 0; font-size: 1.3rem; --btn-fs: 1.3rem;
 }
-.ammo-qty-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--bg-input); }
-.ammo-qty-display { flex: 1; text-align: center; }
-.ammo-qty-num {
-  display: block; font-size: 1.15rem;
-  font-family: Audiowide, sans-serif; color: var(--cyan);
+
+/* — Varianten (setzen nur die --btn-*-Props; Default = primary/cyan) — */
+/* combat / red */
+.buy-btn, .ammo-buy-btn, #buyConfirmOk, #humanityModalConfirm, #psychosisModalClose {
+  --btn-border: var(--red-soft); --btn-fill-hover: var(--bg-panel-red);
+  --btn-color: var(--neon-red); --btn-glow: var(--glow-red-s);
 }
-.ammo-qty-sub { display: block; font-size: .6rem; color: var(--text-muted); }
-.ammo-buy-total {
-  font-size: .9rem; font-family: Audiowide, sans-serif;
-  text-align: center; margin-top: .35rem;
+/* ghost (override / zurück / abbrechen) — neutral, Hover → cyan */
+.override-btn, .nav-back-btn, .shop-modal-cancel, #buyConfirmCancel, #humanityModalCancel {
+  --btn-border: var(--border-dark); --btn-color: var(--text-muted);
+  --btn-fill-hover: var(--bg-panel-cyan); --btn-glow: var(--glow-cyan-s);
 }
-.ammo-stock { font-size: .68rem; color: var(--text-muted); margin: .25rem 0; }
+.override-btn:hover, .nav-back-btn:hover, .shop-modal-cancel:hover, #buyConfirmCancel:hover, #humanityModalCancel:hover { color: var(--neon-cyan); }
+/* slot-toggle (Armor / Slot-Picker) — neutral, aktiv = cyan */
+.slot-btn {
+  --btn-border: var(--border-dark); --btn-color: var(--text-muted);
+}
+.slot-btn:hover { color: var(--neon-cyan); }
+.slot-btn.active { --btn-border: var(--cyan-soft); --btn-color: var(--neon-cyan); --btn-fill: var(--bg-panel-cyan); }
+
+/* Modal-Button-Paare nebeneinander */
+#buyConfirmOk, #buyConfirmCancel, #humanityModalConfirm, #humanityModalCancel { flex: 1; }
+.shop-modal-cancel { width: 100%; margin-top: var(--sp-3); }
+#psychosisModalClose { --btn-h: 38px; --btn-px: var(--sp-6); --btn-fs: var(--fs-sm); }
+
+/* — Touch: alle System-Buttons ≥44px — */
+@media (pointer: coarse) {
+  .buy-btn, .override-btn, .ammo-buy-btn,
+  .slot-btn, .slot-pick-btn, .nav-back-btn, .shop-modal-cancel,
+  #buyConfirmOk, #buyConfirmCancel, #humanityModalConfirm, #humanityModalCancel, #psychosisModalClose { --btn-h: 44px; }
+  .ammo-qty-btn { --btn-h: 44px; width: 44px; min-width: 44px; }
+}

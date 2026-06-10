@@ -20,7 +20,7 @@
 | 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ✅ fertig | In-Place-Reskin; #tab-gear/#tab-raum/#critModalBox/#tab-injuries gescopt; Rollen-Body via #tab-role-Override (roles.css unangetastet) |
 | 4d player Layout-Pass | ✅ fertig | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2 ✅ (Stats/Skills/Karten/Distanz-Bar); 4d-3 ✅ (Lifepath/Notes/Injuries/Raum/Rolle) → **player.html KOMPLETT** |
 | 5 dm.html | ✅ fertig | Opus xhigh; 5a (Basis/Button-System/Haupt-Dashboard) + 5b (Kontroll-Modal) + 5c (Combat-Tracker/Timer/Items/Raum) + 5d (Schwarzmarkt) → **dm.html KOMPLETT** |
-| 6 shop.html | ⬜ offen | |
+| 6 shop.html | ✅ fertig | Fundament-Includes + Token-Migration + Button-System + In-Place-Reskin (Karten/Ammo/Detail/4 Modals); Preis-Tier-Farben; 🔒→ic-lock |
 | 7 map.html | ⬜ offen | Opus xhigh; Canvas unantastbar; Nav-Sidebar hier |
 | 8 create/upload/npc-sheet/radio | ⬜ offen | |
 | 9 Rulebook (neu) | ⬜ offen | |
@@ -1007,8 +1007,99 @@ erhalten; keine Alt-Literale (`#0d0d0d`/`#222`/`#555`/`#1a0000`/`rgba(255,45,45�
 → Angebot senden → Status-Badges (+ neg Ann./Abl.) → schließen; **Realtime** (Player accept/decline/
 negotiate → DM-Status-Row in-place). **→ dm.html (Phase 5) damit KOMPLETT.**
 
+---
+
+## Phase 6 — shop.html: Night Market (Reskin + Relayout) ✅
+**Geändert (nur 2 Dateien + LOG):** `public/assets/css/shop.css` (Voll-Reskin+Relayout, Token-
+Migration, Button-System am Dateiende; Braces **141/141**, Kommentare **41/41**, keine `*/`-Glob-
+Falle), `public/shop.html` (Head-Ladeordnung, Nav-Markup, 4 Modal-Markups, Render-Funktions-Inline-
+Token/Emoji-Swaps; Cache-Bust `shop.css?v=1`). **Keine JS-Logik/IDs/`data-*`/Events/Handler/
+Berechnungen geändert.** shop.css ist **shop-only** → kein Cross-Page-Bleed (`.role-badge` lebt auch
+in player.css, aber die Dateien co-laden nie).
+
+**User-Entscheidungen (2026-06-10):** (1) Karten **in-place reskinnen** statt `<item-card>`/
+`<cyberware-card>` (Komponenten sind reine Statik, `this.className='card'`-Falle, kein Gating/
+Badge/Klick→Detail; Gotcha #4 + dm-Shop-Grid-Präzedenz); (2) Kategorie-Filter **linke Leiste als
+HUD-Chips** (Master-Detail-Layout bleibt). Plan-Entscheidungen: Nav = thin top bar in-place (kein
+Sidebar-Umbau — Phase-2-Scope); **kein globaler Content-Cap** (Full-Height-Master-Detail-Konsole
+wie dm.html, Dichte via Grid-`auto-fill minmax`-Cap).
+
+**Ausgangslage (Bestandsaufnahme):** shop.html lud als einzige große Seite **nur** base.css+shop.css
+(faktisch pre-redesign). → Fundament `cyberpunk-ui.css → cyber-components.css → base.css` vorangestellt
+(MASTER §3). **HUD-Tokens DIREKT** verwendet (base.css lädt nach cyberpunk-ui.css → Legacy-Aliase
+`--red/--cyan/--bg-card/…` behalten ALTE Werte; Memory-Gotcha + LOG #6). Kein `cyber-components.js` —
+Chips via `.cat-btn`-Eigenklasse, keine Custom-Elements → kein neues Verhalten. Scanlines werden NICHT
+auto-gemountet (verifiziert) → nichts erscheint ungewollt.
+
+**Render-Funktionen (Fundorte):** `renderNav`/`updateNavDisplay` :405 (Cash-Readout + JS-getriebenes
+`#psychosisStatus`-Label = in-place, Gotcha #4), `renderCatButtons` :420 (Chips), `renderGrid` :556
+(Subkategorie-Gruppen + `.shop-card` mit Gating), `renderAmmoGrid`/`buildAmmoCard`/`buildAmmoInventoryBar`
+:449, `openDetail`/`closeDetail` :630 (`.shop-detail.visible`-Toggle), Kauf-Flow `buyItem`/`buyAmmo`
+:863 + 4 Modals (`showBuyConfirmModal`/`showSlotPickerModal`/`showHumanityConfirmModal`/Psychosis).
+
+**Button-System (Variante A, gespiegelt von player/dm, am Dateiende, global shop-lokal):** custom-
+property-getrieben (`--btn-*`, `::before`-Border/`::after`-Füllung, clip-sm, `drop-shadow`-Glow,
+Komma-Kommentarlisten gegen die `*/`-Falle). **Mapping:** `.buy-btn`=combat **lg44** full-width
+(locked `.no-cash/.no-rank/.no-humanity` = rotes Ghost, opacity .75, lesbar — kein :disabled-.4-Dim),
+`.override-btn`/`.nav-back-btn`/`.shop-modal-cancel`/`#buyConfirmCancel`/`#humanityModalCancel`=ghost
+**sm**, `.ammo-buy-btn`/`#buyConfirmOk`/`#humanityModalConfirm`/`#psychosisModalClose`=combat,
+`.slot-btn`/`.slot-pick-btn`=neutral-Toggle (aktiv=cyan) **sm**, `.ammo-qty-btn`=**icon 40×40** (→44
+@coarse). Markup: `.ammo-buy-btn` + `#backLink` von base `.btn/.btn-primary/.btn-ghost` befreit
+(Handler hängt nur an `.ammo-buy-btn`/`#backLink`).
+
+**Kategorie-Chips (`.cat-btn`):** HUD-Chip-Rezeptur (Rajdhani 600 uppercase tracking, neutral→aktiv=
+cyan Fill + linker Akzentstrich + `--glow-cyan-s`); `#catButtons` flex-column. Mobile: horizontale
+Chip-Reihe (Border-Bottom-Akzent). Delegierter Klick-Handler unberührt.
+
+**Item-Grid (`renderGrid`):** `.shop-grid` `auto-fill minmax(200px→220px,1fr)` gap `--sp-3` (auto-fill
+= keine aufgeblasenen Karten). `.shop-card` echte Border, `--sp-3/4`-Padding, Hover/Active cyan-Glow.
+**Alle Gating-Klassen/Markup 1:1 erhalten** (`card-no-cash`/`card-locked`/`slot-full`/`role-highlight`/
+`active`/`data-id`/`.lock-icon`/`.role-badge`/Install-+Slot-Badges) — nur Farb-Retoken. **Preis-/
+Seltenheits-Farben** (Phase-Ziel): neue `priceTierClass(item)` leitet das CP-RED-Tier rein aus dem
+vorhandenen `item.raw_cost` (`"100eb (Premium)"`→`/\(([^)]+)\)/`) ab → `.price-tier-*`-Klassen
+(success-green→cyan→warning-yellow→neon-red-Rampe) auf `.shop-card-price`/`.detail-price`. **Keine
+Query-/Schema-Änderung**, additive Anzeige. `slotBadge`-Inline → `.slot-badge`. **🔒→`ic-lock`** via
+`LOCK_IC`-Konstante (Lock-Icon-Div + alle Buy-Button-Lock-Labels, beide innerHTML).
+
+**Ammo-Grid (`buildAmmoCard`/`buildAmmoInventoryBar`):** `.ammo-*`-Klassen Token-Migration; Inline-
+Styles → Klassen (`.ammo-effect`/`.ammo-special-badge`-Margins), dynamische Lager/Affordable-Farben
+auf `var(--neon-red/--neon-cyan)` getauscht (Live-Werte inline, Gotcha #4). Qty-±=icon-System,
+Buy=combat-System.
+
+**Detail-Panel (`openDetail`):** `.detail-*`/`.df-*`/`.install-badge`/`.humanity-cost-preview`/
+`.slot-info` Token-Migration + `--sp`. `.shop-detail.visible`-Toggle unangetastet. Inline raus:
+Slot-Label→`.detail-field-label`, Debt-Warn→`.detail-debt-warn` (warning-yellow), Buy-Zone-Wrapper→
+`.detail-buy-zone`. Armor-Slot-Picker (`.slot-btn`)/`#buyBtn`/`#overrideBtn` aufs System;
+`#buyBtn`/`#overrideBtn`-Listener unberührt.
+
+**4 Modals:** Inline-gestyltete Overlays/Boxen → dedizierte Klassen (HUD-Panel = **echte Border +
+box-shadow/Glow, KEIN clip**, Gotcha #2). **Edge-Case gelöst:** die Overlay-Klasse `.shop-modal-overlay`
+setzt **KEIN `display`** — Show/Hide bleibt `hidden`-Attr + JS `style.display='flex'`/`''`
+(sonst überschriebe ein Klassen-`display:flex` die UA-`[hidden]`-Regel; gleiche Falle wie
+`.cyber-nav-item[hidden]`). Psychosis-Overlay `--top` (z-index +1, ersetzt das alte 10000).
+`slotModalBtns`-Buttons (JS-Template) → `.slot-pick-btn`; `data-slot`+`btnsEl.onclick`-Delegation
+bleibt. `.psychosis-title`-Animation unverändert. Buy-Confirm-/Humanity-Inhalte → Klassen bzw.
+dynamische Token-Inline.
+
+**Emoji:** **🔒→ic-lock** (einziger eindeutiger Sprite-Treffer). Bewusst belassen (kein Sprite-
+Äquivalent): ⚠ (Warn/Hospital/EMP), ⭐ (Role-Badge), 💀/🔴/🟠/⚠ (`getCyberpsychosisStatus`-Status-
+Labels, JS-getrieben), ✓ („gekauft"), − / + (Ammo-Qty).
+
+**Verifiziert:** shop.css Braces 141/141 + Kommentare 41/41 (kein `*/`-Glob); shop.html-Inline-Modul
+`node --check` sauber; `git status` = nur `shop.html`+`shop.css`(+LOG); **alle 23 JS-Hook-IDs** +
+`data-cat/id/slot/ammo-id` + Gating-Klassen + `.visible`-Toggle + alle **8 Modal-`style.display`-
+Toggles** erhalten; keine Legacy-`var(--…)`/Hardcode-Hex mehr (außer den 5 JS-getriebenen
+`getCyberpsychosisStatus`-Status-Hex, Gotcha #4); `ic-lock` resolved im Sprite. **Kauf-Flow +
+Preise + Cash-Abzug (`patchCash`/`cash_log`) + Inventar-Übertrag (weapons/armor/cyberware/gear) +
+Gating + Cyberpsychose-Modal + Ammo + Realtime funktional IDENTISCH** (nur CSS/Markup/Token/Emoji).
+**Offen:** manueller Browser-Durchklick (kein Browser/Supabase-Char in der Session): Kategorie-Chips→
+Grid/Detail, normaler Kauf→Confirm→Cash/Log→gekauft, Cyberware→Slot-Picker→Humanity-Modal→0→Psychose,
+Foundational/Injury-Block + DM-Override, Armor-Slot-Routing, Ammo ±/Kauf, Realtime-Cash/Injury.
+
+---
+
 ## Offene Punkte / To-do bis Ende
-- **Phase 5–10** wie Status-Tabelle.
+- **Phase 7–10** wie Status-Tabelle.
 - **Phase 11 Cleanup:** Migrations-Aliase entfernen; `--radius`-Kollision auflösen; Temp-Fonts
   (Audiowide/Inter/Caveat) entfernen, sobald alle 13 Page-CSS migriert sind; optional In-Place-
   Anzeige-Bars auf Components nachziehen; `favicon.ico`; tote Alt-Styles.
