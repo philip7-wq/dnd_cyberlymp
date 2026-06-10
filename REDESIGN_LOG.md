@@ -19,7 +19,7 @@
 | 4b player Weapons/Armor/Cyberware | ✅ fertig | In-Place-CSS; .roll/.gear-action/.remove gescopt; #dmgApplyBox-Scoping; Autofire→Combat-Rot |
 | 4c player Gear/Lifepath/Injuries/Notes/Raum/Rolle | ✅ fertig | In-Place-Reskin; #tab-gear/#tab-raum/#critModalBox/#tab-injuries gescopt; Rollen-Body via #tab-role-Override (roles.css unangetastet) |
 | 4d player Layout-Pass | ✅ fertig | 4d-1 ✅ (Basis/Button-System/Header/Tab-Bar); 4d-2 ✅ (Stats/Skills/Karten/Distanz-Bar); 4d-3 ✅ (Lifepath/Notes/Injuries/Raum/Rolle) → **player.html KOMPLETT** |
-| 5 dm.html | 🟡 5a ✅ · 5b-1 ✅ · 5b-2 ✅ | Opus xhigh; 5a (Basis/Button-System/Haupt-Dashboard) + 5b-1 (Modal: Foundation/Header/Left-Panel) + 5b-2 (Modal Body-Tabs: Tab-Leiste/Stats/Skills/Inventar + „Mehr"-Karten-Grid) fertig; 5b-3 Rollen-UIs+NPC-Quick / 5c Combat+Items / 5d Schwarzmarkt offen |
+| 5 dm.html | ✅ fertig | Opus xhigh; 5a (Basis/Button-System/Haupt-Dashboard) + 5b (Kontroll-Modal) + 5c (Combat-Tracker/Timer/Items/Raum) + 5d (Schwarzmarkt) → **dm.html KOMPLETT** |
 | 6 shop.html | ⬜ offen | |
 | 7 map.html | ⬜ offen | Opus xhigh; Canvas unantastbar; Nav-Sidebar hier |
 | 8 create/upload/npc-sheet/radio | ⬜ offen | |
@@ -852,6 +852,160 @@ keine Alt-Token/Inline-Magic mehr in Stats/Skills/Inv + buildControlsHtml-Eigens
 Section bewusst noch Alt-Inline → 5b-3). **Offen:** manueller Browser-Durchklick (kein Browser/Supabase-
 Char in der Session) — Tab-Wechsel, 2-Spalten-Grid @≥1100px, Role+Buffs volle Breite, alle Mehr-
 Controls + Cash-Dublette funktional; Rollen-Specialty-Innenleben + NPC-Quick-Feinschliff = **5b-3**.
+
+### Phase 5b-3 — Rollen-Specialty-UIs + NPC-Quick + Modal-Final-Verify ✅ — Modal komplett
+**Geändert (nur 2 Dateien):** `public/assets/css/dm.css` (8 neue additive, modal-scopte Klassen
++ NPC-Quick-Box/-Head + `.npc-dmg-preview` Token-Migration; Braces **533/533**; keine `*/`-Glob-Falle),
+`public/dm.html` (`buildRoleAbilityDataSection` 5 Rollen-Templates + NPC-Quick-Markup; Cache-Bust
+`?v=8`→`?v=9`). **Nur CSS + Markup/Inline-Token-Swaps — `setupRoleAbilityDataControls` + NPC-Quick-
+Handler (IDs/`data-*`/Events/Berechnungen: Allokations-Cap, Loyalty, Lawman-Query, HP-Patch)
+unverändert.**
+
+**Gemeinsame Specialty-Card-Sprache (Konzept §5)** — alle 5 Rollen lesen jetzt als eine Familie,
+gleiches Skelett, Body je Archetyp; Cap/Count-Badge **rechts im Head** (folgt §5-Mockups, statt
+§5-Prosa „Footer"):
+- **Allokation (Medtech/Tech):** Head `.ctrl-spec-head` + `.ctrl-spec-badge` `Σ {used} / {cap}`;
+  `used` = Summe der **gespeicherten** Punkte am Render-Zeitpunkt (User-Entscheid: **statisch**,
+  kein Live-Listener → strikt „null Funktionsänderung", wie der Exec-Zähler). Cap Medtech `rank`,
+  Tech `rank*2`. Inline `max-width:65px` → `.ctrl-input--num` (3 bzw. 4 Inputs); Speichern → `.ctrl-btn--sm`
+  im rechtsbündigen `.ctrl-spec-foot`. `max="5"`/`max="${rank}"` bleiben.
+- **Sammlung (Nomad/Exec):** Nomad-Pool als `.ctrl-chip-list`/`.ctrl-chip` (Inline-Pool-Zeile raus),
+  leerer Pool → `.ctrl-hint`; Badge `pool/available`. Exec-Member als `.ctrl-spec-list`/`.ctrl-spec-row`
+  (`[Name] · [Loyalty]`), Count-Badge `{n} / {maxM}` im Head; Loyalty-Input → `.ctrl-input--num`;
+  alle Hinweistexte → `.ctrl-hint`; Add-Buttons → `.ctrl-btn--sm`.
+- **Query (Lawman):** Button → `.ctrl-btn--sm`; Result-Container → `.ctrl-result` (+ `:empty{display:none}`,
+  damit kein leerer Rahmen vor dem Klick); Handler füllt dasselbe `innerHTML`.
+
+**NPC-Quick-Modal angeglichen (§6/§7):** Inline-Styles raus → `#dmNpcQuickTotal` `.ctrl-readout`
+(Farbe `--text-head`→`--text-main`, Schrift `--font-display` bleibt), `#dmNpcQuickSp` `.ctrl-input--num`,
+Action-Row → `.ctrl-spec-foot`, Cancel → `.ctrl-btn--sm`, Apply Inline `color:var(--red)` →
+`.ctrl-btn-red .ctrl-btn--sm` (System-Rot-Variante). Box/Head Token-Migration (`--bg-card`→`--bg-panel`,
+`--border`→`--border-dark`, Head jetzt cyan/uppercase/`--tracking`/`--fs-xs`, Spacing `--sp-*`).
+
+**Neue CSS-Klassen (8):** `.ctrl-spec-head`, `.ctrl-spec-badge`, `.ctrl-spec-list`, `.ctrl-spec-row`,
+`.ctrl-chip-list`, `.ctrl-chip`, `.ctrl-spec-foot`, `.ctrl-result` (+ `.ctrl-readout`). Globales
+`.ctrl-section(-head)`/`.ctrl-row`/`.ctrl-label`/`.ctrl-input`/`.ctrl-select`/`.ctrl-btn` **unangetastet**.
+
+**Modal-Final-Verify:** Heads aller Kontroll-Modal-Sektionen = `.ctrl-section-head` (cyan HUD);
+Modal-Buttons sm; Karten echte Border/kein clip; msg/result einheitlich. Verbliebene Inline-Overrides
+gehören durchweg zu **out-of-scope-Subsystemen** (Combat-Setup/Timer/Room/Combat-Session/Items = 5c,
+Injury-Picker) — bewusst **nicht** angefasst.
+**Verifiziert:** dm.css Braces 533/533, kein `*/`-Glob; alle 4 Inline-Script-Blöcke `node --check`
+sauber (großer 132K-Block OK); alle Rollen-IDs (`ctrlMed*`/`ctrlTechSpec_*`/`ctrlNomad*`/`ctrlExec*`/
+`ctrlLawman*`) + NPC-Quick-IDs erhalten; `git status` = nur `dm.html`+`dm.css`. **Offen:** manueller
+Browser-Durchklick je Rollentyp (kein Browser/Supabase-Char in der Session). **→ Kontroll-Modal damit
+KOMPLETT (5b fertig).**
+
+---
+
+## Phase 5c — dm.html: Combat-Tracker + Timer + Items + Raum ✅
+**Geändert (nur 2 Dateien + LOG):** `public/assets/css/dm.css` (4 Subsystem-Zonen Tokens→HUD +
+neue/dedizierte Klassen; Braces **576/576**, Kommentare **115/115**; keine `*/`-Glob-Falle),
+`public/dm.html` (Markup-/Render-Inline-Bereinigung in den 4 Subsystemen + 1 Timer-Pause-Label-Zeile;
+Cache-Bust `?v=9`→`?v=10`). **Nur CSS + Markup/Inline-Token-Swaps — keine JS-Logik/IDs/`data-*`/Events/
+Handler/Berechnungen** (Ausnahme: Pause-Button-Label `textContent`→`innerHTML` für den Icon-Swap,
+Zustandslogik identisch — dokumentiertes Emoji→SVG-Muster).
+
+**User-Entscheidungen (2026-06-09):** (1) Raum-Vollansicht-Overlay (#dmRoomOverlay) **mitgenommen**
+(dedizierte `.dm-room-overlay-*`); (2) Timer-Buttons **auf SVG-Icons** (ic-play/ic-pause/ic-stop).
+
+**A) Combat-Setup-Panel + Initiative:** `.combat-setup-*`/`.combat-init-*` Tokens→HUD (Spalten-Heads
+jetzt cyan); neue Klassen `.combat-name-row`, `.combat-setup-head--temp`, `.combat-setup-group`
+(group_color als Daten inline erhalten), `.combat-init-name`. `#combatStartBtn`→`.combat-start-btn`
+(Button-System lg44 primary, `margin-left:auto`); `#npcCombatHp`/Init-Input→`.ctrl-input--num`;
+`+`/Roll-Init→`.ctrl-btn--icon`. **`.ctrl-row` Zeile 66 bleibt FLEX** (label-los). Inline raus
+(54/55/65/66/68/80 + Render 3054/3055/1182/1193).
+
+**B) Combat-Bars:** `.combat-bar`-Block + `.combat-npc-hp-*` Tokens→HUD; Combat-Bar bekommt
+**echte Border + box-shadow (kein clip, Gotcha #2)** mit rotem Combat-Akzent. `cbt-Buttons`:
+Next→`.ctrl-btn--sm`, ⚙→`.ctrl-btn--icon`, ✕Ende→`ctrl-btn-red .ctrl-btn--sm`; **Inline-font-size
+entfernt** (2955/2956 + 2947). `combat-char-hp` Live-Farbe (hpColor) **in-place** (Gotcha #4).
+
+**C) Session-Timer:** Bar+Modal Tokens→HUD (Audiowide bleibt — Phase 11). **`.timer-progress-wrap`/
+`.timer-progress-fill` neu definiert** (waren undefiniert = unsichtbarer Balken; `style.width` bleibt
+JS-getrieben, Gotcha #4). Modal-Inline→Klassen (`.dm-modal-box--narrow`, `.timer-modal-body`,
+`.timer-num`, repurposed `.timer-ctrl-row`, `.dm-bar-btn`). `.timer-quick-btn` auf Preset-Chip-Rezeptur
+(cyan-Ghost, wie `.buff-preset-btn`). **SVG-Icons:** Start→ic-play, Stop+Bar-Stop→ic-stop, Pause→
+ic-pause/ic-play (Label-Zeile `updateDmTimer` `textContent`→`innerHTML`); 🔄 „Neu starten" + ⚙ Bar
+behalten Glyph (kein Media-Icon-Äquivalent). **Dead Legacy entfernt:** `.dm-timer-section`/
+`.dm-timer-config` (nirgends referenziert). Timer-Logik (Start/Pause/Stop/Restart/tick/saveTimer)
+unverändert.
+
+**D) Items-Modal:** komplett inline-gestyltes Overlay → dedizierte `.dm-items-*`-Klassen + Tokens
+(Overlay z-3000/top-aligned exakt erhalten, `[hidden]`-Pattern). Such-/Filter-Selects auf `.ctrl-input`/
+`.ctrl-select`+Modifier, Close→`.dm-modal-close`, Ammo-Strip→`.dm-items-ammo*`, `btn btn-primary`
+Geben→`.ctrl-btn .ctrl-btn--sm`, Grid→`.dm-items-grid`. `renderDmItemsGrid`-Karten→`.dm-item-*`;
+**Grant-JS-Feedback (textContent/style.background) unverändert**. `.item-search-*` (Kontroll-Modal-
+Item-Suche) + `.npc-result`/`.npc-roll-*`/`.npc-crit-hint` (NPC-Angriffswurf, aus 5b-3 verschoben)
+Tokens→HUD.
+
+**E) Raum/Umgebung:** Leiste Rest-Inline raus (⛶→`.ctrl-btn--icon .dm-room-expand-btn`, ↵→
+`.ctrl-btn--icon`, +Legen→`.ctrl-btn--sm`, Raum-leeren→`.dm-room-clear`). Raum-Overlay → dedizierte
+`.dm-room-overlay-*` (Tokens, echte Border, `[hidden]`-Pattern); `renderRoomOverlay`-Reihen-Inline
+entfernt (stützt sich auf gestyltes `.dm-room-item-row`). Injury-Picker (`showInjuryPicker`/
+`showInjuryResult` in `#ctrlInjMsg`) → `.ctrl-inj-pick*`/`.ctrl-inj-result*` (Tokens, Buttons aufs
+System). Empty-States → `.dm-tab-empty`. Alle Pickup-/Clear-/Expand-/Injury-Handler + IDs unverändert.
+
+**Verifiziert:** dm.css Braces 576/576 + Kommentare 115/115 (kein `*/`-Glob); alle 4 Inline-Script-
+Blöcke `node --check` sauber; `git status` = nur `dm.html`+`dm.css`+LOG; **43 neue CSS-Klassen alle
+definiert + im Markup genutzt**; alle 5c-JS-Hook-IDs (combat/cbt/dmTimer/dmBar/timer/dmItems/dmAmmo/
+dmRoom/inj) exakt 1× erhalten; `data-*` (cbt-checks/grant/del-room/quick-sec) intakt; ic-play/ic-pause/
+ic-stop resolven im Sprite; keine Alt-Tokens/Inline-Magic mehr in den 5c-Zonen (Reste nur in
+out-of-scope pin/dice/3D-overlay/notes-box/dead-npc-card/@800-sidebar/`.bm-*` = 5d). **Offen:**
+manueller Browser-Durchklick (kein Browser/Supabase-Char in der Session): Combat Setup→Start→Next→⚙→
+Ende + Bars/Order/Remove/NPC-HP±; Timer Start/Pause/Fortsetzen/Stop/Neu starten + Bar + Progress;
+Items Suche/Filter/Char/Geben/Ammo; Raum Legen/Leeren/⛶-Overlay/Live-Sync; Injury Head/Body/Reroll/
+Apply/Back/Cancel. **→ Nur noch 5d Schwarzmarkt offen für dm.html.**
+
+---
+
+## Phase 5d — dm.html: Schwarzmarkt (Reskin + Relayout) ✅ — dm.html KOMPLETT
+**Geändert (nur 2 Dateien + LOG):** `public/assets/css/dm.css` (`.bm-*`-Block ~1087–1272 komplett
+auf HUD-Tokens; Braces **576/576**, Kommentare **118/118** — +3 Kommentar-Paare, keine `*/`-Glob-Falle),
+`public/dm.html` (5 reine Markup-Zeilen im Schwarzmarkt-Panel + Cache-Bust `?v=10`→`?v=11`).
+**Null `<script>`-Edit** — Daten/Events/IDs/Inline-onclick/`blackmarket_state`-Realtime/Supabase
+byte-identisch. Schwarzmarkt bleibt **rot/illegal** (MASTER-Farblogik); Inputs neutral-cyan
+(dm-Präzedenz wie Combat-Setup). Schrift Audiowide bleibt (Phase 11).
+
+**User-Entscheidung (2026-06-10):** Header 🚪→`ic-blackmarket` (matcht Nav-Trigger), Close-All
+🔒→`ic-lock`. Öffnen-Button behält 🚪 (sein `textContent` wird von `bmActivate` neu geschrieben →
+SVG würde zerstört), 📤 ohne Icon-Äquivalent, Hebel-Status 🔓/🔒 JS-generiert → bleiben Emoji.
+
+**A) Panel-Chrome:** `.bm-dm-panel` → `--bg-panel`, Border `--red-soft`, `--radius`, **echte Border
++ `box-shadow:var(--glow-red-m)` (kein clip, Gotcha #2** — wie `.combat-bar`); Padding `--sp-5`.
+`.bm-dm-header` → `--neon-red`, Unterkante `--border-dark` + roter Drop-Shadow (gespiegelt von
+`.dm-modal-header`), `--sp`-Rhythmus, `.ic`-Sizing für das neue Header-SVG; Close = `.dm-modal-close`
+unangetastet. `.bm-step(-title/-sub)` Token-Migration (Divider `--border-dark`, `--fs-xs`, `--tracking`).
+
+**B) Step 1 (Spieler/Tür):** `.bm-player-check` = Chip (`--border-dark`/`--radius`/`--sp`); Hover/
+`.selected` → `--neon-red` + `--bg-panel-red` + `--text-main`. **Native Checkbox visuell entfernt**
+(`position:absolute;opacity:0` — MASTER: native Inputs = Bugs); `<input>` bleibt im DOM (label-
+gewrappt) → `bmTogglePlayer(this)`/`cb.checked`/`cb.closest('.bm-player-check')` unberührt, roter
+Chip = selected. `.bm-door-card` → **echte Border (kein clip)**, `.selected` `--neon-red` +
+`var(--glow-red-s)`; **Tür-`<img>` + Pfade (`door{1,2,3}_close.jpg`) UNANGETASTET**; Label Token.
+
+**C) Step 2/3 (Steuern/Angebot):** `.bm-lever`/`-wrap` Token (`--bg-panel-soft`/`--border-dark`,
+Thumb `--text-dim`; `.open` → `--neon-red`/roter Track; translateX-Mechanik unverändert). `.bm-input`
+spiegelt `.ctrl-input` (`--bg-panel-soft`/`--border-dark`/`--radius`/`--sp`, Focus `--neon-cyan` +
+`--glow-cyan-s`), bleibt aber Full-Width-stacked (eigene Klasse). Aktions-Buttons **aufs Button-
+System gefaltet** via Markup `class="ctrl-btn ctrl-btn-red bm-action-btn"` (Öffnen/📤) — CSS hält nur
+noch `width:100%`+`margin`.
+
+**D) Step 4/Schließen:** `.bm-status-row`/`.bm-status-badge` Token (waiting `--text-dim`, accepted
+`--success-green`, declined `--neon-red`, neg `--warning-yellow`) — re-rendert in-place via
+`bmRefreshStatus`-innerHTML (Gotcha #4), Klassen only. `.bm-neg-accept/-decline-btn` bleiben kompakte
+Inline-Pills (liegen in JS-Template-Strings → **JS nicht angefasst**), nur Token-Migration in CSS
+(grün/rot). `.bm-close-all-btn` = `ctrl-btn ctrl-btn-red` (rot/combat) + `ic-lock`, Full-Width via CSS.
+
+**Verifiziert:** dm.css Braces 576/576 + Kommentare 118/118 (kein `*/`-Glob); BM-`<script>`-Block
+(3458–3698) `node --check` sauber; alle 12 `bm*`-Funktionen + alle 6 statischen Inline-onclick
+(`bmSelectDoor(1/2/3)`/`bmActivate`/`bmSendOffer`/`bmCloseAll`) + alle 15 `bm*`-IDs + 3 Tür-Bildpfade
+erhalten; keine Alt-Literale (`#0d0d0d`/`#222`/`#555`/`#1a0000`/`rgba(255,45,45…)`/`8px`/`6px`/`4px`/
+`var(--red/border/bg-input)`) mehr im `.bm-*`-Block; `git status` = nur `dm.html`+`dm.css`+LOG.
+**Offen:** manueller Browser-Durchklick (kein Browser/Supabase-Char in der Session): Schwarzmarkt
+öffnen → Spieler(roter Chip)+Tür(roter Glow, Bild intakt) wählen → Öffnen → Hebel auf/zu → Item+Preis
+→ Angebot senden → Status-Badges (+ neg Ann./Abl.) → schließen; **Realtime** (Player accept/decline/
+negotiate → DM-Status-Row in-place). **→ dm.html (Phase 5) damit KOMPLETT.**
 
 ## Offene Punkte / To-do bis Ende
 - **Phase 5–10** wie Status-Tabelle.

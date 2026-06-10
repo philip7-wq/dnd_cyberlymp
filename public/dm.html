@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
   <link rel="stylesheet" href="assets/css/cyber-components.css">
   <link rel="stylesheet" href="assets/css/base.css?v=2">
-  <link rel="stylesheet" href="assets/css/dm.css?v=8">
+  <link rel="stylesheet" href="assets/css/dm.css?v=11">
   <link rel="stylesheet" href="assets/css/agent.css">
   <link rel="stylesheet" href="assets/css/sound.css">
   <link rel="stylesheet" href="assets/css/radio.css?v=4">
@@ -51,8 +51,8 @@
 
 <!-- Combat Setup Panel (collapsible) -->
 <div class="combat-setup-panel" id="combatSetupPanel" style="display:none">
-  <div style="padding:.4rem 1rem .2rem;display:flex;gap:.5rem;align-items:center">
-    <input id="combatNameInput" class="ctrl-input" placeholder="Kampf-Name (optional, z.B. 'Dachverfolgung')" style="flex:1;font-size:.75rem">
+  <div class="combat-name-row">
+    <input id="combatNameInput" class="ctrl-input" placeholder="Kampf-Name (optional, z.B. 'Dachverfolgung')">
   </div>
   <div class="combat-setup-cols">
     <div>
@@ -62,11 +62,11 @@
     <div>
       <div class="combat-setup-head">NPCs</div>
       <div id="combatNpcDbList"></div>
-      <div class="combat-setup-head" style="margin-top:.5rem;font-size:.58rem;opacity:.7">Temporär (nicht gespeichert)</div>
-      <div class="ctrl-row" style="margin-bottom:.35rem">
+      <div class="combat-setup-head combat-setup-head--temp">Temporär (nicht gespeichert)</div>
+      <div class="ctrl-row">
         <input class="ctrl-input" id="npcCombatName" placeholder="Name">
-        <input class="ctrl-input" id="npcCombatHp" placeholder="HP" type="number" style="max-width:60px">
-        <button class="ctrl-btn" id="npcCombatAddBtn">+</button>
+        <input class="ctrl-input ctrl-input--num" id="npcCombatHp" placeholder="HP" type="number">
+        <button class="ctrl-btn ctrl-btn--icon" id="npcCombatAddBtn">+</button>
       </div>
       <div id="combatNpcList"></div>
     </div>
@@ -77,7 +77,7 @@
   </div>
   <div class="combat-setup-footer">
     <button class="ctrl-btn ctrl-btn-red" id="combatCancelSetup">Abbrechen</button>
-    <button class="ctrl-btn" id="combatStartBtn" style="color:var(--cyan);font-size:1rem;padding:.65rem 1.75rem;font-weight:700;margin-left:auto">▶ Kampf starten</button>
+    <button class="ctrl-btn combat-start-btn" id="combatStartBtn">▶ Kampf starten</button>
   </div>
 </div>
 
@@ -85,25 +85,25 @@
 <div id="dmTimerBar" class="dm-timer-bar" style="display:none">
   <span class="dm-timer-bar-label" id="dmBarLabel">Timer</span>
   <span class="dm-timer-bar-countdown" id="dmBarCountdown">0:00</span>
-  <div class="timer-progress-wrap" style="flex:1;height:5px">
-    <div class="timer-progress-fill" id="dmBarFill" style="width:100%"></div>
+  <div class="timer-progress-wrap">
+    <div class="timer-progress-fill" id="dmBarFill"></div>
   </div>
-  <button type="button" class="ctrl-btn" id="dmBarOpenBtn" style="font-size:.65rem;flex-shrink:0">⚙</button>
-  <button type="button" class="ctrl-btn ctrl-btn-red" id="dmBarStopBtn" style="font-size:.65rem;flex-shrink:0">⏹ Stop</button>
+  <button type="button" class="ctrl-btn ctrl-btn--icon dm-bar-btn" id="dmBarOpenBtn">⚙</button>
+  <button type="button" class="ctrl-btn ctrl-btn-red ctrl-btn--sm dm-bar-btn" id="dmBarStopBtn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-stop"/></svg> Stop</button>
 </div>
 
 <!-- DM Timer Modal -->
 <div id="dmTimerModal" class="dm-modal-overlay" hidden>
-  <div class="dm-modal-box" style="max-width:340px;width:96vw">
+  <div class="dm-modal-box dm-modal-box--narrow">
     <div class="dm-modal-header">
       <span><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-timer"/></svg> TIMER</span>
       <button class="dm-modal-close" id="dmTimerModalClose">✕</button>
     </div>
-    <div style="padding:1rem;display:flex;flex-direction:column;gap:.6rem">
+    <div class="timer-modal-body">
       <input id="dmTimerLabel" class="ctrl-input" placeholder="Label (z.B. Bomben-Timer)" value="Timer" maxlength="40">
       <div class="timer-time-row">
-        <input type="number" id="dmTimerMin" class="ctrl-input" min="0" max="99" value="1" style="width:60px;text-align:center"> min
-        <input type="number" id="dmTimerSec" class="ctrl-input" min="0" max="59" value="0" style="width:60px;text-align:center"> sek
+        <input type="number" id="dmTimerMin" class="ctrl-input timer-num" min="0" max="99" value="1"> min
+        <input type="number" id="dmTimerSec" class="ctrl-input timer-num" min="0" max="59" value="0"> sek
       </div>
       <div class="timer-quick-btns">
         <button type="button" class="timer-quick-btn" data-sec="10">10s</button>
@@ -114,21 +114,21 @@
       </div>
       <div class="timer-warning-row">
         Warnung bei
-        <input type="number" id="dmTimerWarn" class="ctrl-input" min="3" max="300" value="10" style="width:60px;text-align:center"> sek
+        <input type="number" id="dmTimerWarn" class="ctrl-input timer-num" min="3" max="300" value="10"> sek
       </div>
-      <div style="display:flex;gap:.4rem;margin-top:.25rem">
-        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerStartBtn" style="flex:1">▶ Starten</button>
-        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerPauseBtn" disabled style="flex:1">⏸ Pause</button>
+      <div class="timer-ctrl-row">
+        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerStartBtn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-play"/></svg> Starten</button>
+        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerPauseBtn" disabled><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-pause"/></svg> Pause</button>
       </div>
-      <div style="display:flex;gap:.4rem">
-        <button type="button" class="ctrl-btn ctrl-btn-red timer-ctrl-btn" id="timerStopBtn" disabled style="flex:1">⏹ Stoppen</button>
-        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerRestartBtn" disabled style="flex:1">🔄 Neu starten</button>
+      <div class="timer-ctrl-row">
+        <button type="button" class="ctrl-btn ctrl-btn-red timer-ctrl-btn" id="timerStopBtn" disabled><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-stop"/></svg> Stoppen</button>
+        <button type="button" class="ctrl-btn timer-ctrl-btn" id="timerRestartBtn" disabled>🔄 Neu starten</button>
       </div>
       <div id="dmTimerPreview" class="dm-timer-preview" style="display:none">
         <span class="timer-preview-label" id="dmPreviewLabel">Timer</span>
         <span class="timer-preview-countdown" id="dmPreviewCountdown">0:00</span>
-        <div class="timer-progress-wrap" style="flex:1;height:5px">
-          <div class="timer-progress-fill" id="dmPreviewFill" style="width:100%"></div>
+        <div class="timer-progress-wrap">
+          <div class="timer-progress-fill" id="dmPreviewFill"></div>
         </div>
       </div>
     </div>
@@ -193,21 +193,21 @@
       <div class="dm-room-header" id="dmRoomToggle">
         <span>📦 RAUM / UMGEBUNG</span>
         <span id="dmRoomCount" class="dm-room-count"></span>
-        <button class="ctrl-btn" id="dmRoomExpandBtn" style="margin-left:auto;font-size:.6rem;padding:.15rem .45rem" title="Vollansicht">⛶</button>
+        <button class="ctrl-btn ctrl-btn--icon dm-room-expand-btn" id="dmRoomExpandBtn" title="Vollansicht">⛶</button>
         <span class="dm-room-chevron" id="dmRoomChevron">▲</span>
       </div>
       <div id="dmRoomBody" class="dm-room-body">
         <div class="dm-room-inputs">
-          <input id="dmRoomDesc" class="ctrl-input" placeholder="Raum-Beschreibung" style="flex:1;font-size:.7rem" maxlength="60">
-          <button class="ctrl-btn" id="dmRoomDescSet" style="font-size:.65rem">↵</button>
+          <input id="dmRoomDesc" class="ctrl-input" placeholder="Raum-Beschreibung" maxlength="60">
+          <button class="ctrl-btn ctrl-btn--icon" id="dmRoomDescSet">↵</button>
         </div>
         <div class="dm-room-inputs">
-          <input id="dmRoomItemSearch" class="ctrl-input" placeholder="Item suchen oder Name eingeben" style="flex:1;font-size:.72rem">
-          <button class="ctrl-btn" id="dmRoomItemAdd" style="font-size:.65rem">+ Legen</button>
+          <input id="dmRoomItemSearch" class="ctrl-input" placeholder="Item suchen oder Name eingeben">
+          <button class="ctrl-btn ctrl-btn--sm" id="dmRoomItemAdd">+ Legen</button>
         </div>
         <div id="dmRoomItemResults" class="dm-room-results"></div>
         <div id="dmRoomItemList" class="dm-room-list"></div>
-        <button class="ctrl-btn ctrl-btn-red" id="dmRoomClear" style="width:100%;font-size:.65rem;margin-top:.25rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-roomempty"/></svg> Raum leeren</button>
+        <button class="ctrl-btn ctrl-btn-red dm-room-clear" id="dmRoomClear"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-roomempty"/></svg> Raum leeren</button>
       </div>
     </div>
 
@@ -238,16 +238,16 @@
   </div>
 </div>
 <!-- Room Expand Overlay -->
-<div id="dmRoomOverlay" hidden style="position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center">
-  <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:8px;width:480px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column">
-    <div style="display:flex;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--border);gap:.5rem">
-      <span style="font-family:Audiowide,sans-serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)">📦 RAUM / UMGEBUNG</span>
-      <span id="dmRoomOverlayDesc" style="font-size:.7rem;color:var(--text-muted);flex:1"></span>
-      <button id="dmRoomOverlayClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;margin-left:auto">✕</button>
+<div id="dmRoomOverlay" class="dm-room-overlay" hidden>
+  <div class="dm-room-overlay-box">
+    <div class="dm-room-overlay-head">
+      <span class="dm-room-overlay-title">📦 RAUM / UMGEBUNG</span>
+      <span id="dmRoomOverlayDesc" class="dm-room-overlay-desc"></span>
+      <button id="dmRoomOverlayClose" class="dm-modal-close" style="margin-left:auto">✕</button>
     </div>
-    <div id="dmRoomOverlayList" style="overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.4rem;flex:1"></div>
-    <div style="padding:.5rem 1rem;border-top:1px solid var(--border)">
-      <button class="ctrl-btn ctrl-btn-red" id="dmRoomOverlayClear" style="width:100%;font-size:.72rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-roomempty"/></svg> Raum leeren</button>
+    <div id="dmRoomOverlayList" class="dm-room-overlay-list"></div>
+    <div class="dm-room-overlay-foot">
+      <button class="ctrl-btn ctrl-btn-red dm-room-clear" id="dmRoomOverlayClear"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-roomempty"/></svg> Raum leeren</button>
     </div>
   </div>
 </div>
@@ -321,52 +321,52 @@
 <div class="dm-npc-quick-overlay" id="dmNpcQuickOverlay" hidden>
   <div class="dm-npc-quick-box">
     <div class="dm-npc-quick-head">NPC SCHADEN ANWENDEN</div>
-    <div class="ctrl-row" style="margin-bottom:.5rem">
+    <div class="ctrl-row">
       <span class="ctrl-label">Ziel</span>
       <select class="ctrl-select" id="dmNpcQuickTarget"></select>
     </div>
     <div class="ctrl-row">
       <span class="ctrl-label">Schaden</span>
-      <span id="dmNpcQuickTotal" style="font-family:var(--font-display);font-size:1.2rem;color:var(--text-head);min-width:3ch"></span>
+      <span class="ctrl-readout" id="dmNpcQuickTotal"></span>
     </div>
     <div class="ctrl-row">
       <span class="ctrl-label">Armor SP</span>
-      <input type="number" class="ctrl-input" id="dmNpcQuickSp" value="0" min="0" style="max-width:70px">
+      <input type="number" class="ctrl-input ctrl-input--num" id="dmNpcQuickSp" value="0" min="0">
     </div>
     <div class="npc-dmg-preview" id="dmNpcQuickPreview"></div>
-    <div class="ctrl-row" style="margin-top:.75rem;justify-content:flex-end;gap:.4rem">
-      <button class="ctrl-btn" id="dmNpcQuickCancel">Abbrechen</button>
-      <button class="ctrl-btn" id="dmNpcQuickApply" style="color:var(--red)">Schaden anwenden</button>
+    <div class="ctrl-spec-foot">
+      <button class="ctrl-btn ctrl-btn--sm" id="dmNpcQuickCancel">Abbrechen</button>
+      <button class="ctrl-btn ctrl-btn-red ctrl-btn--sm" id="dmNpcQuickApply">Schaden anwenden</button>
     </div>
     <div class="ctrl-msg" id="dmNpcQuickMsg"></div>
   </div>
 </div>
 
 <!-- DM Items Modal -->
-<div id="dmItemsModal" hidden style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.8);display:none;align-items:flex-start;justify-content:center;padding-top:3rem">
-  <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:8px;width:92%;max-width:700px;max-height:85vh;display:flex;flex-direction:column">
-    <div style="display:flex;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--border);gap:.5rem">
-      <span style="font-family:Audiowide,sans-serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-items"/></svg> Items</span>
-      <input id="dmItemsSearch" class="ctrl-input" placeholder="Suchen…" style="flex:1;max-width:200px" autocomplete="off">
-      <select id="dmItemsCatFilter" class="ctrl-select" style="max-width:160px;font-size:.72rem"></select>
-      <select id="dmItemsCharTarget" class="ctrl-select" style="max-width:160px;font-size:.72rem"></select>
-      <button id="dmItemsClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;margin-left:auto">✕</button>
+<div id="dmItemsModal" class="dm-items-overlay" hidden>
+  <div class="dm-items-box">
+    <div class="dm-items-header">
+      <span class="dm-items-title"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-items"/></svg> Items</span>
+      <input id="dmItemsSearch" class="ctrl-input dm-items-search" placeholder="Suchen…" autocomplete="off">
+      <select id="dmItemsCatFilter" class="ctrl-select dm-items-select"></select>
+      <select id="dmItemsCharTarget" class="ctrl-select dm-items-select"></select>
+      <button id="dmItemsClose" class="dm-modal-close" style="margin-left:auto">✕</button>
     </div>
     <!-- Ammo geben Sektion -->
-    <div style="padding:.5rem 1rem;border-top:1px solid var(--border);background:rgba(0,229,255,.04);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-      <span style="font-size:.68rem;color:var(--cyan);font-family:Audiowide,sans-serif;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0">🎯 Ammo geben</span>
-      <select id="dmAmmoCharSel" class="ctrl-select" style="font-size:.72rem;max-width:140px"></select>
-      <select id="dmAmmoTypeSel" class="ctrl-select" style="font-size:.72rem">
+    <div class="dm-items-ammo">
+      <span class="dm-items-ammo-label">🎯 Ammo geben</span>
+      <select id="dmAmmoCharSel" class="ctrl-select dm-items-ammo-sel"></select>
+      <select id="dmAmmoTypeSel" class="ctrl-select dm-items-ammo-sel">
         <option value="pistol">Pistol</option>
         <option value="rifle">Rifle</option>
         <option value="shotgun">Shotgun</option>
         <option value="arrow">Arrow</option>
       </select>
-      <input type="number" id="dmAmmoQty" class="ctrl-input" value="30" min="1" max="999" style="width:60px;font-size:.78rem">
-      <span style="font-size:.68rem;color:var(--text-muted)">Schuss</span>
-      <button id="dmAmmoGiveBtn" class="btn btn-primary" style="font-size:.72rem;padding:.25rem .65rem">Geben</button>
+      <input type="number" id="dmAmmoQty" class="ctrl-input ctrl-input--num" value="30" min="1" max="999">
+      <span class="ctrl-hint">Schuss</span>
+      <button id="dmAmmoGiveBtn" class="ctrl-btn ctrl-btn--sm">Geben</button>
     </div>
-    <div id="dmItemsGrid" style="overflow-y:auto;padding:.75rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.4rem;flex:1"></div>
+    <div id="dmItemsGrid" class="dm-items-grid"></div>
   </div>
 </div>
 
@@ -1179,7 +1179,7 @@ function renderCombatSetupNpcList() {
   const wrap = document.getElementById('combatNpcDbList');
   if (!wrap) return;
   if (!_npcs.length) {
-    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.72rem;margin-bottom:.3rem">Keine gespeicherten NPCs.</div>';
+    wrap.innerHTML = '<div class="dm-tab-empty">Keine gespeicherten NPCs.</div>';
     return;
   }
   // Nach Gruppe sortiert
@@ -1190,7 +1190,7 @@ function renderCombatSetupNpcList() {
     if (n.group_name !== lastGroup) {
       lastGroup = n.group_name;
       groupHeader = n.group_name
-        ? `<div style="font-size:.6rem;color:${n.group_color||'#FF2D2D'};letter-spacing:.1em;text-transform:uppercase;padding:.25rem 0 .1rem;font-family:Audiowide,sans-serif">${escapeHtml(n.group_name)}</div>`
+        ? `<div class="combat-setup-group" style="color:${n.group_color||'#FF2D2D'}">${escapeHtml(n.group_name)}</div>`
         : '';
     }
     return groupHeader + `<label class="combat-setup-check">
@@ -1431,7 +1431,7 @@ function renderDmRoomList() {
   const cnt = document.getElementById('dmRoomCount');
   if (cnt) cnt.textContent = _roomItems.length ? `${_roomItems.length} Item${_roomItems.length !== 1 ? 's' : ''}` : '';
   if (!el) return;
-  if (!_roomItems.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:.72rem;padding:.2rem 0">Leer.</div>'; return; }
+  if (!_roomItems.length) { el.innerHTML = '<div class="dm-tab-empty">Leer.</div>'; return; }
   el.innerHTML = _roomItems.map(buildRoomItemHtml).join('');
   el.querySelectorAll('[data-del-room]').forEach(btn => {
     btn.addEventListener('click', async () => { try { await removeRoomItem(btn.dataset.delRoom); } catch(e) { console.warn(e); } });
@@ -1447,10 +1447,10 @@ function renderRoomOverlay() {
   if (!ol) return;
   const desc = _roomItems[0]?.room_description || '';
   if (del) del.textContent = desc;
-  if (!_roomItems.length) { ol.innerHTML = '<div style="color:var(--text-muted);font-size:.8rem;padding:.5rem">Raum ist leer.</div>'; return; }
+  if (!_roomItems.length) { ol.innerHTML = '<div class="dm-tab-empty">Raum ist leer.</div>'; return; }
   ol.innerHTML = _roomItems.map(r => `
-    <div class="dm-room-item-row" style="padding:.45rem .6rem;font-size:.82rem">
-      <span class="dm-room-item-name" style="font-size:.82rem">${escapeHtml(r.item_name)}</span>
+    <div class="dm-room-item-row">
+      <span class="dm-room-item-name">${escapeHtml(r.item_name)}</span>
       ${r.placed_by && r.placed_by !== 'DM' ? `<span class="dm-room-item-by">von ${escapeHtml(r.placed_by)}</span>` : ''}
       <button class="dm-room-item-del" data-del-room="${r.id}" title="Entfernen">✕</button>
     </div>`).join('');
@@ -2180,30 +2180,32 @@ function buildRoleAbilityDataSection(c) {
 
   if (roleKey === 'medtech') {
     const sp = rad.specialtyPoints || { surgery:0, pharmaceuticals:0, cryosystem_operation:0 };
+    const medUsed = (sp.surgery||0) + (sp.pharmaceuticals||0) + (sp.cryosystem_operation||0);
     return `
       <div class="ctrl-section">
-        <div class="ctrl-section-head">Medtech Specialties (Total ≤ Rank ${rank})</div>
+        <div class="ctrl-section-head ctrl-spec-head"><span>Medtech — Specialties</span><span class="ctrl-spec-badge">Σ ${medUsed} / ${rank}</span></div>
         <div class="ctrl-row"><span class="ctrl-label">Surgery</span>
-          <input type="number" class="ctrl-input" id="ctrlMedSurgery" value="${sp.surgery||0}" min="0" style="max-width:65px"></div>
+          <input type="number" class="ctrl-input ctrl-input--num" id="ctrlMedSurgery" value="${sp.surgery||0}" min="0"></div>
         <div class="ctrl-row"><span class="ctrl-label">Pharma (max 5)</span>
-          <input type="number" class="ctrl-input" id="ctrlMedPharma" value="${sp.pharmaceuticals||0}" min="0" max="5" style="max-width:65px"></div>
+          <input type="number" class="ctrl-input ctrl-input--num" id="ctrlMedPharma" value="${sp.pharmaceuticals||0}" min="0" max="5"></div>
         <div class="ctrl-row"><span class="ctrl-label">Cryosystem (max 5)</span>
-          <input type="number" class="ctrl-input" id="ctrlMedCryo" value="${sp.cryosystem_operation||0}" min="0" max="5" style="max-width:65px"></div>
-        <button class="ctrl-btn" id="ctrlMedSpecSave">Speichern</button>
+          <input type="number" class="ctrl-input ctrl-input--num" id="ctrlMedCryo" value="${sp.cryosystem_operation||0}" min="0" max="5"></div>
+        <div class="ctrl-spec-foot"><button class="ctrl-btn ctrl-btn--sm" id="ctrlMedSpecSave">Speichern</button></div>
         <div class="ctrl-msg" id="ctrlMedSpecMsg"></div>
       </div>`;
   }
 
   if (roleKey === 'tech') {
     const sr = rad.specialtyRanks || { field:0, upgrade:0, fabrication:0, invention:0 };
+    const techUsed = (sr.field||0) + (sr.upgrade||0) + (sr.fabrication||0) + (sr.invention||0);
     return `
       <div class="ctrl-section">
-        <div class="ctrl-section-head">Tech Specialties (Total ≤ Rank × 2 = ${rank * 2})</div>
+        <div class="ctrl-section-head ctrl-spec-head"><span>Tech — Specialties</span><span class="ctrl-spec-badge">Σ ${techUsed} / ${rank * 2}</span></div>
         ${['field','upgrade','fabrication','invention'].map(s =>
           `<div class="ctrl-row"><span class="ctrl-label">${s.charAt(0).toUpperCase()+s.slice(1)}</span>
-           <input type="number" class="ctrl-input" id="ctrlTechSpec_${s}" value="${sr[s]||0}" min="0" max="${rank}" style="max-width:65px"></div>`
+           <input type="number" class="ctrl-input ctrl-input--num" id="ctrlTechSpec_${s}" value="${sr[s]||0}" min="0" max="${rank}"></div>`
         ).join('')}
-        <button class="ctrl-btn" id="ctrlTechSpecSave">Speichern</button>
+        <div class="ctrl-spec-foot"><button class="ctrl-btn ctrl-btn--sm" id="ctrlTechSpecSave">Speichern</button></div>
         <div class="ctrl-msg" id="ctrlTechSpecMsg"></div>
       </div>`;
   }
@@ -2213,15 +2215,16 @@ function buildRoleAbilityDataSection(c) {
     const motorpool = getRankBandDM(roleAbilities?.nomad?.family_motorpool, rank) || {};
     const available = motorpool.vehicles || (Array.isArray(motorpool) ? motorpool : []);
     const notInPool = available.filter(v => !pool.includes(v));
+    const poolBadge = available.length ? `${pool.length} / ${available.length}` : `${pool.length}`;
     return `
       <div class="ctrl-section">
-        <div class="ctrl-section-head">Nomad — Fahrzeugpool</div>
-        <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.35rem">Pool: ${pool.join(', ') || '—'}</div>
+        <div class="ctrl-section-head ctrl-spec-head"><span>Nomad — Fahrzeugpool</span><span class="ctrl-spec-badge">${poolBadge}</span></div>
+        ${pool.length ? `<div class="ctrl-chip-list">${pool.map(v => `<span class="ctrl-chip">${v}</span>`).join('')}</div>` : '<div class="ctrl-hint">Pool leer.</div>'}
         ${notInPool.length ? `
           <div class="ctrl-row">
             <select class="ctrl-select" id="ctrlNomadVehicle">${notInPool.map(v => `<option>${v}</option>`).join('')}</select>
-            <button class="ctrl-btn" id="ctrlNomadAddVehicle">+ Hinzufügen</button>
-          </div>` : '<div style="font-size:.72rem;color:var(--text-muted)">Alle Motorpool-Fahrzeuge bereits im Pool.</div>'}
+            <button class="ctrl-btn ctrl-btn--sm" id="ctrlNomadAddVehicle">+ Hinzufügen</button>
+          </div>` : '<div class="ctrl-hint">Alle Motorpool-Fahrzeuge bereits im Pool.</div>'}
         <div class="ctrl-msg" id="ctrlNomadMsg"></div>
       </div>`;
   }
@@ -2231,14 +2234,14 @@ function buildRoleAbilityDataSection(c) {
     const maxM = rank >= 9 ? 3 : rank >= 5 ? 2 : rank >= 3 ? 1 : 0;
     return `
       <div class="ctrl-section">
-        <div class="ctrl-section-head">Exec — Team Members (${members.length} / ${maxM})</div>
-        ${members.map(m => `<div style="font-size:.8rem;padding:.25rem 0">${m.name} · Loyalty ${m.loyalty ?? 5}</div>`).join('') || '<div style="font-size:.72rem;color:var(--text-muted)">Keine Mitglieder.</div>'}
+        <div class="ctrl-section-head ctrl-spec-head"><span>Exec — Team Members</span><span class="ctrl-spec-badge">${members.length} / ${maxM}</span></div>
+        ${members.length ? `<div class="ctrl-spec-list">${members.map(m => `<div class="ctrl-spec-row"><span>${m.name}</span><span>Loyalty ${m.loyalty ?? 5}</span></div>`).join('')}</div>` : '<div class="ctrl-hint">Keine Mitglieder.</div>'}
         ${members.length < maxM ? `
-          <div class="ctrl-row" style="margin-top:.4rem;flex-wrap:wrap;gap:.4rem">
-            <input type="text" class="ctrl-input" id="ctrlExecName" placeholder="Name" style="flex:1;min-width:80px">
-            <input type="number" class="ctrl-input" id="ctrlExecLoyalty" value="5" min="0" max="10" style="max-width:65px" title="Loyalty">
-            <button class="ctrl-btn" id="ctrlExecAddMember">+ Hinzufügen</button>
-          </div>` : `<div style="font-size:.72rem;color:var(--text-muted);margin-top:.35rem">Max. ${maxM} Mitglieder bei Rank ${rank}.</div>`}
+          <div class="ctrl-row">
+            <input type="text" class="ctrl-input" id="ctrlExecName" placeholder="Name">
+            <input type="number" class="ctrl-input ctrl-input--num" id="ctrlExecLoyalty" value="5" min="0" max="10" title="Loyalty">
+            <button class="ctrl-btn ctrl-btn--sm" id="ctrlExecAddMember">+ Hinzufügen</button>
+          </div>` : `<div class="ctrl-hint">Max. ${maxM} Mitglieder bei Rank ${rank}.</div>`}
         <div class="ctrl-msg" id="ctrlExecMsg"></div>
       </div>`;
   }
@@ -2246,9 +2249,9 @@ function buildRoleAbilityDataSection(c) {
   if (roleKey === 'lawman') {
     return `
       <div class="ctrl-section">
-        <div class="ctrl-section-head">Lawman — Backup Squad</div>
-        <button class="ctrl-btn" id="ctrlLawmanShowSquad">Squad für Rank ${rank} anzeigen</button>
-        <div id="ctrlLawmanSquadResult" style="margin-top:.4rem;font-size:.78rem"></div>
+        <div class="ctrl-section-head ctrl-spec-head"><span>Lawman — Backup Squad</span></div>
+        <button class="ctrl-btn ctrl-btn--sm" id="ctrlLawmanShowSquad">Squad für Rank ${rank} anzeigen</button>
+        <div class="ctrl-result" id="ctrlLawmanSquadResult"></div>
       </div>`;
   }
 
@@ -2614,10 +2617,12 @@ function showInjuryPicker() {
   // Phase 1: Head/Body
   const msg = document.getElementById('ctrlInjMsg');
   msg.innerHTML = `
-    <span style="color:var(--text)">Tabelle wählen: </span>
-    <button class="ctrl-btn" id="injPickHead" style="margin:0 .25rem">Head</button>
-    <button class="ctrl-btn" id="injPickBody" style="margin:0 .25rem">Body</button>
-    <button class="ctrl-btn" id="injPickCancel" style="color:var(--text-muted)">Abbrechen</button>
+    <div class="ctrl-inj-pick">
+      <span class="ctrl-inj-pick-label">Tabelle wählen:</span>
+      <button class="ctrl-btn ctrl-btn--sm" id="injPickHead">Head</button>
+      <button class="ctrl-btn ctrl-btn--sm" id="injPickBody">Body</button>
+      <button class="ctrl-btn ctrl-btn--sm ctrl-btn--ghost" id="injPickCancel">Abbrechen</button>
+    </div>
   `;
   document.getElementById('injPickHead').addEventListener('click', () => rollAndPick('head'));
   document.getElementById('injPickBody').addEventListener('click', () => rollAndPick('body'));
@@ -2635,15 +2640,15 @@ function rollAndPick(table) {
 function showInjuryResult(inj, rollVal, table) {
   const msg = document.getElementById('ctrlInjMsg');
   msg.innerHTML = `
-    <div style="background:rgba(255,45,45,.08);border:1px solid var(--red);border-radius:var(--radius);padding:.6rem .75rem;margin-top:.4rem">
-      <div style="font-family:var(--font-display);color:var(--red);font-size:.9rem">${inj.name}</div>
-      <div style="font-size:.65rem;color:var(--text-muted);margin:.2rem 0">${table.toUpperCase()} · 2d6 = ${rollVal}</div>
-      ${inj.effect ? `<div style="font-size:.75rem;color:var(--text);margin-top:.3rem">${inj.effect}</div>` : ''}
-      <div style="display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap">
-        <button class="ctrl-btn" id="injApplyBtn">Hinzufügen (−5 HP)</button>
-        <button class="ctrl-btn" id="injRerollBtn">Neu würfeln</button>
-        <button class="ctrl-btn" id="injBackBtn" style="color:var(--text-muted)">← Zurück</button>
-        <button class="ctrl-btn" id="injCancelBtn" style="color:var(--text-muted)">Abbrechen</button>
+    <div class="ctrl-inj-result">
+      <div class="ctrl-inj-result-name">${inj.name}</div>
+      <div class="ctrl-inj-result-meta">${table.toUpperCase()} · 2d6 = ${rollVal}</div>
+      ${inj.effect ? `<div class="ctrl-inj-result-effect">${inj.effect}</div>` : ''}
+      <div class="ctrl-inj-result-actions">
+        <button class="ctrl-btn ctrl-btn--sm" id="injApplyBtn">Hinzufügen (−5 HP)</button>
+        <button class="ctrl-btn ctrl-btn--sm" id="injRerollBtn">Neu würfeln</button>
+        <button class="ctrl-btn ctrl-btn--sm ctrl-btn--ghost" id="injBackBtn">← Zurück</button>
+        <button class="ctrl-btn ctrl-btn--sm ctrl-btn--ghost" id="injCancelBtn">Abbrechen</button>
       </div>
     </div>
   `;
@@ -2923,7 +2928,7 @@ function renderCombatOrder(session) {
           <span class="combat-npc-hp-val${isElim ? ' elim' : ''}">${isElim ? '💀' : `${c.hp}/${c.maxHp}`}</span>
           <button class="combat-npc-hp-btn" data-sid="${session.id}" data-ci="${i}" data-delta="1">+</button>
         </div>`
-      : `<span class="combat-char-hp" style="font-size:.68rem;color:${hpColor(c.hp, c.maxHp)}">${c.hp}/${c.maxHp}</span>`;
+      : `<span class="combat-char-hp" style="color:${hpColor(c.hp, c.maxHp)}">${c.hp}/${c.maxHp}</span>`;
     return `<div class="combat-turn-chip${i === idx ? ' active' : ''}${isElim ? ' npc-eliminated' : ''}">
       <span>${escapeHtml(c.name)}</span>
       <span class="combat-init">${c.initiative}</span>
@@ -2941,16 +2946,16 @@ function renderAllCombatBars() {
   container.innerHTML = sessions.map(session => `
     <div class="combat-bar" data-session-id="${session.id}" style="display:flex">
       <div class="combat-meta">
-        <span class="combat-label" style="font-size:.6rem">${escapeHtml(session.name || 'KAMPF')}</span>
+        <span class="combat-label">${escapeHtml(session.name || 'KAMPF')}</span>
         <span class="combat-round-num">R${session.round}</span>
       </div>
       <div class="combat-order" id="combatOrder-${session.id}">
         ${renderCombatOrder(session)}
       </div>
       <div class="combat-actions">
-        <button class="ctrl-btn cbt-next-btn" data-sid="${session.id}">Next →</button>
-        <button class="ctrl-btn cbt-setup-btn" data-sid="${session.id}" style="font-size:.65rem">⚙</button>
-        <button class="ctrl-btn ctrl-btn-red cbt-end-btn" data-sid="${session.id}" style="font-size:.65rem">✕ Ende</button>
+        <button class="ctrl-btn ctrl-btn--sm cbt-next-btn" data-sid="${session.id}">Next →</button>
+        <button class="ctrl-btn ctrl-btn--icon cbt-setup-btn" data-sid="${session.id}">⚙</button>
+        <button class="ctrl-btn ctrl-btn-red ctrl-btn--sm cbt-end-btn" data-sid="${session.id}">✕ Ende</button>
       </div>
     </div>`).join('');
 }
@@ -3048,10 +3053,10 @@ function renderSetupInitiativeList() {
   const wrap = document.getElementById('combatInitiativeList');
   wrap.innerHTML = setupCombatants.map((c, i) => `
     <div class="ctrl-row combat-init-row" data-si="${i}">
-      <span style="flex:1;font-size:.78rem">${c.name}</span>
-      <input type="number" class="ctrl-input" style="max-width:55px"
+      <span class="combat-init-name">${c.name}</span>
+      <input type="number" class="ctrl-input ctrl-input--num"
              value="${c.initiative || ''}" placeholder="Init" data-si="${i}">
-      ${!c.isNpc ? `<button class="ctrl-btn combat-roll-init" data-si="${i}" data-ref="${c.ref ?? 0}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>` : ''}
+      ${!c.isNpc ? `<button class="ctrl-btn ctrl-btn--icon combat-roll-init" data-si="${i}" data-ref="${c.ref ?? 0}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg></button>` : ''}
     </div>`).join('');
   wrap.querySelectorAll('input[type=number]').forEach(inp => {
     inp.addEventListener('input', () => {
@@ -3159,7 +3164,7 @@ function setupDmItemsModal() {
     if (ammoCharSel) ammoCharSel.innerHTML = charDropdownHtml;
     // Items lazy-laden
     if (!_dmItemsAllItems.length) {
-      grid.innerHTML = '<div style="color:var(--text-muted);font-size:.78rem;padding:1rem">Lade Items…</div>';
+      grid.innerHTML = '<div class="dm-tab-empty">Lade Items…</div>';
       try { _dmItemsAllItems = await getItems([]); } catch { _dmItemsAllItems = itemsCache; }
     }
     modal.hidden = false; modal.style.display = 'flex';
@@ -3218,13 +3223,13 @@ function renderDmItemsGrid() {
   let list = _dmItemsAllItems;
   if (_dmItemsActiveCat) list = list.filter(i => i.category === _dmItemsActiveCat);
   if (_dmItemsQuery)     list = list.filter(i => i.name.toLowerCase().includes(_dmItemsQuery));
-  if (!list.length) { grid.innerHTML = '<div style="color:var(--text-muted);font-size:.78rem">Keine Items gefunden.</div>'; return; }
+  if (!list.length) { grid.innerHTML = '<div class="dm-tab-empty">Keine Items gefunden.</div>'; return; }
   grid.innerHTML = list.slice(0, 120).map(item => `
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .65rem">
-      <div style="font-size:.78rem;color:var(--text-head);margin-bottom:.2rem">${escapeHtml(item.name)}</div>
-      <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:.35rem">${item.subcategory || item.category}</div>
-      ${item.price != null ? `<div style="font-size:.68rem;color:var(--cyan)">${item.price.toLocaleString('de-DE')} eb</div>` : ''}
-      <button data-grant-id="${item.id}" style="margin-top:.4rem;width:100%;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:3px;padding:.2rem;cursor:pointer;font-size:.68rem">🎁 Geben</button>
+    <div class="dm-item-card">
+      <div class="dm-item-name">${escapeHtml(item.name)}</div>
+      <div class="dm-item-cat">${item.subcategory || item.category}</div>
+      ${item.price != null ? `<div class="dm-item-price">${item.price.toLocaleString('de-DE')} eb</div>` : ''}
+      <button data-grant-id="${item.id}" class="dm-item-grant">🎁 Geben</button>
     </div>`).join('');
 }
 
@@ -3322,7 +3327,9 @@ function updateDmTimer(timerData) {
 
   if (preview) preview.style.display = 'flex';
   if (startBtn)   startBtn.disabled   = true;
-  if (pauseBtn) { pauseBtn.disabled   = false; pauseBtn.textContent = timerData.active ? '⏸ Pause' : '▶ Fortsetzen'; }
+  if (pauseBtn) { pauseBtn.disabled   = false; pauseBtn.innerHTML = timerData.active
+    ? '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-pause"/></svg> Pause'
+    : '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-play"/></svg> Fortsetzen'; }
   if (stopBtn)    stopBtn.disabled    = false;
   if (restartBtn) restartBtn.disabled = false;
   if (preview) document.getElementById('dmPreviewLabel').textContent = timerData.label || 'Timer';
@@ -3395,7 +3402,7 @@ window._bmPatchChar = (id, patch) => patchCharacter(id, patch);
 <div id="bmPanel" hidden style="position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.82);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:60px 1rem 2rem">
   <div class="bm-dm-panel">
     <div class="bm-dm-header">
-      <span>🚪 SCHWARZMARKT</span>
+      <span><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-blackmarket"/></svg> SCHWARZMARKT</span>
       <button class="dm-modal-close" id="bmPanelClose">✕</button>
     </div>
 
@@ -3419,7 +3426,7 @@ window._bmPatchChar = (id, patch) => patchCharacter(id, patch);
           <div class="bm-door-card-label">Tür 3</div>
         </div>
       </div>
-      <button class="bm-action-btn" id="bmActivateBtn" onclick="bmActivate()">🚪 Schwarzmarkt öffnen</button>
+      <button class="ctrl-btn ctrl-btn-red bm-action-btn" id="bmActivateBtn" onclick="bmActivate()">🚪 Schwarzmarkt öffnen</button>
     </section>
 
     <!-- Step 2: Lever per active player -->
@@ -3434,7 +3441,7 @@ window._bmPatchChar = (id, patch) => patchCharacter(id, patch);
       <input id="bmOfferItem"  class="bm-input" placeholder="Item / Angebot Name">
       <input id="bmOfferPrice" class="bm-input" type="number" min="0" placeholder="Preis (eb)">
       <input id="bmOfferNotes" class="bm-input" placeholder="Notiz (optional, z.B. Kein Rückgaberecht)">
-      <button class="bm-action-btn" onclick="bmSendOffer()">📤 Angebot senden</button>
+      <button class="ctrl-btn ctrl-btn-red bm-action-btn" onclick="bmSendOffer()">📤 Angebot senden</button>
     </section>
 
     <!-- Step 4: Status tracker -->
@@ -3443,7 +3450,7 @@ window._bmPatchChar = (id, patch) => patchCharacter(id, patch);
       <div id="bmStatusRows"></div>
     </section>
 
-    <button class="bm-close-all-btn" id="bmCloseAllBtn" style="display:none" onclick="bmCloseAll()">🔒 Schwarzmarkt schließen</button>
+    <button class="ctrl-btn ctrl-btn-red bm-close-all-btn" id="bmCloseAllBtn" style="display:none" onclick="bmCloseAll()"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-lock"/></svg> Schwarzmarkt schließen</button>
   </div>
 </div>
 

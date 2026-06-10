@@ -149,6 +149,8 @@ body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
   border-radius: var(--radius); width: min(1100px, 96vw);
   max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;
 }
+/* Schmale Modal-Variante (Timer) */
+.dm-modal-box--narrow { width: min(340px, 96vw); }
 .dm-modal-header {
   display: flex; gap: var(--sp-3); align-items: center;
   padding: var(--sp-4) var(--sp-5); flex-shrink: 0;
@@ -349,6 +351,44 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 /* .ctrl-btn / .ctrl-btn-red → look from BUTTON-SYSTEM block (file end, global) */
 .ctrl-msg { font-size: var(--fs-xs); color: var(--neon-cyan); min-height: 1em; margin: .15rem 0 var(--sp-2); }
 
+/* ── Rollen-Specialty-Cards (5b-3) — gemeinsame Card-Sprache für alle 5 Rollen.
+   Additiv + modal-scoped; globales .ctrl-section(-head) bleibt unangetastet. ── */
+/* Head-Modifier: Titel links, Cap/Count-Badge rechts (folgt §5-Mockups). */
+.ctrl-spec-head { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); }
+/* Cap/Used-Pille (Σ x/cap bzw. n/max) — statisch beim Render, kein Live-Listener. */
+.ctrl-spec-badge {
+  font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--neon-cyan);
+  border: 1px solid var(--cyan-dark); border-radius: var(--radius);
+  padding: .1rem var(--sp-2); white-space: nowrap;
+}
+/* Zeilen-Liste (Exec-Member): Name links, Meta rechts. */
+.ctrl-spec-list { display: flex; flex-direction: column; gap: var(--sp-1); margin-bottom: var(--sp-3); }
+.ctrl-spec-row {
+  display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-sm); background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-2) var(--sp-3);
+}
+.ctrl-spec-row > span:last-child { color: var(--text-muted); font-size: var(--fs-xs); }
+/* Chip-Liste (Nomad-Fahrzeugpool). */
+.ctrl-chip-list { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.ctrl-chip {
+  font-size: var(--fs-xs); font-family: var(--font-mono); color: var(--neon-cyan);
+  background: var(--bg-panel-soft); border: 1px solid var(--cyan-dark);
+  border-radius: var(--radius); padding: .1rem var(--sp-2);
+}
+/* Rechtsbündiger Aktions-Footer (Speichern / NPC-Quick-Buttons). */
+.ctrl-spec-foot { display: flex; justify-content: flex-end; align-items: center; gap: var(--sp-2); margin-top: var(--sp-3); }
+/* Result-Block (Lawman-Squad) im gleichen HUD-Look wie .ctrl-msg. */
+.ctrl-result {
+  margin-top: var(--sp-2); padding: var(--sp-3); background: var(--bg-panel);
+  border: 1px solid var(--border-dark); border-radius: var(--radius);
+  font-size: var(--fs-sm); color: var(--text-main);
+}
+/* Kein leerer Rahmen, bevor das Query-Ergebnis (Lawman-Squad) eingefügt wird. */
+.ctrl-result:empty { display: none; }
+/* Großer Zahlen-Readout (NPC-Quick-Total). Schrift bleibt --font-display (Phase 11). */
+.ctrl-readout { font-family: var(--font-display); font-size: var(--fs-lg); color: var(--text-main); min-width: 3ch; }
+
 /* Injury list in controls */
 .ctrl-inj-list { display: flex; flex-direction: column; gap: var(--sp-1); margin-bottom: var(--sp-3); }
 .ctrl-inj-row {
@@ -365,33 +405,45 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 }
 .ctrl-inj-remove:hover { color: var(--neon-red); }
 
-/* Item search */
+/* Injury-Picker (in #ctrlInjMsg gerendert — Tabelle wählen + Ergebnis-Karte) */
+.ctrl-inj-pick { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.ctrl-inj-pick-label { font-size: var(--fs-xs); color: var(--text-main); }
+.ctrl-inj-result {
+  background: var(--bg-panel-red); border: 1px solid var(--red-soft);
+  border-radius: var(--radius); padding: var(--sp-3); margin-top: var(--sp-2);
+}
+.ctrl-inj-result-name { font-family: var(--font-display); color: var(--neon-red); font-size: var(--fs-md); }
+.ctrl-inj-result-meta { font-size: var(--fs-xs); color: var(--text-muted); margin: var(--sp-1) 0; }
+.ctrl-inj-result-effect { font-size: var(--fs-sm); color: var(--text-main); margin-top: var(--sp-2); }
+.ctrl-inj-result-actions { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); flex-wrap: wrap; }
+
+/* Item search (Kontroll-Modal „Item geben"-Dropdown) */
 .ctrl-item-wrap { position: relative; flex: 1; }
 .item-search-results {
-  position: absolute; z-index: 10; background: var(--bg-card);
-  border: 1px solid var(--border); border-radius: var(--radius);
+  position: absolute; z-index: 10; background: var(--bg-panel);
+  border: 1px solid var(--border-dark); border-radius: var(--radius);
   width: 100%; max-height: 200px; overflow-y: auto; top: 100%; left: 0;
 }
 .item-search-row {
-  padding: .4rem .75rem; font-size: .78rem; cursor: pointer;
-  transition: var(--transition); display: flex; justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3); font-size: var(--fs-sm); cursor: pointer;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease); display: flex; justify-content: space-between;
 }
-.item-search-row:hover { background: var(--bg-input); color: var(--cyan); }
-.item-search-row .isr-price { font-size: .68rem; color: var(--text-muted); }
-.item-search-empty { padding: .5rem .75rem; font-size: .75rem; color: var(--text-muted); }
+.item-search-row:hover { background: var(--bg-panel-soft); color: var(--neon-cyan); }
+.item-search-row .isr-price { font-size: var(--fs-xs); color: var(--text-muted); }
+.item-search-empty { padding: var(--sp-2) var(--sp-3); font-size: var(--fs-xs); color: var(--text-muted); }
 
-/* ── NPC Attack ── */
+/* ── NPC Attack (Kontroll-Modal NPC-Angriffswurf — aus 5b-3 nach 5c verschoben) ── */
 .npc-mod-input { max-width: 60px !important; flex: none !important; }
 .npc-result {
-  margin-top: .5rem; padding: .6rem .75rem;
-  background: var(--bg-input); border: 1px solid var(--border);
+  margin-top: var(--sp-3); padding: var(--sp-3);
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
   border-radius: var(--radius);
 }
-.npc-roll-result { display: flex; align-items: baseline; gap: .5rem; margin-bottom: .3rem; }
-.npc-roll-total { font-family: var(--font-display); font-size: 1.4rem; color: var(--text-head); }
-.npc-roll-dice  { font-size: .72rem; color: var(--text-muted); }
-.npc-crit-hint  { font-size: .75rem; color: var(--red); display: flex; align-items: center; margin-bottom: .4rem; flex-wrap: wrap; gap: .3rem; }
-.npc-dmg-preview { font-size: .78rem; color: var(--cyan); margin-top: .25rem; min-height: 1.2em; }
+.npc-roll-result { display: flex; align-items: baseline; gap: var(--sp-2); margin-bottom: var(--sp-1); }
+.npc-roll-total { font-family: var(--font-display); font-size: 1.4rem; color: var(--text-main); }
+.npc-roll-dice  { font-size: var(--fs-xs); color: var(--text-muted); }
+.npc-crit-hint  { font-size: var(--fs-sm); color: var(--neon-red); display: flex; align-items: center; margin-bottom: var(--sp-2); flex-wrap: wrap; gap: var(--sp-1); }
+.npc-dmg-preview { font-size: .78rem; color: var(--neon-cyan); margin-top: .25rem; min-height: 1.2em; }
 
 /* ── Card Delete Button (subtle ghost-icon affordance) ── */
 .dm-card-delete {
@@ -455,34 +507,48 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 /* ── NPC Quick Damage Modal ── */
 .dm-npc-quick-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 2000; display: flex; align-items: center; justify-content: center; }
 .dm-npc-quick-overlay[hidden] { display: none; }
-.dm-npc-quick-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; width: min(360px, 92vw); }
-.dm-npc-quick-head { font-family: var(--font-display); font-size: .68rem; letter-spacing: .18em; color: var(--text-muted); margin-bottom: .9rem; }
+.dm-npc-quick-box { background: var(--bg-panel); border: 1px solid var(--border-dark); border-radius: var(--radius); padding: var(--sp-5); width: min(360px, 92vw); }
+.dm-npc-quick-head { font-family: var(--font-display); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--tracking); color: var(--neon-cyan); margin-bottom: var(--sp-4); }
 
-/* ── Combat Bar ── */
-.combat-bar { display: flex; align-items: center; gap: 1rem; padding: .5rem 1rem; background: var(--bg-card); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-.combat-meta { display: flex; align-items: center; gap: .4rem; }
-.combat-label { font-size: .55rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
-.combat-round-num { font-family: var(--font-display); font-size: 1.1rem; color: var(--cyan); }
-.combat-order { display: flex; gap: .35rem; flex-wrap: wrap; flex: 1; min-width: 0; }
-.combat-turn-chip { display: flex; align-items: center; gap: .3rem; padding: .2rem .55rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 2px; font-size: .72rem; }
-.combat-turn-chip.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,.08); }
-.combat-init { font-family: var(--font-display); font-size: .65rem; color: var(--text-muted); margin-left: .2rem; }
-.combat-remove-btn { background: none; border: none; color: var(--text-muted); font-size: .65rem; cursor: pointer; padding: 0; line-height: 1; margin-left: .25rem; transition: color .12s; }
-.combat-remove-btn:hover { color: var(--red); }
-.combat-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+/* ── Combat Bar (live combat strip — echte Border + box-shadow, kein clip: Gotcha #2/#4) ── */
+.combat-bar {
+  display: flex; align-items: center; gap: var(--sp-4); padding: var(--sp-2) var(--sp-4);
+  background: var(--bg-panel); border-bottom: 1px solid var(--red-soft);
+  box-shadow: 0 2px 12px rgba(255,49,88,.06); flex-wrap: wrap;
+}
+.combat-meta { display: flex; align-items: center; gap: var(--sp-2); }
+.combat-label { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--tracking); color: var(--text-muted); }
+.combat-round-num { font-family: var(--font-display); font-size: var(--fs-lg); color: var(--neon-cyan); }
+.combat-order { display: flex; gap: var(--sp-2); flex-wrap: wrap; flex: 1; min-width: 0; }
+.combat-turn-chip { display: flex; align-items: center; gap: var(--sp-1); padding: var(--sp-1) var(--sp-2); background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); font-size: var(--fs-xs); }
+.combat-turn-chip.active { border-color: var(--neon-cyan); color: var(--neon-cyan); background: rgba(34,247,255,.08); }
+.combat-init { font-family: var(--font-display); font-size: var(--fs-xs); color: var(--text-muted); margin-left: var(--sp-1); }
+.combat-remove-btn { background: none; border: none; color: var(--text-muted); font-size: var(--fs-xs); cursor: pointer; padding: 0; line-height: 1; margin-left: var(--sp-1); transition: color var(--t-fast) var(--ease); }
+.combat-remove-btn:hover { color: var(--neon-red); }
+.combat-actions { display: flex; gap: var(--sp-2); flex-shrink: 0; }
 
 /* ── Combat Setup Panel ── */
 .combat-setup-panel {
-  padding: .75rem 1rem .6rem;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-dark);
   max-height: calc(100vh - 100px);
   overflow-y: auto;
   scrollbar-width: thin;
   position: relative;
 }
-.combat-setup-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: .75rem; align-items: start; }
-.combat-setup-head { font-size: .6rem; text-transform: uppercase; letter-spacing: .14em; color: var(--text-muted); margin-bottom: .4rem; border-bottom: 1px solid var(--border); padding-bottom: .2rem; }
+.combat-name-row { display: flex; gap: var(--sp-2); align-items: center; padding: 0 0 var(--sp-2); }
+.combat-setup-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-3); align-items: start; }
+.combat-setup-head {
+  font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--tracking);
+  color: var(--neon-cyan); margin-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border-dark); padding-bottom: var(--sp-1);
+}
+.combat-setup-head--temp { color: var(--text-muted); margin-top: var(--sp-3); opacity: .8; }
+.combat-setup-group {
+  font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase;
+  padding: var(--sp-1) 0 .1rem; font-family: var(--font-display);
+}
 #combatPlayerList,
 #combatNpcDbList,
 #combatNpcList,
@@ -501,17 +567,18 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 #combatNpcDbList::-webkit-scrollbar-thumb,
 #combatNpcList::-webkit-scrollbar-thumb,
 #combatInitiativeList::-webkit-scrollbar-thumb,
-.combat-setup-panel::-webkit-scrollbar-thumb { background: rgba(255,45,45,.35); border-radius: 3px; }
-.combat-setup-check { display: flex; align-items: center; gap: .4rem; font-size: .78rem; padding: .2rem 0; cursor: pointer; }
-.combat-init-small { font-size: .65rem; color: var(--text-muted); }
-.combat-npc-item { display: flex; align-items: center; gap: .4rem; font-size: .75rem; padding: .15rem 0; color: var(--text-muted); }
+.combat-setup-panel::-webkit-scrollbar-thumb { background: rgba(255,49,88,.35); border-radius: 3px; }
+.combat-setup-check { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); padding: var(--sp-1) 0; cursor: pointer; color: var(--text-main); }
+.combat-init-small { font-size: var(--fs-xs); color: var(--text-muted); }
+.combat-init-name { flex: 1; font-size: var(--fs-sm); color: var(--text-main); }
+.combat-npc-item { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); padding: .15rem 0; color: var(--text-muted); }
 .combat-setup-footer {
-  display: flex; gap: .5rem; align-items: center;
-  border-top: 1px solid var(--border);
-  padding: .6rem 0 0;
+  display: flex; gap: var(--sp-2); align-items: center;
+  border-top: 1px solid var(--border-dark);
+  padding: var(--sp-3) 0 0;
   position: sticky;
   bottom: -.6rem;
-  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, var(--bg-card) 18%, var(--bg-card) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, var(--bg-panel) 18%, var(--bg-panel) 100%);
   z-index: 2;
 }
 
@@ -632,10 +699,10 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .npc-edit-btn { padding: .25rem .45rem; font-size: .65rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; background: var(--bg-input); color: var(--text-muted); }
 .npc-dice-btn { padding: .25rem .45rem; font-size: .65rem; border: 1px solid var(--cyan); border-radius: var(--radius); cursor: pointer; background: rgba(0,229,255,.08); color: var(--cyan); }
 .npc-card.eliminated { opacity: .45; filter: grayscale(1); }
-.combat-npc-hp-ctrl { display: flex; align-items: center; gap: .2rem; font-size: .68rem; }
-.combat-npc-hp-btn { width: 18px; height: 18px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 2px; color: var(--text); cursor: pointer; font-size: .8rem; display: flex; align-items: center; justify-content: center; padding: 0; }
+.combat-npc-hp-ctrl { display: flex; align-items: center; gap: var(--sp-1); font-size: .68rem; }
+.combat-npc-hp-btn { width: 18px; height: 18px; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); cursor: pointer; font-size: .8rem; display: flex; align-items: center; justify-content: center; padding: 0; }
 .combat-npc-hp-val { font-size: .68rem; color: var(--text-muted); min-width: 3ch; text-align: center; }
-.combat-npc-hp-val.elim { color: var(--red); }
+.combat-npc-hp-val.elim { color: var(--neon-red); }
 .combat-char-hp { font-size: .68rem; }
 .npc-eliminated { opacity: .5; }
 
@@ -859,6 +926,31 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 .dm-room-item-by { font-size: .62rem; color: var(--text-muted); }
 .dm-room-item-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: var(--fs-sm); opacity: .5; padding: 0 .2rem; transition: opacity var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
 .dm-room-item-del:hover { opacity: 1; color: var(--neon-red); }
+.dm-room-expand-btn { margin-left: auto; }
+.dm-room-clear { width: 100%; }
+
+/* ── DM Raum-Vollansicht-Overlay ── */
+.dm-room-overlay {
+  position: fixed; inset: 0; z-index: 2500; background: rgba(0,0,0,.8);
+  display: flex; align-items: center; justify-content: center;
+}
+.dm-room-overlay[hidden] { display: none; }
+.dm-room-overlay-box {
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); width: 480px; max-width: 95vw; max-height: 80vh;
+  display: flex; flex-direction: column;
+}
+.dm-room-overlay-head {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-dark);
+}
+.dm-room-overlay-title {
+  font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: var(--tracking);
+  text-transform: uppercase; color: var(--neon-cyan);
+}
+.dm-room-overlay-desc { font-size: var(--fs-xs); color: var(--text-muted); flex: 1; }
+.dm-room-overlay-list { overflow-y: auto; padding: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-1); flex: 1; }
+.dm-room-overlay-foot { padding: var(--sp-2) var(--sp-4); border-top: 1px solid var(--border-dark); }
 
 /* ── Psychosis card ── */
 .dm-card--psycho { border-color: #7B2FBE !important; }
@@ -878,74 +970,131 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 }
 .dm-ammo-chip.warn { color: var(--neon-red); border-color: var(--red-soft); }
 
+/* ── DM Items Modal ── */
+.dm-items-overlay {
+  position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,.8);
+  display: flex; align-items: flex-start; justify-content: center; padding-top: 3rem;
+}
+.dm-items-overlay[hidden] { display: none; }
+.dm-items-box {
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); width: 92%; max-width: 700px; max-height: 85vh;
+  display: flex; flex-direction: column;
+}
+.dm-items-header {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border-dark);
+}
+.dm-items-title {
+  font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: var(--tracking);
+  text-transform: uppercase; color: var(--neon-cyan); flex-shrink: 0;
+}
+.dm-items-search { flex: 1; max-width: 200px; }
+.dm-items-select { flex: none; max-width: 160px; font-size: var(--fs-xs); }
+.dm-items-ammo {
+  display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-4); border-top: 1px solid var(--border-dark);
+  background: var(--bg-panel-cyan);
+}
+.dm-items-ammo-label {
+  font-size: var(--fs-xs); color: var(--neon-cyan); font-family: var(--font-display);
+  letter-spacing: var(--tracking); text-transform: uppercase; flex-shrink: 0;
+}
+.dm-items-ammo-sel { flex: none; max-width: 140px; font-size: var(--fs-xs); }
+.dm-items-grid {
+  overflow-y: auto; padding: var(--sp-3); flex: 1;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--sp-2);
+}
+/* Item-Karten (renderDmItemsGrid) */
+.dm-item-card {
+  background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
+  border-radius: var(--radius); padding: var(--sp-2) var(--sp-3);
+}
+.dm-item-name { font-size: var(--fs-sm); color: var(--text-main); margin-bottom: var(--sp-1); }
+.dm-item-cat { font-size: var(--fs-xs); color: var(--text-muted); margin-bottom: var(--sp-2); }
+.dm-item-price { font-size: var(--fs-xs); color: var(--neon-cyan); font-family: var(--font-mono); }
+/* Grant-Chip (cyan-Ghost); JS-Erfolgs-Feedback setzt transient background/textContent */
+.dm-item-grant {
+  margin-top: var(--sp-2); width: 100%; padding: var(--sp-1);
+  background: var(--bg-panel-soft); border: 1px solid var(--cyan-dark);
+  border-radius: var(--radius); color: var(--neon-cyan); cursor: pointer;
+  font-size: var(--fs-xs); font-family: var(--font-heading); text-transform: uppercase;
+  letter-spacing: var(--tracking);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.dm-item-grant:hover { border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+
 /* ── DM Timer Bar (top of page when active) ── */
 .dm-timer-bar {
-  display: flex; align-items: center; gap: .75rem;
-  padding: .4rem 1rem; background: #0a0a14;
-  border-bottom: 1px solid rgba(0,229,255,.25);
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4); background: var(--bg-panel);
+  border-bottom: 1px solid rgba(34,247,255,.25);
 }
 .dm-timer-bar-label {
-  font-family: Audiowide, sans-serif; font-size: .72rem;
-  color: var(--cyan); white-space: nowrap; min-width: 70px;
+  font-family: Audiowide, sans-serif; font-size: var(--fs-xs);
+  color: var(--neon-cyan); white-space: nowrap; min-width: 70px;
 }
 .dm-timer-bar-countdown {
-  font-family: Audiowide, sans-serif; font-size: 1.1rem;
-  color: var(--cyan); min-width: 58px;
+  font-family: Audiowide, sans-serif; font-size: var(--fs-lg);
+  color: var(--neon-cyan); min-width: 58px;
 }
+.dm-bar-btn { flex-shrink: 0; }
+/* Timer-Fortschrittsbalken (Bar + Modal-Preview) — width JS-getrieben (Gotcha #4) */
+.timer-progress-wrap { flex: 1; height: 5px; background: var(--bg-panel-soft); border-radius: var(--radius); overflow: hidden; }
+.timer-progress-fill { height: 100%; width: 100%; background: var(--neon-cyan); border-radius: var(--radius); transition: width .25s linear; }
 
-/* ── DM Timer Section (legacy sidebar — kept for modal CSS reuse) ── */
-.dm-timer-section {
-  border-bottom: 1px solid var(--border);
-  padding-bottom: .6rem; margin-bottom: .25rem;
-}
-.dm-timer-config {
-  display: flex; flex-direction: column; gap: .3rem;
-  padding: .4rem .75rem .25rem;
-}
+/* ── DM Timer Modal/Config ── */
+.timer-modal-body { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-4); }
 .timer-time-row {
-  display: flex; align-items: center; gap: .35rem;
-  font-size: .72rem; color: var(--text-muted);
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-sm); color: var(--text-muted);
 }
-.timer-quick-btns { display: flex; gap: .2rem; flex-wrap: wrap; }
+/* zentriertes Zeit-/Warn-Feld (min/sek/Warnung) */
+.timer-num { width: 60px; text-align: center; flex: none; }
+.timer-quick-btns { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+/* Preset-Chips (cyan-Ghost) — gleiche Rezeptur wie .buff-preset-btn / .dm-left-ip-btn */
 .timer-quick-btn {
-  padding: .2rem .45rem; font-size: .62rem;
-  border: 1px solid var(--border); background: var(--bg-input);
-  color: var(--text-muted); border-radius: var(--radius);
-  cursor: pointer; transition: var(--transition);
+  padding: var(--sp-1) var(--sp-2); font-size: var(--fs-xs);
+  border: 1px solid var(--cyan-dark); background: var(--bg-panel-soft);
+  color: var(--neon-cyan); border-radius: var(--radius); cursor: pointer;
+  font-family: var(--font-heading); text-transform: uppercase; letter-spacing: var(--tracking);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
-.timer-quick-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.timer-quick-btn:hover { border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
 .timer-warning-row {
-  display: flex; align-items: center; gap: .35rem;
-  font-size: .72rem; color: var(--text-muted);
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-sm); color: var(--text-muted);
 }
-.timer-ctrl-row {
-  display: flex; gap: .25rem; flex-wrap: wrap;
-  padding: .25rem .75rem 0;
-}
-.timer-ctrl-btn { font-size: .65rem; flex: 1; min-width: 60px; }
+.timer-ctrl-row { display: flex; gap: var(--sp-2); }
+.timer-ctrl-btn { flex: 1; min-width: 60px; }
 .dm-timer-preview {
-  display: flex; align-items: center; gap: .6rem;
-  margin: .35rem .75rem 0;
-  background: #0a0a10; border: 1px solid rgba(0,229,255,.18);
-  border-radius: var(--radius); padding: .35rem .65rem;
+  display: flex; align-items: center; gap: var(--sp-3);
+  background: var(--bg-panel-soft); border: 1px solid rgba(34,247,255,.18);
+  border-radius: var(--radius); padding: var(--sp-2) var(--sp-3);
 }
 .timer-preview-label {
-  font-family: Audiowide, sans-serif; font-size: .65rem;
-  color: var(--cyan); min-width: 60px;
+  font-family: Audiowide, sans-serif; font-size: var(--fs-xs);
+  color: var(--neon-cyan); min-width: 60px;
 }
 .timer-preview-countdown {
-  font-family: Audiowide, sans-serif; font-size: 1rem;
-  color: var(--cyan); min-width: 52px;
+  font-family: Audiowide, sans-serif; font-size: var(--fs-md);
+  color: var(--neon-cyan); min-width: 52px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
    BLACK MARKET DM PANEL
    ═══════════════════════════════════════════════════════════════ */
+/* Phase 5d: HUD-Migration. Night-Market bleibt rot/illegal (MASTER Farblogik).
+   Panel + Door-Cards = echte Border + Glow (kein clip, Gotcha #2). Status-Rows
+   re-rendern in-place via bmRefreshStatus (Gotcha #4). Schrift Audiowide bleibt
+   bis Phase 11. .bm-action-/.bm-close-all-btn liegen jetzt auf dem Button-System
+   (ctrl-btn ctrl-btn-red im Markup) — hier nur noch Full-Width-Layout. */
 .bm-dm-panel {
-  background: #0d0d0d;
-  border: 1px solid rgba(255,50,50,.35);
-  border-radius: 8px;
-  padding: 1.25rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--red-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--glow-red-m);
+  padding: var(--sp-5);
   width: 560px;
   max-width: 96vw;
   max-height: 85vh;
@@ -955,132 +1104,121 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 .bm-dm-header {
   display: flex;
   align-items: center;
+  gap: var(--sp-2);
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border-dark);
+  filter: drop-shadow(0 1px 0 rgba(255,49,88,.18));
   font-family: Audiowide, sans-serif;
-  font-size: .8rem;
-  color: var(--red);
-  letter-spacing: .1em;
+  font-size: var(--fs-sm);
+  color: var(--neon-red);
+  letter-spacing: var(--tracking);
   text-transform: uppercase;
 }
+.bm-dm-header .ic { width: 1.05em; height: 1.05em; vertical-align: -.12em; }
 .bm-step {
-  margin-bottom: .75rem;
-  padding-bottom: .75rem;
-  border-bottom: 1px solid rgba(255,255,255,.05);
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border-dark);
 }
 .bm-step:last-of-type { border-bottom: none; }
 .bm-step-title {
-  font-size: .68rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: .1em;
-  margin-bottom: .5rem;
+  letter-spacing: var(--tracking);
+  margin-bottom: var(--sp-2);
   font-family: Audiowide, sans-serif;
 }
 .bm-step-sub {
-  font-size: .72rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
-  margin-bottom: .35rem;
+  margin-bottom: var(--sp-1);
 }
 .bm-player-checks {
   display: flex;
   flex-wrap: wrap;
-  gap: .4rem;
-  margin-bottom: .5rem;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
 }
 .bm-player-check {
   display: flex;
   align-items: center;
-  gap: .3rem;
-  font-size: .78rem;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
   cursor: pointer;
-  padding: .2rem .5rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
-.bm-player-check:hover { border-color: var(--red); }
-.bm-player-check.selected { border-color: var(--red); background: rgba(255,45,45,.12); color: #fff; }
+/* Native Checkbox raus (MASTER: native Inputs = Bugs) — Input bleibt im DOM
+   (label-gewrappt), nur visuell entfernt; bmTogglePlayer/cb.checked unberührt.
+   Roter Chip = selected-State. */
+.bm-player-check input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.bm-player-check:hover { border-color: var(--neon-red); }
+.bm-player-check.selected { border-color: var(--neon-red); background: var(--bg-panel-red); color: var(--text-main); }
 .bm-door-grid {
   display: flex;
-  gap: .75rem;
-  margin: .25rem 0 .75rem;
+  gap: var(--sp-3);
+  margin: var(--sp-1) 0 var(--sp-3);
 }
 .bm-door-card {
   flex: 1;
   cursor: pointer;
-  border: 2px solid var(--border);
-  border-radius: 6px;
+  border: 2px solid var(--border-dark);
+  border-radius: var(--radius);
   overflow: hidden;
-  transition: border-color .2s, box-shadow .2s;
+  transition: border-color var(--t-med) var(--ease), box-shadow var(--t-med) var(--ease);
 }
-.bm-door-card:hover  { border-color: rgba(255,45,45,.5); }
-.bm-door-card.selected { border-color: var(--red); box-shadow: 0 0 8px rgba(255,45,45,.3); }
+.bm-door-card:hover  { border-color: var(--red-soft); }
+.bm-door-card.selected { border-color: var(--neon-red); box-shadow: var(--glow-red-s); }
 .bm-door-card img { width: 100%; height: 110px; object-fit: cover; display: block; }
 .bm-door-card-label {
   text-align: center;
-  font-size: .62rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
-  padding: .22rem;
+  padding: var(--sp-1);
   background: rgba(0,0,0,.4);
 }
 .bm-input {
   width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: .4rem .6rem;
-  color: var(--text);
-  font-size: .78rem;
-  margin-bottom: .4rem;
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--text-main);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--sp-2);
   box-sizing: border-box;
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
-.bm-input:focus { outline: none; border-color: rgba(255,45,45,.5); }
-.bm-action-btn {
-  width: 100%;
-  padding: .42rem;
-  background: rgba(255,45,45,.1);
-  border: 1px solid rgba(255,45,45,.35);
-  color: var(--red);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: .75rem;
-  margin-top: .25rem;
-  transition: background .2s;
-}
-.bm-action-btn:hover { background: rgba(255,45,45,.2); }
-.bm-close-all-btn {
-  width: 100%;
-  margin-top: 1rem;
-  padding: .45rem;
-  background: #1a0000;
-  border: 1px solid var(--red);
-  color: var(--red);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: .75rem;
-  transition: background .2s;
-}
-.bm-close-all-btn:hover { background: rgba(255,45,45,.15); }
+.bm-input:focus { outline: none; border-color: var(--neon-cyan); box-shadow: var(--glow-cyan-s); }
+/* Auf Button-System gefaltet (ctrl-btn ctrl-btn-red im Markup) — nur Full-Width-Layout */
+.bm-action-btn { width: 100%; margin-top: var(--sp-2); }
+.bm-close-all-btn { width: 100%; margin-top: var(--sp-4); }
 /* Lever toggle */
 .bm-lever-wrap {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: .4rem .6rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  margin-bottom: .35rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius);
+  margin-bottom: var(--sp-1);
 }
-.bm-lever-name { font-size: .78rem; }
+.bm-lever-name { font-size: var(--fs-sm); }
 .bm-lever {
   position: relative;
   width: 44px;
   height: 22px;
-  background: #222;
+  background: var(--bg-panel-soft);
   border-radius: 11px;
   cursor: pointer;
-  border: 1px solid var(--border);
-  transition: background .25s;
+  border: 1px solid var(--border-dark);
+  transition: background var(--t-med) var(--ease), border-color var(--t-med) var(--ease);
   flex-shrink: 0;
 }
 .bm-lever::after {
@@ -1088,45 +1226,45 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   position: absolute;
   top: 2px; left: 2px;
   width: 18px; height: 18px;
-  background: #555;
+  background: var(--text-dim);
   border-radius: 50%;
-  transition: transform .25s, background .25s;
+  transition: transform var(--t-med) var(--ease), background var(--t-med) var(--ease);
 }
-.bm-lever.open { background: rgba(255,45,45,.25); border-color: var(--red); }
-.bm-lever.open::after { transform: translateX(22px); background: var(--red); }
+.bm-lever.open { background: rgba(255,49,88,.25); border-color: var(--neon-red); }
+.bm-lever.open::after { transform: translateX(22px); background: var(--neon-red); }
 /* Status rows */
 .bm-status-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: .4rem;
-  padding: .35rem .5rem;
-  border-bottom: 1px solid rgba(255,255,255,.04);
-  font-size: .75rem;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2);
+  border-bottom: 1px solid var(--border-dark);
+  font-size: var(--fs-sm);
 }
 .bm-status-badge {
-  font-size: .68rem;
-  padding: .1rem .38rem;
-  border-radius: 3px;
+  font-size: var(--fs-xs);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius);
   border: 1px solid;
 }
-.bm-status-badge.waiting  { color: #777; border-color: #333; }
-.bm-status-badge.accepted { color: #00cc66; border-color: #00cc66; }
-.bm-status-badge.declined { color: var(--red); border-color: var(--red); }
-.bm-status-badge.neg      { color: #FFA000; border-color: #FFA000; }
+.bm-status-badge.waiting  { color: var(--text-dim); border-color: var(--border-dark); }
+.bm-status-badge.accepted { color: var(--success-green); border-color: var(--success-green); }
+.bm-status-badge.declined { color: var(--neon-red); border-color: var(--neon-red); }
+.bm-status-badge.neg      { color: var(--warning-yellow); border-color: var(--warning-yellow); }
 .bm-neg-accept-btn,
 .bm-neg-decline-btn {
-  font-size: .68rem;
-  padding: .15rem .45rem;
-  border-radius: 3px;
+  font-size: var(--fs-xs);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius);
   cursor: pointer;
   border: 1px solid;
-  transition: background .15s;
+  transition: background var(--t-fast) var(--ease);
 }
-.bm-neg-accept-btn  { color: #00cc66; border-color: #00cc66; background: rgba(0,204,102,.08); }
-.bm-neg-accept-btn:hover  { background: rgba(0,204,102,.2); }
-.bm-neg-decline-btn { color: var(--red); border-color: var(--red); background: rgba(255,45,45,.08); }
-.bm-neg-decline-btn:hover { background: rgba(255,45,45,.18); }
+.bm-neg-accept-btn  { color: var(--success-green); border-color: var(--success-green); background: rgba(54,255,159,.08); }
+.bm-neg-accept-btn:hover  { background: rgba(54,255,159,.2); }
+.bm-neg-decline-btn { color: var(--neon-red); border-color: var(--neon-red); background: var(--bg-panel-red); }
+.bm-neg-decline-btn:hover { background: rgba(255,49,88,.18); }
 
 /* ── Session Timer ── */
 .dm-session-timer {
@@ -1405,6 +1543,8 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   --btn-fill-hover: var(--bg-panel-cyan); --btn-glow: var(--glow-cyan-s);
 }
 .ctrl-btn--ghost:hover { color: var(--neon-cyan); }
+/* lg 44 — große Primär-Aktion (Combat „Kampf starten"), rechtsbündig im Footer */
+.combat-start-btn { --btn-h: 44px; --btn-px: var(--sp-6); --btn-fs: var(--fs-md); margin-left: auto; }
 
 /* — Varianten (setzen nur die --btn-*-Props; Default = primary/cyan) — */
 /* combat / red */
