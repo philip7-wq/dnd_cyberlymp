@@ -78,7 +78,7 @@
 <div id="aoeHoverPopup" class="map-popup map-popup--fire" style="display:none;position:fixed;z-index:8000;pointer-events:auto">
   <div id="aoeHoverLabel" class="map-popup-label"></div>
   <button id="aoeHoverApplyBtn" class="ctrl-btn ctrl-btn--sm"
-    style="--btn-border:#FF4500;--btn-color:#FF4500;--btn-fill-hover:rgba(255,69,0,.12);width:100%">💥 Schaden anwenden</button>
+    style="--btn-border:#FF4500;--btn-color:#FF4500;--btn-fill-hover:rgba(255,69,0,.12);width:100%"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-burst"/></svg> Schaden anwenden</button>
 </div>
 
 <!-- Fog Hover Popup (DM) -->
@@ -94,7 +94,7 @@
 <div class="map-dice-popup" id="mapDicePopup">
   <div class="map-dice-popup-head">
     <span>WÜRFELN</span>
-    <button id="mapDiceClose" style="background:none;border:none;color:#555;cursor:pointer;font-size:1rem;padding:0 .1rem;line-height:1">✕</button>
+    <button id="mapDiceClose" style="background:none;border:none;color:#555;cursor:pointer;font-size:1rem;padding:0 .1rem;line-height:1"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg></button>
   </div>
   <div class="map-dice-section">
     <div class="map-dice-label">Schnellwurf</div>
@@ -147,12 +147,12 @@
       class="map-field" style="margin-bottom:.4rem">
     <div id="dmQuickBtns" class="map-quick-row"></div>
     <div class="map-modal-label">WAFFENKLASSE</div>
-    <select id="dmWeaponClass" class="map-field" style="margin-bottom:.5rem">
+    <cyber-select id="dmWeaponClass" style="display:block;margin-bottom:.5rem">
       <option value="ranged">Ranged / Brawling (volle SP)</option>
       <option value="melee_weapon">Melee Weapon (½ SP)</option>
       <option value="martial_arts">Martial Arts (½ SP)</option>
       <option value="choke_throw">Choke / Throw (ignoriert SP)</option>
-    </select>
+    </cyber-select>
     <div id="dmRollResult" class="map-result-gold" style="display:none"></div>
     <button id="dmRollExecBtn" class="atk-btn" style="margin-bottom:.35rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Würfeln</button>
     <div id="dmSpRow" style="display:none">
@@ -161,7 +161,7 @@
         <input id="dmSpInput" type="number" min="0" value="0" style="width:46px">
       </div>
       <div id="dmFinalDmg" class="map-final-dmg"></div>
-      <button id="dmApplyBtn" class="atk-btn atk-btn-danger" style="margin-bottom:.3rem">✅ Anwenden</button>
+      <button id="dmApplyBtn" class="atk-btn atk-btn-danger" style="margin-bottom:.3rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-check"/></svg> Anwenden</button>
     </div>
     <button id="dmRollClose" class="ts-btn" style="width:100%;font-size:.62rem">Abbrechen</button>
   </div>
@@ -180,7 +180,7 @@
   <div class="token-modal-box">
     <div class="token-modal-head">
       TOKEN HINZUFÜGEN
-      <button class="token-modal-close" id="tokenModalClose">✕</button>
+      <button class="token-modal-close" id="tokenModalClose"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg></button>
     </div>
     <div class="token-modal-body">
       <div class="token-picker-tabs">
@@ -199,12 +199,12 @@
           Farbe <input type="color" id="customColor" value="#FF8C00">
         </div>
         <input id="customHp"    class="ctrl-input" placeholder="Max HP (optional)" type="number" min="0">
-        <button id="customAddBtn" class="ctrl-btn">+ Hinzufügen</button>
+        <button id="customAddBtn" class="ctrl-btn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-plus"/></svg> Hinzufügen</button>
       </div>
       <div id="tokenPickerVehicle" class="token-picker-grid" style="display:none"></div>
       <!-- Custom Vehicle Form -->
       <div id="customVehicleForm" style="display:none;padding:.6rem .75rem;border-top:1px solid var(--border-dark)">
-        <div style="font-family:Audiowide,sans-serif;font-size:.65rem;color:var(--neon-cyan);letter-spacing:.08em;margin-bottom:.5rem">+ EIGENES FAHRZEUG</div>
+        <div style="font-family:Audiowide,sans-serif;font-size:.65rem;color:var(--neon-cyan);letter-spacing:.08em;margin-bottom:.5rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-plus"/></svg> EIGENES FAHRZEUG</div>
         <div style="display:flex;gap:.25rem;margin-bottom:.25rem">
           <input id="cvLabel"  class="ctrl-input" placeholder="🚘 Label" maxlength="3" style="width:56px;text-align:center">
           <input id="cvName"   class="ctrl-input" placeholder="Name" style="flex:1">
@@ -226,12 +226,12 @@
             style="width:100%;box-sizing:border-box;font-size:.7rem;color:var(--text-muted);
             background:var(--bg-panel-soft);border:1px solid var(--border-dark);border-radius:var(--radius);padding:.3rem .4rem;cursor:pointer">
         </div>
-        <button id="cvAddBtn" class="ctrl-btn" style="width:100%">+ Hinzufügen</button>
-        <div id="cvUploadStatus" style="font-size:.65rem;color:var(--text-muted);margin-top:.25rem;display:none">⏳ Bild wird hochgeladen…</div>
+        <button id="cvAddBtn" class="ctrl-btn" style="width:100%"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-plus"/></svg> Hinzufügen</button>
+        <div id="cvUploadStatus" style="font-size:.65rem;color:var(--text-muted);margin-top:.25rem;display:none"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-hourglass"/></svg> Bild wird hochgeladen…</div>
       </div>
     </div>
     <div style="padding:.5rem .75rem;border-top:1px solid var(--border-dark);display:flex;justify-content:flex-end">
-      <button id="tokenModalDone" class="ctrl-btn">✓ Fertig</button>
+      <button id="tokenModalDone" class="ctrl-btn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-check"/></svg> Fertig</button>
     </div>
   </div>
 </div>
@@ -241,7 +241,7 @@
   <div class="token-modal-box aoe-blast-modal">
     <div class="token-modal-head">
       <span id="aoeBlastTitle">💥 EXPLOSION — SCHADEN ANWENDEN</span>
-      <button class="token-modal-close" id="aoeBlastClose">✕</button>
+      <button class="token-modal-close" id="aoeBlastClose"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg></button>
     </div>
     <div class="token-modal-body" style="padding:.75rem">
       <div class="ts-row" style="margin-bottom:.5rem">
@@ -252,7 +252,7 @@
       </div>
       <div id="aoeBlastTargets" style="max-height:260px;overflow-y:auto;margin:.35rem 0"></div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem">
-        <button id="aoeBlastApply" class="ctrl-btn ctrl-btn--flame" style="flex:1" disabled>✅ Anwenden</button>
+        <button id="aoeBlastApply" class="ctrl-btn ctrl-btn--flame" style="flex:1" disabled><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-check"/></svg> Anwenden</button>
         <button id="aoeBlastCancel" class="ctrl-btn" style="flex:0 0 auto">Abbrechen</button>
       </div>
     </div>
@@ -262,12 +262,12 @@
 <!-- On Fire Modal -->
 <div id="fireModal" class="token-modal-overlay" style="display:none">
   <div class="token-modal-box" style="max-width:280px">
-    <div class="token-modal-head">🔥 FEUER STUFE<button class="token-modal-close" id="fireModalClose">✕</button></div>
+    <div class="token-modal-head"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fire"/></svg> FEUER STUFE<button class="token-modal-close" id="fireModalClose"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg></button></div>
     <div class="token-modal-body" style="padding:.75rem;display:flex;flex-direction:column;gap:.4rem">
-      <button class="ctrl-btn ctrl-btn--orange fire-tier-btn" data-tier="On Fire (Mild)">🔥 Mild — 2d6/Runde, DV10 löschen</button>
-      <button class="ctrl-btn ctrl-btn--ember fire-tier-btn" data-tier="On Fire (Severe)">🔥🔥 Severe — 4d6/Runde, DV15 löschen</button>
-      <button class="ctrl-btn red fire-tier-btn" data-tier="On Fire (Deadly)">🔥🔥🔥 Deadly — 8d6/Runde, braucht Hilfe</button>
-      <button class="ctrl-btn" id="fireExtinguishBtn" style="margin-top:.25rem">❄ Löschen</button>
+      <button class="ctrl-btn ctrl-btn--orange fire-tier-btn" data-tier="On Fire (Mild)"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fire"/></svg> Mild — 2d6/Runde, DV10 löschen</button>
+      <button class="ctrl-btn ctrl-btn--ember fire-tier-btn" data-tier="On Fire (Severe)"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fire"/></svg><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fire"/></svg> Severe — 4d6/Runde, DV15 löschen</button>
+      <button class="ctrl-btn red fire-tier-btn" data-tier="On Fire (Deadly)"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fire"/></svg><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fire"/></svg><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fire"/></svg> Deadly — 8d6/Runde, braucht Hilfe</button>
+      <button class="ctrl-btn" id="fireExtinguishBtn" style="margin-top:.25rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-snow"/></svg> Löschen</button>
     </div>
   </div>
 </div>
@@ -275,17 +275,17 @@
 <!-- Grapple Modal (DM/Player) -->
 <div id="grappleModal" class="token-modal-overlay" style="display:none">
   <div class="token-modal-box" style="max-width:300px">
-    <div class="token-modal-head">⛓ GRAPPLE<button class="token-modal-close" id="grappleModalClose">✕</button></div>
+    <div class="token-modal-head"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-chain"/></svg> GRAPPLE<button class="token-modal-close" id="grappleModalClose"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg></button></div>
     <div class="token-modal-body" style="padding:.75rem;display:flex;flex-direction:column;gap:.5rem">
-      <select id="grappleTarget" class="ctrl-input"><option value="">— Ziel wählen —</option></select>
+      <cyber-select id="grappleTarget" placeholder="— Ziel wählen —"></cyber-select>
       <div id="grappleResult" style="font-size:.78rem;color:var(--text-muted)"></div>
       <button id="grappleRollBtn" class="ctrl-btn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Grapple würfeln</button>
       <div id="grappleActions" style="display:none;flex-direction:column;gap:.35rem">
         <div style="font-size:.7rem;color:var(--neon-cyan);font-family:Audiowide,sans-serif;letter-spacing:.08em;margin:.1rem 0">IM GRAPPLE:</div>
-        <button class="ctrl-btn ctrl-btn--orange grapple-action-btn" data-action="choke">👊 Choke — BODY direkt auf HP</button>
-        <button class="ctrl-btn ctrl-btn--ember grapple-action-btn" data-action="throw">🤸 Throw — BODY + Prone</button>
-        <button class="ctrl-btn ctrl-btn--purple grapple-action-btn" data-action="shield">🛡 Human Shield</button>
-        <button class="ctrl-btn ctrl-btn--ghost grapple-action-btn" data-action="release">⛓ Loslassen</button>
+        <button class="ctrl-btn ctrl-btn--orange grapple-action-btn" data-action="choke"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fist"/></svg> Choke — BODY direkt auf HP</button>
+        <button class="ctrl-btn ctrl-btn--ember grapple-action-btn" data-action="throw"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dodge"/></svg> Throw — BODY + Prone</button>
+        <button class="ctrl-btn ctrl-btn--purple grapple-action-btn" data-action="shield"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-shield"/></svg> Human Shield</button>
+        <button class="ctrl-btn ctrl-btn--ghost grapple-action-btn" data-action="release"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-chain"/></svg> Loslassen</button>
       </div>
     </div>
   </div>
@@ -294,10 +294,10 @@
 <!-- Vehicle Ram Dialog -->
 <div id="vehicleRamModal" class="token-modal-overlay" style="display:none">
   <div class="token-modal-box" style="max-width:280px">
-    <div class="token-modal-head">🚗 RAMMEN?<button class="token-modal-close" id="vehicleRamClose">✕</button></div>
+    <div class="token-modal-head">🚗 RAMMEN?<button class="token-modal-close" id="vehicleRamClose"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg></button></div>
     <div class="token-modal-body" style="padding:.75rem;display:flex;flex-direction:column;gap:.5rem">
       <div id="vehicleRamDesc" style="font-size:.8rem;color:var(--text-muted)"></div>
-      <button id="vehicleRamConfirm" class="ctrl-btn ctrl-btn--flame">💥 Rammen — 6d6 auf beide</button>
+      <button id="vehicleRamConfirm" class="ctrl-btn ctrl-btn--flame"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-burst"/></svg> Rammen — 6d6 auf beide</button>
       <button id="vehicleRamCancel" class="ctrl-btn">Abbrechen</button>
     </div>
   </div>
@@ -305,7 +305,7 @@
 
 <!-- Death / Spectator Banner -->
 <div id="deathBanner" class="map-death-banner" style="display:none">
-  ☠ DU BIST TOT — SPECTATOR MODE
+  <svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-skull"/></svg> DU BIST TOT — SPECTATOR MODE
 </div>
 
 <!-- Top Bar -->
@@ -325,12 +325,12 @@
       <span id="gridSizeLabel" style="font-size:.65rem;color:var(--neon-cyan);font-family:Audiowide,sans-serif;min-width:36px">50px</span>
     </span>
     <span class="map-topbar-sep"></span>
-    <button class="map-topbar-btn" id="zoomInBtn">+</button>
+    <button class="map-topbar-btn" id="zoomInBtn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-plus"/></svg></button>
     <span id="zoomLabel" style="font-size:.65rem;color:var(--text-muted);min-width:36px;text-align:center">100%</span>
-    <button class="map-topbar-btn" id="zoomOutBtn">−</button>
-    <button class="map-topbar-btn" id="zoomResetBtn">⌂</button>
+    <button class="map-topbar-btn" id="zoomOutBtn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-minus"/></svg></button>
+    <button class="map-topbar-btn" id="zoomResetBtn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-home"/></svg></button>
     <span class="map-topbar-sep"></span>
-    <button id="nextTurnBtn" class="map-topbar-btn next-turn-btn" style="display:none">▶▶ Nächste Runde</button>
+    <button id="nextTurnBtn" class="map-topbar-btn next-turn-btn" style="display:none"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-next"/></svg> Nächste Runde</button>
     <span class="map-topbar-sep"></span>
     <a id="mapBackBtn" href="index.html" class="map-topbar-btn">← Zurück</a>
   </div>
@@ -357,22 +357,22 @@
     <!-- DM Tool List -->
     <div class="tool-list" id="toolList" style="display:none">
       <div class="tool-group-head">Auswahl</div>
-      <div class="tool-btn-row active" data-tool="select"><span class="tool-icon">🖱</span><span class="tool-name">Select / Move</span></div>
+      <div class="tool-btn-row active" data-tool="select"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-cursor"/></svg></span><span class="tool-name">Select / Move</span></div>
       <div class="tool-group-head">Messung</div>
-      <div class="tool-btn-row" data-tool="measure"><span class="tool-icon">📏</span><span class="tool-name">Messen / Target</span></div>
+      <div class="tool-btn-row" data-tool="measure"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-mapdist"/></svg></span><span class="tool-name">Messen / Target</span></div>
       <div class="tool-group-head">Kampf</div>
-      <div class="tool-btn-row" data-tool="aoe"><span class="tool-icon">⭕</span><span class="tool-name">AoE Marker</span></div>
-      <div class="tool-btn-row" data-tool="cover"><span class="tool-icon">🧱</span><span class="tool-name">Deckung / Objekt</span></div>
-      <div class="tool-btn-row" data-tool="suppressive"><span class="tool-icon">🔫</span><span class="tool-name">Supp. Fire</span></div>
+      <div class="tool-btn-row" data-tool="aoe"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-target"/></svg></span><span class="tool-name">AoE Marker</span></div>
+      <div class="tool-btn-row" data-tool="cover"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-cover"/></svg></span><span class="tool-name">Deckung / Objekt</span></div>
+      <div class="tool-btn-row" data-tool="suppressive"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-burst"/></svg></span><span class="tool-name">Supp. Fire</span></div>
       <div class="tool-group-head">Zeichnen</div>
-      <div class="tool-btn-row" data-tool="pen"><span class="tool-icon">✏️</span><span class="tool-name">Freihand</span></div>
-      <div class="tool-btn-row" data-tool="rect"><span class="tool-icon">▭</span><span class="tool-name">Rechteck</span></div>
-      <div class="tool-btn-row" data-tool="circle"><span class="tool-icon">○</span><span class="tool-name">Kreis</span></div>
+      <div class="tool-btn-row" data-tool="pen"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-edit"/></svg></span><span class="tool-name">Freihand</span></div>
+      <div class="tool-btn-row" data-tool="rect"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-rect"/></svg></span><span class="tool-name">Rechteck</span></div>
+      <div class="tool-btn-row" data-tool="circle"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-circle"/></svg></span><span class="tool-name">Kreis</span></div>
       <div class="tool-group-head">Sicht</div>
-      <div class="tool-btn-row" data-tool="fog"><span class="tool-icon">🌑</span><span class="tool-name">Verdecken</span></div>
+      <div class="tool-btn-row" data-tool="fog"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fog"/></svg></span><span class="tool-name">Verdecken</span></div>
       <div class="tool-group-head">Löschen</div>
-      <div class="tool-btn-row" data-tool="delete"><span class="tool-icon">🗑</span><span class="tool-name">Element löschen</span></div>
-      <div class="tool-btn-row" id="clearAllRow"><span class="tool-icon">🧹</span><span class="tool-name">Alles löschen</span></div>
+      <div class="tool-btn-row" data-tool="delete"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-delete"/></svg></span><span class="tool-name">Element löschen</span></div>
+      <div class="tool-btn-row" id="clearAllRow"><span class="tool-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-clear"/></svg></span><span class="tool-name">Alles löschen</span></div>
     </div>
 
     <!-- Tool Settings (DM) -->
@@ -399,25 +399,23 @@
     <div class="map-sidebar-section">
       <div class="map-right-head" style="padding:0 0 .25rem;border:none">HINTERGRUND</div>
       <button id="bgUploadBtn" class="ctrl-btn" style="width:100%">🖼 Bild hochladen</button>
-      <button id="bgClearBtn"  class="ctrl-btn red" style="width:100%;margin-top:.25rem">✕ Entfernen</button>
+      <button id="bgClearBtn"  class="ctrl-btn red" style="width:100%;margin-top:.25rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg> Entfernen</button>
       <input type="file" id="bgFileInput" accept="image/*" style="display:none">
     </div>
 
     <div class="map-sidebar-section" id="savedMapsSection" style="display:none">
       <div class="map-right-head" style="padding:0 0 .25rem;border:none;display:flex;align-items:center;gap:4px">
-        KARTEN <span id="unsavedDot" style="display:none;color:#FFD700;font-size:.8rem" title="Ungespeichert">●</span>
+        KARTEN <span id="unsavedDot" style="display:none;color:#FFD700;font-size:.8rem" title="Ungespeichert"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dot"/></svg></span>
       </div>
-      <select id="savedMapsDropdown" class="ctrl-input" style="width:100%;margin-bottom:.25rem">
-        <option value="">— Karte wählen —</option>
-      </select>
+      <cyber-select id="savedMapsDropdown" placeholder="— Karte wählen —" style="width:100%;margin-bottom:.25rem"></cyber-select>
       <div style="display:flex;gap:.25rem;margin-bottom:.25rem">
-        <button id="saveSnapshotBtn" class="ctrl-btn" style="flex:1">💾</button>
-        <button id="loadSnapshotBtn" class="ctrl-btn" style="flex:1">📂 Laden</button>
+        <button id="saveSnapshotBtn" class="ctrl-btn" style="flex:1"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-save"/></svg></button>
+        <button id="loadSnapshotBtn" class="ctrl-btn" style="flex:1"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-folder"/></svg> Laden</button>
       </div>
       <div style="display:flex;gap:.25rem;margin-bottom:.25rem">
-        <button id="newSnapshotBtn"    class="ctrl-btn" style="flex:1">+ Neu</button>
-        <button id="renameSnapshotBtn" class="ctrl-btn" style="flex:1">✏</button>
-        <button id="deleteSnapshotBtn" class="ctrl-btn red" style="flex:0 0 auto">🗑</button>
+        <button id="newSnapshotBtn"    class="ctrl-btn" style="flex:1"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-plus"/></svg> Neu</button>
+        <button id="renameSnapshotBtn" class="ctrl-btn" style="flex:1"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-edit"/></svg></button>
+        <button id="deleteSnapshotBtn" class="ctrl-btn red" style="flex:0 0 auto"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-delete"/></svg></button>
       </div>
       <div id="lastSavedLabel" style="font-size:.6rem;color:var(--text-muted)"></div>
     </div>
@@ -436,7 +434,7 @@
 <!-- Roll Request Modal (Player Self-Roll) -->
 <div id="rollRequestModal" class="map-overlay" style="display:none;z-index:10001;background:rgba(0,0,0,.88)">
   <div class="map-rr-box">
-    <div class="map-rr-title">⚠ SCHADEN ERHALTEN!</div>
+    <div class="map-rr-title"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-warning"/></svg> SCHADEN ERHALTEN!</div>
     <div id="rrSource" class="map-rr-source"></div>
     <div id="rrFormula" class="map-rr-formula"></div>
     <button id="rrRollBtn" class="ctrl-btn red" style="width:100%">
@@ -444,7 +442,7 @@
     </button>
     <div id="rrResultArea" style="display:none;margin-top:1rem">
       <div id="rrResultText" class="map-rr-result"></div>
-      <button id="rrConfirmBtn" class="ctrl-btn" style="width:100%">✅ Bestätigen</button>
+      <button id="rrConfirmBtn" class="ctrl-btn" style="width:100%"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-check"/></svg> Bestätigen</button>
     </div>
   </div>
 </div>
@@ -1797,8 +1795,8 @@ function renderTokenListSidebar() {
         <div class="token-list-name">${t.name||''}</div>
         ${hpText ? `<div class="token-list-hp">${hpText} HP</div>` : ''}
       </div>
-      ${t.type==='npc' ? `<button class="token-list-ctrl" data-tid="${t.id}" title="NPC spielen">🎮</button>` : ''}
-      <button class="token-list-remove" data-tid="${t.id}" title="Entfernen">✕</button>
+      ${t.type==='npc' ? `<button class="token-list-ctrl" data-tid="${t.id}" title="NPC spielen"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-gamepad"/></svg></button>` : ''}
+      <button class="token-list-remove" data-tid="${t.id}" title="Entfernen"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg></button>
     </div>`;
   }).join('');
   wrap.querySelectorAll('.token-list-remove').forEach(btn => {
@@ -2666,9 +2664,7 @@ function renderToolSettings(tool) {
       </div>
       <div class="ts-row" style="margin-top:.35rem">
         <span class="ts-label">Material</span>
-        <select id="coverMat" class="ts-input">
-          ${Object.entries(COVER_MATERIALS).map(([k,v])=>`<option value="${k}" ${S.coverConfig.material===k?'selected':''}>${k} (${v.hp}HP)</option>`).join('')}
-        </select>
+        <cyber-select id="coverMat" class="ts-input"></cyber-select>
       </div>
       <div class="ts-row">
         <span class="ts-label">HP</span>
@@ -2723,11 +2719,18 @@ function renderToolSettings(tool) {
     delete: ()=>`
       <div class="tool-settings-head">Löschen</div>
       <div class="tool-settings-hint">Klick auf Element → sofort löschen</div>
-      <div class="ts-row"><button id="undoDrawBtn" class="ts-btn">↩ Undo letzte Zeichnung</button></div>`,
+      <div class="ts-row"><button id="undoDrawBtn" class="ts-btn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-undo"/></svg> Undo letzte Zeichnung</button></div>`,
   };
 
   el.innerHTML = (tplMap[tool]||tplMap.select)();
   el.style.display = '';
+
+  // cyber-select #coverMat (frisches Element je Render) — Options + Vorauswahl setzen
+  const coverMatSel = el.querySelector('#coverMat');
+  if (coverMatSel) {
+    coverMatSel.options = Object.entries(COVER_MATERIALS).map(([k,v])=>({ value:k, label:`${k} (${v.hp}HP)` }));
+    coverMatSel.value = S.coverConfig.material;
+  }
 
   // Wire up tool-settings controls
   el.querySelector('#snapToggle')?.addEventListener('change', e=>{ S.snapToGrid=e.target.checked; });
@@ -2798,7 +2801,7 @@ function renderTokenPicker() {
   const cg=document.getElementById('tokenPickerChars');
   cg.innerHTML=S.chars.map(c=>`
     <div class="token-pick-card" data-cid="${c.id}">
-      ${c.image_url?`<img class="token-pick-avatar" src="${c.image_url}" alt="">`:`<div class="token-pick-avatar">⚡</div>`}
+      ${c.image_url?`<img class="token-pick-avatar" src="${c.image_url}" alt="">`:`<div class="token-pick-avatar"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-bolt"/></svg></div>`}
       <div class="token-pick-name">${c.handle||c.name}</div>
     </div>`).join('');
   cg.querySelectorAll('[data-cid]').forEach(el=>{
@@ -2822,7 +2825,7 @@ function renderTokenPicker() {
   const ng=document.getElementById('tokenPickerNpcs');
   ng.innerHTML=S.npcs.map(n=>`
     <div class="token-pick-card" data-nid="${n.id}">
-      ${n.image_url?`<img class="token-pick-avatar" src="${n.image_url}" alt="">`:`<div class="token-pick-avatar">👤</div>`}
+      ${n.image_url?`<img class="token-pick-avatar" src="${n.image_url}" alt="">`:`<div class="token-pick-avatar"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-user"/></svg></div>`}
       <div class="token-pick-name">${n.name}</div>
     </div>`).join('');
   ng.querySelectorAll('[data-nid]').forEach(el=>{
@@ -3031,9 +3034,8 @@ function openGrappleModal(initiatorToken) {
     sel.style.display = '';
     document.getElementById('grappleRollBtn').style.display = '';
     actionsEl.style.display = 'none';
-    sel.innerHTML = `<option value="">— Ziel wählen —</option>` +
-      S.tokens.filter(t=>t.id!==initiatorToken.id)
-        .map(t=>`<option value="${t.id}">${t.name||t.label||'?'}</option>`).join('');
+    sel.options = S.tokens.filter(t=>t.id!==initiatorToken.id)
+      .map(t=>({ value: t.id, label: t.name||t.label||'?' }));
   }
 
   document.getElementById('grappleRollBtn').onclick = () => {
@@ -3137,9 +3139,9 @@ function openAoeBlastModal(aoe) {
       return `<div class="blast-target-row">
         <div class="token-list-icon" style="width:28px;height:28px">${t.label||t.name?.[0]||'?'}</div>
         <div class="blast-target-name">${t.name||''}</div>
-        ${covered ? '<span class="blast-cover-badge">🧱 DECKUNG</span>' : ''}
-        ${isPlayer && !covered ? '<span style="font-size:.58rem;color:#00E5FF;font-family:Audiowide,sans-serif">📨 Spieler entscheidet</span>' : ''}
-        ${!isPlayer && canDodge && rollResult>0 ? `<button class="blast-dodge-btn ctrl-btn ctrl-btn--sm" data-tid="${t.id}">🤸 Dodge</button>` : ''}
+        ${covered ? '<span class="blast-cover-badge"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-cover"/></svg> DECKUNG</span>' : ''}
+        ${isPlayer && !covered ? '<span style="font-size:.58rem;color:#00E5FF;font-family:Audiowide,sans-serif"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-envelope"/></svg> Spieler entscheidet</span>' : ''}
+        ${!isPlayer && canDodge && rollResult>0 ? `<button class="blast-dodge-btn ctrl-btn ctrl-btn--sm" data-tid="${t.id}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dodge"/></svg> Dodge</button>` : ''}
         <div class="blast-dmg-val">${dmgVal}</div>
       </div>`;
     }).join('') || '<div style="color:var(--text-muted);font-size:.78rem;padding:.5rem">Keine Tokens im Radius.</div>';
@@ -3565,7 +3567,7 @@ function showMissPopupDm(data) {
   const lineItems = (data.lineTokens||[]).map(n =>
     `<div style="font-size:.65rem;color:#888;padding:.1rem 0">• ${n}</div>`).join('');
   div.innerHTML = `
-    <div style="font-family:Audiowide,sans-serif;font-size:.65rem;color:#FF2D2D;letter-spacing:.1em;margin-bottom:.4rem">✕ FEHLSCHUSS</div>
+    <div style="font-family:Audiowide,sans-serif;font-size:.65rem;color:#FF2D2D;letter-spacing:.1em;margin-bottom:.4rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg> FEHLSCHUSS</div>
     <div style="font-size:.68rem;color:#e0e0e8;margin-bottom:.2rem">
       <b style="color:#FFD700">${data.shooter||'?'}</b> verfehlt <b style="color:#FF2D2D">${data.target||'?'}</b>
     </div>
@@ -3705,19 +3707,19 @@ function buildPlayerPanel() {
       <div class="player-map-section-label">Buffs <span style="color:#00E5FF">(${buffs.length})</span></div>
       <div class="pmap-buff-list">${buffs.map(b=>{
         const rem=b.expires_at?new Date(b.expires_at).getTime()-now:null;
-        const timeStr=rem===null?'∞':rem<=0?'ABG.':Math.ceil(rem/60000)+'min';
+        const timeStr=rem===null?'<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-infinity"/></svg>':rem<=0?'ABG.':Math.ceil(rem/60000)+'min';
         return `<span class="pmap-buff">${b.name} <span style="color:var(--text-muted);font-size:.6rem">${timeStr}</span></span>`;
       }).join('')}</div>
     </div>`:''
 
   document.getElementById('playerPanel').innerHTML=`
     <div class="player-map-portrait">
-      ${c.image_url?`<img src="${c.image_url}" alt="">`:`<div class="avatar-fallback">${_npcControlMode?'👤':'⚡'}</div>`}
+      ${c.image_url?`<img src="${c.image_url}" alt="">`:`<div class="avatar-fallback">${_npcControlMode?'<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-user"/></svg>':'<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-bolt"/></svg>'}</div>`}
       <div>
         <div class="player-map-pname">${c.handle||c.name||'—'}</div>
-        <div class="player-map-prole">${_npcControlMode?'🎮 NPC':(c.role||'')}</div>
+        <div class="player-map-prole">${_npcControlMode?'<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-gamepad"/></svg> NPC':(c.role||'')}</div>
       </div>
-      ${_npcControlMode?`<button id="npcCtrlBackBtn" title="Zurück zur DM-Ansicht" style="margin-left:auto;background:rgba(255,49,88,.15);border:2px solid var(--neon-red);border-radius:var(--radius);color:var(--neon-red);cursor:pointer;padding:.5rem 1rem;font-size:.9rem;font-weight:700;box-shadow:0 0 12px rgba(255,49,88,.5),0 0 24px rgba(255,49,88,.2);letter-spacing:.05em;white-space:nowrap;animation:npcBackGlow 2s ease-in-out infinite">🔙 DM</button>`:''}
+      ${_npcControlMode?`<button id="npcCtrlBackBtn" title="Zurück zur DM-Ansicht" style="margin-left:auto;background:rgba(255,49,88,.15);border:2px solid var(--neon-red);border-radius:var(--radius);color:var(--neon-red);cursor:pointer;padding:.5rem 1rem;font-size:.9rem;font-weight:700;box-shadow:0 0 12px rgba(255,49,88,.5),0 0 24px rgba(255,49,88,.2);letter-spacing:.05em;white-space:nowrap;animation:npcBackGlow 2s ease-in-out infinite"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-back"/></svg> DM</button>`:''}
     </div>
     <div class="player-map-stats">
       <div class="pmap-bar-row">
@@ -3775,11 +3777,7 @@ function buildPlayerPanel() {
         <!-- Ammo type selector -->
         <div id="mwcAmmoRow" style="display:none;margin-top:.3rem">
           <div style="font-size:.58rem;color:#555;letter-spacing:.08em;margin-bottom:.2rem">MUNITION</div>
-          <select id="mwcAmmoSelect"
-            style="width:100%;font-size:.65rem;background:#0f0f18;border:1px solid #2a2a3a;
-                   color:#e0e0e8;border-radius:4px;padding:.2rem .35rem">
-            <option value="basic">Standard (Basic)</option>
-          </select>
+          <cyber-select id="mwcAmmoSelect" style="width:100%"></cyber-select>
         </div>
 
         <!-- Attack roll flow -->
@@ -3808,12 +3806,12 @@ function buildPlayerPanel() {
             </div>
             <div class="atk-input-row">
               <span style="font-size:.63rem;color:#666">Aimed Shot</span>
-              <select id="atkAimed" style="background:#0f0f18;border:1px solid #2a2a3a;color:#e0e0e8;border-radius:4px;font-size:.7rem;padding:.28rem .4rem;width:100%;margin-top:.1rem">
+              <cyber-select id="atkAimed" style="width:100%;margin-top:.1rem">
                 <option value="">— kein Aimed Shot —</option>
                 <option value="head">🎯 Kopf  (−8, ×2 Schaden)</option>
                 <option value="leg">🦵 Bein  (−8, Broken Leg)</option>
                 <option value="held_item">✋ Held Item  (−8, droppt Item)</option>
-              </select>
+              </cyber-select>
             </div>
             <div class="atk-dv-display" id="atkDvDisplay"></div>
             <div style="position:relative">
@@ -3826,7 +3824,7 @@ function buildPlayerPanel() {
           <!-- Step 2: Damage roll (revealed on hit) -->
           <div class="atk-step" id="atkStep2" style="display:none">
             <div class="atk-step-header">SCHADENSWURF</div>
-            <button id="dmgRollBtn" class="atk-btn">💀 Schaden würfeln</button>
+            <button id="dmgRollBtn" class="atk-btn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-skull"/></svg> Schaden würfeln</button>
             <div class="atk-result" id="dmgRollResult" style="display:none"></div>
           </div>
           <!-- Step 3: Armor reduction (revealed after damage) -->
@@ -3838,7 +3836,7 @@ function buildPlayerPanel() {
             </div>
             <div id="atkFinalDmg" style="font-size:.72rem;color:#FF8C00;margin:.25rem 0"></div>
             <button id="atkApplyDmg" class="atk-btn atk-btn-danger" style="display:none">✅ Schaden anwenden</button>
-            <button id="atkResetBtn" class="ts-btn" style="width:100%;margin-top:.3rem;font-size:.6rem">↺ Neuer Angriff</button>
+            <button id="atkResetBtn" class="ts-btn" style="width:100%;margin-top:.3rem;font-size:.6rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-undo"/></svg> Neuer Angriff</button>
           </div>
         </div>
       </div>
@@ -3940,10 +3938,12 @@ function buildPlayerPanel() {
     const inv = S.char?.ammo_inventory || {};
     const allTypes = (mapAmmoData?.ammo_types || [])
       .filter(t => t.ammo_type === weaponAmmoType && !t.id.startsWith('ammo-basic-'));
-    const opts = allTypes.filter(t => (inv[t.id] || 0) > 0)
-      .map(t => `<option value="${t.id}"${raw.loaded_ammo===t.id?' selected':''}>${t.name} (${inv[t.id]})</option>`)
-      .join('');
-    ammoSel.innerHTML = `<option value="basic"${(!raw.loaded_ammo||raw.loaded_ammo==='basic')?' selected':''}>Standard (Basic)</option>${opts}`;
+    ammoSel.options = [
+      { value: 'basic', label: 'Standard (Basic)' },
+      ...allTypes.filter(t => (inv[t.id] || 0) > 0)
+        .map(t => ({ value: t.id, label: `${t.name} (${inv[t.id]})` })),
+    ];
+    ammoSel.value = (!raw.loaded_ammo || raw.loaded_ammo === 'basic') ? 'basic' : raw.loaded_ammo;
     ammoRow.style.display = '';
   }
 
@@ -4080,11 +4080,11 @@ function buildPlayerPanel() {
       numEl.className = 'atk-dice-num ' + (isCrit ? 'crit' : isFumble ? 'fumble' : '');
       if (isCrit)   dieEl?.classList.add('glow-green');
       if (isFumble) dieEl?.classList.add('glow-red');
-      const critStr = isCrit ? ` + ${bonus}🎯` : isFumble ? ` − ${bonus}💀` : '';
+      const critStr = isCrit ? ` + ${bonus}<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-target"/></svg>` : isFumble ? ` − ${bonus}<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-skull"/></svg>` : '';
       lblEl.innerHTML =
         `d10: ${d10}${critStr} + REF ${ref} + Skill ${skill}${mod ? (mod>0?` +${mod}`:` ${mod}`):''}` +
         ` = <b>${total}</b> vs DV ${dv}<br>` +
-        `<span class="${hit ? 'atk-hit-badge' : 'atk-miss-badge'}">${hit ? '✓ TREFFER' : '✗ VERFEHLT'}</span>`;
+        `<span class="${hit ? 'atk-hit-badge' : 'atk-miss-badge'}">${hit ? '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-check"/></svg> TREFFER' : '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg> VERFEHLT'}</span>`;
     }, 480);
     setTimeout(() => {
       overlay.style.display = 'none';
@@ -4124,7 +4124,7 @@ function buildPlayerPanel() {
       `<div style="display:flex;align-items:center;gap:.3rem;margin:.15rem 0">
         <span style="font-size:.63rem;color:#888">${t.name}</span>
         <button class="atk-btn" data-miss-idx="${i}"
-          style="font-size:.55rem;padding:.08rem .35rem;flex-shrink:0">💥 Schaden</button>
+          style="font-size:.55rem;padding:.08rem .35rem;flex-shrink:0"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-burst"/></svg> Schaden</button>
       </div>`
     ).join('');
     res.innerHTML += `<div style="margin-top:.35rem;border-top:1px solid #1e1e2a;padding-top:.3rem">
@@ -4183,16 +4183,16 @@ function buildPlayerPanel() {
 
     showAtkDiceAnim(d10, bonus, ref, skill, dispMod, total, dv, hit, isCrit, isFumble, () => {
       let html = '';
-      if (isCrit)   html += '<div class="atk-badge-crit">✨ CRITICAL SUCCESS!</div>';
-      if (isFumble) html += '<div class="atk-badge-miss">☠ CRITICAL FAILURE</div>';
+      if (isCrit)   html += '<div class="atk-badge-crit"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-sparkle"/></svg> CRITICAL SUCCESS!</div>';
+      if (isFumble) html += '<div class="atk-badge-miss"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-skull"/></svg> CRITICAL FAILURE</div>';
       html += `d10: <b>${d10}</b>`;
       if (bonus) html += isCrit ? ` +${bonus}` : ` −${bonus}`;
       html += ` + REF ${ref} + Skill ${skill}${dispMod ? (dispMod>0?` +${dispMod}`:` ${dispMod}`):''}`;
       if (aimed) html += ` <span style="color:#FFD700">· Aimed: ${aimed==='head'?'Kopf':aimed==='leg'?'Bein':'Item'}</span>`;
       html += ` = <b style="font-family:Audiowide;font-size:.9rem">${total}</b> vs DV <b>${dv}</b>`;
       html += hit
-        ? `<div style="color:#22C55E;margin-top:.2rem;font-size:.7rem">✅ TREFFER (+${total-dv})</div>`
-        : `<div style="color:#FF2D2D;margin-top:.2rem;font-size:.7rem">✕ FEHLSCHUSS (${dv-total} unter DV)</div>`;
+        ? `<div style="color:#22C55E;margin-top:.2rem;font-size:.7rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-check"/></svg> TREFFER (+${total-dv})</div>`
+        : `<div style="color:#FF2D2D;margin-top:.2rem;font-size:.7rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg> FEHLSCHUSS (${dv-total} unter DV)</div>`;
       const res = document.getElementById('atkRollResult');
       res.innerHTML = html; res.style.display = '';
       if (hit) document.getElementById('atkStep2').style.display = '';
@@ -4234,7 +4234,7 @@ function buildPlayerPanel() {
     html += ` = <b style="color:#FF8C00;font-family:Audiowide;font-size:.9rem">${total}</b> Schaden`;
     if (_atkWeaponClass === 'melee_weapon' || _atkWeaponClass === 'martial_arts')
       html += ` <span style="color:#888;font-size:.58rem">(½ SP)</span>`;
-    if (critInjury) html += '<div class="atk-badge-injury">⚠ CRITICAL INJURY!</div>';
+    if (critInjury) html += '<div class="atk-badge-injury"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-warning"/></svg> CRITICAL INJURY!</div>';
     // Ammo-Abzug sofort (nicht erst nach Animation)
     // Deduct ammo
     const rawW = S.char?.weapons?.[w?.rawIdx];
@@ -4267,7 +4267,7 @@ function buildPlayerPanel() {
     let animLabel = `[${rolls.join('][')}]`;
     if (_autofireOn && mult > 1) animLabel += ` × ${mult}`;
     animLabel += ` = ${total} Schaden`;
-    if (critInjury) animLabel += '<br><span style="color:#FF8C42">⚠ CRITICAL INJURY!</span>';
+    if (critInjury) animLabel += '<br><span style="color:#FF8C42"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-warning"/></svg> CRITICAL INJURY!</span>';
     showDmgDiceAnim(total, animLabel, () => {
       const res = document.getElementById('dmgRollResult');
       res.innerHTML = html; res.style.display = '';
@@ -4462,8 +4462,8 @@ function setupDmControls() {
     const { getSavedMaps } = await import('./assets/js/supabase.js');
     const maps = await getSavedMaps().catch(() => []);
     const dd = document.getElementById('savedMapsDropdown');
-    dd.innerHTML = '<option value="">— Karte wählen —</option>' +
-      maps.map(m => `<option value="${m.id}"${m.id===_activeSavedMapId?' selected':''}>${m.name}</option>`).join('');
+    dd.options = maps.map(m => ({ value: m.id, label: m.name }));
+    if (_activeSavedMapId) dd.value = _activeSavedMapId;
   }
   refreshSavedMapsDropdown();
 
@@ -4471,7 +4471,7 @@ function setupDmControls() {
     const { upsertSavedMap } = await import('./assets/js/supabase.js');
     let name;
     if (_activeSavedMapId) {
-      name = document.getElementById('savedMapsDropdown').selectedOptions[0]?.text || S.mapName || 'Karte';
+      name = document.getElementById('savedMapsDropdown').selectedOption?.label || S.mapName || 'Karte';
     } else {
       name = await mapPrompt('Name für diese Karte', S.mapName || 'Karte');
       if (!name) return;
@@ -4534,7 +4534,7 @@ function setupDmControls() {
   document.getElementById('renameSnapshotBtn').addEventListener('click', async () => {
     const id = document.getElementById('savedMapsDropdown').value;
     if (!id) return;
-    const name = await mapPrompt('Neuer Name', document.getElementById('savedMapsDropdown').selectedOptions[0]?.text || '');
+    const name = await mapPrompt('Neuer Name', document.getElementById('savedMapsDropdown').selectedOption?.label || '');
     if (!name) return;
     const { upsertSavedMap } = await import('./assets/js/supabase.js');
     await upsertSavedMap(id, name, null).catch(e => showMapToast('Fehler: '+e.message,'red'));
@@ -4858,11 +4858,11 @@ function renderCombatBar() {
     const isDead = c.maxHp && c.hp <= 0;
     const imgEl = c.imageUrl
       ? `<img class="combat-card-avatar" src="${c.imageUrl}" loading="lazy">`
-      : `<div class="combat-card-placeholder">${c.isNpc ? '👤' : '⚡'}</div>`;
+      : `<div class="combat-card-placeholder">${c.isNpc ? '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-user"/></svg>' : '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-bolt"/></svg>'}</div>`;
     const initBadge = (c.initiative != null) ? `<div class="combat-card-init">INI ${c.initiative}</div>` : '';
     const killBtn = IS_DM ? `<button class="combat-card-kill" data-cidx="${i}"
       style="font-size:.5rem;background:none;border:none;color:#FF2D2D;cursor:pointer;padding:1px 2px;line-height:1"
-      title="Aus Kampf entfernen">✕</button>` : '';
+      title="Aus Kampf entfernen"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg></button>` : '';
     cardsHtml += `<div class="combat-card${isActive?' active':''}${isDead?' dead':''}"
       data-cidx="${i}" draggable="${IS_DM?'true':'false'}">
       ${imgEl}
@@ -4878,10 +4878,10 @@ function renderCombatBar() {
     actionsHtml = `<div class="combat-bar-actions">
       <button id="cbNextTurnBtn" style="font-family:Audiowide,sans-serif;font-size:.58rem;
         padding:.2rem .45rem;background:rgba(0,229,255,.1);border:1px solid #00E5FF;
-        color:#00E5FF;border-radius:4px;cursor:pointer;white-space:nowrap;">▶ Nächster</button>
+        color:#00E5FF;border-radius:4px;cursor:pointer;white-space:nowrap;"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-next"/></svg> Nächster</button>
       <button id="cbEndCombatBtn" style="font-family:Audiowide,sans-serif;font-size:.58rem;
         padding:.2rem .45rem;background:rgba(255,45,45,.1);border:1px solid #FF2D2D;
-        color:#FF2D2D;border-radius:4px;cursor:pointer;white-space:nowrap;">✕ Beenden</button>
+        color:#FF2D2D;border-radius:4px;cursor:pointer;white-space:nowrap;"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg> Beenden</button>
     </div>`;
   }
 

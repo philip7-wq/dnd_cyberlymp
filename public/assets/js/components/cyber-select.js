@@ -42,6 +42,10 @@ class CyberSelect extends CyberElement {
         this._options = parseOptionsAttr(this.getAttribute('options'));
       }
       if (this._value == null && this.hasAttribute('value')) this._value = this.getAttribute('value');
+      // Native-<select>-Parität: ohne placeholder + ohne Vorauswahl → erste Option ist Default.
+      if (this._value == null && !this.hasAttribute('placeholder') && this._options.length) {
+        this._value = this._options[0].value;
+      }
       this._initialized = true;
     }
     super.connectedCallback();

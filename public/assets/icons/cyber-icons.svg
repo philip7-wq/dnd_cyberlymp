@@ -108,4 +108,97 @@
 
 <symbol id="ic-seek" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 6 11 12 5 18"/><polyline points="12 6 18 12 12 18"/></g></symbol>
 
+<!-- ===== BATCH 3 (map.html + Phase 8-10) ===== -->
+
+<!-- Tools / Map -->
+<symbol id="ic-cursor" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 6 18.8 10.1 14.6 12.8 20.6 15.2 19.5 12.5 13.6 18.2 13.4 Z"/></g></symbol>
+
+<symbol id="ic-cover" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="1"/><path d="M3.5 9.7H20.5M3.5 14.3H20.5M9 5V9.7M14.5 5V9.7M11.75 9.7V14.3M9 14.3V19M14.5 14.3V19"/></g></symbol>
+
+<symbol id="ic-fog" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8q3-2 6 0t6 0 6 0M3 12q3-2 6 0t6 0 6 0M3 16q3-2 6 0t6 0 6 0"/></g></symbol>
+
+<symbol id="ic-rect" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6.5" width="16" height="11" rx="1"/></g></symbol>
+
+<symbol id="ic-circle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/></g></symbol>
+
+<symbol id="ic-clear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4 11.5 12.5M9 10l5 5-3.2 3.2c-1.6 1.6-4.2 1.6-5.8 0l0 0c-.6-.6-.6-1.6 0-2.2z"/><path d="M6.5 17.5 8 19M9 15.5 10.5 17"/></g></symbol>
+
+<symbol id="ic-heart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-9.5a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10.5c0 5-7 9.5-7 9.5z"/></g></symbol>
+
+<symbol id="ic-bolt" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5 13.5h6L10.5 21 19 10h-6z"/></g></symbol>
+
+<symbol id="ic-chain" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 13.5a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1.2 1.2M13.5 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1.2-1.2"/></g></symbol>
+
+<symbol id="ic-gamepad" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9.5" rx="4.75"/><path d="M8 11.2v3M6.5 12.7h3"/><circle cx="16" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="14" r="1" fill="currentColor" stroke="none"/></g></symbol>
+
+<symbol id="ic-palette" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 0 0 0 18c1.4 0 2-1 2-2 0-1.2 1-2 2-2h1.6A3.4 3.4 0 0 0 21 13.6 9 9 0 0 0 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="9.5" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="7" r="1" fill="currentColor" stroke="none"/></g></symbol>
+
+<symbol id="ic-group" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.4a3 3 0 0 1 0 5.6M15.5 14.2a5.5 5.5 0 0 1 5 4.8"/></g></symbol>
+
+<symbol id="ic-ruler" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5 19 19 Z"/><path d="M16.5 8.5H17.5M13.5 11.5H15M10.5 14.5H12.5"/></g></symbol>
+
+<symbol id="ic-hammer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5 20.5 9.5 18 12 12 6z"/><path d="M13 8 5 16a2.1 2.1 0 0 0 3 3l8-8"/></g></symbol>
+
+<symbol id="ic-snow" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4.2 7.5 19.8 16.5M19.8 7.5 4.2 16.5"/><path d="M12 6 10 8M12 6 14 8M12 18 10 16M12 18 14 16M6.6 8.8 7 11.5 4.4 12.3M17.4 8.8 17 11.5 19.6 12.3M6.6 15.2 7 12.5 4.4 11.7M17.4 15.2 17 12.5 19.6 11.7"/></g></symbol>
+
+<symbol id="ic-fist" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="9" width="12" height="9.5" rx="3"/><path d="M9 9V7.4a1.3 1.3 0 0 1 2.6 0V9M11.6 9V6.8a1.3 1.3 0 0 1 2.6 0V9M14.2 9V7.4a1.3 1.3 0 0 1 2.6 0V9M6 12.5H8.5"/></g></symbol>
+
+<symbol id="ic-dodge" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="5" r="2"/><path d="M13.5 7 11 12.5 14 14.5 15.5 20M11 12.5 6.5 11M14.2 13.8 18.5 11.5"/></g></symbol>
+
+<!-- Files / Media -->
+<symbol id="ic-image" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M4 16.5 8.5 12l3 3L15 11.5 20 16.5"/></g></symbol>
+
+<symbol id="ic-save" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 13h8v7H8z"/></g></symbol>
+
+<symbol id="ic-folder" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5a1.5 1.5 0 0 1 1.5-1.5h4l2 2.5h8a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/></g></symbol>
+
+<symbol id="ic-home" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4 20 11.5M6 10v9h12v-9M10 19v-5h4v5"/></g></symbol>
+
+<symbol id="ic-envelope" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6" width="17" height="12" rx="1.5"/><path d="M4 7 12 13 20 7"/></g></symbol>
+
+<!-- Controls / Status -->
+<symbol id="ic-minus" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></g></symbol>
+
+<symbol id="ic-plus" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></g></symbol>
+
+<symbol id="ic-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 6.5"/></g></symbol>
+
+<symbol id="ic-x" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6 18 18M18 6 6 18"/></g></symbol>
+
+<symbol id="ic-warning" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 20H21.5z"/><path d="M12 10v4.5M12 17.4h.01"/></g></symbol>
+
+<symbol id="ic-hourglass" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12M6 20h12M7 4c0 4 5 5 5 8s-5 4-5 8M17 4c0 4-5 5-5 8s5 4 5 8"/></g></symbol>
+
+<symbol id="ic-back" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6 5 12 11 18M5 12h14"/></g></symbol>
+
+<symbol id="ic-undo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8v4h4"/><path d="M5.5 12a6.5 6.5 0 1 1 1.6 4.3"/></g></symbol>
+
+<symbol id="ic-resize-h" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8 4 12 8 16M16 8 20 12 16 16M4 12h16"/></g></symbol>
+
+<symbol id="ic-infinity" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9a3 3 0 1 0 0 6c2.5 0 3.5-6 6-6a3 3 0 1 1 0 6c-2.5 0-3.5-6-6-6z"/></g></symbol>
+
+<symbol id="ic-sparkle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M17.5 14l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></g></symbol>
+
+<symbol id="ic-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="currentColor"/></symbol>
+
+<!-- Body parts (Aimed Shot) -->
+<symbol id="ic-hand" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 11V5.6a1.3 1.3 0 0 1 2.6 0V10M11.1 10V4.8a1.3 1.3 0 0 1 2.6 0V10M13.7 10V5.4a1.3 1.3 0 0 1 2.6 0V11.5"/><path d="M16.3 9.6a1.3 1.3 0 0 1 2.4.7V15a6 6 0 0 1-6 6h-.7a6 6 0 0 1-5.1-2.9l-2-3.4a1.3 1.3 0 0 1 2.1-1.5L8.5 12"/></g></symbol>
+
+<symbol id="ic-leg" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 9.6 12a3.5 3.5 0 0 0 .9 2.2L14 19M13.5 4 13.2 10.5M13.5 19 17 20.5"/></g></symbol>
+
+<!-- Vehicle token presets -->
+<symbol id="ic-car" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14 4.6 9.4A2 2 0 0 1 6.5 8h11a2 2 0 0 1 1.9 1.4L21 14"/><path d="M3 14h18v3a1 1 0 0 1-1 1h-1.2M5.2 18H4a1 1 0 0 1-1-1v-3"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/></g></symbol>
+
+<symbol id="ic-suv" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13V8.2A1.2 1.2 0 0 1 4.7 7h14.6a1.2 1.2 0 0 1 1.2 1.2V13"/><path d="M3.5 13h17v3.5a1 1 0 0 1-1 1h-1.3M5.8 17.5H4.5a1 1 0 0 1-1-1V13M12 7v6"/><circle cx="7.2" cy="17.3" r="1.5"/><circle cx="16.8" cy="17.3" r="1.5"/></g></symbol>
+
+<symbol id="ic-truck" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16V7h11v9M13 10h4l3 3.2V16h-2"/><path d="M2 16h2M11 16H8"/><circle cx="6" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/></g></symbol>
+
+<symbol id="ic-motorcycle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="16" r="3"/><circle cx="18.5" cy="16" r="3"/><path d="M5.5 16 9.5 10h3.5l2 3M9 10h3.5M15.5 13 17 10h2.5"/></g></symbol>
+
+<symbol id="ic-plane" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 0 1.6 1.1 1.6 3.2v3.6l6.9 4v2.1l-6.9-2v3l2 1.5v1.6l-3.6-1-3.6 1V19.5l2-1.5v-3l-6.9 2v-2.1l6.9-4V6.2C10.4 4.1 11 3 12 3z"/></g></symbol>
+
+<symbol id="ic-helicopter" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M12 6v3"/><path d="M7 9h6a4 4 0 0 1 4 4v1H7a3 3 0 0 1-3-3 1 1 0 0 1 1-1z"/><path d="M17 12h4l-1.3 3M7 17h7M9 14.5v2.5M12.5 14v3"/></g></symbol>
+
+<symbol id="ic-balloon" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6.5 6.5 0 0 1 6.5 6.5c0 4-3.2 6.2-6.5 7.2-3.3-1-6.5-3.2-6.5-7.2A6.5 6.5 0 0 1 12 3z"/><path d="M9.6 15.4 10.5 17.7h3l.9-2.3M10.6 17.7v2.3a.6.6 0 0 0 .6.6h1.6a.6.6 0 0 0 .6-.6v-2.3"/></g></symbol>
+
 </svg>
