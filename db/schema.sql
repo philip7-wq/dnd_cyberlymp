@@ -261,6 +261,9 @@ ALTER TABLE characters ADD COLUMN IF NOT EXISTS
 ALTER TABLE characters ADD COLUMN IF NOT EXISTS
   last_hp_tick_at_ingame timestamptz DEFAULT '2045-09-15 08:00:00+00';
 
+-- characters Black-Market-State (Schwarzmarkt-Angebot/Verhandlung pro PC)
+ALTER TABLE characters ADD COLUMN IF NOT EXISTS blackmarket_state jsonb;
+
 -- session_log — DM-Session-Leiste: Start/Stop + Teilnehmer-Tracking
 CREATE TABLE IF NOT EXISTS session_log (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

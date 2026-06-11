@@ -3310,28 +3310,6 @@
       }
     },
     {
-      "id": "gear-radio-scanner-music-player",
-      "name": "Radio Scanner/ Music Player",
-      "category": "Gear",
-      "subcategory": null,
-      "price": 50,
-      "price_options": [
-        50
-      ],
-      "currency": "eb",
-      "price_category": "Costly",
-      "raw_cost": "50eb (Costly)",
-      "damage": null,
-      "rof": null,
-      "hands": null,
-      "ammo": null,
-      "notes": null,
-      "source": {
-        "page": 351,
-        "pdf_page": 352
-      }
-    },
-    {
       "id": "gear-road-flare",
       "name": "Road Flare",
       "category": "Gear",
@@ -14447,6 +14425,26 @@
       "source": {
         "page": null,
         "pdf_page": null
+      }
+    },
+    {
+      "id": "gear-radio-scanner",
+      "name": "Radio Scanner / Music Player",
+      "category": "Gear",
+      "subcategory": "Communications",
+      "price": 100,
+      "price_options": [100],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Portable multi-band radio scanner with music playback. Picks up 5 Night City broadcast stations. Sync'd to live city-time — everyone hears the same timestamp.",
+      "source": {
+        "page": 351,
+        "pdf_page": 352
       }
     }
   ]

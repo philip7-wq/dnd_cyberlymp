@@ -357,7 +357,7 @@
 
 <script type="module">
 console.log('[player] module loaded');
-import { getCharacter, getCharacters, patchCharacter, patchCash, logRoll, getActiveCombat, getActiveCombats, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc, getRoomItems, addRoomItem, removeRoomItem, subscribeRoomItems } from './assets/js/supabase.js';
+import { getCharacter, getCharacters, getItems, patchCharacter, patchCash, logRoll, getActiveCombat, getActiveCombats, subscribeCombat, subscribeCharacters, sendMessage, getMessages, subscribeMessages, getActiveNpcs, patchNpc, getRoomItems, addRoomItem, removeRoomItem, subscribeRoomItems } from './assets/js/supabase.js';
 import { roll, initDiceBox, animateRollNumber } from './assets/js/dice.js';
 import { loadCombatData, resolveDeathSave, getBaseDeathSavePenalty, getHighestArmorPenalty, getInjuryPenaltyStruct } from './assets/js/combat-modifiers.js';
 import { initAgent } from './assets/js/agent/agent-core.js';
@@ -3966,7 +3966,110 @@ document.getElementById('timerExpiredOk').addEventListener('click', () => {
   document.getElementById('timerExpiredModal').style.display = 'none';
 });
 
+// ── BM Item-Grant (D2) — Schreibstruktur 1:1 aus dm.html C1 (grantItem) ──
+function routeItem(item) {
+  if (['Ranged Weapon','Melee Weapon','Exotic Weapon'].includes(item.category)) return 'weapons';
+  if (item.category === 'Armor')     return 'armor';
+  if (item.category === 'Cyberware') return 'cyberware';
+  return 'gear';
+}
+
+const CYBERWARE_SLOT_MAP = {
+  'Fashionware':                     ['fashionware'],
+  'Neuralware / Chipware':           ['neuralLink'],
+  'Chipware':                        ['neuralLink'],
+  'Neuralware':                      ['neuralLink'],
+  'Cybereye / Cybereye Option':      ['rightCybereye','leftCybereye'],
+  'Cybereye Option':                 ['rightCybereye','leftCybereye'],
+  'Cyberaudio Suite / Option':       ['cyberaudio'],
+  'Cyberaudio Option':               ['cyberaudio'],
+  'Internal Cyberware':              ['internal'],
+  'External Cyberware':              ['external'],
+  'Cyberarm / Cyberarm Option':      ['rightCyberarm','leftCyberarm'],
+  'Cyberarm Option':                 ['rightCyberarm','leftCyberarm'],
+  'Cyberarm/Cyberleg/Cyberlimb Option':['rightCyberarm','leftCyberarm','rightCyberleg','leftCyberleg'],
+  'Cyberleg/Cyberlimb Option':       ['rightCyberleg','leftCyberleg'],
+  'Borgware':                        ['borgware'],
+};
+
+function getItemSlots(item) {
+  const sub = item.subcategory || '';
+  const base = CYBERWARE_SLOT_MAP[sub] || ['internal'];
+  if (sub !== 'Cyberarm/Cyberleg/Cyberlimb Option') return base;
+
+  const notes = item.notes || '';
+  if (item.name === 'Cyberleg' || notes.startsWith('Cyberleg Option') || notes.toLowerCase().startsWith('replacement leg'))
+    return ['rightCyberleg','leftCyberleg'];
+  if (notes.startsWith('Cyberarm Option'))
+    return ['rightCyberarm','leftCyberarm'];
+  return base;
+}
+
+function getSlotCost(item) {
+  const m = (item.notes || '').match(/takes (\d+) Option Slot/i);
+  return m ? parseInt(m[1]) : 1;
+}
+
+function buildSnapshot(item) {
+  const x = item.extra || {};
+  switch (routeItem(item)) {
+    case 'weapons':
+      return { name: item.name, damage: item.damage || null, ammo: item.ammo || null,
+               rof: item.rof || null, notes: item.notes || null,
+               price: item.price, raw_cost: item.raw_cost, category: item.category };
+    case 'armor':
+      return { name: item.name, sp: parseInt(x.sp) || 0,
+               penalty: (x.armor_penalty && x.armor_penalty !== 'None') ? parseInt(x.armor_penalty) || 0 : 0,
+               notes: item.notes || null, price: item.price, raw_cost: item.raw_cost };
+    case 'cyberware':
+      return { name: item.name, category: item.category, notes: item.notes || null,
+               install: x.install || null, humanity_loss: x.humanity_loss || null,
+               price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null,
+               slotCost: getSlotCost(item) };
+    default:
+      return { name: item.name, notes: item.notes || null,
+               price: item.price, raw_cost: item.raw_cost };
+  }
+}
+
+let _bmItemsCache = [];
+async function _bmFetchItem(itemId) {
+  if (!_bmItemsCache.length) { try { _bmItemsCache = await getItems([]); } catch { return null; } }
+  return _bmItemsCache.find(i => i.id === itemId) || null;
+}
+
+async function _bmGrantItem(itemId) {
+  const item = await _bmFetchItem(itemId);
+  if (!item) return false;                 // Fallback: kein Crash
+  const dest = routeItem(item);
+  const snapshot = buildSnapshot(item);
+  const patch = {};
+  if (dest === 'weapons') {
+    char.weapons = [...(Array.isArray(char.weapons) ? char.weapons : []), snapshot];
+    patch.weapons = char.weapons;
+  } else if (dest === 'cyberware') {
+    const slots = getItemSlots(item);
+    const chosenSlot = slots[0];           // erster Slot automatisch (wie C1)
+    const existingCw = (char.cyberware && !Array.isArray(char.cyberware)) ? char.cyberware : {};
+    char.cyberware = { ...existingCw, [chosenSlot]: [...(existingCw[chosenSlot] || []), snapshot] };
+    patch.cyberware = char.cyberware;
+  } else if (dest === 'gear') {
+    char.gear = [...(Array.isArray(char.gear) ? char.gear : []), snapshot];
+    patch.gear = char.gear;
+  } else if (dest === 'armor') {
+    char.armor = { ...(char.armor || {}), body: snapshot };
+    patch.armor = char.armor;
+  }
+  await patchCharacter(char.id, patch);
+  if      (dest === 'weapons')   renderWeapons();
+  else if (dest === 'cyberware') renderCyberware();
+  else if (dest === 'gear')      renderGear();
+  else if (dest === 'armor')     renderArmor();
+  return true;
+}
+
 // Expose module-scoped vars for the BM plain script below
+window._bmGrantItem    = (itemId) => _bmGrantItem(itemId);
 window._bmGetChar      = () => char;
 window._bmPatchChar    = (id, p) => patchCharacter(id, p);
 window._bmPatchCash    = (...a) => patchCash(...a);
@@ -4013,6 +4116,7 @@ const _bmChar       = () => window._bmGetChar?.()    ?? null;
 const _bmPatch      = (id, p) => window._bmPatchChar?.(id, p) ?? Promise.resolve();
 const _bmPatchCash  = (...a) => window._bmPatchCash?.(...a)   ?? Promise.resolve();
 const _bmCashUpdate = () => window._bmUpdateCash?.();
+const _bmGrant      = (itemId) => window._bmGrantItem?.(itemId) ?? Promise.resolve(false);
 
 function bmDoorSrc(door, open) {
   return `assets/images/blackmarket/door${door}_${open ? 'open' : 'close'}.jpg`;
@@ -4138,6 +4242,7 @@ async function bmAccept() {
   c.cash_log = await _bmPatchCash(c.id, newCash, -price, `Schwarzmarkt: ${state.offer.item_name}`, c.cash_log);
   c.cash = newCash;
   _bmCashUpdate();
+  if (state.offer.item_id) await _bmGrant(state.offer.item_id);
   const next = { ...state, status: 'accepted', paid: true };
   c.blackmarket_state = next;
   await _bmPatch(c.id, { blackmarket_state: next });
@@ -4179,6 +4284,7 @@ async function bmAutoDeduct(state) {
   c.cash_log    = await _bmPatchCash(c.id, newCash, -price, `Schwarzmarkt (Verh.): ${state.offer?.item_name || '?'}`, c.cash_log);
   c.cash        = newCash;
   _bmCashUpdate();
+  if (state.offer?.item_id) await _bmGrant(state.offer.item_id);
   const next = { ...state, paid: true };
   c.blackmarket_state = next;
   await _bmPatch(c.id, { blackmarket_state: next });
