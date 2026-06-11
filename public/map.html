@@ -52,51 +52,41 @@
 </div>
 
 <!-- Custom Confirm Modal (replaces browser confirm()) -->
-<div id="mapConfirmModal" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.75);align-items:center;justify-content:center">
-  <div style="background:#111;border:1px solid rgba(255,45,45,.35);border-radius:6px;padding:1.25rem 1.5rem;min-width:260px;max-width:340px;width:90%;box-shadow:0 0 40px rgba(0,0,0,.8)">
-    <div id="mapConfirmModalText" style="font-family:Audiowide,sans-serif;font-size:.75rem;color:#e0e0e8;letter-spacing:.04em;line-height:1.5;margin-bottom:1rem"></div>
-    <div style="display:flex;gap:.5rem;justify-content:flex-end">
-      <button id="mapConfirmModalCancel" style="background:none;border:1px solid #444;color:#888;border-radius:4px;padding:.35rem .85rem;cursor:pointer;font-size:.75rem">Abbrechen</button>
-      <button id="mapConfirmModalOk" style="background:rgba(255,45,45,.15);border:1px solid #FF2D2D;color:#FF2D2D;border-radius:4px;padding:.35rem .85rem;cursor:pointer;font-size:.75rem;font-family:Audiowide,sans-serif">Bestätigen</button>
+<div id="mapConfirmModal" class="map-overlay" style="display:none;z-index:10001">
+  <div class="map-modal-box map-modal-box--red">
+    <div id="mapConfirmModalText" class="map-modal-text"></div>
+    <div class="map-modal-actions">
+      <button id="mapConfirmModalCancel" class="ctrl-btn ctrl-btn--sm ctrl-btn--ghost">Abbrechen</button>
+      <button id="mapConfirmModalOk" class="ctrl-btn ctrl-btn--sm red">Bestätigen</button>
     </div>
   </div>
 </div>
 
 <!-- Custom Input Modal (replaces browser prompt()) -->
-<div id="mapInputModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);align-items:center;justify-content:center">
-  <div style="background:#111;border:1px solid rgba(0,229,255,.35);border-radius:6px;padding:1.25rem 1.5rem;min-width:260px;max-width:340px;width:90%;box-shadow:0 0 40px rgba(0,0,0,.8)">
-    <div id="mapInputModalTitle" style="font-family:Audiowide,sans-serif;font-size:.72rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem"></div>
-    <input id="mapInputModalField" style="width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid rgba(0,229,255,.3);border-radius:4px;color:#e0e0e8;font-size:.9rem;padding:.45rem .6rem;outline:none;font-family:inherit" autocomplete="off">
-    <div style="display:flex;gap:.5rem;margin-top:.85rem;justify-content:flex-end">
-      <button id="mapInputModalCancel" style="background:none;border:1px solid #444;color:#888;border-radius:4px;padding:.35rem .85rem;cursor:pointer;font-size:.75rem">Abbrechen</button>
-      <button id="mapInputModalOk" style="background:rgba(0,229,255,.12);border:1px solid var(--cyan);color:var(--cyan);border-radius:4px;padding:.35rem .85rem;cursor:pointer;font-size:.75rem;font-family:Audiowide,sans-serif">OK</button>
+<div id="mapInputModal" class="map-overlay" style="display:none;z-index:10000">
+  <div class="map-modal-box map-modal-box--cyan">
+    <div id="mapInputModalTitle" class="map-modal-title"></div>
+    <input id="mapInputModalField" class="map-field map-field--cyan" autocomplete="off">
+    <div class="map-modal-actions" style="margin-top:.85rem">
+      <button id="mapInputModalCancel" class="ctrl-btn ctrl-btn--sm ctrl-btn--ghost">Abbrechen</button>
+      <button id="mapInputModalOk" class="ctrl-btn ctrl-btn--sm">OK</button>
     </div>
   </div>
 </div>
 
 <!-- AoE Hover Popup (DM) -->
-<div id="aoeHoverPopup" style="display:none;position:fixed;z-index:8000;
-  background:#111;border:1px solid rgba(255,80,0,.4);border-radius:6px;
-  padding:.4rem .65rem;font-size:.68rem;font-family:Audiowide,sans-serif;
-  box-shadow:0 4px 16px rgba(0,0,0,.7);pointer-events:auto">
-  <div id="aoeHoverLabel" style="color:#FF8C00;margin-bottom:.3rem"></div>
-  <button id="aoeHoverApplyBtn" class="ctrl-btn"
-    style="font-size:.62rem;padding:.2rem .6rem;border-color:#FF4500;color:#FF4500;
-           background:rgba(255,45,0,.08);width:100%">💥 Schaden anwenden</button>
+<div id="aoeHoverPopup" class="map-popup map-popup--fire" style="display:none;position:fixed;z-index:8000;pointer-events:auto">
+  <div id="aoeHoverLabel" class="map-popup-label"></div>
+  <button id="aoeHoverApplyBtn" class="ctrl-btn ctrl-btn--sm"
+    style="--btn-border:#FF4500;--btn-color:#FF4500;--btn-fill-hover:rgba(255,69,0,.12);width:100%">💥 Schaden anwenden</button>
 </div>
 
 <!-- Fog Hover Popup (DM) -->
-<div id="fogHoverPopup" style="display:none;position:fixed;z-index:8000;
-  background:#111;border:1px solid #333;border-radius:6px;
-  padding:.4rem .65rem;font-size:.65rem;font-family:Audiowide,sans-serif;
-  box-shadow:0 4px 16px rgba(0,0,0,.7);pointer-events:auto;min-width:140px">
-  <div style="color:#555;font-size:.55rem;letter-spacing:.1em;margin-bottom:.3rem">VERDECKTER BEREICH</div>
-  <div id="fogHoverNote" style="color:#888;font-size:.62rem;margin-bottom:.35rem;min-height:.8rem"></div>
-  <button id="fogHoverRevealBtn" class="ctrl-btn"
-    style="font-size:.62rem;padding:.2rem .5rem;width:100%;margin-bottom:.25rem;
-           border-color:#00E5FF;color:#00E5FF;background:rgba(0,229,255,.06)">👁 Aufdecken</button>
-  <button id="fogHoverNoteBtn" class="ctrl-btn"
-    style="font-size:.6rem;padding:.15rem .5rem;width:100%">✏ Notiz bearbeiten</button>
+<div id="fogHoverPopup" class="map-popup" style="display:none;position:fixed;z-index:8000;pointer-events:auto;min-width:140px">
+  <div class="map-popup-head">VERDECKTER BEREICH</div>
+  <div id="fogHoverNote" class="map-popup-note"></div>
+  <button id="fogHoverRevealBtn" class="ctrl-btn ctrl-btn--sm" style="width:100%;margin-bottom:.25rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-eye"/></svg> Aufdecken</button>
+  <button id="fogHoverNoteBtn" class="ctrl-btn ctrl-btn--sm ctrl-btn--ghost" style="width:100%"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-edit"/></svg> Notiz bearbeiten</button>
 </div>
 
 <!-- Map Dice FAB + Popup -->
@@ -138,49 +128,39 @@
 </div>
 
 <!-- Attack Dice Animation Overlay -->
-<div id="atkDiceOverlay" style="display:none;position:fixed;inset:0;z-index:9000;
-  background:rgba(0,0,0,.72);align-items:center;justify-content:center;flex-direction:column">
+<div id="atkDiceOverlay" class="map-overlay map-overlay--col" style="display:none;z-index:9000;background:rgba(0,0,0,.72)">
   <div class="atk-dice-d10">
     <div class="atk-dice-num rolling" id="atkDiceNum">?</div>
   </div>
-  <div id="atkDiceLabel" style="margin-top:.75rem;font-size:.72rem;color:#e0e0e8;
-    font-family:Audiowide,sans-serif;text-align:center;max-width:300px;line-height:1.7;padding:0 1rem"></div>
+  <div id="atkDiceLabel" class="atk-dice-label"></div>
 </div>
 
 <!-- DM Damage Roll Modal -->
-<div id="dmRollModal" style="display:none;position:fixed;inset:0;z-index:10002;
-  background:rgba(0,0,0,.75);align-items:center;justify-content:center">
-  <div style="background:#111;border:1px solid rgba(255,45,45,.3);border-radius:8px;
-    padding:1.25rem;min-width:280px;max-width:340px;width:90%;box-shadow:0 0 40px rgba(0,0,0,.8)">
-    <div style="font-family:Audiowide,sans-serif;font-size:.7rem;color:#e0e0e8;
-      letter-spacing:.08em;margin-bottom:.75rem">SCHADEN WÜRFELN</div>
-    <div style="font-size:.62rem;color:#555;letter-spacing:.08em;margin-bottom:.2rem">QUELLE / WAFFE</div>
+<div id="dmRollModal" class="map-overlay" style="display:none;z-index:10002">
+  <div class="map-modal-box map-modal-box--red map-modal-box--wide">
+    <div class="map-modal-title map-modal-title--red">SCHADEN WÜRFELN</div>
+    <div class="map-modal-label">QUELLE / WAFFE</div>
     <input id="dmRollSource" type="text" placeholder="z.B. Asp ICE, Explosion"
-      style="width:100%;margin-bottom:.5rem;background:#0f0f18;border:1px solid #2a2a3a;
-             color:#e0e0e8;border-radius:4px;padding:.3rem .5rem;font-size:.75rem;box-sizing:border-box">
-    <div style="font-size:.62rem;color:#555;letter-spacing:.08em;margin-bottom:.2rem">WÜRFELFORMEL</div>
+      class="map-field" style="margin-bottom:.5rem">
+    <div class="map-modal-label">WÜRFELFORMEL</div>
     <input id="dmRollExpr" type="text" placeholder="z.B. 3d6, 2d6+4"
-      style="width:100%;margin-bottom:.4rem;background:#0f0f18;border:1px solid #2a2a3a;
-             color:#e0e0e8;border-radius:4px;padding:.3rem .5rem;font-size:.75rem;box-sizing:border-box">
-    <div id="dmQuickBtns" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.5rem"></div>
-    <div style="font-size:.62rem;color:#555;letter-spacing:.08em;margin-bottom:.2rem">WAFFENKLASSE</div>
-    <select id="dmWeaponClass" style="width:100%;margin-bottom:.5rem;background:#0f0f18;border:1px solid #2a2a3a;
-             color:#e0e0e8;border-radius:4px;padding:.3rem .5rem;font-size:.72rem;box-sizing:border-box">
+      class="map-field" style="margin-bottom:.4rem">
+    <div id="dmQuickBtns" class="map-quick-row"></div>
+    <div class="map-modal-label">WAFFENKLASSE</div>
+    <select id="dmWeaponClass" class="map-field" style="margin-bottom:.5rem">
       <option value="ranged">Ranged / Brawling (volle SP)</option>
       <option value="melee_weapon">Melee Weapon (½ SP)</option>
       <option value="martial_arts">Martial Arts (½ SP)</option>
       <option value="choke_throw">Choke / Throw (ignoriert SP)</option>
     </select>
-    <div id="dmRollResult" style="display:none;margin-bottom:.5rem;font-size:.85rem;
-      font-family:Audiowide,sans-serif;color:#FFD700;text-align:center;padding:.4rem;
-      background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:4px"></div>
+    <div id="dmRollResult" class="map-result-gold" style="display:none"></div>
     <button id="dmRollExecBtn" class="atk-btn" style="margin-bottom:.35rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Würfeln</button>
     <div id="dmSpRow" style="display:none">
       <div class="atk-input-row" style="margin-bottom:.3rem">
-        <span style="font-size:.65rem;color:#888">SP des Ziels</span>
+        <span style="font-size:.65rem;color:var(--text-muted)">SP des Ziels</span>
         <input id="dmSpInput" type="number" min="0" value="0" style="width:46px">
       </div>
-      <div id="dmFinalDmg" style="font-size:.72rem;color:#FF8C00;margin-bottom:.35rem"></div>
+      <div id="dmFinalDmg" class="map-final-dmg"></div>
       <button id="dmApplyBtn" class="atk-btn atk-btn-danger" style="margin-bottom:.3rem">✅ Anwenden</button>
     </div>
     <button id="dmRollClose" class="ts-btn" style="width:100%;font-size:.62rem">Abbrechen</button>
@@ -209,7 +189,7 @@
         <button class="token-picker-tab" data-tab="custom">Custom</button>
         <button class="token-picker-tab" data-tab="vehicle">Fahrzeug</button>
       </div>
-      <div id="tokenAddedBanner" style="display:none;padding:.3rem .6rem;background:rgba(0,229,255,.1);border-bottom:1px solid rgba(0,229,255,.2);font-size:.68rem;color:var(--cyan);font-family:Audiowide,sans-serif;letter-spacing:.06em"></div>
+      <div id="tokenAddedBanner" style="display:none;padding:.3rem .6rem;background:rgba(34,247,255,.1);border-bottom:1px solid rgba(34,247,255,.2);font-size:.68rem;color:var(--neon-cyan);font-family:Audiowide,sans-serif;letter-spacing:.06em"></div>
       <div id="tokenPickerChars" class="token-picker-grid"></div>
       <div id="tokenPickerNpcs"  class="token-picker-grid" style="display:none"></div>
       <div id="tokenPickerCustom" class="custom-token-form" style="display:none">
@@ -223,8 +203,8 @@
       </div>
       <div id="tokenPickerVehicle" class="token-picker-grid" style="display:none"></div>
       <!-- Custom Vehicle Form -->
-      <div id="customVehicleForm" style="display:none;padding:.6rem .75rem;border-top:1px solid var(--border)">
-        <div style="font-family:Audiowide,sans-serif;font-size:.65rem;color:var(--cyan);letter-spacing:.08em;margin-bottom:.5rem">+ EIGENES FAHRZEUG</div>
+      <div id="customVehicleForm" style="display:none;padding:.6rem .75rem;border-top:1px solid var(--border-dark)">
+        <div style="font-family:Audiowide,sans-serif;font-size:.65rem;color:var(--neon-cyan);letter-spacing:.08em;margin-bottom:.5rem">+ EIGENES FAHRZEUG</div>
         <div style="display:flex;gap:.25rem;margin-bottom:.25rem">
           <input id="cvLabel"  class="ctrl-input" placeholder="🚘 Label" maxlength="3" style="width:56px;text-align:center">
           <input id="cvName"   class="ctrl-input" placeholder="Name" style="flex:1">
@@ -243,15 +223,15 @@
         <div style="margin-bottom:.4rem">
           <label style="font-size:.65rem;color:var(--text-muted);display:block;margin-bottom:.2rem">Bild (optional)</label>
           <input type="file" id="cvImage" accept="image/*"
-            style="width:100%;box-sizing:border-box;font-size:.7rem;color:#888;
-            background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:.3rem .4rem;cursor:pointer">
+            style="width:100%;box-sizing:border-box;font-size:.7rem;color:var(--text-muted);
+            background:var(--bg-panel-soft);border:1px solid var(--border-dark);border-radius:var(--radius);padding:.3rem .4rem;cursor:pointer">
         </div>
-        <button id="cvAddBtn" class="ctrl-btn" style="width:100%;border-color:var(--cyan);color:var(--cyan)">+ Hinzufügen</button>
+        <button id="cvAddBtn" class="ctrl-btn" style="width:100%">+ Hinzufügen</button>
         <div id="cvUploadStatus" style="font-size:.65rem;color:var(--text-muted);margin-top:.25rem;display:none">⏳ Bild wird hochgeladen…</div>
       </div>
     </div>
-    <div style="padding:.5rem .75rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end">
-      <button id="tokenModalDone" class="ctrl-btn" style="border-color:var(--cyan);color:var(--cyan)">✓ Fertig</button>
+    <div style="padding:.5rem .75rem;border-top:1px solid var(--border-dark);display:flex;justify-content:flex-end">
+      <button id="tokenModalDone" class="ctrl-btn">✓ Fertig</button>
     </div>
   </div>
 </div>
@@ -272,7 +252,7 @@
       </div>
       <div id="aoeBlastTargets" style="max-height:260px;overflow-y:auto;margin:.35rem 0"></div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem">
-        <button id="aoeBlastApply" class="ctrl-btn" style="flex:1;background:rgba(255,45,0,.15);border-color:#FF4500;color:#FF4500" disabled>✅ Anwenden</button>
+        <button id="aoeBlastApply" class="ctrl-btn ctrl-btn--flame" style="flex:1" disabled>✅ Anwenden</button>
         <button id="aoeBlastCancel" class="ctrl-btn" style="flex:0 0 auto">Abbrechen</button>
       </div>
     </div>
@@ -284,10 +264,10 @@
   <div class="token-modal-box" style="max-width:280px">
     <div class="token-modal-head">🔥 FEUER STUFE<button class="token-modal-close" id="fireModalClose">✕</button></div>
     <div class="token-modal-body" style="padding:.75rem;display:flex;flex-direction:column;gap:.4rem">
-      <button class="ctrl-btn fire-tier-btn" data-tier="On Fire (Mild)" style="border-color:#FF8C00;color:#FF8C00">🔥 Mild — 2d6/Runde, DV10 löschen</button>
-      <button class="ctrl-btn fire-tier-btn" data-tier="On Fire (Severe)" style="border-color:#FF6B35;color:#FF6B35">🔥🔥 Severe — 4d6/Runde, DV15 löschen</button>
-      <button class="ctrl-btn fire-tier-btn" data-tier="On Fire (Deadly)" style="border-color:#FF2D2D;color:#FF2D2D">🔥🔥🔥 Deadly — 8d6/Runde, braucht Hilfe</button>
-      <button class="ctrl-btn" id="fireExtinguishBtn" style="border-color:#00E5FF;color:#00E5FF;margin-top:.25rem">❄ Löschen</button>
+      <button class="ctrl-btn ctrl-btn--orange fire-tier-btn" data-tier="On Fire (Mild)">🔥 Mild — 2d6/Runde, DV10 löschen</button>
+      <button class="ctrl-btn ctrl-btn--ember fire-tier-btn" data-tier="On Fire (Severe)">🔥🔥 Severe — 4d6/Runde, DV15 löschen</button>
+      <button class="ctrl-btn red fire-tier-btn" data-tier="On Fire (Deadly)">🔥🔥🔥 Deadly — 8d6/Runde, braucht Hilfe</button>
+      <button class="ctrl-btn" id="fireExtinguishBtn" style="margin-top:.25rem">❄ Löschen</button>
     </div>
   </div>
 </div>
@@ -301,11 +281,11 @@
       <div id="grappleResult" style="font-size:.78rem;color:var(--text-muted)"></div>
       <button id="grappleRollBtn" class="ctrl-btn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Grapple würfeln</button>
       <div id="grappleActions" style="display:none;flex-direction:column;gap:.35rem">
-        <div style="font-size:.7rem;color:var(--cyan);font-family:Audiowide,sans-serif;letter-spacing:.08em;margin:.1rem 0">IM GRAPPLE:</div>
-        <button class="ctrl-btn grapple-action-btn" data-action="choke" style="border-color:#FF8C00;color:#FF8C00">👊 Choke — BODY direkt auf HP</button>
-        <button class="ctrl-btn grapple-action-btn" data-action="throw" style="border-color:#FF6B35;color:#FF6B35">🤸 Throw — BODY + Prone</button>
-        <button class="ctrl-btn grapple-action-btn" data-action="shield" style="border-color:#9B59B6;color:#9B59B6">🛡 Human Shield</button>
-        <button class="ctrl-btn grapple-action-btn" data-action="release" style="border-color:var(--text-muted);color:var(--text-muted)">⛓ Loslassen</button>
+        <div style="font-size:.7rem;color:var(--neon-cyan);font-family:Audiowide,sans-serif;letter-spacing:.08em;margin:.1rem 0">IM GRAPPLE:</div>
+        <button class="ctrl-btn ctrl-btn--orange grapple-action-btn" data-action="choke">👊 Choke — BODY direkt auf HP</button>
+        <button class="ctrl-btn ctrl-btn--ember grapple-action-btn" data-action="throw">🤸 Throw — BODY + Prone</button>
+        <button class="ctrl-btn ctrl-btn--purple grapple-action-btn" data-action="shield">🛡 Human Shield</button>
+        <button class="ctrl-btn ctrl-btn--ghost grapple-action-btn" data-action="release">⛓ Loslassen</button>
       </div>
     </div>
   </div>
@@ -317,17 +297,14 @@
     <div class="token-modal-head">🚗 RAMMEN?<button class="token-modal-close" id="vehicleRamClose">✕</button></div>
     <div class="token-modal-body" style="padding:.75rem;display:flex;flex-direction:column;gap:.5rem">
       <div id="vehicleRamDesc" style="font-size:.8rem;color:var(--text-muted)"></div>
-      <button id="vehicleRamConfirm" class="ctrl-btn" style="border-color:#FF4500;color:#FF4500">💥 Rammen — 6d6 auf beide</button>
+      <button id="vehicleRamConfirm" class="ctrl-btn ctrl-btn--flame">💥 Rammen — 6d6 auf beide</button>
       <button id="vehicleRamCancel" class="ctrl-btn">Abbrechen</button>
     </div>
   </div>
 </div>
 
 <!-- Death / Spectator Banner -->
-<div id="deathBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:2000;
-  background:rgba(255,45,45,.12);border-bottom:2px solid #FF2D2D;color:#FF2D2D;
-  font-family:Audiowide,sans-serif;font-size:.8rem;letter-spacing:.1em;
-  text-align:center;padding:.45rem;pointer-events:none;">
+<div id="deathBanner" class="map-death-banner" style="display:none">
   ☠ DU BIST TOT — SPECTATOR MODE
 </div>
 
@@ -344,8 +321,8 @@
     </label>
     <span id="gridSizeWrap" style="display:none;align-items:center;gap:4px">
       <input type="range" id="gridSizeSlider" min="25" max="100" value="50"
-        style="width:72px;accent-color:var(--cyan)" title="Grid-Größe">
-      <span id="gridSizeLabel" style="font-size:.65rem;color:var(--cyan);font-family:Audiowide,sans-serif;min-width:36px">50px</span>
+        style="width:72px;accent-color:var(--neon-cyan)" title="Grid-Größe">
+      <span id="gridSizeLabel" style="font-size:.65rem;color:var(--neon-cyan);font-family:Audiowide,sans-serif;min-width:36px">50px</span>
     </span>
     <span class="map-topbar-sep"></span>
     <button class="map-topbar-btn" id="zoomInBtn">+</button>
@@ -361,7 +338,7 @@
 
 <!-- Combat Bar -->
 <div id="combatBar" style="display:none;overflow-y:auto;
-  background:#09090f;border-bottom:1px solid #1e1e2a;padding:5px 10px;
+  background:var(--bg-main);border-bottom:1px solid var(--border-dark);padding:5px 10px;
   max-height:130px;flex-shrink:0;">
   <div id="combatCards" style="display:flex;flex-wrap:wrap;gap:5px;align-items:flex-start"></div>
 </div>
@@ -457,26 +434,17 @@
 </div>
 
 <!-- Roll Request Modal (Player Self-Roll) -->
-<div id="rollRequestModal" style="display:none;position:fixed;inset:0;z-index:10001;
-  background:rgba(0,0,0,.88);align-items:center;justify-content:center;">
-  <div style="background:#0f0f18;border:1px solid #FF2D2D;border-radius:10px;
-    padding:1.5rem;max-width:340px;width:90%;text-align:center;
-    box-shadow:0 0 40px rgba(255,45,45,.25);">
-    <div style="font-family:Audiowide,sans-serif;font-size:.85rem;color:#FF2D2D;
-      letter-spacing:.1em;margin-bottom:.75rem;">⚠ SCHADEN ERHALTEN!</div>
-    <div id="rrSource" style="font-size:.9rem;color:#e0e0e8;margin-bottom:.25rem"></div>
-    <div id="rrFormula" style="font-family:Audiowide,sans-serif;font-size:1.1rem;
-      color:#FFD700;margin-bottom:1rem"></div>
-    <button id="rrRollBtn" style="width:100%;padding:.7rem;font-family:Audiowide,sans-serif;
-      font-size:.9rem;background:rgba(255,45,45,.15);border:1px solid #FF2D2D;
-      color:#FF2D2D;border-radius:6px;cursor:pointer;letter-spacing:.08em;">
+<div id="rollRequestModal" class="map-overlay" style="display:none;z-index:10001;background:rgba(0,0,0,.88)">
+  <div class="map-rr-box">
+    <div class="map-rr-title">⚠ SCHADEN ERHALTEN!</div>
+    <div id="rrSource" class="map-rr-source"></div>
+    <div id="rrFormula" class="map-rr-formula"></div>
+    <button id="rrRollBtn" class="ctrl-btn red" style="width:100%">
       <svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> WÜRFELN
     </button>
     <div id="rrResultArea" style="display:none;margin-top:1rem">
-      <div id="rrResultText" style="font-size:1rem;color:#e0e0e8;margin-bottom:.75rem"></div>
-      <button id="rrConfirmBtn" style="width:100%;padding:.6rem;font-family:Audiowide,sans-serif;
-        font-size:.8rem;background:rgba(0,229,255,.12);border:1px solid #00E5FF;
-        color:#00E5FF;border-radius:6px;cursor:pointer;">✅ Bestätigen</button>
+      <div id="rrResultText" class="map-rr-result"></div>
+      <button id="rrConfirmBtn" class="ctrl-btn" style="width:100%">✅ Bestätigen</button>
     </div>
   </div>
 </div>
@@ -2664,7 +2632,7 @@ function renderToolSettings(tool) {
       <div class="tool-settings-head">Messen</div>
       <div class="ts-row">
         <input type="checkbox" id="measurePin" class="ts-check" ${S.measurePinned?'checked':''}>
-        <span class="ts-label">📌 Messung pinnen</span>
+        <span class="ts-label"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-pin"/></svg> Messung pinnen</span>
       </div>
       <div class="measure-live" id="measureLive">— m</div>`,
 
@@ -3171,7 +3139,7 @@ function openAoeBlastModal(aoe) {
         <div class="blast-target-name">${t.name||''}</div>
         ${covered ? '<span class="blast-cover-badge">🧱 DECKUNG</span>' : ''}
         ${isPlayer && !covered ? '<span style="font-size:.58rem;color:#00E5FF;font-family:Audiowide,sans-serif">📨 Spieler entscheidet</span>' : ''}
-        ${!isPlayer && canDodge && rollResult>0 ? `<button class="blast-dodge-btn ctrl-btn" data-tid="${t.id}" style="font-size:.6rem;padding:.1rem .3rem;border-color:#00E5FF;color:#00E5FF">🤸 Dodge</button>` : ''}
+        ${!isPlayer && canDodge && rollResult>0 ? `<button class="blast-dodge-btn ctrl-btn ctrl-btn--sm" data-tid="${t.id}">🤸 Dodge</button>` : ''}
         <div class="blast-dmg-val">${dmgVal}</div>
       </div>`;
     }).join('') || '<div style="color:var(--text-muted);font-size:.78rem;padding:.5rem">Keine Tokens im Radius.</div>';
@@ -3346,7 +3314,7 @@ function showMapToast(msg, type='cyan') {
   }
   t.style.background = type==='red'?'rgba(255,45,45,.9)':'rgba(0,229,255,.12)';
   t.style.border = `1px solid ${type==='red'?'#FF4500':'rgba(0,229,255,.5)'}`;
-  t.style.color = type==='red'?'#fff':'var(--cyan)';
+  t.style.color = type==='red'?'#fff':'var(--neon-cyan)';
   t.textContent = msg; t.style.opacity='1';
   clearTimeout(t._tid);
   t._tid=setTimeout(()=>{ t.style.opacity='0'; },3500);
@@ -3749,7 +3717,7 @@ function buildPlayerPanel() {
         <div class="player-map-pname">${c.handle||c.name||'—'}</div>
         <div class="player-map-prole">${_npcControlMode?'🎮 NPC':(c.role||'')}</div>
       </div>
-      ${_npcControlMode?`<button id="npcCtrlBackBtn" title="Zurück zur DM-Ansicht" style="margin-left:auto;background:rgba(255,45,45,.15);border:2px solid var(--red);border-radius:6px;color:var(--red);cursor:pointer;padding:.5rem 1rem;font-size:.9rem;font-weight:700;box-shadow:0 0 12px rgba(255,45,45,.5),0 0 24px rgba(255,45,45,.2);letter-spacing:.05em;white-space:nowrap;animation:npcBackGlow 2s ease-in-out infinite">🔙 DM</button>`:''}
+      ${_npcControlMode?`<button id="npcCtrlBackBtn" title="Zurück zur DM-Ansicht" style="margin-left:auto;background:rgba(255,49,88,.15);border:2px solid var(--neon-red);border-radius:var(--radius);color:var(--neon-red);cursor:pointer;padding:.5rem 1rem;font-size:.9rem;font-weight:700;box-shadow:0 0 12px rgba(255,49,88,.5),0 0 24px rgba(255,49,88,.2);letter-spacing:.05em;white-space:nowrap;animation:npcBackGlow 2s ease-in-out infinite">🔙 DM</button>`:''}
     </div>
     <div class="player-map-stats">
       <div class="pmap-bar-row">

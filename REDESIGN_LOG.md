@@ -1098,8 +1098,72 @@ Foundational/Injury-Block + DM-Override, Armor-Slot-Routing, Ammo ±/Kauf, Realt
 
 ---
 
+## Phase 7 — Map / Locations (`map.html`) ✅
+**Geändert:** `public/assets/css/map.css`, `public/assets/css/map-weapons.css`, `public/map.html`
+(NICHT `topbar.css` — die geteilte `gt-topbar` via `topbar.js mountTopbar` injiziert, Phase 2 schon
+migriert, out of scope). **Canvas/Token-Rendering TABU** — diff berührt keine `ctx.`/`resizeCanvas`/
+`requestAnimationFrame`/`S.ox/oy/scale`/`markDirty`/Hit-Test-Zeile; Canvas-Wrap-Geometrie +
+Sidebar-Breiten (280/260) + FAB-Position (`left:296px`) unverändert.
+
+**Wichtiger Befund:** map.html lud cyberpunk-ui.css **bereits** (Phase 2, nicht wie Prompt-Text
+„lädt aktuell NICHT") → Tokens schon verfügbar; nur Werte-Migration nötig. base.css überschreibt
+Legacy-Aliase auf ALTE Werte (LOG #6) → durchgehend **neue Tokens direkt** verwendet.
+
+**Stufe 2 (map.css Token-Migration):** alle Legacy-`var(--bg/--bg-card/--bg-input/--border/--cyan/
+--red/--text/--text-head/--transition)` → neue Tokens (`--transition`→`var(--t-fast) var(--ease)`);
+Brand-/Struktur-Hex in `.combat-card`, `.dv-live`, `.range-info-box`, `.measure-live`, `.map-canvas-wrap`-
+Background, `npcBackGlow` → Tokens. **Bewusst belassen** (semantische Effektfarben, decken sich mit
+JS-Paletten AOE_EFFECTS/COND_C): Fire-Oranges (`fire-flicker`), `#FF8C00` (Injury), `#FFA000` (Cover-Badge).
+
+**Stufe 3 (Button-System gespiegelt):** map lädt **kein** player/dm.css → das globale 5a-`.ctrl-btn`
+ist hier inaktiv → eigene Kopie des cyber-button-Systems in map.css (custom-property-getrieben
+`--btn-border/-fill/-fill-hover/-color/-glow/-h/-px/-fs`, Border via `::before`, Füllung `::after`,
+Glow `filter:drop-shadow`, `clip-sm`, `isolation:isolate`, Gotcha #2). Default md36, Modifier
+`--sm`/`--icon` (→44 `@pointer:coarse`), **Variante `.ctrl-btn.red`** (map nutzt diese Schreibweise,
+nicht `.ctrl-btn-red`). Effekt-Varianten `.ctrl-btn--ghost/--orange/--ember/--flame/--purple`
+ersetzen die Inline-`border-color/color`-Buttons (Fire/Grapple/Explosion/Dodge) — Border kommt aus
+`::before`, daher MUSS Farbe via `--btn-*` statt `border-color` (sonst cyan-Border + Fremdfarb-Text).
+`.ts-btn`/`.add-token-btn`/`.map-topbar-btn`/`.map-die-btn`/`.atk-btn` bleiben leichte Kompakt-Buttons
+(Token-migriert, kein clip). **FAB52:** `.map-dice-fab` 50→52px + `--neon-red`/neue Glow-rgba,
+Position `left:296px` bleibt.
+
+**Stufe 4 (voll-inline Modals → HUD-Klassen):** neue Klassen `.map-overlay`(`--col`)/`.map-modal-box`
+(`--red/--cyan/--wide`)/`.map-modal-title`/`-text`/`-label`/`-actions`/`.map-field`/`.map-popup`
+(`--fire`)/`.map-death-banner`/`.atk-dice-label`/`.map-rr-*`. Umgestellt: `#mapConfirmModal`,
+`#mapInputModal`, `#dmRollModal`, `#rollRequestModal`, `#atkDiceOverlay`, `#aoeHoverPopup`,
+`#fogHoverPopup`, `#deathBanner`. **Display-Falle (wie Shop):** `.map-overlay` setzt **KEIN
+`display`** → Show/Hide bleibt JS `style.display='flex'/'block'/'none'` (Inline `display:none`
+Initial-State + abweichende `z-index`/Dim-Backgrounds inline erhalten). Echte Border + box-shadow
+(kein clip) wo Glow/Puls (Gotcha #2).
+
+**Stufe 5 (token-modal-Buttons + JS-Chrome + Emoji):** Fire-/Grapple-/Ram-/AoE-Apply-/Dodge-Buttons
+auf Varianten-Klassen (`fire-tier-btn`/`grapple-action-btn` + `data-tier`/`data-action`-Hooks
+**erhalten**); alle Inline-Legacy-`var(--cyan/--red/--border)` + alt-Brand-rgba in map.html → neue
+Tokens/rgba. **Emoji konservativ:** 📌→`ic-pin` (measure), 👁→`ic-eye` / ✏→`ic-edit` (Fog-Hover-
+Buttons); vorhandene ic-dice/ic-reload/ic-autofire bleiben. **Bewusst belassen:** DM-Tool-Listen-
+Emoji-Set (🖱📏⭕🧱🔫✏️▭○🌑🗑🧹, kohärent), Context-Menü-Labels, 🎮/✕ (Token-Liste), 🔥/⛓/💥/☠ etc.
+**Canvas-Paint-Hex (`ctx.fillStyle` Zonen/Conditions/Token-Farben) + Player-Panel-Live-Farben
+(HP/Armor, decken sich mit Canvas) NICHT angefasst** (TABU + Gotcha #4).
+
+**Stufe 6 (Feinschliff):** Rest-Struktur-Hex in statischem Markup (`#combatBar`, `cvImage`-File-Input)
+→ Tokens; neue Klassen nutzen `--sp`-Skala; Button-Höhen über System einheitlich; native Selects/
+Range haben Token-Border + cyan Accent (volle Select-Pfeil-Stilisierung = Phase 11).
+
+**Verifiziert:** map.css Braces **217/217** + Kommentare **40/40**, map-weapons.css **97/97** + **7/7**
+(kein `*/`-Glob); map.html-Inline-Modul `node --check` sauber; `git diff` = nur die 3 Dateien;
+**jede entfernte `id=`/`data-*` wieder vorhanden** (comm-Abgleich leer); alle Modal-`style.display`-
+Toggles + JS-Hooks (fire-tier/grapple-action/data-tier/data-action) intakt; keine Legacy-`var(--…)`
+mehr in map.html/map.css; `.ic` (base.css+cyberpunk-ui.css) + Sprite-IDs `ic-pin/eye/edit` resolved.
+Inline-Styles 245→209. **Map-Mechanik (Token setzen/bewegen/Snap, Messen, AoE, Cover, Fog, Würfeln,
+Fire/Grapple, Attack-Flow, Realtime) im Code unberührt — nur Chrome-CSS/Markup/Token/Emoji.**
+**Offen:** manueller Browser-Durchklick (kein Headless-Browser/Supabase-Auth in der Session) als DM
+(`sessionStorage.dm_auth='1'`) + Player (`?id=…`): Konsole sauber, Canvas-Render + Resize, alle
+Tools/Modals/FAB/Combat-Bar/Token-Picker/DM-Roll/Player-Attack-Flow/Saved-Maps.
+
+---
+
 ## Offene Punkte / To-do bis Ende
-- **Phase 7–10** wie Status-Tabelle.
+- **Phase 8–10** wie Status-Tabelle.
 - **Phase 11 Cleanup:** Migrations-Aliase entfernen; `--radius`-Kollision auflösen; Temp-Fonts
   (Audiowide/Inter/Caveat) entfernen, sobald alle 13 Page-CSS migriert sind; optional In-Place-
   Anzeige-Bars auf Components nachziehen; `favicon.ico`; tote Alt-Styles.
