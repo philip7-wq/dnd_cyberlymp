@@ -206,6 +206,8 @@ if (!id) {
       getItems(SHOP_CATEGORIES),
       loadAmmoData(),
     ]);
+    // Black-Chrome/Nightmarket nur für DM — im Player-Shop komplett ausblenden
+    items = items.filter(i => !(i.extra?.nightmarket === true || i.extra?.nightmarket === 'true'));
     renderNav();
     renderCatButtons();
     renderGrid();

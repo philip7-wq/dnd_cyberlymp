@@ -2002,7 +2002,8 @@ function buildInventoryHtml() {
   const c  = openChar;
   const ws = Array.isArray(c.weapons) ? c.weapons : [];
   const ar = c.armor || {};
-  const cw = Array.isArray(c.cyberware) ? c.cyberware : [];
+  const cwRaw = c.cyberware || {};
+  const cw = Array.isArray(cwRaw) ? cwRaw : Object.values(cwRaw).flat();
   const gr = Array.isArray(c.gear) ? c.gear : [];
 
   const weaponRows = ws.map(w =>
@@ -2696,6 +2697,46 @@ function routeItem(item) {
   return 'gear';
 }
 
+// ── Cyberware slot mapping (Referenz: shop.html) ──────────────
+const CYBERWARE_SLOT_MAP = {
+  'Fashionware':                     ['fashionware'],
+  'Neuralware / Chipware':           ['neuralLink'],
+  'Chipware':                        ['neuralLink'],
+  'Neuralware':                      ['neuralLink'],
+  'Cybereye / Cybereye Option':      ['rightCybereye','leftCybereye'],
+  'Cybereye Option':                 ['rightCybereye','leftCybereye'],
+  'Cyberaudio Suite / Option':       ['cyberaudio'],
+  'Cyberaudio Option':               ['cyberaudio'],
+  'Internal Cyberware':              ['internal'],
+  'External Cyberware':              ['external'],
+  'Cyberarm / Cyberarm Option':      ['rightCyberarm','leftCyberarm'],
+  'Cyberarm Option':                 ['rightCyberarm','leftCyberarm'],
+  'Cyberarm/Cyberleg/Cyberlimb Option':['rightCyberarm','leftCyberarm','rightCyberleg','leftCyberleg'],
+  'Cyberleg/Cyberlimb Option':       ['rightCyberleg','leftCyberleg'],
+  'Borgware':                        ['borgware'],
+};
+
+// ── Slot-Bestimmung (korrekte Slots je nach Item-Name + Notes) ─
+function getItemSlots(item) {
+  const sub = item.subcategory || '';
+  const base = CYBERWARE_SLOT_MAP[sub] || ['internal'];
+  if (sub !== 'Cyberarm/Cyberleg/Cyberlimb Option') return base;
+
+  // Kombinierte Subcategory: anhand von Name und Notes spezifizieren
+  const notes = item.notes || '';
+  if (item.name === 'Cyberleg' || notes.startsWith('Cyberleg Option') || notes.toLowerCase().startsWith('replacement leg'))
+    return ['rightCyberleg','leftCyberleg'];
+  if (notes.startsWith('Cyberarm Option'))
+    return ['rightCyberarm','leftCyberarm'];
+  return base; // genuines Cyberlimb-Option (Wolvers etc.) → alle Gliedmaßen
+}
+
+// ── Slot-Kosten eines Items (aus notes) ───────────────────────
+function getSlotCost(item) {
+  const m = (item.notes || '').match(/takes (\d+) Option Slot/i);
+  return m ? parseInt(m[1]) : 1;
+}
+
 function buildSnapshot(item) {
   const x = item.extra || {};
   switch (routeItem(item)) {
@@ -2708,9 +2749,10 @@ function buildSnapshot(item) {
                penalty: (x.armor_penalty && x.armor_penalty !== 'None') ? parseInt(x.armor_penalty) || 0 : 0,
                notes: item.notes || null, price: item.price, raw_cost: item.raw_cost };
     case 'cyberware':
-      return { name: item.name, notes: item.notes || null,
+      return { name: item.name, category: item.category, notes: item.notes || null,
                install: x.install || null, humanity_loss: x.humanity_loss || null,
-               price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null };
+               price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null,
+               slotCost: getSlotCost(item) };
     default:
       return { name: item.name, notes: item.notes || null,
                price: item.price, raw_cost: item.raw_cost };
@@ -3254,7 +3296,13 @@ async function grantItem(item) {
   if (dest === 'weapons') {
     patch.weapons   = [...(Array.isArray(c.weapons) ? c.weapons : []), snapshot];
   } else if (dest === 'cyberware') {
-    patch.cyberware = [...(Array.isArray(c.cyberware) ? c.cyberware : []), snapshot];
+    const slots      = getItemSlots(item);
+    const chosenSlot = slots[0];                       // Auto-Wahl (kein Slot-Picker beim DM-Grant)
+    const existingCw = (c.cyberware && !Array.isArray(c.cyberware)) ? c.cyberware : {};
+    patch.cyberware  = {
+      ...existingCw,
+      [chosenSlot]: [...(existingCw[chosenSlot] || []), snapshot],
+    };
   } else if (dest === 'gear') {
     patch.gear      = [...(Array.isArray(c.gear) ? c.gear : []), snapshot];
   } else if (dest === 'armor') {
@@ -3394,6 +3442,11 @@ document.querySelectorAll('.timer-quick-btn').forEach(btn => {
 // Expose module-scoped vars for the BM plain script below
 window._bmGetChars  = () => chars;
 window._bmPatchChar = (id, patch) => patchCharacter(id, patch);
+window._bmGetItems  = async () => {
+  if (!itemsCache.length) { try { itemsCache = await getItems([]); } catch { return []; } }
+  return itemsCache;
+};
+window._bmEsc = (s) => escapeHtml(s);
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
@@ -3438,6 +3491,9 @@ window._bmPatchChar = (id, patch) => patchCharacter(id, patch);
     <!-- Step 3: Offer form -->
     <section id="bmStep3" class="bm-step" style="display:none">
       <div class="bm-step-title">SCHRITT 3 — ANGEBOT SENDEN</div>
+      <input id="bmOfferSearch" class="bm-input" placeholder="🔍 Black Chrome durchsuchen…">
+      <div id="bmOfferPicker" class="bm-offer-picker"></div>
+      <div style="font-size:.68rem;color:var(--text-muted);margin:.35rem 0 .5rem">Item wählen — Name &amp; Preis werden vorbefüllt und bleiben editierbar (Custom).</div>
       <input id="bmOfferItem"  class="bm-input" placeholder="Item / Angebot Name">
       <input id="bmOfferPrice" class="bm-input" type="number" min="0" placeholder="Preis (eb)">
       <input id="bmOfferNotes" class="bm-input" placeholder="Notiz (optional, z.B. Kein Rückgaberecht)">
@@ -3463,6 +3519,8 @@ const _bmPatch = (id, p) => window._bmPatchChar?.(id, p) ?? Promise.resolve();
 let _bmSelected = new Set();
 let _bmDoor     = 1;
 let _bmActive   = {};  // charId → blackmarket_state
+let _bmPickItems = [];  // gecachte Black-Chrome-Items für den Offer-Picker
+let _bmPickedId  = null; // zuletzt gewähltes Item (für offer.item_id, D2)
 
 function bmShowError(msg) {
   let el = document.getElementById('bmErrorMsg');
@@ -3509,6 +3567,7 @@ function openBmPanel() {
     document.getElementById('bmCloseAllBtn').style.display = '';
     bmRenderLevers();
     bmRefreshStatus();
+    bmRenderPicker(document.getElementById('bmOfferSearch')?.value || '');
   }
 }
 
@@ -3551,6 +3610,7 @@ async function bmActivate() {
     document.getElementById('bmCloseAllBtn').style.display = '';
     bmRenderLevers();
     bmRefreshStatus();
+    bmRenderPicker('');
   } catch(err) {
     console.error('[BM] bmActivate:', err);
     bmShowError('Fehler: ' + (err.message || err) + (err.code === '42703' ? ' — SQL-Migration noch nicht ausgeführt?' : ''));
@@ -3589,6 +3649,45 @@ async function bmToggleDoor(charId) {
   }
 }
 
+async function bmRenderPicker(query = '') {
+  const grid = document.getElementById('bmOfferPicker');
+  if (!grid) return;
+  if (!_bmPickItems.length) {
+    grid.innerHTML = '<div class="dm-tab-empty">Lade Items…</div>';
+    const all = await (window._bmGetItems?.() ?? Promise.resolve([]));
+    _bmPickItems = all.filter(i => i.extra?.nightmarket === true || i.extra?.nightmarket === 'true');
+  }
+  const esc = window._bmEsc ?? (s => s);
+  const q = query.trim().toLowerCase();
+  let list = _bmPickItems;
+  if (q) list = list.filter(i => i.name.toLowerCase().includes(q));
+  if (!list.length) { grid.innerHTML = '<div class="dm-tab-empty">Keine Items gefunden.</div>'; return; }
+  grid.innerHTML = list.slice(0, 120).map(item => `
+    <div class="dm-item-card${item.id === _bmPickedId ? ' selected' : ''}" data-bm-pick="${item.id}">
+      <div class="dm-item-name">${esc(item.name)}</div>
+      <div class="dm-item-cat">${esc(item.subcategory || item.category || '')}</div>
+      ${item.price != null ? `<div class="dm-item-price">${item.price.toLocaleString('de-DE')} eb</div>` : ''}
+    </div>`).join('');
+}
+
+document.getElementById('bmOfferPicker')?.addEventListener('click', e => {
+  const card = e.target.closest('[data-bm-pick]');
+  if (!card) return;
+  const item = _bmPickItems.find(i => i.id === card.dataset.bmPick);
+  if (!item) return;
+  _bmPickedId = item.id;
+  document.getElementById('bmOfferItem').value  = item.name;
+  document.getElementById('bmOfferPrice').value = item.price ?? '';
+  document.querySelectorAll('#bmOfferPicker .dm-item-card').forEach(c => c.classList.toggle('selected', c === card));
+});
+
+let _bmPickSearchTimer;
+document.getElementById('bmOfferSearch')?.addEventListener('input', e => {
+  clearTimeout(_bmPickSearchTimer);
+  const q = e.target.value;
+  _bmPickSearchTimer = setTimeout(() => bmRenderPicker(q), 200);
+});
+
 async function bmSendOffer() {
   const item  = document.getElementById('bmOfferItem').value.trim();
   const price = parseInt(document.getElementById('bmOfferPrice').value);
@@ -3596,7 +3695,7 @@ async function bmSendOffer() {
   if (!item)  { bmShowError('Bitte einen Item-Namen eingeben.'); return; }
   if (!price || price <= 0) { bmShowError('Bitte einen gültigen Preis eingeben.'); return; }
   bmClearError();
-  const offer = { item_name: item, price, notes: notes || null };
+  const offer = { item_name: item, price, notes: notes || null, item_id: _bmPickedId || null };
   try {
     for (const charId of Object.keys(_bmActive)) {
       const state = _bmActive[charId];
