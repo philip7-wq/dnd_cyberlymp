@@ -1,0 +1,3599 @@
+{
+  "title": "Cyberpunk RED — Black Chrome / Night Market Items",
+  "source_file": "data-import/black_chrome_nightmarket_liste.json",
+  "scope": "Black Chrome book. Vehicles (Land/Air) excluded (decision D5).",
+  "schema_note": "Flat fields; non-core keys map to items.extra on seed. nightmarket=true on all.",
+  "total_entries": 137,
+  "items": [
+    {
+      "id": "gear-digital-gladiator",
+      "name": "Digital Gladiator",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 20,
+      "price_options": [
+        20
+      ],
+      "currency": "eb",
+      "price_category": "Everyday",
+      "raw_cost": "20eb (Everyday)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Agent-App für Head-to-head Solo-Kämpfe; Verlierer-Agent wird zerstört, Internal-Agent-Nutzer riskiert Brain Injury.",
+      "source": {
+        "page": 12,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Segotari",
+      "app": true
+    },
+    {
+      "id": "gear-4tify",
+      "name": "4Tify",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Scannen von Cover/Deckung: nach 5 Minuten +1d6 auf den nächsten Schaden gegen diese Deckung; Nutzer + Agent müssen in 1 m/yd bleiben.",
+      "source": {
+        "page": 13,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "SecSystems",
+      "app": true
+    },
+    {
+      "id": "gear-ncpd-crime-database",
+      "name": "NCPD Crime Database",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Foto/Records-Request gegen öffentliche NCPD-Daten; braucht CitiNet in Night City; Ergebnis nach 1 Stunde; Datenschutz-Risiko.",
+      "source": {
+        "page": 13,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "NCPD",
+      "app": true
+    },
+    {
+      "id": "gear-trauma-team-medscan",
+      "name": "Trauma Team MedScan",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 20,
+      "price_options": [
+        20
+      ],
+      "currency": "eb",
+      "price_category": "Everyday",
+      "raw_cost": "20eb (Everyday)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Remote-Hilfe für First Aid/Paramedic/Medical Tech/Surgery gegen Zusatzkosten; Boni typischerweise +1 während bezahlter Beratung.",
+      "source": {
+        "page": 14,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Trauma Team",
+      "app": true
+    },
+    {
+      "id": "gear-ziggurat-city-database",
+      "name": "Ziggurat City Database",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "+1 auf Local Expert Checks für die gekaufte Stadt-Datenbank.",
+      "source": {
+        "page": 14,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Ziggurat",
+      "app": true
+    },
+    {
+      "id": "cyberware-borgware-hardened-shielding",
+      "name": "Borgware Hardened Shielding",
+      "category": "Cyberware",
+      "subcategory": "Borgware",
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Schützt ein einzelnes Borgware-Teil gegen EMP/Microwaver/electric shock und Non-Black-ICE-Effekte.",
+      "source": {
+        "page": 17,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Borgware",
+      "install": "Hospital",
+      "humanity_loss": "14 (4d6)"
+    },
+    {
+      "id": "cyberware-budget-chipware-socket",
+      "name": "Budget Chipware Socket",
+      "category": "Cyberware",
+      "subcategory": "Neuralware / Chipware",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Billiger Chipsocket; Chip kann bei Kopfschaden herausfliegen; bei 1 auf 1d10 wird der Chip zerstört. Requires Neural Link.",
+      "source": {
+        "page": 17,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Neuralware",
+      "install": "Clinic",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-discount-cyberaudio-suite",
+      "name": "Discount Cyberaudio Suite",
+      "category": "Cyberware",
+      "subcategory": "Cyberaudio Suite / Option",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Günstige Cyberaudio Suite mit nur 1 Option Slot; auffällige äußere Bauteile.",
+      "source": {
+        "page": 17,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Cyberaudio",
+      "install": "Clinic",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-dynalar-modular-finger-enthusiast-cyberhand",
+      "name": "Dynalar Modular Finger Enthusiast Cyberhand",
+      "category": "Cyberware",
+      "subcategory": "Cyberarm / Cyberarm Option",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Cyberhand mit Platz für bis zu 8 Cyberfingers; kommt mit 8 Standard Cyberfingers; braucht 2 Option Slots.",
+      "source": {
+        "page": 18,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Borgware/Cyberarm",
+      "install": "Hospital",
+      "humanity_loss": "14 (4d6)"
+    },
+    {
+      "id": "cyberware-explicit-memory-stimulator",
+      "name": "Explicit Memory Stimulator",
+      "category": "Cyberware",
+      "subcategory": "Neuralware / Chipware",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "+2 auf Concentration Checks, um Informationen zu erinnern; funktioniert in Chipware Socket. Requires Chipware Socket.",
+      "source": {
+        "page": 18,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Chipware",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-extra-jointed-cyberlimb-upgrade",
+      "name": "Extra-Jointed Cyberlimb Upgrade",
+      "category": "Cyberware",
+      "subcategory": "Cyberarm/Cyberleg/Cyberlimb Option",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "+2 auf Contortionist pro Cyberlimb; max. vier Limbs nutzbar für insgesamt +8.",
+      "source": {
+        "page": 18,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Rocklin Augmentics",
+      "bc_type": "Cyberlimb",
+      "install": "Clinic",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-flashbulb",
+      "name": "Flashbulb",
+      "category": "Cyberware",
+      "subcategory": "Cyberarm Option",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Cyberarm-Blitz; Action gegen Ziel bis 25 m/yds; bei misslungenem DV15 Resist Torture/Drugs: Damaged Eye für 1 Minute; Anti-Dazzle schützt.",
+      "source": {
+        "page": 18,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Cyberarm",
+      "install": "Clinic",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-hardened-cybereye-casing",
+      "name": "Hardened Cybereye Casing",
+      "category": "Cyberware",
+      "subcategory": "Cybereye Option",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Schützt Cybereye und Optionen gegen EMP/Microwaver/electric shock und Non-Black-ICE-Effekte.",
+      "source": {
+        "page": 19,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Cybereye",
+      "install": "Clinic",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-heuristic-health-monitor",
+      "name": "Heuristic Health Monitor",
+      "category": "Cyberware",
+      "subcategory": "Fashionware",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Braucht Biomonitor; zeigt eigene HP/Health-Daten auf einen Blick.",
+      "source": {
+        "page": 19,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Biotechnica",
+      "bc_type": "Fashionware",
+      "install": "Clinic",
+      "humanity_loss": "0 (N/A)"
+    },
+    {
+      "id": "cyberware-integrated-cyberdeck-upgrade",
+      "name": "Integrated Cyberdeck Upgrade",
+      "category": "Cyberware",
+      "subcategory": "Cyberarm Option",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "+1 Program/Hardware-Slot für bereits Cyberarm-integriertes Cyberdeck im selben Arm.",
+      "source": {
+        "page": 19,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Cyberarm",
+      "install": "Clinic",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-internal-body-cyberware-hardened-shielding",
+      "name": "Internal Body Cyberware Hardened Shielding",
+      "category": "Cyberware",
+      "subcategory": "Internal Cyberware",
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Schützt alle Internal-Body-Cyberware-Optionen gegen EMP/Microwaver/electric shock und Non-Black-ICE.",
+      "source": {
+        "page": 20,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Internal Body Cyberware",
+      "install": "Hospital",
+      "humanity_loss": "14 (4d6)"
+    },
+    {
+      "id": "cyberware-modular-finger-cyberhand",
+      "name": "Modular Finger Cyberhand",
+      "category": "Cyberware",
+      "subcategory": "Cyberarm / Cyberarm Option",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Cyberhand/Meat-Arm-Option mit Platz für 5 Cyberfingers; kommt mit 5 Standard Cyberfingers.",
+      "source": {
+        "page": 20,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Cyberarm",
+      "install": "Hospital",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-neo-soviet-cyberarm",
+      "name": "Neo-Soviet Cyberarm",
+      "category": "Cyberware",
+      "subcategory": "Cyberarm / Cyberarm Option",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Billiger Cyberarm mit 3 Option Slots und Standardhand; bei BODY < 8: −1 auf Rolls mit diesem Arm; immer sichtbar/auffällig.",
+      "source": {
+        "page": 20,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Cyberarm",
+      "install": "Hospital",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-popup-net-launcher",
+      "name": "Popup Net Launcher",
+      "category": "Cyberware",
+      "subcategory": "Cyberarm Option",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Versteckter einhändiger Net Launcher; Shoulder Arms, Shotgun Slug Range bis 25 m/yd; Ziel verliert Move Action, −2 physische Actions, Netz 15 HP; Ersatznetz 50eb.",
+      "source": {
+        "page": 20,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Pursuit Security Inc.",
+      "bc_type": "Cyberarm",
+      "install": "Clinic",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-popup-shotgun",
+      "name": "Popup Shotgun",
+      "category": "Cyberware",
+      "subcategory": "Cyberarm Option",
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Versteckte Cyberarm-Shotgun mit 2 Shots; nur Smartgun Link als Attachment kompatibel; Hand nicht nutzbar, solange ausgeklappt.",
+      "source": {
+        "page": 21,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Cyberarm",
+      "install": "Clinic",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-racerbracer",
+      "name": "RacerBracer",
+      "category": "Cyberware",
+      "subcategory": "Internal Cyberware",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Immunität gegen Whiplash Critical Injury.",
+      "source": {
+        "page": 22,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Rocklin Augmentics",
+      "bc_type": "Internal Body Cyberware",
+      "install": "Hospital",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-reflex-co-processor",
+      "name": "Reflex Co-Processor",
+      "category": "Cyberware",
+      "subcategory": "Neuralware / Chipware",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Erlaubt Bullet-Dodging unabhängig von REF-Wert. Requires Neural Link.",
+      "source": {
+        "page": 21,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Neuralware",
+      "install": "Hospital",
+      "humanity_loss": "14 (4d6)"
+    },
+    {
+      "id": "cyberware-reinforced-cyberlimb-upgrade",
+      "name": "Reinforced Cyberlimb Upgrade",
+      "category": "Cyberware",
+      "subcategory": "Cyberarm/Cyberleg/Cyberlimb Option",
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Cyberarm/-leg wird immun gegen Broken Arm bzw. Broken Leg Critical Injury.",
+      "source": {
+        "page": 21,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Cyberlimb",
+      "install": "Clinic",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-sponsored-cybereye",
+      "name": "Sponsored Cybereye",
+      "category": "Cyberware",
+      "subcategory": "Cybereye / Cybereye Option",
+      "price": 50,
+      "price_options": [
+        50
+      ],
+      "currency": "eb",
+      "price_category": "Costly",
+      "raw_cost": "50eb (Costly)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Billiges Cybereye mit 2 Option Slots + Chyron; Werbung kann stören: bis Action zum Schließen −1 auf vision-basierte Checks.",
+      "source": {
+        "page": 22,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Cybereye",
+      "install": "Clinic",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-trauma-response-nanomatrix",
+      "name": "Trauma Response Nanomatrix",
+      "category": "Cyberware",
+      "subcategory": "Internal Cyberware",
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "1× pro Tag als Action Skinweave/Subdermal Armor auf volle SP reparieren; jede weitere Installation +1 tägliche Nutzung.",
+      "source": {
+        "page": 22,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "bc_type": "Internal Body Cyberware",
+      "install": "Hospital",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-airhypo-cyberfinger",
+      "name": "Airhypo Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Verstecktes Airhypo im Finger. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 24,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-ballpoint-cyberfinger",
+      "name": "Ballpoint Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Versteckter Kugelschreiber im Finger. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 24,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "0 (N/A)"
+    },
+    {
+      "id": "cyberware-bullet-storage-cyberfinger",
+      "name": "Bullet Storage Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Versteckt 2 Schuss bullet-type Ammo ohne Check. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 24,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-dartgun-cyberfinger",
+      "name": "Dartgun Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Versteckte 1-Schuss-Dartgun; kein Concealment-Check mit Handschuh. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 24,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-flashlight-cyberfinger",
+      "name": "Flashlight Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Versteckte Taschenlampe. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 24,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-homing-tracer-cyberfinger",
+      "name": "Homing Tracer Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Zeigt Richtung des verlinkten Tracers bis 1 mile/1,6 km; Ersatz-Fingernail-Tracer 50eb. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 25,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-laser-pointer-cyberfinger",
+      "name": "Laser Pointer Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Laserpointer; mit 4+ Fingern als Action DV13 Resist Torture/Drugs gegen Damaged Eye 1 Minute; mit 8 Fingern bis Behandlung. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 25,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-lighter-cyberfinger",
+      "name": "Lighter Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Feuerzeug in der Fingerspitze. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 25,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-lockpick-cyberfinger",
+      "name": "Lockpick Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Lockpick + tensioning tool für nicht-elektronische Schlösser; Pick Lock Skill. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 25,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "2 (1d6)"
+    },
+    {
+      "id": "cyberware-microphone-cyberfinger",
+      "name": "Microphone Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Verstecktes Mikrofon. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 25,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "2 (1d6)"
+    },
+    {
+      "id": "cyberware-mini-air-supply-cyberfinger",
+      "name": "Mini Air Supply Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Winzige Luftversorgung im Finger. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 26,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "2 (1d6)"
+    },
+    {
+      "id": "cyberware-one-shot-special-cyberfinger",
+      "name": "One Shot Special Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Einmalige Finger-Pistole/Schussfunktion. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 26,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "7 (2d6)"
+    },
+    {
+      "id": "cyberware-spray-paint-cyberfinger",
+      "name": "Spray Paint Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Sprühfarbe im Finger für Tags/Markierungen. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 26,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-squirt-cyberfinger",
+      "name": "Squirt Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Spritzt Flüssigkeiten aus dem Finger. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 26,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "cyberware-standard-cyberfinger",
+      "name": "Standard Cyberfinger",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 20,
+      "price_options": [
+        20
+      ],
+      "currency": "eb",
+      "price_category": "Everyday",
+      "raw_cost": "20eb (Everyday)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Normaler Ersatz-/Standardfinger. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 26,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "0 (N/A)"
+    },
+    {
+      "id": "cyberware-wirecutter-scissor-cyberfingers",
+      "name": "Wirecutter/Scissor Cyberfingers",
+      "category": "Cyberware",
+      "subcategory": "Cyberfinger",
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Schere/Drahtschneider-Funktion; braucht passende Cyberfinger-Konfiguration. Requires Modular Finger Cyberhand.",
+      "source": {
+        "page": 26,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Dynalar",
+      "bc_type": "Cyberfinger",
+      "install": "Mall",
+      "humanity_loss": "3 (1d6)"
+    },
+    {
+      "id": "armor-corporate-island",
+      "name": "Corporate Island",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Unauffällige Business-Armor; keine Extras. Light Armorjack (Body).",
+      "source": {
+        "page": 35,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Nu-Tek",
+      "sp": "11",
+      "armor_penalty": "None",
+      "appearance_of": "Businesswear"
+    },
+    {
+      "id": "armor-the-dirk-combat-jacket",
+      "name": "The Dirk Combat Jacket",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Kann 2 Ammo-Clips ohne Check verstauen. Light Armorjack (Body).",
+      "source": {
+        "page": 28,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Zhukova International",
+      "sp": "11",
+      "armor_penalty": "None",
+      "appearance_of": "Leisurewear"
+    },
+    {
+      "id": "armor-executive-armor",
+      "name": "Executive Armor",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Repariert sich mit der Zeit selbst. Light Armorjack (Body).",
+      "source": {
+        "page": 34,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Torrell and Chiang",
+      "sp": "11",
+      "armor_penalty": "None",
+      "appearance_of": "Businesswear"
+    },
+    {
+      "id": "armor-fire-brand-bunker-gear",
+      "name": "Fire Brand Bunker Gear",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Feuerimmunität, Gasmaske, Sauerstofftank. Flak (Body & Head).",
+      "source": {
+        "page": 29,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Fire Brand",
+      "sp": "15",
+      "armor_penalty": "-4 REF/DEX/MOVE"
+    },
+    {
+      "id": "armor-laser-light-street-jacket",
+      "name": "Laser Light Street Jacket",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Zählt als 1 Light Tattoo. Light Armorjack (Body).",
+      "source": {
+        "page": 31,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Laser Light",
+      "sp": "11",
+      "armor_penalty": "None",
+      "appearance_of": "Urban Flash"
+    },
+    {
+      "id": "armor-lotos-netsuit",
+      "name": "Lotos Netsuit",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Extra Hardware Slot; kommt mit Excellent Quality Cyberdeck. Bodyweight Suit (Body & Head).",
+      "source": {
+        "page": 31,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Lotos Designs",
+      "sp": "13",
+      "armor_penalty": "-2 REF/DEX/MOVE"
+    },
+    {
+      "id": "armor-masetto-airrider",
+      "name": "Masetto AirRider",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Inflatable Schutz gegen Whiplash bei Crashs. Kevlar® (Body).",
+      "source": {
+        "page": 33,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Masetto Tech Clothing",
+      "sp": "7",
+      "armor_penalty": "None"
+    },
+    {
+      "id": "gear-masetto-holo-wear",
+      "name": "Masetto Holo-Wear",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Holografische Kleidung; EMP kann problematisch sein; Outfits herunterladbar.",
+      "source": {
+        "page": 35,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Masetto Tech Clothing"
+    },
+    {
+      "id": "armor-mechaman-motorcycle-helmet",
+      "name": "MechaMan Motorcycle Helmet",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Built-in Smart Glasses mit Low Light/IR/UV + Chyron. Flak (Head).",
+      "source": {
+        "page": 37,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Tokyo Dynamics",
+      "sp": "15",
+      "armor_penalty": "-4 REF/DEX/MOVE"
+    },
+    {
+      "id": "gear-mechaman-smart-glove",
+      "name": "MechaMan Smart Glove",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Kommt mit Subdermal Grip; 1 zusätzlicher Option Slot.",
+      "source": {
+        "page": 37,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Tokyo Dynamics"
+    },
+    {
+      "id": "armor-mimic-clothing-kit",
+      "name": "Mimic Clothing Kit",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Rüstet vorhandene Kleidung zu Armor auf. Light Armorjack (Body).",
+      "source": {
+        "page": 33,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "sp": "11",
+      "armor_penalty": "None",
+      "appearance_of": "Various"
+    },
+    {
+      "id": "armor-montage-variable-clothing-line",
+      "name": "Montage Variable Clothing Line",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Muster/Farben wechselbar; neue Designs käuflich. Light Armorjack (Body or Head).",
+      "source": {
+        "page": 32,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Montage",
+      "sp": "11",
+      "armor_penalty": "None",
+      "appearance_of": "Generic Chic/Gang Colors"
+    },
+    {
+      "id": "armor-shock-armor",
+      "name": "Shock Armor",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Kann elektrifizieren: beendet Grapple bei misslungenem DV15 Resist Torture/Drugs des Ziels. Kevlar® (Body).",
+      "source": {
+        "page": 29,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Gibson Battlegear",
+      "sp": "7",
+      "armor_penalty": "None"
+    },
+    {
+      "id": "armor-skidrow-trench",
+      "name": "SkidRow Trench",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Billiger Flak-Trench; keine Extras. Flak (Body).",
+      "source": {
+        "page": 33,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "SkidRow Limited",
+      "sp": "13",
+      "armor_penalty": "-4 REF/DEX/MOVE"
+    },
+    {
+      "id": "armor-street-viper-riding-suit",
+      "name": "Street Viper Riding Suit",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Kommt mit 2 eingebauten Medium Melee Weapons. Kevlar® (Body).",
+      "source": {
+        "page": 36,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Zonda",
+      "sp": "7",
+      "armor_penalty": "None"
+    },
+    {
+      "id": "armor-tactical-smart-armor",
+      "name": "Tactical Smart Armor",
+      "category": "Armor",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Built-in Smart Glasses. Medium Armorjack (Body & Head).",
+      "source": {
+        "page": 30,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Gibson Battlegear",
+      "sp": "12",
+      "armor_penalty": "-2 REF/DEX/MOVE"
+    },
+    {
+      "id": "gear-chipvault-by-secsystems",
+      "name": "ChipVault by SecSystems",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Transportiert Chips sicher, ohne sie zu beschädigen/frittieren.",
+      "source": {
+        "page": 44,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "SecSystems"
+    },
+    {
+      "id": "gear-the-drink-master-3000",
+      "name": "The Drink Master 3000",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Automatischer Drink-Mixer für diverse Cocktails.",
+      "source": {
+        "page": 42,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Hammered Industries"
+    },
+    {
+      "id": "gear-everest-ventureware-airwell-50",
+      "name": "Everest VentureWare AirWell 50",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Gewinnt Wasser aus der Luft.",
+      "source": {
+        "page": 48,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Everest VentureWare"
+    },
+    {
+      "id": "gear-everest-ventureware-one-touch-habitat",
+      "name": "Everest VentureWare One Touch Habitat",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Selbstaufbauendes, komfortables Zelt/Habitat.",
+      "source": {
+        "page": 48,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Everest VentureWare"
+    },
+    {
+      "id": "gear-hydrosubsidium-universal-aqualung",
+      "name": "Hydrosubsidium Universal Aqualung",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Erlaubt Atmen knapp unter Wasser; teures Spezialgerät.",
+      "source": {
+        "page": 42,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Hydrosubsidium Inc."
+    },
+    {
+      "id": "gear-jeeves-executive-garment-bag",
+      "name": "Jeeves Executive Garment Bag",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Kleidersack, der Kleidung lagert, reinigt und repariert.",
+      "source": {
+        "page": 43,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Nu-Tek"
+    },
+    {
+      "id": "gear-killstrom-banshee-microphone",
+      "name": "KillStrom Banshee Microphone",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Head-Mic; verbessert Stimme/Performance.",
+      "source": {
+        "page": 40,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "KillStrom Music"
+    },
+    {
+      "id": "gear-killstrom-sonic-boom-amp",
+      "name": "KillStrom Sonic Boom Amp",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Erzeugt extrem lauten Schall; kann Ohren ernsthaft schädigen.",
+      "source": {
+        "page": 40,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "KillStrom Music"
+    },
+    {
+      "id": "gear-killstrom-typhoid-speaker",
+      "name": "KillStrom Typhoid Speaker",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Erweitert Power/Reichweite des Sonic Boom Amp.",
+      "source": {
+        "page": 41,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "KillStrom Music"
+    },
+    {
+      "id": "gear-ktech-doberman-500",
+      "name": "KTech Doberman 500",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Persönlicher Roboterhund/Drone-Begleiter.",
+      "source": {
+        "page": 45,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "KTech"
+    },
+    {
+      "id": "gear-ktech-doberman-500-marking-scent",
+      "name": "KTech Doberman 500 Marking Scent",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 50,
+      "price_options": [
+        50
+      ],
+      "currency": "eb",
+      "price_category": "Costly",
+      "raw_cost": "50eb (Costly)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Markiert Ziel zur besseren Geruchsverfolgung; Pack mit 12.",
+      "source": {
+        "page": 44,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "KTech"
+    },
+    {
+      "id": "gear-laser-light-electric-guitar",
+      "name": "Laser Light Electric Guitar",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "E-Gitarre; zählt als 1 Light Tattoo.",
+      "source": {
+        "page": 41,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Laser Light"
+    },
+    {
+      "id": "gear-mr-biscuit-multi-food-processor",
+      "name": "Mr. Biscuit Multi-Food Processor",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Macht Food-Wafers aus organischem Abfall/Junk.",
+      "source": {
+        "page": 49,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Everest VentureWare"
+    },
+    {
+      "id": "gear-petrochem-nitro-ultra9",
+      "name": "Petrochem Nitro Ultra9",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Boostet Fahrzeugleistung; macht Fahrzeug riskanter/explosiver.",
+      "source": {
+        "page": 49,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Petrochem"
+    },
+    {
+      "id": "gear-rapideploy-sheath",
+      "name": "RapiDeploy Sheath",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Robuste, vielseitige, verdeckbare Scheide/Holster-Lösung.",
+      "source": {
+        "page": 47,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Gambler Workshop"
+    },
+    {
+      "id": "gear-shower-in-a-can",
+      "name": "Shower•in•a•Can",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 10,
+      "price_options": [
+        10
+      ],
+      "currency": "eb",
+      "price_category": "Cheap",
+      "raw_cost": "10eb (Cheap)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Schaum zum Desinfizieren und Deodorieren.",
+      "source": {
+        "page": 38,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Biotechnica"
+    },
+    {
+      "id": "gear-sovoil-lubricants",
+      "name": "SovOil Lubricants",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 10,
+      "price_options": [
+        10
+      ],
+      "currency": "eb",
+      "price_category": "Cheap",
+      "raw_cost": "10eb (Cheap)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Verschiedene Schmiermittel für verschiedene Zwecke.",
+      "source": {
+        "page": 56,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "SovOil"
+    },
+    {
+      "id": "gear-streetcase-by-secsystems",
+      "name": "Streetcase by SecSystems",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Executive-Koffer mit Storage- und Defense-Funktion.",
+      "source": {
+        "page": 47,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "SecSystems"
+    },
+    {
+      "id": "gear-triti-fizz",
+      "name": "Triti-Fizz",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 10,
+      "price_options": [
+        10
+      ],
+      "currency": "eb",
+      "price_category": "Cheap",
+      "raw_cost": "10eb (Cheap)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Softdrink/Food-Item; Night-City-Style Flavor-Produkt.",
+      "source": {
+        "page": 124,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Continental Brands"
+    },
+    {
+      "id": "gear-worldsat-aerial-sphere",
+      "name": "WorldSat Aerial Sphere",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "CitiNet-Verbindung aus den Badlands heraus.",
+      "source": {
+        "page": 50,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "WorldSat"
+    },
+    {
+      "id": "gear-zetatech-porta-printer",
+      "name": "Zetatech Porta-Printer",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Tragbarer Tech-Workshop/Printer auf dem Rücken.",
+      "source": {
+        "page": 43,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Zetatech"
+    },
+    {
+      "id": "cyberware-el-f4-nt-linear-frame",
+      "name": "EL-F4-NT Linear Frame",
+      "category": "Cyberware",
+      "subcategory": "External Cyberware",
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Externer Baustellen-/Construction-Frame; External only.",
+      "source": {
+        "page": 55,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Zhirafa Technical Manufacturing",
+      "humanity_loss": "0 (N/A)"
+    },
+    {
+      "id": "cyberware-f-ma-kotar-linear-frame",
+      "name": "Fūma Kotarō Linear Frame",
+      "category": "Cyberware",
+      "subcategory": "Borgware",
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Starker, stealthy Frame mit vielen Blades.",
+      "source": {
+        "page": 52,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Various",
+      "install": "Hospital",
+      "humanity_loss": "14 (4d6)"
+    },
+    {
+      "id": "cyberware-lf-001-swat-linear-frame",
+      "name": "LF-001 SWAT Linear Frame",
+      "category": "Cyberware",
+      "subcategory": "Borgware",
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Für Schwimmen, Klettern und Prügeln; taktischer Frame.",
+      "source": {
+        "page": 53,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Polska CyberTechnologies",
+      "install": "Hospital",
+      "humanity_loss": "14 (4d6)"
+    },
+    {
+      "id": "cyberware-vermilion-linear-frame",
+      "name": "Vermilion Linear Frame",
+      "category": "Cyberware",
+      "subcategory": "Borgware",
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Springt hoch, bewegt sich schnell, macht stark.",
+      "source": {
+        "page": 54,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Wyzard Technologies",
+      "install": "Hospital",
+      "humanity_loss": "14 (4d6)"
+    },
+    {
+      "id": "exotic-weapon-arachnid-grenade",
+      "name": "Arachnid Grenade",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Ziel wird mit klebriger Grappling-Lösung bedeckt.",
+      "source": {
+        "page": 86,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Centurion Essentials",
+      "bc_type": "Grenade Ammunition"
+    },
+    {
+      "id": "exotic-weapon-gunmart-door-cracker",
+      "name": "GunMart Door Cracker",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 50,
+      "price_options": [
+        50
+      ],
+      "currency": "eb",
+      "price_category": "Costly",
+      "raw_cost": "50eb (Costly)",
+      "damage": "6d6",
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Muss platziert werden; beschädigt nur das Objekt, an dem es angebracht ist.",
+      "source": {
+        "page": 87,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "GunMart",
+      "bc_type": "Explosive"
+    },
+    {
+      "id": "exotic-weapon-killchip-100-micro-bomb",
+      "name": "KillChip 100 Micro-Bomb",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "6d6",
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Muss in Chipware Socket eingesetzt werden; Schaden direkt auf HP und Brain Injury Critical Injury.",
+      "source": {
+        "page": 88,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "—",
+      "bc_type": "Explosive"
+    },
+    {
+      "id": "exotic-weapon-ktech-security-grenade",
+      "name": "KTech Security Grenade",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "5d6",
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Armor Piercing; beschädigt keine Deckung.",
+      "source": {
+        "page": 89,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "KTech",
+      "bc_type": "Grenade Ammunition"
+    },
+    {
+      "id": "exotic-weapon-micro-hydrogen-combuster",
+      "name": "Micro Hydrogen Combuster",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "6d6",
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Muss in Flüssigkeit untergetaucht sein; Armor Piercing; erzeugt Rauchschirm.",
+      "source": {
+        "page": 88,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Hydrosubsidium",
+      "bc_type": "Explosive"
+    },
+    {
+      "id": "exotic-weapon-outlet-explosive",
+      "name": "OUTLet Explosive",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "6d6",
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Sieht wie Outlet Adapter aus; muss vorbereitet werden; Armor Piercing.",
+      "source": {
+        "page": 89,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "—",
+      "bc_type": "Explosive"
+    },
+    {
+      "id": "exotic-weapon-shuriken-tornado-grenade",
+      "name": "Shuriken Tornado Grenade",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "6d6",
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Armor Piercing; Schaden für jedes Ziel separat würfeln; Chance auf zweite Critical Injury.",
+      "source": {
+        "page": 87,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Great Lakes Cutlery",
+      "bc_type": "Grenade Ammunition"
+    },
+    {
+      "id": "exotic-weapon-tr-4-detonator-fluid",
+      "name": "TR-4 Detonator Fluid",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "6d6",
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Muss vorbereitet werden; Armor Piercing; trifft automatisch Fahrzeug-Schwachpunkt und ignoriert Fahrzeugpanzerung.",
+      "source": {
+        "page": 90,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "—",
+      "bc_type": "Explosive"
+    },
+    {
+      "id": "melee-weapon-arasaka-weeping-reaver-katana",
+      "name": "Arasaka Weeping Reaver Katana",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": null,
+      "notes": "Excellent Quality; kann mit speziellen Arasaka-Fluids beschichtet werden.",
+      "source": {
+        "page": 91,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Arasaka",
+      "bc_type": "Very Heavy Melee",
+      "weapon_skill": "Melee",
+      "concealable": false
+    },
+    {
+      "id": "gear-arasaka-acid",
+      "name": "Arasaka Acid",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Fluid für Weeping Reaver; Armor Piercing.",
+      "source": {
+        "page": 91,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Arasaka",
+      "bc_type": "Weeping Reaver Fluid"
+    },
+    {
+      "id": "gear-arasaka-fire",
+      "name": "Arasaka Fire",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Fluid für Weeping Reaver; kann Ziel entzünden.",
+      "source": {
+        "page": 91,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Arasaka",
+      "bc_type": "Weeping Reaver Fluid"
+    },
+    {
+      "id": "gear-arasaka-wound-salt",
+      "name": "Arasaka Wound Salt",
+      "category": "Gear",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": null,
+      "rof": null,
+      "hands": null,
+      "ammo": null,
+      "notes": "Fluid für Weeping Reaver; Chance auf zweite Critical Injury.",
+      "source": {
+        "page": 91,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Arasaka",
+      "bc_type": "Weeping Reaver Fluid"
+    },
+    {
+      "id": "melee-weapon-faisal-s-magna-knuckles",
+      "name": "Faisal’s Magna Knuckles",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "2d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Chance, Cyberware zu deaktivieren, wenn Ziel zweimal getroffen wird; braucht Battery Pack.",
+      "source": {
+        "page": 96,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Faisal’s Customs",
+      "bc_type": "Medium Melee",
+      "weapon_skill": "Melee",
+      "concealable": false
+    },
+    {
+      "id": "melee-weapon-kendachi-mono-guard",
+      "name": "Kendachi Mono-Guard",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "3d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Chance auf zweite Critical Injury.",
+      "source": {
+        "page": 96,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Kendachi",
+      "bc_type": "Heavy Melee",
+      "weapon_skill": "Melee",
+      "concealable": true
+    },
+    {
+      "id": "melee-weapon-kendachi-mono-katana",
+      "name": "Kendachi Mono-Katana",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": null,
+      "notes": "Ignoriert Armor, wenn SP unter 7 liegt.",
+      "source": {
+        "page": 92,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Kendachi",
+      "bc_type": "Very Heavy Melee",
+      "weapon_skill": "Melee",
+      "concealable": false
+    },
+    {
+      "id": "melee-weapon-kendachi-mono-wakizashi",
+      "name": "Kendachi Mono-Wakizashi",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "3d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Ignoriert Armor, wenn SP unter 7 liegt.",
+      "source": {
+        "page": 93,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Kendachi",
+      "bc_type": "Heavy Melee",
+      "weapon_skill": "Melee",
+      "concealable": false
+    },
+    {
+      "id": "melee-weapon-rostovi-kleaver",
+      "name": "Rostović Kleaver",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": null,
+      "notes": "Braucht BODY 11+; aufladbar auf 5d6, kann entzünden und Armor unter SP 11 ignorieren.",
+      "source": {
+        "page": 94,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Rostović",
+      "bc_type": "Very Heavy Melee",
+      "weapon_skill": "Melee",
+      "concealable": false
+    },
+    {
+      "id": "melee-weapon-slamdance-fangfist",
+      "name": "SlamDance FangFist",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "2d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Excellent Quality; im Zug der Blade-Deployment wie Very Heavy Melee Weapon.",
+      "source": {
+        "page": 98,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "SlamDance Inc.",
+      "bc_type": "Medium Melee",
+      "weapon_skill": "Melee",
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "melee-weapon-slamdance-tasmanskiy-kl",
+      "name": "SlamDance Tasmanskiy Klô",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Excellent Quality; kommt in Battleglove mit 1 leerem Option Slot; +2 Interrogation beim Drohen.",
+      "source": {
+        "page": 99,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "SlamDance Inc.",
+      "bc_type": "Very Heavy Melee",
+      "weapon_skill": "Melee",
+      "concealable": false
+    },
+    {
+      "id": "melee-weapon-solo-wolf-and-bot-mono-katana",
+      "name": "Solo Wolf and Bot Mono-Katana",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": null,
+      "notes": "Poor Quality; kein echtes Mono-Katana; DV13 Perception/Weaponstech zum Erkennen.",
+      "source": {
+        "page": 92,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Kendachi",
+      "bc_type": "Very Heavy Melee",
+      "weapon_skill": "Melee",
+      "concealable": false
+    },
+    {
+      "id": "melee-weapon-the-pursuit-security-bouncer",
+      "name": "The Pursuit Security Bouncer",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "2d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Kombi aus Stun Baton und Microwaver; braucht Battery Pack.",
+      "source": {
+        "page": 97,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Pursuit Security Inc.",
+      "bc_type": "Medium Melee/Very Heavy Pistol",
+      "weapon_skill": "Melee",
+      "concealable": false,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "melee-weapon-white-hornet-tanto",
+      "name": "White Hornet Tanto",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "2d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Kann less-than-lethal eingesetzt werden.",
+      "source": {
+        "page": 93,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Centurion Essentials",
+      "bc_type": "Medium Melee",
+      "weapon_skill": "Melee",
+      "concealable": true
+    },
+    {
+      "id": "melee-weapon-zhirafa-rhinocefist",
+      "name": "Zhirafa Rhinocefist",
+      "category": "Melee Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Braucht Interface Plugs; Nutzer macht 4d6 Brawling Damage; kann zu Excellent Quality Very Heavy Melee umgebaut werden.",
+      "source": {
+        "page": 95,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Zhirafa Technical Manufacturing",
+      "bc_type": "Very Heavy Melee",
+      "weapon_skill": "Melee",
+      "concealable": false
+    },
+    {
+      "id": "exotic-weapon-kendachi-mono-star",
+      "name": "Kendachi Mono-Star",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "2d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Halves SP when thrown; kann zweite Critical Injury verursachen.",
+      "source": {
+        "page": 101,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Kendachi",
+      "weapon_skill": "Melee",
+      "concealable": true,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "exotic-weapon-ranger-combat-boomerang",
+      "name": "Ranger Combat Boomerang",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "3d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Kein Melee Attack; halves SP when thrown; kann zum Werfer zurückkehren.",
+      "source": {
+        "page": 100,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Everest VentureWare",
+      "weapon_skill": "Athletics",
+      "concealable": false
+    },
+    {
+      "id": "exotic-weapon-utility-tomahawk",
+      "name": "Utility Tomahawk",
+      "category": "Exotic Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "3d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": null,
+      "notes": "Halves SP when thrown.",
+      "source": {
+        "page": 101,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Everest VentureWare",
+      "weapon_skill": "Melee",
+      "concealable": false,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "ranged-weapon-arasaka-prototype-variable-ar",
+      "name": "Arasaka Prototype Variable AR",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 15000,
+      "price_options": [
+        15000
+      ],
+      "currency": "eb",
+      "price_category": "Super Luxury",
+      "raw_cost": "15,000eb (Super Luxury)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Rifle",
+      "notes": "Excellent Quality; Autofire x4; Suppressive Fire; Railgun Mode ignoriert Armor < SP7, ist Single Shot und keine Aimed Shots.",
+      "source": {
+        "page": 102,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Arasaka",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "25",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-e-tack-public-defender",
+      "name": "E-TACK Public Defender",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "3d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": "H Pistol",
+      "notes": "Poor Quality; Smartgun Link; lethal oder less-than-lethal Modi.",
+      "source": {
+        "page": 115,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Pursuit Security Inc.",
+      "weapon_skill": "Handgun",
+      "magazine": "8",
+      "concealable": true
+    },
+    {
+      "id": "ranged-weapon-eagletech-survivalist",
+      "name": "Eagletech Survivalist",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Arrow",
+      "notes": "Combination; Sniping Scope; kann Non-Basic Ammo laden.",
+      "source": {
+        "page": 103,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Eagletech",
+      "weapon_skill": "Archery",
+      "concealable": false,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "ranged-weapon-faisal-s-dead-or-alive",
+      "name": "Faisal’s Dead or Alive",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Slug",
+      "notes": "Poor Quality; Shotgun Shell; zusätzlicher Poor Quality Net Launcher mit 2 Netzen.",
+      "source": {
+        "page": 104,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Faisal’s Customs",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "4",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-federated-arms-pepper-shaker",
+      "name": "Federated Arms Pepper Shaker",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "2d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": "M Pistol",
+      "notes": "Nur Autofire x3 und Suppressive Fire; keine Aimed Shots; Autofire kostet nur 6 Bullets; Non-Basic Ammo möglich.",
+      "source": {
+        "page": 105,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Federated Arms",
+      "weapon_skill": "Autofire",
+      "magazine": "30",
+      "concealable": true
+    },
+    {
+      "id": "ranged-weapon-georgia-arms-matchmaker",
+      "name": "Georgia Arms Matchmaker",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 20,
+      "price_options": [
+        20
+      ],
+      "currency": "eb",
+      "price_category": "Everyday",
+      "raw_cost": "20eb (Everyday)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Slug",
+      "notes": "Poor Quality; Shotgun Shell; Non-Basic Ammo möglich.",
+      "source": {
+        "page": 105,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Georgia Arms",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "1",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-gunmart-bubba-buster",
+      "name": "GunMart Bubba Buster",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 50,
+      "price_options": [
+        50
+      ],
+      "currency": "eb",
+      "price_category": "Costly",
+      "raw_cost": "50eb (Costly)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Slug",
+      "notes": "Poor Quality; Shotgun Shell; Non-Basic Ammo möglich; zerstört sich, wenn 3× in 1 Minute gefeuert.",
+      "source": {
+        "page": 106,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "GunMart",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "4",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-gunmart-engage-rocket-launcher",
+      "name": "GunMart Engage Rocket Launcher",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "8d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Rocket",
+      "notes": "Poor Quality; vorgeladen; bei 1 oder Ammo-Entfernungsversuch explodiert er.",
+      "source": {
+        "page": 107,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "GunMart",
+      "weapon_skill": "Heavy Weapons",
+      "magazine": "1",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-gunmart-smart-special",
+      "name": "GunMart Smart Special",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "3d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": "H Pistol",
+      "notes": "Poor Quality; Smartgun Link; bei 1 zerstört sich die Waffe beyond repair.",
+      "source": {
+        "page": 108,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "GunMart",
+      "weapon_skill": "Handgun",
+      "magazine": "8",
+      "concealable": true
+    },
+    {
+      "id": "ranged-weapon-gunmart-special",
+      "name": "GunMart Special",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 20,
+      "price_options": [
+        20
+      ],
+      "currency": "eb",
+      "price_category": "Everyday",
+      "raw_cost": "20eb (Everyday)",
+      "damage": "3d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": "H Pistol",
+      "notes": "Poor Quality; bei 1 zerstört sich die Waffe beyond repair.",
+      "source": {
+        "page": 108,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "GunMart",
+      "weapon_skill": "Handgun",
+      "magazine": "8",
+      "concealable": true
+    },
+    {
+      "id": "ranged-weapon-hades-multipurpose-assault-shotgun",
+      "name": "Hades Multipurpose Assault Shotgun",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": "Slug",
+      "notes": "Shotgun Shell; Non-Basic Ammo möglich; bis zu 5 unterschiedliche Ammo-Typen gleichzeitig ladbar.",
+      "source": {
+        "page": 109,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "MetaCorp",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "16",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-ktech-techhammer",
+      "name": "KTech TechHammer",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Slug",
+      "notes": "Shotgun Shell; lädt Slugs/Shells/Smart Rockets; Smart Rockets brauchen keinen Targeting Scope.",
+      "source": {
+        "page": 110,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "KTech",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "4",
+      "concealable": false,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "ranged-weapon-midnight-arms-beast-shotgun",
+      "name": "Midnight Arms Beast Shotgun",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Slug",
+      "notes": "Shotgun Shell; Non-Basic Ammo möglich; braucht BODY 10+ oder Mounting, sonst Broken Arm Risiko; 2 Actions reload.",
+      "source": {
+        "page": 111,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Midnight Arms",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "40",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-militech-fox-dual-ammo-pistol",
+      "name": "Militech Fox Dual Ammo Pistol",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "3d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": "H Pistol",
+      "notes": "Kann Non-Basic Ammo; zwei Ammo-Typen parallel, je einer pro Magazin.",
+      "source": {
+        "page": 113,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Militech",
+      "weapon_skill": "Handgun",
+      "magazine": "10",
+      "concealable": true,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "ranged-weapon-militech-mastiff-smg",
+      "name": "Militech Mastiff SMG",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "2d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "M Pistol",
+      "notes": "Combination; Autofire x3; Suppressive Fire; Shotgun Shells.",
+      "source": {
+        "page": 113,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Militech",
+      "weapon_skill": "Handgun",
+      "magazine": "30",
+      "concealable": false,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "ranged-weapon-militech-perseus",
+      "name": "Militech Perseus",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": "VH Pistol",
+      "notes": "Excellent Quality; wenn in vorheriger Round gefeuert, steigt ROF auf 2.",
+      "source": {
+        "page": 112,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Militech",
+      "weapon_skill": "Handgun",
+      "magazine": "11",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-modfire-10x",
+      "name": "ModFire 10X",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "3d6",
+      "rof": 2,
+      "hands": "1",
+      "ammo": "H Pistol",
+      "notes": "Umbau zwischen Heavy Pistol, SMG und Assault Rifle in 1 Minute; Autofire x3/x4 und Suppressive Fire in SMG/AR.",
+      "source": {
+        "page": 114,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Centurion Essentials",
+      "weapon_skill": "Handgun",
+      "magazine": "8",
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "ranged-weapon-nomad-rocker",
+      "name": "Nomad Rocker",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": "Rocks",
+      "notes": "Poor Quality; verschießt Steine statt Bullets; einfach/schnell zu reparieren.",
+      "source": {
+        "page": 115,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Everest VentureWare",
+      "weapon_skill": "Handgun",
+      "magazine": "8",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-overlord-handcannon",
+      "name": "Overlord Handcannon",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 100,
+      "price_options": [
+        100
+      ],
+      "currency": "eb",
+      "price_category": "Premium",
+      "raw_cost": "100eb (Premium)",
+      "damage": "3d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": "H Pistol",
+      "notes": "Poor Quality; +1 auf Facedown, außer Gegner weiß, was die Waffe wirklich ist.",
+      "source": {
+        "page": 106,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "GunMart",
+      "weapon_skill": "Handgun",
+      "magazine": "8",
+      "concealable": true
+    },
+    {
+      "id": "ranged-weapon-pursuit-security-inc-crowd-buster",
+      "name": "Pursuit Security Inc. Crowd Buster",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Rifle",
+      "notes": "Autofire x4; Suppressive Fire; Sonic Mode kann Damaged Ear Critical Injury verursachen.",
+      "source": {
+        "page": 116,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Pursuit Security Inc.",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "25",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-rostovi-uli-ni-uni-titelj",
+      "name": "Rostović Ulični Uništitelj",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "3d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Shells",
+      "notes": "Poor Quality; nur Shotgun Shells; als Action Metall in Läufe stopfen für nächsten Shot 4d6.",
+      "source": {
+        "page": 117,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Rostović",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "3",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-sanroo-hello-cutie-ultra-k8-assault-pistol",
+      "name": "Sanroo Hello Cutie Ultra-K8 Assault Pistol",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 5000,
+      "price_options": [
+        5000
+      ],
+      "currency": "eb",
+      "price_category": "Luxury",
+      "raw_cost": "5,000eb (Luxury)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": "VH Pistol",
+      "notes": "Excellent Quality; Action zum Wechsel zwischen Very Heavy Pistol und Heavy SMG; Autofire x3/Suppressive Fire als SMG; +2 Wardrobe & Style; Anime-Sounds.",
+      "source": {
+        "page": 118,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Sanroo Firearms of Tokyo",
+      "weapon_skill": "Handgun",
+      "magazine": "30",
+      "concealable": false,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "ranged-weapon-sternmeyer-m-04-variable-assault",
+      "name": "Sternmeyer M-04 Variable Assault",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Rifle",
+      "notes": "Poor Quality Combination; Autofire x4; Suppressive Fire; Jam betrifft beide Modi; Non-Basic Grenades möglich.",
+      "source": {
+        "page": 119,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Sternmeyer",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "20",
+      "concealable": false,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "ranged-weapon-superchrome-glam-rifle",
+      "name": "Superchrome® Glam Rifle",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Rifle",
+      "notes": "Autofire x4; Suppressive Fire; +2 Wardrobe & Style; Non-Basic Ammo möglich.",
+      "source": {
+        "page": 120,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Centurion Essentials",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "25",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-superchrome-javelin",
+      "name": "Superchrome® Javelin",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Rifle",
+      "notes": "+2 Wardrobe & Style; Non-Basic Ammo möglich.",
+      "source": {
+        "page": 120,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Centurion Essentials",
+      "weapon_skill": "Shoulder Arms",
+      "magazine": "4",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-superchrome-sidearm",
+      "name": "Superchrome® Sidearm",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": "VH Pistol",
+      "notes": "+2 Wardrobe & Style; Non-Basic Ammo möglich.",
+      "source": {
+        "page": 121,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Centurion Essentials",
+      "weapon_skill": "Handgun",
+      "magazine": "8",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-techtronika-russia-bmg-500",
+      "name": "Techtronika Russia BMG-500",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "5d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "Rifle",
+      "notes": "Autofire x4; Suppressive Fire; braucht BODY 11+ oder Mounting; kommt mit Bipod.",
+      "source": {
+        "page": 122,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Techtronika Russia",
+      "weapon_skill": "Heavy Weapons",
+      "magazine": "500",
+      "concealable": false
+    },
+    {
+      "id": "ranged-weapon-tommyknocker",
+      "name": "Tommyknocker",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 1000,
+      "price_options": [
+        1000
+      ],
+      "currency": "eb",
+      "price_category": "Very Expensive",
+      "raw_cost": "1,000eb (V Expensive)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "2",
+      "ammo": "VH Pistol",
+      "notes": "Combination; Poor Quality Shotgun; Shotgun Shells; mit 2 Händen oder BODY 10+, sonst Risiko Waffe zu verlieren.",
+      "source": {
+        "page": 123,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Centurion Essentials",
+      "weapon_skill": "Handgun",
+      "magazine": "8",
+      "concealable": false,
+      "_problem": "multi-mode: Primärmodus gemappt, Details in notes"
+    },
+    {
+      "id": "ranged-weapon-westwood",
+      "name": "Westwood",
+      "category": "Ranged Weapon",
+      "subcategory": null,
+      "price": 500,
+      "price_options": [
+        500
+      ],
+      "currency": "eb",
+      "price_category": "Expensive",
+      "raw_cost": "500eb (Expensive)",
+      "damage": "4d6",
+      "rof": 1,
+      "hands": "1",
+      "ammo": "VH Pistol",
+      "notes": "Ausziehbarer Screen mit vorinstallierten Filmen; wählbare Lauflänge.",
+      "source": {
+        "page": 121,
+        "book": "Black Chrome"
+      },
+      "nightmarket": true,
+      "company": "Nova Arms",
+      "weapon_skill": "Handgun",
+      "magazine": "6",
+      "concealable": false
+    }
+  ]
+}

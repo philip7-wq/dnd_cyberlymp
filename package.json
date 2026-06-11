@@ -5,7 +5,8 @@
   "private": true,
   "description": "Cyberpunk RED character hub — by LZRV-Studio",
   "scripts": {
-    "seed": "node db/seed_items.js"
+    "seed": "node db/seed_items.js",
+    "seed:blackchrome": "node db/seed_black_chrome.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
