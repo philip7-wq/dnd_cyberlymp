@@ -25,7 +25,7 @@
 | 8 create/upload/npc-sheet/radio | ✅ fertig | 8a upload.html · 8c radio.html · 8b-2 roles.css :root · 8b-3 npc-sheet.html → **Phase 8 KOMPLETT** (create.html bewusst alt belassen, nicht genutzt) |
 | 9 Rulebook (neu) | ⬜ offen | |
 | 10 Cyberware-Index (neu) | ⬜ offen | |
-| 11 Responsive/A11y/Cleanup/QA | ⬜ offen | Aliase + Temp-Fonts entfernen, --radius, favicon |
+| 11 Responsive/A11y/Cleanup/QA | 🔶 läuft | 11a+11b+11c ✅ (tote CSS, Slot-Dedup, Aliase entfernt); offen: 11d Fonts |
 
 **Modell-Kadenz:** additive/isolierte Phasen → Sonnet 4.6; player/dm/map (4/5/7) + Final-QA → Opus xhigh.
 
@@ -1315,6 +1315,83 @@ sauber; keine bare Legacy-Tokens mehr; 8 Sprite-Refs == vorhandene Symbol-IDs; L
 **Offen:** manueller Browser-Durchklick als DM (`localStorage.dm_auth='1'`, `?npc_id=…`) — alle Tabs,
 HP ±/Custom-Modal, Armor-SP ±, Attack/Damage-Würfe + Modal, Critical-Injuries, Notes-Autosave, Realtime;
 Konsole sauber; Optik-Abgleich mit player-Rollen-Tab.
+
+---
+
+## Phase 11a + 11b — Tote CSS + Slot-Helfer-Dedup ✅
+
+**11a — tote CSS:** `.role-roll-btn` + `.role-save-btn` aus `player.css` entfernt. Vorab
+grep-bestätigt: 0 echte Treffer in html/js (nur Definition + `_dev/phase4d-concept.md`-Doku).
+Stammten aus deferred Phase-4d-Role-Buttons (nie verdrahtet). `.role-roll-group`/`.role-roll-result`
+/`.role-textarea` bewusst behalten (noch genutzt).
+
+**11b — Slot-Helfer-Dedup:** 5 in dm/player/shop duplizierte Helfer (`routeItem`,
+`CYBERWARE_SLOT_MAP`, `getItemSlots`, `getSlotCost`, `buildSnapshot`) → neues ES-Modul
+`public/assets/js/item-slots.js` (kein Build; native `import`). dm.html ≡ player.html waren
+identisch; **shop war die reichste Variante → kanonisch übernommen**.
+
+**Entscheidung AMMO_DATA-Wiring = Parameter** (`buildSnapshot(item, ammoData)`), kleinste Änderung
+an Aufrufstellen (Alternative „Modul lädt json selbst" hätte async/Init-State erzwungen):
+- shop (Kauf) + player (BM-Annahme) übergeben ihr lokales `AMMO_DATA` → volle Magazindaten.
+- **dm (Grant) übergibt nichts** — dm.html lädt keine ammunition.json. Waffen-Magazinfelder bleiben
+  `null`/`false` und werden vom Spieler-Sheet via `migrateWeaponsMagazines()` (player.html) lazy
+  geheilt. Self-healing → bewusst kein neuer fetch in dm.html.
+
+**Extra-Felder, die dm/player durch die kanonische Version NEU bekommen** (Snapshot-Form
+vereinheitlicht; fehlten vorher): weapons → `magazine_max`/`ammo_current`/`loaded_ammo`/`is_autofire`;
+armor + gear → zusätzliches `category`.
+
+**Shop-lokal NICHT verschoben:** `SLOT_LABELS`, `SLOT_MAXES`, `getSlotStatus`, `getInjuryBlock`,
+`parseInjuries` (hängen nicht an den 5 Symbolen).
+
+**Verifiziert:** `node --check item-slots.js` sauber; 5 Definitionen nur noch im Modul; je 1 Import
+in shop/player/dm; Call-Sites korrekt (dm ohne, player/shop mit AMMO_DATA); keine Orphan-Referenzen
+in anderen Dateien. **Offen (manuell):** Browser-Smoke je Pfad (shop-Kauf, player-BM-Annahme,
+dm-Grant) + Cyberware-Slot-Routing, Konsole sauber.
+
+**Phase 11 offen:** 11c (Migrations-Aliase + base.css-Token-Kopplung), 11d (Font Audiowide→Rajdhani
+/ Inter→IBM Plex Mono, ~160 Literale).
+
+---
+
+## Phase 11c — Migrations-Aliase entfernt (gekoppelter Token-Cleanup) ✅
+
+Die 10 Legacy-Aliase projektweit durch HUD-Tokens ersetzt + beide Definitionsquellen entfernt.
+**Bewusster Farb-Shift auf die neue Palette** (User bestätigt) — alle 10 Aliase hatten andere Hex
+als die neuen Tokens:
+
+| alt | → neu | alt-hex → neu-hex |
+|---|---|---|
+| `--red` | `--neon-red` | #FF2D2D → #FF3158 |
+| `--red-dim` | `--red-soft` | #cc1f1f → #B8253D |
+| `--cyan` | `--neon-cyan` | #00E5FF → #22F7FF |
+| `--cyan-dim` | `--cyan-soft` | #00b8cc → #0DB7D9 |
+| `--bg` | `--bg-main` | #0a0a0f → #080A0F |
+| `--bg-card` | `--bg-panel` | #12121a → #101318 |
+| `--bg-input` | `--bg-panel-soft` | #1a1a26 → #151920 |
+| `--border` | `--border-dark` | #2a2a3e → #25313A |
+| `--text` | `--text-main` | #c8c8d8 → #E8F8FF |
+| `--text-head` | `--text-main` | #e8e8f0 → #E8F8FF |
+
+**Umgeschrieben (Schritt 1, `replace_all` auf exakt `var(--alias)`):** player.css, dm.css,
+player.html, dm.html, base.css (eigene Component-Klassen), upload.css.
+**Entfernt:** Schritt 2 = 10 Alias-Zeilen aus base.css-`:root` (Override-Quelle zuerst); Schritt 3 =
+cyberpunk-ui.css-Alias-`:root`-Block. Reihenfolge: erst alle Consumer migrieren, dann Definitionen,
+sonst Fallback auf invalid.
+
+**Behalten (NICHT angefasst):** `--text-muted` (base.css #686880 überschreibt weiterhin
+cyberpunk-ui #8A9AA3 — eigener Wert, kein Alias), `--font-display`/`--font-body` (→ 11d),
+`--radius` (4px-Kollision = separates To-do), `--transition`.
+
+**create.html bewusst ausgelassen** (User-Entscheidung): lädt nur base.css (kein cyberpunk-ui.css),
+hängt ganz an den Aliasen → behält jetzt 51 `var(--alias)`-Refs, die ins Leere laufen → **sieht
+kaputt aus**, bis es separat migriert/entfernt wird. Bekannt & akzeptiert.
+
+**Verifiziert:** `var(--alias)` projektweit nur noch in create.html (sonst 0); keine Alias-Definition
+mehr vorhanden; alle 9 neuen Tokens in cyberpunk-ui.css definiert; 4 Inline-Module (player/dm)
+`node --check` als .mjs sauber; keine malformed Doppel-Ersetzungen. index.html unbetroffen (nutzte
+keinen Alias). **Offen (manuell):** Visual-Regression player/dm/upload/map/shop/npc-sheet (neue
+Palette, Shift gewollt), Konsole je Seite.
 
 ---
 

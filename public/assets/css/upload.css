@@ -1,9 +1,8 @@
 /* ============================================================
    LZRV D&D Hub — upload.html styles  (Phase 8a HUD-Reskin)
-   HUD-Tokens direkt verwenden: base.css re-definiert die Alt-Aliase
-   (var(--cyan)/--red/--bg-*) auf alte Werte → daher die neuen Tokens
-   (--neon-cyan, --bg-panel-soft, …) direkt. Fonts (var(--font-display)/
-   var(--font-body)) bleiben bis Phase 11. Akzent = Cyan (Charakterdaten).
+   HUD-Tokens (--neon-cyan, --bg-panel-soft, …) direkt verwenden (Phase 11c:
+   Alt-Aliase entfernt). Fonts (var(--font-display)/var(--font-body)) bleiben
+   bis Phase 11d. Akzent = Cyan (Charakterdaten).
    ============================================================ */
 
 .upload-page {

@@ -4,26 +4,26 @@
 
 /* ── PIN Overlay ── */
 .pin-overlay {
-  position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+  position: fixed; inset: 0; background: var(--bg-main); z-index: 9999;
   display: flex; align-items: center; justify-content: center;
 }
 .pin-overlay[hidden] { display: none; }
 .pin-box {
-  background: var(--bg-card); border: 2px solid var(--red);
+  background: var(--bg-panel); border: 2px solid var(--neon-red);
   border-radius: var(--radius); padding: 2rem; width: 280px; text-align: center;
 }
 .pin-title {
-  font-family: var(--font-display); color: var(--red);
+  font-family: var(--font-display); color: var(--neon-red);
   font-size: 1rem; letter-spacing: .2em; margin-bottom: 1rem;
 }
 .pin-input {
-  width: 100%; padding: .6rem; background: var(--bg-input);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  color: var(--text); font-size: 1rem; text-align: center;
+  width: 100%; padding: .6rem; background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark); border-radius: var(--radius);
+  color: var(--text-main); font-size: 1rem; text-align: center;
   font-family: var(--font-display); letter-spacing: .2em; box-sizing: border-box;
 }
-.pin-input:focus { outline: none; border-color: var(--red); }
-.pin-error { color: var(--red); font-size: .75rem; margin-top: .5rem; min-height: 1.2em; }
+.pin-input:focus { outline: none; border-color: var(--neon-red); }
+.pin-error { color: var(--neon-red); font-size: .75rem; margin-top: .5rem; min-height: 1.2em; }
 
 /* ── Main Layout ── */
 /* ── Page shell ── */
@@ -466,10 +466,10 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .roll-log-clear:hover { opacity: 1; color: var(--neon-red); }
 
 /* ── DM Dice FAB (mirrors player.html) ── */
-.dice-fab { position: fixed; bottom: calc(38vh + .75rem); left: 1.5rem; width: 52px; height: 52px; border-radius: 50%; background: var(--red); border: none; color: #fff; font-size: 1.3rem; cursor: pointer; box-shadow: 0 4px 16px rgba(255,45,45,.45); z-index: 100; display: flex; align-items: center; justify-content: center; transition: transform .15s, background .15s; }
-.dice-fab:hover { background: var(--red-dim); transform: scale(1.07); }
+.dice-fab { position: fixed; bottom: calc(38vh + .75rem); left: 1.5rem; width: 52px; height: 52px; border-radius: 50%; background: var(--neon-red); border: none; color: #fff; font-size: 1.3rem; cursor: pointer; box-shadow: 0 4px 16px rgba(255,45,45,.45); z-index: 100; display: flex; align-items: center; justify-content: center; transition: transform .15s, background .15s; }
+.dice-fab:hover { background: var(--red-soft); transform: scale(1.07); }
 @keyframes fab-pulse { to { box-shadow: 0 4px 24px rgba(255,45,45,.8); transform: scale(1.05); } }
-.dice-popup { position: fixed; bottom: calc(38vh + 4.25rem); left: 1.5rem; width: 312px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,.85); z-index: 99; display: none; flex-direction: column; overflow: hidden; }
+.dice-popup { position: fixed; bottom: calc(38vh + 4.25rem); left: 1.5rem; width: 312px; background: var(--bg-panel); border: 1px solid var(--border-dark); border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,.85); z-index: 99; display: none; flex-direction: column; overflow: hidden; }
 .dice-popup.open { display: flex; }
 /* Würfel-UI neben die Nav-Rail versetzen — konstant --sb-rail (Overlay-Modell,
    wie player.css). Sonst säße #dmDiceFab bei left:1.5rem unter der Sidebar. */
@@ -477,22 +477,22 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
   body.has-cyber-sidebar .dice-fab,
   body.has-cyber-sidebar .dice-popup { left: calc(var(--sb-rail) + 1.5rem); }
 }
-.dice-popup-head { padding: .6rem 1rem; background: linear-gradient(90deg, #0c0c16 0%, #12121e 100%); border-bottom: 2px solid var(--red); font-family: var(--font-display); font-size: .72rem; letter-spacing: .14em; color: var(--red); display: flex; justify-content: space-between; align-items: center; }
+.dice-popup-head { padding: .6rem 1rem; background: linear-gradient(90deg, #0c0c16 0%, #12121e 100%); border-bottom: 2px solid var(--neon-red); font-family: var(--font-display); font-size: .72rem; letter-spacing: .14em; color: var(--neon-red); display: flex; justify-content: space-between; align-items: center; }
 .dice-popup-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0 .15rem; line-height: 1; transition: color .12s; }
-.dice-popup-close:hover { color: var(--text); }
-.dp-section { padding: .55rem .9rem .5rem; border-bottom: 1px solid var(--border); }
+.dice-popup-close:hover { color: var(--text-main); }
+.dp-section { padding: .55rem .9rem .5rem; border-bottom: 1px solid var(--border-dark); }
 .dp-section:last-child { border-bottom: none; padding-bottom: .55rem; }
 .dp-sec-label { font-size: .5rem; letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-display); margin-bottom: .4rem; opacity: .65; }
 .dice-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .3rem; }
-.die-btn { padding: .48rem .2rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--cyan); font-family: var(--font-display); font-size: .74rem; cursor: pointer; text-align: center; transition: border-color .12s, background .12s; }
-.die-btn:hover { border-color: var(--cyan); background: #0d1e22; }
+.die-btn { padding: .48rem .2rem; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--neon-cyan); font-family: var(--font-display); font-size: .74rem; cursor: pointer; text-align: center; transition: border-color .12s, background .12s; }
+.die-btn:hover { border-color: var(--neon-cyan); background: #0d1e22; }
 .dice-custom { display: flex; gap: .35rem; }
-.dice-custom input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: .42rem .65rem; font-size: .88rem; font-family: var(--font-display); }
-.dice-custom input:focus { outline: none; border-color: var(--red); }
-.dice-custom button { background: var(--red); border: none; border-radius: var(--radius); color: #fff; padding: .42rem .85rem; font-family: var(--font-display); font-size: .78rem; cursor: pointer; white-space: nowrap; letter-spacing: .04em; }
-.dice-custom button:hover { background: var(--red-dim); }
-.dice-result-area { padding: .55rem .9rem .65rem; background: linear-gradient(180deg, #09090f 0%, #0d0d1a 100%); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; display: flex; flex-direction: column; align-items: center; }
-.dice-result-num { font-family: var(--font-display); font-size: 2.6rem; color: var(--text-head); line-height: 1; margin: .05rem 0; }
+.dice-custom input { flex: 1; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); padding: .42rem .65rem; font-size: .88rem; font-family: var(--font-display); }
+.dice-custom input:focus { outline: none; border-color: var(--neon-red); }
+.dice-custom button { background: var(--neon-red); border: none; border-radius: var(--radius); color: #fff; padding: .42rem .85rem; font-family: var(--font-display); font-size: .78rem; cursor: pointer; white-space: nowrap; letter-spacing: .04em; }
+.dice-custom button:hover { background: var(--red-soft); }
+.dice-result-area { padding: .55rem .9rem .65rem; background: linear-gradient(180deg, #09090f 0%, #0d0d1a 100%); border-top: 1px solid var(--border-dark); border-bottom: 1px solid var(--border-dark); text-align: center; display: flex; flex-direction: column; align-items: center; }
+.dice-result-num { font-family: var(--font-display); font-size: 2.6rem; color: var(--text-main); line-height: 1; margin: .05rem 0; }
 .dice-result-detail { font-size: .68rem; color: var(--text-muted); margin-top: .28rem; line-height: 1.4; }
 @keyframes roll-pop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.18)} 100%{transform:scale(1);opacity:1} }
 .dice-result-num.pop { animation: roll-pop .32s ease forwards; }
@@ -500,8 +500,8 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .dice-log-row { display: flex; justify-content: space-between; align-items: center; padding: .26rem .9rem; font-size: .75rem; border-bottom: 1px solid rgba(255,255,255,.04); }
 .dice-log-row:last-child { border-bottom: none; }
 .dice-log-expr { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
-.dice-log-tot  { font-family: var(--font-display); color: var(--text); font-size: .85rem; }
-#dmDiceNpcBtn { padding: .4rem .9rem .5rem; border-top: 1px solid var(--border); }
+.dice-log-tot  { font-family: var(--font-display); color: var(--text-main); font-size: .85rem; }
+#dmDiceNpcBtn { padding: .4rem .9rem .5rem; border-top: 1px solid var(--border-dark); }
 #dmDiceNpcBtn .ctrl-btn { width: 100%; }
 
 /* ── NPC Quick Damage Modal ── */
@@ -596,7 +596,7 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 @media (max-width: 800px) {
   .dm-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 260px; }
   .dm-main-col { min-height: 0; }
-  .dm-sidebar { border-left: none; border-top: 1px solid var(--border); }
+  .dm-sidebar { border-left: none; border-top: 1px solid var(--border-dark); }
   .dm-chat-bottom { height: 30vh; }
   .dm-own-notes-area { min-height: 80px; }
   .dm-stats-grid { grid-template-columns: repeat(3, 1fr); }
@@ -641,7 +641,7 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 /* ── Player Notes Read-only Overlay ── */
 .dm-notes-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 1500; display: flex; align-items: center; justify-content: center; }
 .dm-notes-overlay[hidden] { display: none; }
-.dm-notes-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; width: min(480px, 94vw); max-height: 70vh; overflow-y: auto; }
+.dm-notes-box { background: var(--bg-panel); border: 1px solid var(--border-dark); border-radius: var(--radius); padding: 1.25rem; width: min(480px, 94vw); max-height: 70vh; overflow-y: auto; }
 .dm-notes-box-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
 
 /* ── DM Own Notes ── */
@@ -683,21 +683,21 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 
 .npc-grid { display: flex; flex-direction: column; gap: 0; max-width: 760px; margin: 0 auto; }
 
-.npc-card { background: var(--bg-card); border: 1px solid var(--red); border-radius: var(--radius); padding: .75rem; display: flex; flex-direction: column; gap: .4rem; }
-.npc-card-portrait { width: 100%; aspect-ratio: 1; border-radius: calc(var(--radius) - 2px); background: var(--bg-input); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.npc-card { background: var(--bg-panel); border: 1px solid var(--neon-red); border-radius: var(--radius); padding: .75rem; display: flex; flex-direction: column; gap: .4rem; }
+.npc-card-portrait { width: 100%; aspect-ratio: 1; border-radius: calc(var(--radius) - 2px); background: var(--bg-panel-soft); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .npc-card-portrait img { width: 100%; height: 100%; object-fit: cover; }
-.npc-card-name { font-family: var(--font-display); font-size: .8rem; color: var(--red); }
+.npc-card-name { font-family: var(--font-display); font-size: .8rem; color: var(--neon-red); }
 .npc-card-role { font-size: .65rem; color: var(--text-muted); }
 .npc-hp-bar-wrap { height: 5px; background: rgba(255,255,255,.1); border-radius: 3px; overflow: hidden; }
 .npc-hp-bar { height: 100%; border-radius: 3px; transition: width .3s, background .3s; }
 .npc-card-hp-controls { display: flex; align-items: center; gap: .3rem; font-size: .75rem; }
-.npc-hp-input { width: 42px; text-align: center; background: var(--bg-input); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-size: .8rem; padding: .15rem; }
-.npc-hp-btn { width: 22px; height: 22px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 3px; color: var(--text); cursor: pointer; font-size: .9rem; display: flex; align-items: center; justify-content: center; padding: 0; }
+.npc-hp-input { width: 42px; text-align: center; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: 3px; color: var(--text-main); font-size: .8rem; padding: .15rem; }
+.npc-hp-btn { width: 22px; height: 22px; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: 3px; color: var(--text-main); cursor: pointer; font-size: .9rem; display: flex; align-items: center; justify-content: center; padding: 0; }
 .npc-card-actions { display: flex; gap: .3rem; flex-wrap: wrap; }
-.npc-visibility-btn { flex: 1; padding: .25rem .4rem; font-size: .65rem; border-radius: var(--radius); cursor: pointer; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-muted); white-space: nowrap; }
+.npc-visibility-btn { flex: 1; padding: .25rem .4rem; font-size: .65rem; border-radius: var(--radius); cursor: pointer; border: 1px solid var(--border-dark); background: var(--bg-panel-soft); color: var(--text-muted); white-space: nowrap; }
 .npc-visibility-btn.active { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,.1); }
-.npc-edit-btn { padding: .25rem .45rem; font-size: .65rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; background: var(--bg-input); color: var(--text-muted); }
-.npc-dice-btn { padding: .25rem .45rem; font-size: .65rem; border: 1px solid var(--cyan); border-radius: var(--radius); cursor: pointer; background: rgba(0,229,255,.08); color: var(--cyan); }
+.npc-edit-btn { padding: .25rem .45rem; font-size: .65rem; border: 1px solid var(--border-dark); border-radius: var(--radius); cursor: pointer; background: var(--bg-panel-soft); color: var(--text-muted); }
+.npc-dice-btn { padding: .25rem .45rem; font-size: .65rem; border: 1px solid var(--neon-cyan); border-radius: var(--radius); cursor: pointer; background: rgba(0,229,255,.08); color: var(--neon-cyan); }
 .npc-card.eliminated { opacity: .45; filter: grayscale(1); }
 .combat-npc-hp-ctrl { display: flex; align-items: center; gap: var(--sp-1); font-size: .68rem; }
 .combat-npc-hp-btn { width: 18px; height: 18px; background: var(--bg-panel-soft); border: 1px solid var(--border-dark); border-radius: var(--radius); color: var(--text-main); cursor: pointer; font-size: .8rem; display: flex; align-items: center; justify-content: center; padding: 0; }
@@ -846,19 +846,19 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   animation: dice-spin 1.25s cubic-bezier(0.5, 0.05, 0.1, 1) forwards;
 }
 .dice-3d-face.landed {
-  color: var(--text-head); text-shadow: 0 0 18px rgba(255,255,255,.32);
-  border-color: var(--red);
+  color: var(--text-main); text-shadow: 0 0 18px rgba(255,255,255,.32);
+  border-color: var(--neon-red);
   animation: dice-land-bounce .4s cubic-bezier(.34,1.56,.64,1) forwards,
              dice-glow-red .5s ease forwards;
 }
 .dice-3d-face.landed.crit-s {
-  border-color: var(--cyan); color: var(--cyan);
+  border-color: var(--neon-cyan); color: var(--neon-cyan);
   text-shadow: 0 0 20px rgba(0,229,255,.68);
   animation: dice-land-bounce .4s cubic-bezier(.34,1.56,.64,1) forwards,
              dice-glow-cyan .5s ease forwards;
 }
 .dice-3d-face.landed.crit-f {
-  border-color: var(--red); color: var(--red);
+  border-color: var(--neon-red); color: var(--neon-red);
   text-shadow: 0 0 18px rgba(255,45,45,.62);
 }
 .dice-roll-ctx {
@@ -886,7 +886,7 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   gap: .45rem; padding: .5rem .75rem .6rem;
 }
 .npc-card-med {
-  background: var(--bg-card); border: 1px solid var(--border);
+  background: var(--bg-panel); border: 1px solid var(--border-dark);
   border-radius: var(--radius); padding: .5rem; display: flex; gap: .45rem; align-items: flex-start;
   transition: var(--transition);
 }
@@ -896,7 +896,7 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   background: #1a1a1a; flex-shrink: 0;
 }
 .npc-card-body-med { flex: 1; min-width: 0; }
-.npc-card-name-med { font-size: .82rem; color: var(--text-head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: .1rem; }
+.npc-card-name-med { font-size: .82rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: .1rem; }
 .npc-card-role-med { font-size: .62rem; color: var(--text-muted); margin-bottom: .25rem; }
 .npc-card-hp-text-med { font-size: .62rem; color: var(--text-muted); margin-top: .15rem; }
 .npc-card-actions-med { display: flex; flex-direction: column; gap: .2rem; flex-shrink: 0; }

@@ -33,7 +33,7 @@
   <div class="modal-box" style="text-align:center;max-width:340px">
     <div class="timer-expired-title"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-timer"/></svg> ZEIT ABGELAUFEN</div>
     <div id="timerExpiredLabel" style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 1rem"></div>
-    <button type="button" class="btn" id="timerExpiredOk" style="background:var(--red);color:#fff;width:100%">OK</button>
+    <button type="button" class="btn" id="timerExpiredOk" style="background:var(--neon-red);color:#fff;width:100%">OK</button>
   </div>
 </div>
 
@@ -364,20 +364,21 @@ import { initAgent } from './assets/js/agent/agent-core.js';
 import './assets/js/agent/agent-apps.js';
 import { mountRoleInterface } from './assets/js/roles/roles-router.js';
 import './assets/js/sound-player.js';
+import { routeItem, CYBERWARE_SLOT_MAP, getItemSlots, getSlotCost, buildSnapshot } from './assets/js/item-slots.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const STATS_ORDER = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP'];
 
 const COND_COLORS = {
   'Seriously Wounded': '#FF8C00',
-  'Mortally Wounded':  'var(--red)',
+  'Mortally Wounded':  'var(--neon-red)',
   'Stunned':           '#9B59B6',
   'Suppressed':        '#2980B9',
   'Prone':             '#7F8C8D',
   'Blinded':           '#C0392B',
   'Deafened':          '#7F8C8D',
   'On Fire':           '#E67E22',
-  'Bleeding Out':      'var(--red)',
+  'Bleeding Out':      'var(--neon-red)',
 };
 
 const SKILL_CAT = {
@@ -492,7 +493,7 @@ function updateNavCash() {
   const el = document.getElementById('navCash');
   if (el) {
     el.textContent = text;
-    el.style.color = cash < 0 ? 'var(--red)' : '';
+    el.style.color = cash < 0 ? 'var(--neon-red)' : '';
   }
   // Spiegel-Anzeige im Dossier-Header (gleiche Quelle/gleicher Wert)
   const headEl = document.getElementById('charCashValue');
@@ -538,7 +539,7 @@ if (id) {
   const bootTimeout = setTimeout(() => {
     const el = document.getElementById('loader');
     if (el && el.style.display !== 'none') {
-      el.innerHTML = `<span style="color:var(--red);font-size:.85rem">Timeout: Keine Verbindung zu Supabase.<br>Prüfe Internet / Supabase-Status und lade neu.</span>`;
+      el.innerHTML = `<span style="color:var(--neon-red);font-size:.85rem">Timeout: Keine Verbindung zu Supabase.<br>Prüfe Internet / Supabase-Status und lade neu.</span>`;
     }
   }, 15000);
 
@@ -677,10 +678,10 @@ if (id) {
     console.error('[player] boot error:', e);
     if (e.code === 'NOT_FOUND' || e.code === 'PGRST116') {
       document.getElementById('loader').innerHTML =
-        `<span style="color:var(--red);font-size:.85rem">Charakter nicht gefunden.<br><a href="index.html" style="color:var(--cyan)">← Zurück zur Übersicht</a></span>`;
+        `<span style="color:var(--neon-red);font-size:.85rem">Charakter nicht gefunden.<br><a href="index.html" style="color:var(--neon-cyan)">← Zurück zur Übersicht</a></span>`;
     } else {
       document.getElementById('loader').innerHTML =
-        `<span style="color:var(--red);font-size:.85rem">Fehler: ${e.message}</span>`;
+        `<span style="color:var(--neon-red);font-size:.85rem">Fehler: ${e.message}</span>`;
     }
   }
 }
@@ -1717,7 +1718,7 @@ function renderWeapons() {
     if (hits === 0) {
       resEl.innerHTML = `<span style="color:var(--text-muted)">${rollTotal} − DV ${dv} = +${beatenBy} → <strong>0 Treffer</strong> (kein Schaden)</span>`;
     } else {
-      resEl.innerHTML = `<span style="color:#FF8C00">${rollTotal} − DV ${dv} = +${beatenBy} → <strong>${hits} Treffer</strong> × ${dmgPerHit} = <span style="color:var(--red)">${total} Schaden</span></span>`;
+      resEl.innerHTML = `<span style="color:#FF8C00">${rollTotal} − DV ${dv} = +${beatenBy} → <strong>${hits} Treffer</strong> × ${dmgPerHit} = <span style="color:var(--neon-red)">${total} Schaden</span></span>`;
     }
   }
 
@@ -2836,11 +2837,11 @@ function setupCashLog() {
     } else {
       content.innerHTML = log.map(e => {
         const sign  = e.delta >= 0 ? '+' : '';
-        const color = e.delta >= 0 ? '#2ecc71' : 'var(--red)';
+        const color = e.delta >= 0 ? '#2ecc71' : 'var(--neon-red)';
         const t     = new Date(e.ts).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-        return `<div style="display:flex;gap:.5rem;align-items:baseline;border-bottom:1px solid var(--border);padding:.25rem 0">
+        return `<div style="display:flex;gap:.5rem;align-items:baseline;border-bottom:1px solid var(--border-dark);padding:.25rem 0">
           <span style="color:${color};font-family:Audiowide,sans-serif;font-size:.75rem;min-width:80px">${sign}${e.delta?.toLocaleString('de-DE')} eb</span>
-          <span style="flex:1;color:var(--text)">${e.reason || '—'}</span>
+          <span style="flex:1;color:var(--text-main)">${e.reason || '—'}</span>
           <span style="color:var(--text-muted);font-size:.65rem">${t}</span>
           <span style="color:var(--text-muted);font-size:.65rem">${e.balance?.toLocaleString('de-DE')} eb</span>
         </div>`;
@@ -3548,7 +3549,7 @@ function showSkillCheckModal(expr, ctx) {
   if (swPen > 0)    penParts.push(`−${swPen} SW`);
   if (injPen < 0)   penParts.push(`${injPen} Injury`);
   if (sleepMod)     penParts.push(`${sleepMod} ${sleep.label || 'Schlafentzug'}`);
-  const penLabel     = penParts.length ? ` <span style="color:var(--red);font-size:.8em">(${penParts.join(', ')})</span>` : '';
+  const penLabel     = penParts.length ? ` <span style="color:var(--neon-red);font-size:.8em">(${penParts.join(', ')})</span>` : '';
 
   const overlay = document.createElement('div');
   overlay.className = 'skill-modal-overlay';
@@ -3739,7 +3740,7 @@ function renderBuffs() {
 
     const timeStr  = remaining === null ? '∞' : expired ? 'ABGELAUFEN' : formatRemaining(remaining);
     const bonusStr = b.stat && b.stat_bonus != null
-      ? ` <span style="color:var(--cyan);font-size:.62em">${b.stat_bonus >= 0 ? '+' : ''}${b.stat_bonus} ${b.stat}</span>` : '';
+      ? ` <span style="color:var(--neon-cyan);font-size:.62em">${b.stat_bonus >= 0 ? '+' : ''}${b.stat_bonus} ${b.stat}</span>` : '';
     return `<div class="buff-chip${expired ? ' expired' : ''}" title="${b.effect || ''}">
       <span class="buff-name">${b.name}${bonusStr}</span>
       <span class="buff-time">${timeStr} ⏱</span>
@@ -3967,70 +3968,8 @@ document.getElementById('timerExpiredOk').addEventListener('click', () => {
 });
 
 // ── BM Item-Grant (D2) — Schreibstruktur 1:1 aus dm.html C1 (grantItem) ──
-function routeItem(item) {
-  if (['Ranged Weapon','Melee Weapon','Exotic Weapon'].includes(item.category)) return 'weapons';
-  if (item.category === 'Armor')     return 'armor';
-  if (item.category === 'Cyberware') return 'cyberware';
-  return 'gear';
-}
-
-const CYBERWARE_SLOT_MAP = {
-  'Fashionware':                     ['fashionware'],
-  'Neuralware / Chipware':           ['neuralLink'],
-  'Chipware':                        ['neuralLink'],
-  'Neuralware':                      ['neuralLink'],
-  'Cybereye / Cybereye Option':      ['rightCybereye','leftCybereye'],
-  'Cybereye Option':                 ['rightCybereye','leftCybereye'],
-  'Cyberaudio Suite / Option':       ['cyberaudio'],
-  'Cyberaudio Option':               ['cyberaudio'],
-  'Internal Cyberware':              ['internal'],
-  'External Cyberware':              ['external'],
-  'Cyberarm / Cyberarm Option':      ['rightCyberarm','leftCyberarm'],
-  'Cyberarm Option':                 ['rightCyberarm','leftCyberarm'],
-  'Cyberarm/Cyberleg/Cyberlimb Option':['rightCyberarm','leftCyberarm','rightCyberleg','leftCyberleg'],
-  'Cyberleg/Cyberlimb Option':       ['rightCyberleg','leftCyberleg'],
-  'Borgware':                        ['borgware'],
-};
-
-function getItemSlots(item) {
-  const sub = item.subcategory || '';
-  const base = CYBERWARE_SLOT_MAP[sub] || ['internal'];
-  if (sub !== 'Cyberarm/Cyberleg/Cyberlimb Option') return base;
-
-  const notes = item.notes || '';
-  if (item.name === 'Cyberleg' || notes.startsWith('Cyberleg Option') || notes.toLowerCase().startsWith('replacement leg'))
-    return ['rightCyberleg','leftCyberleg'];
-  if (notes.startsWith('Cyberarm Option'))
-    return ['rightCyberarm','leftCyberarm'];
-  return base;
-}
-
-function getSlotCost(item) {
-  const m = (item.notes || '').match(/takes (\d+) Option Slot/i);
-  return m ? parseInt(m[1]) : 1;
-}
-
-function buildSnapshot(item) {
-  const x = item.extra || {};
-  switch (routeItem(item)) {
-    case 'weapons':
-      return { name: item.name, damage: item.damage || null, ammo: item.ammo || null,
-               rof: item.rof || null, notes: item.notes || null,
-               price: item.price, raw_cost: item.raw_cost, category: item.category };
-    case 'armor':
-      return { name: item.name, sp: parseInt(x.sp) || 0,
-               penalty: (x.armor_penalty && x.armor_penalty !== 'None') ? parseInt(x.armor_penalty) || 0 : 0,
-               notes: item.notes || null, price: item.price, raw_cost: item.raw_cost };
-    case 'cyberware':
-      return { name: item.name, category: item.category, notes: item.notes || null,
-               install: x.install || null, humanity_loss: x.humanity_loss || null,
-               price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null,
-               slotCost: getSlotCost(item) };
-    default:
-      return { name: item.name, notes: item.notes || null,
-               price: item.price, raw_cost: item.raw_cost };
-  }
-}
+// Slot-/Snapshot-Helfer (routeItem, getItemSlots, buildSnapshot, …) kommen
+// jetzt aus dem geteilten Modul assets/js/item-slots.js (Phase 11b dedup).
 
 let _bmItemsCache = [];
 async function _bmFetchItem(itemId) {
@@ -4042,7 +3981,7 @@ async function _bmGrantItem(itemId) {
   const item = await _bmFetchItem(itemId);
   if (!item) return false;                 // Fallback: kein Crash
   const dest = routeItem(item);
-  const snapshot = buildSnapshot(item);
+  const snapshot = buildSnapshot(item, AMMO_DATA);
   const patch = {};
   if (dest === 'weapons') {
     char.weapons = [...(Array.isArray(char.weapons) ? char.weapons : []), snapshot];

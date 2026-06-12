@@ -257,10 +257,10 @@
 <div id="dmNotesOverlay" class="dm-notes-overlay" hidden>
   <div class="dm-notes-box">
     <div class="dm-notes-box-head">
-      <span id="dmNotesCharName" style="font-family:var(--font-display);font-size:.8rem;color:var(--cyan);letter-spacing:.1em"></span>
+      <span id="dmNotesCharName" style="font-family:var(--font-display);font-size:.8rem;color:var(--neon-cyan);letter-spacing:.1em"></span>
       <button class="dm-modal-close" id="dmNotesClose">✕</button>
     </div>
-    <pre id="dmNotesContent" style="font-family:var(--font-body);font-size:.85rem;white-space:pre-wrap;color:var(--text);margin-top:.6rem"></pre>
+    <pre id="dmNotesContent" style="font-family:var(--font-body);font-size:.85rem;white-space:pre-wrap;color:var(--text-main);margin-top:.6rem"></pre>
   </div>
 </div>
 
@@ -421,7 +421,7 @@
         <div style="display:flex;gap:.5rem;align-items:center;margin-top:.3rem">
           <datalist id="npcGroupList"></datalist>
           <input id="npcGroupName" class="npc-field" list="npcGroupList" placeholder="Gruppe (z.B. Valentinos)" maxlength="40" style="flex:1" autocomplete="off">
-          <input id="npcGroupColor" type="color" value="#FF2D2D" title="Gruppenfarbe" style="width:36px;height:32px;padding:2px;border:1px solid var(--border);border-radius:4px;background:#111;cursor:pointer">
+          <input id="npcGroupColor" type="color" value="#FF2D2D" title="Gruppenfarbe" style="width:36px;height:32px;padding:2px;border:1px solid var(--border-dark);border-radius:4px;background:#111;cursor:pointer">
         </div>
         <textarea id="npcNotes" class="npc-field npc-field--notes" placeholder="Notizen…" rows="3" maxlength="500"></textarea>
       </div>
@@ -448,6 +448,7 @@ import { loadCombatData, getBaseDeathSavePenalty } from './assets/js/combat-modi
 import { initDmAgent } from './assets/js/agent/agent-dm.js';
 import './assets/js/agent/agent-apps.js';
 import { mountSound } from './assets/js/sound-dm.js';
+import { routeItem, CYBERWARE_SLOT_MAP, getItemSlots, getSlotCost, buildSnapshot } from './assets/js/item-slots.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const DM_PIN = 'DM2077';
@@ -531,7 +532,7 @@ async function boot() {
   combatSession = activeCombatsList[activeCombatsList.length - 1] ?? null;
   } catch (e) {
     document.getElementById('dmGrid').innerHTML =
-      `<div style="color:var(--red);font-size:.82rem">Fehler: ${e.message}</div>`;
+      `<div style="color:var(--neon-red);font-size:.82rem">Fehler: ${e.message}</div>`;
     return;
   }
 
@@ -1620,7 +1621,7 @@ async function openDetail(id) {
   try {
     openChar = await getCharacter(id);
   } catch (e) {
-    document.getElementById('dmModalHeader').innerHTML = `<span style="color:var(--red)">Fehler: ${e.message}</span>`;
+    document.getElementById('dmModalHeader').innerHTML = `<span style="color:var(--neon-red)">Fehler: ${e.message}</span>`;
     return;
   }
 
@@ -2362,7 +2363,7 @@ function setupControls() {
   function renderCashLogHtml(log) {
     return (log || []).slice(0, 8).map(e => {
       const sign  = e.delta >= 0 ? '+' : '';
-      const color = e.delta >= 0 ? '#2ecc71' : 'var(--red)';
+      const color = e.delta >= 0 ? '#2ecc71' : 'var(--neon-red)';
       const t     = new Date(e.ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
       return `<div style="color:${color}">${sign}${e.delta} eb${e.reason ? ` — ${e.reason}` : ''} <span style="color:#555">${t}</span></div>`;
     }).join('');
@@ -2560,7 +2561,7 @@ function showNpcResult(total, dice, mod, hasCrit) {
       const max = openChar.max_hp ?? 0;
       const pct = max ? Math.round(newHp / max * 100) : 0;
       const fill = document.querySelector('.dm-left-hp-fill');
-      if (fill) { fill.style.width = pct + '%'; fill.style.background = pct > 50 ? 'var(--cyan)' : pct > 20 ? '#FFD600' : 'var(--red)'; }
+      if (fill) { fill.style.width = pct + '%'; fill.style.background = pct > 50 ? 'var(--neon-cyan)' : pct > 20 ? '#FFD600' : 'var(--neon-red)'; }
       const label = document.querySelector('.dm-left-hp-label');
       if (label) label.textContent = `${newHp} / ${max}`;
     }
@@ -2584,7 +2585,7 @@ function renderCtrlActiveBuffs() {
   wrap.innerHTML = buffs.map(b => {
     const rem = b.expires_at ? new Date(b.expires_at).getTime() - now : null;
     const timeStr = rem === null ? '∞' : rem <= 0 ? 'ABGELAUFEN' : formatMs(rem);
-    const bonusLabel = b.stat && b.stat_bonus != null ? ` <span style="color:var(--cyan);font-size:.65rem">${b.stat_bonus >= 0 ? '+' : ''}${b.stat_bonus} ${b.stat}</span>` : '';
+    const bonusLabel = b.stat && b.stat_bonus != null ? ` <span style="color:var(--neon-cyan);font-size:.65rem">${b.stat_bonus >= 0 ? '+' : ''}${b.stat_bonus} ${b.stat}</span>` : '';
     return `<div class="ctrl-buff-row">
       <span class="ctrl-buff-name">${b.name}${bonusLabel}</span>
       <span class="ctrl-buff-time">${timeStr}</span>
@@ -2595,7 +2596,7 @@ function renderCtrlActiveBuffs() {
 
 async function ctrlPatch(patch, msgId, successText) {
   const msgEl = document.getElementById(msgId);
-  if (msgEl) { msgEl.textContent = ''; msgEl.style.color = 'var(--cyan)'; }
+  if (msgEl) { msgEl.textContent = ''; msgEl.style.color = 'var(--neon-cyan)'; }
   try {
     await patchCharacter(openChar.id, patch);
     Object.assign(openChar, patch);
@@ -2605,7 +2606,7 @@ async function ctrlPatch(patch, msgId, successText) {
     renderGrid();
     if (msgEl) msgEl.textContent = `✓ ${successText}`;
   } catch (e) {
-    if (msgEl) { msgEl.textContent = `Fehler: ${e.message}`; msgEl.style.color = 'var(--red)'; }
+    if (msgEl) { msgEl.textContent = `Fehler: ${e.message}`; msgEl.style.color = 'var(--neon-red)'; }
   }
 }
 
@@ -2683,81 +2684,17 @@ async function applyInjury(inj, table) {
     const max = openChar.max_hp ?? 0;
     const pct = max ? Math.round(newHp / max * 100) : 0;
     const fill = document.querySelector('.dm-left-hp-fill');
-    if (fill) { fill.style.width = pct + '%'; fill.style.background = pct > 50 ? 'var(--cyan)' : pct > 20 ? '#FFD600' : 'var(--red)'; }
+    if (fill) { fill.style.width = pct + '%'; fill.style.background = pct > 50 ? 'var(--neon-cyan)' : pct > 20 ? '#FFD600' : 'var(--neon-red)'; }
     const label = document.querySelector('.dm-left-hp-label');
     if (label) label.textContent = `${newHp} / ${max}`;
   }
 }
 
 // ── Custom Item Grant ─────────────────────────────────────────
-function routeItem(item) {
-  if (['Ranged Weapon','Melee Weapon','Exotic Weapon'].includes(item.category)) return 'weapons';
-  if (item.category === 'Armor')     return 'armor';
-  if (item.category === 'Cyberware') return 'cyberware';
-  return 'gear';
-}
-
-// ── Cyberware slot mapping (Referenz: shop.html) ──────────────
-const CYBERWARE_SLOT_MAP = {
-  'Fashionware':                     ['fashionware'],
-  'Neuralware / Chipware':           ['neuralLink'],
-  'Chipware':                        ['neuralLink'],
-  'Neuralware':                      ['neuralLink'],
-  'Cybereye / Cybereye Option':      ['rightCybereye','leftCybereye'],
-  'Cybereye Option':                 ['rightCybereye','leftCybereye'],
-  'Cyberaudio Suite / Option':       ['cyberaudio'],
-  'Cyberaudio Option':               ['cyberaudio'],
-  'Internal Cyberware':              ['internal'],
-  'External Cyberware':              ['external'],
-  'Cyberarm / Cyberarm Option':      ['rightCyberarm','leftCyberarm'],
-  'Cyberarm Option':                 ['rightCyberarm','leftCyberarm'],
-  'Cyberarm/Cyberleg/Cyberlimb Option':['rightCyberarm','leftCyberarm','rightCyberleg','leftCyberleg'],
-  'Cyberleg/Cyberlimb Option':       ['rightCyberleg','leftCyberleg'],
-  'Borgware':                        ['borgware'],
-};
-
-// ── Slot-Bestimmung (korrekte Slots je nach Item-Name + Notes) ─
-function getItemSlots(item) {
-  const sub = item.subcategory || '';
-  const base = CYBERWARE_SLOT_MAP[sub] || ['internal'];
-  if (sub !== 'Cyberarm/Cyberleg/Cyberlimb Option') return base;
-
-  // Kombinierte Subcategory: anhand von Name und Notes spezifizieren
-  const notes = item.notes || '';
-  if (item.name === 'Cyberleg' || notes.startsWith('Cyberleg Option') || notes.toLowerCase().startsWith('replacement leg'))
-    return ['rightCyberleg','leftCyberleg'];
-  if (notes.startsWith('Cyberarm Option'))
-    return ['rightCyberarm','leftCyberarm'];
-  return base; // genuines Cyberlimb-Option (Wolvers etc.) → alle Gliedmaßen
-}
-
-// ── Slot-Kosten eines Items (aus notes) ───────────────────────
-function getSlotCost(item) {
-  const m = (item.notes || '').match(/takes (\d+) Option Slot/i);
-  return m ? parseInt(m[1]) : 1;
-}
-
-function buildSnapshot(item) {
-  const x = item.extra || {};
-  switch (routeItem(item)) {
-    case 'weapons':
-      return { name: item.name, damage: item.damage || null, ammo: item.ammo || null,
-               rof: item.rof || null, notes: item.notes || null,
-               price: item.price, raw_cost: item.raw_cost, category: item.category };
-    case 'armor':
-      return { name: item.name, sp: parseInt(x.sp) || 0,
-               penalty: (x.armor_penalty && x.armor_penalty !== 'None') ? parseInt(x.armor_penalty) || 0 : 0,
-               notes: item.notes || null, price: item.price, raw_cost: item.raw_cost };
-    case 'cyberware':
-      return { name: item.name, category: item.category, notes: item.notes || null,
-               install: x.install || null, humanity_loss: x.humanity_loss || null,
-               price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null,
-               slotCost: getSlotCost(item) };
-    default:
-      return { name: item.name, notes: item.notes || null,
-               price: item.price, raw_cost: item.raw_cost };
-  }
-}
+// Slot-/Snapshot-Helfer (routeItem, getItemSlots, buildSnapshot, …) kommen
+// jetzt aus dem geteilten Modul assets/js/item-slots.js (Phase 11b dedup).
+// dm.html lädt keine ammunition.json → buildSnapshot ohne ammoData; Waffen-
+// Magazinfelder bleiben null und werden vom Spieler-Sheet lazy geheilt.
 
 async function runItemSearch(query) {
   const resultsEl = document.getElementById('ctrlItemResults');
@@ -2930,11 +2867,11 @@ function openNpcQuickModal(total) {
       await patchCharacter(targetId, patch);
       Object.assign(target, patch);
       renderGrid();
-      msg.style.color = 'var(--cyan)';
+      msg.style.color = 'var(--neon-cyan)';
       msg.textContent = `✓ ${dmg} Schaden → ${target.name} HP ${newHp}${newHp === 0 ? ' ⚠ MORTALLY WOUNDED' : ''}`;
       setTimeout(() => { overlay.hidden = true; msg.textContent = ''; }, 1800);
     } catch(e) {
-      msg.style.color = 'var(--red)';
+      msg.style.color = 'var(--neon-red)';
       msg.textContent = 'Fehler: ' + e.message;
     }
   };

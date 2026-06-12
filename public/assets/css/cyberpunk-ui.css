@@ -86,26 +86,8 @@
   --color-warn:    var(--warning-yellow);
 }
 
-/* ── Migrations-Aliase ──────────────────────────────────────
-   TEMPORÄR — wird in Phase 11 entfernt.
-   Mappt alte global genutzte base.css-Vars auf neue Tokens, damit
-   halb-migrierte Seiten zwischen Phasen nicht brechen. Namespaced
-   Vars (--agent-*, --role-*, --snd-*, --relic-*, --cyber-*) sind
-   seiten-lokal und werden NICHT gemappt.
-   ──────────────────────────────────────────────────────────── */
-:root {
-  --red:        var(--neon-red);    /* alt: #FF2D2D  TEMPORÄR — Phase 11 entfernen */
-  --cyan:       var(--neon-cyan);   /* alt: #00E5FF  TEMPORÄR — Phase 11 entfernen */
-  --bg:         var(--bg-main);     /* alt: #0a0a0f  TEMPORÄR — Phase 11 entfernen */
-  --bg-card:    var(--bg-panel);    /* alt: #12121a  TEMPORÄR — Phase 11 entfernen */
-  --bg-input:   var(--bg-panel-soft); /* alt: #1a1a26 TEMPORÄR — Phase 11 entfernen */
-  --border:     var(--border-dark); /* alt: #2a2a3e  TEMPORÄR — Phase 11 entfernen */
-  --red-dim:    var(--red-soft);    /* alt: #cc1f1f  TEMPORÄR — Phase 11 entfernen */
-  --cyan-dim:   var(--cyan-soft);   /* alt: #00b8cc  TEMPORÄR — Phase 11 entfernen */
-  --text:       var(--text-main);   /* alt: #c8c8d8  TEMPORÄR — Phase 11 entfernen */
-  /* --text-muted: gleicher Name, neuer Wert (siehe Token-Set oben) — TEMPORÄR */
-  --text-head:  var(--text-main);   /* alt: #e8e8f0  TEMPORÄR — Phase 11 entfernen */
-}
+/* Phase 11c: Migrations-Aliase entfernt — Consumer nutzen die HUD-Tokens
+   (--neon-red, --bg-main, --text-main, …) direkt. */
 
 /* ── @font-face (self-hosted woff2, font-display: swap) ─────── */
 @font-face {
