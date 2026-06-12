@@ -7,7 +7,7 @@
   padding: .2rem .55rem;
   cursor: pointer;
   color: var(--text-dim);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   white-space: nowrap;
   transition: border-color .15s, color .15s, background .15s;
 }
@@ -30,7 +30,7 @@
   margin-bottom: .25rem;
 }
 .map-weapon-card-name {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: .72rem;
   color: var(--text-main);
   letter-spacing: .04em;
@@ -40,7 +40,7 @@
   text-overflow: ellipsis;
 }
 .map-weapon-damage {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: .75rem;
   color: var(--warning-yellow);
   white-space: nowrap;
@@ -97,7 +97,7 @@
 }
 .dv-info-dist {
   color: var(--neon-cyan);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: .72rem;
 }
 .dv-info-bracket {
@@ -105,7 +105,7 @@
 }
 .dv-info-value {
   color: var(--warning-yellow);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: .75rem;
 }
 
@@ -118,7 +118,7 @@
   padding: .45rem 0 .2rem;
 }
 .atk-step-header {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: .6rem;
   letter-spacing: .12em;
   color: var(--text-dim);
@@ -155,7 +155,7 @@
 .atk-btn {
   width: 100%;
   padding: .45rem;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: .7rem;
   letter-spacing: .06em;
   background: rgba(34,247,255,.08);
@@ -197,7 +197,7 @@
   border: 1px solid var(--warning-yellow);
   color: var(--warning-yellow);
   border-radius: 4px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: .6rem;
   letter-spacing: .08em;
   margin-bottom: .25rem;
@@ -210,7 +210,7 @@
   border: 1px solid var(--text-dim);
   color: var(--text-muted);
   border-radius: 4px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: .6rem;
   letter-spacing: .08em;
   margin-bottom: .25rem;
@@ -222,7 +222,7 @@
   border: 1px solid #FF8C00;
   color: #FF8C00;
   border-radius: 4px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: .6rem;
   letter-spacing: .08em;
   margin-top: .25rem;
@@ -255,7 +255,7 @@
 .atk-dice-d10.glow-red    { border-color: var(--neon-red); box-shadow: 0 0 50px rgba(255,49,88,.7), 0 0 100px rgba(255,49,88,.3); }
 .atk-dice-d10.glow-orange { border-color: #FF8C00; box-shadow: 0 0 50px rgba(255,140,0,.65), 0 0 100px rgba(255,140,0,.25); }
 .atk-dice-num {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 3rem; color: var(--neon-cyan);
   transition: color .2s, text-shadow .2s;
 }
@@ -264,8 +264,8 @@
 }
 .atk-dice-num.crit   { color: var(--warning-yellow); text-shadow: 0 0 24px var(--warning-yellow)AA; }
 .atk-dice-num.fumble { color: var(--neon-red); animation: atk-shake .18s ease-in-out 4; }
-.atk-hit-badge  { color: var(--success-green); font-family: Audiowide, sans-serif; font-size: .82rem; }
-.atk-miss-badge { color: var(--neon-red); font-family: Audiowide, sans-serif; font-size: .82rem; }
+.atk-hit-badge  { color: var(--success-green); font-family: Rajdhani, sans-serif; font-size: .82rem; }
+.atk-miss-badge { color: var(--neon-red); font-family: Rajdhani, sans-serif; font-size: .82rem; }
 @keyframes dice-spin {
   from { transform: scale(.85) rotate(-8deg); opacity: .5; }
   to   { transform: scale(1.12) rotate(8deg); opacity: 1;  }
@@ -302,20 +302,20 @@
   padding: .55rem .9rem;
   background: linear-gradient(90deg, var(--bg-main) 0%, var(--bg-panel) 100%);
   border-bottom: 2px solid var(--neon-red);
-  font-family: Audiowide, sans-serif; font-size: .68rem; letter-spacing: .14em;
+  font-family: Rajdhani, sans-serif; font-size: .68rem; letter-spacing: .14em;
   color: var(--neon-red); display: flex; justify-content: space-between; align-items: center;
 }
 .map-dice-section { padding: .5rem .85rem .45rem; border-bottom: 1px solid var(--border-dark); }
 .map-dice-section:last-child { border-bottom: none; }
 .map-dice-label {
   font-size: .5rem; letter-spacing: .18em; text-transform: uppercase;
-  color: var(--text-dim); font-family: Audiowide, sans-serif; margin-bottom: .38rem;
+  color: var(--text-dim); font-family: Rajdhani, sans-serif; margin-bottom: .38rem;
 }
 .map-dice-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: .28rem; }
 .map-die-btn {
   padding: .42rem .2rem;
   background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
-  border-radius: 5px; color: var(--neon-cyan); font-family: Audiowide, sans-serif;
+  border-radius: 5px; color: var(--neon-cyan); font-family: Rajdhani, sans-serif;
   font-size: .68rem; cursor: pointer; text-align: center;
   transition: border-color .12s, background .12s;
 }
@@ -325,12 +325,12 @@
 .map-dice-custom input {
   flex: 1; background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
   border-radius: 5px; color: var(--text-main); padding: .38rem .55rem;
-  font-size: .82rem; font-family: Audiowide, sans-serif;
+  font-size: .82rem; font-family: Rajdhani, sans-serif;
 }
 .map-dice-custom input:focus { outline: none; border-color: var(--neon-red); }
 .map-dice-custom button {
   background: var(--neon-red); border: none; border-radius: 5px;
-  color: #fff; padding: .38rem .75rem; font-family: Audiowide, sans-serif;
+  color: #fff; padding: .38rem .75rem; font-family: Rajdhani, sans-serif;
   font-size: .72rem; cursor: pointer; white-space: nowrap;
 }
 .map-dice-custom button:hover { background: var(--red-soft); }
@@ -341,7 +341,7 @@
   text-align: center; display: flex; flex-direction: column; align-items: center;
 }
 .map-dice-num {
-  font-family: Audiowide, sans-serif; font-size: 2.4rem; color: var(--text-main);
+  font-family: Rajdhani, sans-serif; font-size: 2.4rem; color: var(--text-main);
   line-height: 1; margin: .05rem 0; transition: color .2s;
 }
 .map-dice-num.crit-s { color: var(--neon-cyan); text-shadow: 0 0 18px rgba(34,247,255,.55); }
@@ -359,4 +359,4 @@
 }
 .map-dice-log-row:last-child { border-bottom: none; }
 .map-dice-log-expr { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%; }
-.map-dice-log-tot  { font-family: Audiowide, sans-serif; color: var(--text-main); font-size: .8rem; }
+.map-dice-log-tot  { font-family: Rajdhani, sans-serif; color: var(--text-main); font-size: .8rem; }

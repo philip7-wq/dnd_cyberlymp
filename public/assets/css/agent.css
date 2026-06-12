@@ -43,13 +43,13 @@
   align-items: center;
   padding: 0 18px;
   transition: opacity 220ms;
-  font-family: 'Inter', sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
 }
 .agent-bar.hidden,
 .agent-dm-bar.hidden { opacity: 0; pointer-events: none; }
 
 .agent-bar-logo {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   color: var(--agent-hologram);
   letter-spacing: 0.18em;
   font-size: 15px;
@@ -139,13 +139,13 @@
   display: flex;
   align-items: center;
   padding: 14px 22px 8px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   color: var(--agent-hologram);
   letter-spacing: 0.1em;
   border-bottom: 1px solid var(--agent-line);
 }
-.agent-status-bar .agent-time { font-family: 'Audiowide', sans-serif; font-size: 13px; color: var(--agent-text); }
+.agent-status-bar .agent-time { font-family: 'Rajdhani', sans-serif; font-size: 13px; color: var(--agent-text); }
 .agent-status-bar .agent-date { margin-left: auto; color: var(--agent-muted); }
 .agent-status-bar .agent-signal { margin-left: 14px; letter-spacing: 1px; }
 
@@ -165,7 +165,7 @@
 }
 .agent-boot-overlay.gone { opacity: 0; transition: opacity 300ms; pointer-events: none; }
 .agent-boot-logo {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 36px;
   letter-spacing: 0.3em;
   color: var(--agent-hologram);
@@ -173,7 +173,7 @@
   animation: agent-glitch 1.6s steps(2, end);
 }
 .agent-boot-line {
-  font-family: 'Inter', sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   color: var(--agent-hologram-dim);
   letter-spacing: 0.25em;
@@ -247,7 +247,7 @@
   flex-direction: column;
   padding: 14px 18px 70px;
   color: var(--agent-text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
   animation: agent-fadein 200ms ease-out;
 }
 @keyframes agent-fadein {
@@ -312,7 +312,7 @@
   background: linear-gradient(135deg, rgba(0,229,255,0.18) 0%, rgba(0,229,255,0.04) 100%);
   border: 1px solid var(--agent-hologram);
   border-radius: 18px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   color: var(--agent-hologram);
   font-size: 22px;
   letter-spacing: 0.05em;
@@ -366,7 +366,7 @@
 }
 .agent-back:hover { text-shadow: 0 0 8px var(--agent-hologram-glow); }
 .agent-app-title {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 14px;
   letter-spacing: 0.18em;
   color: var(--agent-hologram);
@@ -423,7 +423,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   color: var(--agent-text);
   font-size: 14px;
   background-size: cover;
@@ -512,7 +512,7 @@
   border: none;
   border-radius: 18px;
   padding: 0 16px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 11px;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -536,7 +536,7 @@
   color: var(--agent-muted);
   cursor: pointer;
   text-transform: uppercase;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   border-bottom: 2px solid transparent;
   transition: all 120ms;
 }
@@ -574,9 +574,9 @@
   0%, 100% { box-shadow: 0 0 20px var(--agent-hologram-glow); }
   50% { box-shadow: 0 0 40px var(--agent-hologram); }
 }
-.agent-call-active .name { font-family: 'Audiowide', sans-serif; font-size: 22px; color: var(--agent-text); letter-spacing: 0.1em; }
+.agent-call-active .name { font-family: 'Rajdhani', sans-serif; font-size: 22px; color: var(--agent-text); letter-spacing: 0.1em; }
 .agent-call-active .state { font-size: 12px; color: var(--agent-hologram); letter-spacing: 0.2em; text-transform: uppercase; }
-.agent-call-active .timer { font-family: 'Audiowide', sans-serif; font-size: 28px; color: var(--agent-hologram); font-variant-numeric: tabular-nums; }
+.agent-call-active .timer { font-family: 'Rajdhani', sans-serif; font-size: 28px; color: var(--agent-hologram); font-variant-numeric: tabular-nums; }
 .agent-call-controls { display: flex; gap: 20px; }
 .agent-call-btn {
   width: 60px; height: 60px;
@@ -614,7 +614,7 @@
 .agent-incoming-call.show { display: flex; }
 .agent-incoming-call .label { font-size: 11px; letter-spacing: 0.25em; color: var(--agent-danger); text-transform: uppercase; }
 .agent-incoming-call .agent-avatar { width: 110px; height: 110px; font-size: 30px; border: 2px solid var(--agent-danger); box-shadow: 0 0 40px rgba(255,45,45,0.5); }
-.agent-incoming-call .caller-name { font-family: 'Audiowide', sans-serif; font-size: 24px; color: var(--agent-text); }
+.agent-incoming-call .caller-name { font-family: 'Rajdhani', sans-serif; font-size: 24px; color: var(--agent-text); }
 @keyframes agent-ring-shake {
   0%, 100% { transform: translateX(-50%); }
   25% { transform: translateX(calc(-50% - 3px)); }
@@ -630,7 +630,7 @@
   margin-bottom: 14px;
 }
 .agent-balance .label { font-size: 10px; letter-spacing: 0.2em; color: var(--agent-hologram); text-transform: uppercase; }
-.agent-balance .value { font-family: 'Audiowide', sans-serif; font-size: 28px; color: var(--agent-text); margin-top: 4px; }
+.agent-balance .value { font-family: 'Rajdhani', sans-serif; font-size: 28px; color: var(--agent-text); margin-top: 4px; }
 .agent-balance .value::after { content: ' €$'; font-size: 14px; color: var(--agent-muted); }
 
 .agent-transfer-actions { display: flex; gap: 10px; margin-bottom: 14px; }
@@ -640,7 +640,7 @@
   border: 1px solid var(--agent-hologram);
   color: var(--agent-hologram);
   padding: 10px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -664,7 +664,7 @@
 .agent-transfer-body { flex: 1; }
 .agent-transfer-name { font-size: 13px; color: var(--agent-text); }
 .agent-transfer-note { font-size: 10px; color: var(--agent-muted); }
-.agent-transfer-amount { font-family: 'Audiowide', sans-serif; font-variant-numeric: tabular-nums; }
+.agent-transfer-amount { font-family: 'Rajdhani', sans-serif; font-variant-numeric: tabular-nums; }
 .agent-transfer-amount.in { color: #00cc66; }
 .agent-transfer-amount.out { color: var(--agent-danger); }
 .agent-transfer-status { font-size: 9px; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.1em; text-transform: uppercase; margin-left: 8px; }
@@ -702,7 +702,7 @@
   padding: 18px;
 }
 .agent-modal h3 {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 13px;
   letter-spacing: 0.15em;
   color: var(--agent-hologram);
@@ -730,7 +730,7 @@
   border: 1px solid var(--agent-line);
   background: transparent;
   color: var(--agent-text);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 11px;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -782,11 +782,11 @@
   align-items: center;
   padding: 0 18px;
   transition: opacity 220ms;
-  font-family: 'Inter', sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
 }
 .agent-dm-bar:hover { opacity: .85; }
 .agent-dm-bar-logo {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   color: var(--agent-accent-warm);
   letter-spacing: 0.18em;
   font-size: 14px;
@@ -822,7 +822,7 @@
 }
 .agent-dm-tab {
   padding: 8px 12px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   color: var(--agent-muted);

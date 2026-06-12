@@ -44,7 +44,7 @@
   grid-template-columns: 1fr;
   gap: 16px;
   color: var(--role-text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
   padding: 16px 0;
   position: relative;
 }
@@ -88,7 +88,7 @@
   border-radius: 14px;
   display: grid;
   place-items: center;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 24px;
   color: var(--role-accent);
   text-shadow: 0 0 14px var(--role-accent-glow);
@@ -98,7 +98,7 @@
 }
 .role-title-block { flex: 1; min-width: 200px; }
 .role-name {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 28px;
   letter-spacing: 0.14em;
   color: var(--role-text);
@@ -128,7 +128,7 @@
   text-transform: uppercase;
 }
 .role-rank-value {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 32px;
   color: var(--role-accent);
   font-variant-numeric: tabular-nums;
@@ -152,7 +152,7 @@
   padding: 16px 18px;
 }
 .role-section-title {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 12px;
   letter-spacing: 0.2em;
   color: var(--role-accent);
@@ -201,7 +201,7 @@
   pointer-events: none;
 }
 .role-card-name {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 13px;
   color: var(--role-text);
   letter-spacing: 0.06em;
@@ -224,7 +224,7 @@
   right: 8px;
   background: var(--role-accent);
   color: var(--role-bg);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 10px;
   padding: 2px 7px;
   border-radius: 4px;
@@ -294,7 +294,7 @@
   border: none;
   border-radius: 8px;
   padding: 10px 18px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 12px;
   letter-spacing: 0.15em;
   cursor: pointer;
@@ -323,7 +323,7 @@
 .role-dice-result.success { border-color: var(--role-success); }
 .role-dice-result.fail { border-color: var(--role-danger); }
 .role-dice-result .dice-total {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 22px;
   color: var(--role-accent);
   margin-right: 8px;
@@ -331,7 +331,7 @@
 .role-dice-result .dice-verdict {
   display: inline-block;
   margin-left: 8px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 11px;
   letter-spacing: 0.2em;
   padding: 2px 8px;
@@ -352,7 +352,7 @@
   border-radius: 50%;
   text-align: center;
   line-height: 28px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 14px;
   color: var(--role-accent);
   margin-right: 8px;
@@ -449,7 +449,7 @@
   box-shadow: 0 0 40px var(--role-accent-glow);
 }
 .role-modal h3 {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 14px;
   letter-spacing: 0.18em;
   color: var(--role-accent);
@@ -489,7 +489,7 @@
   border: 1px solid var(--role-line);
   background: transparent;
   color: var(--role-text);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 11px;
   letter-spacing: 0.12em;
   cursor: pointer;
@@ -551,7 +551,7 @@
 }
 .netrunner-floor.current { background: var(--role-accent-soft); border-left-width: 6px; box-shadow: 0 0 16px var(--role-accent-soft); }
 .netrunner-floor.cleared { opacity: 0.5; }
-.netrunner-floor-num { font-family: 'Audiowide', sans-serif; color: var(--role-accent); }
+.netrunner-floor-num { font-family: 'Rajdhani', sans-serif; color: var(--role-accent); }
 
 /* Tab nav for sub-views inside a role */
 .role-subtabs {
@@ -562,7 +562,7 @@
 }
 .role-subtab {
   padding: 8px 14px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--role-muted);

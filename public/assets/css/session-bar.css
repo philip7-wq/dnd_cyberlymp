@@ -10,7 +10,7 @@
   background: var(--bg-panel-soft);
   border-bottom: 1px solid var(--border-dark);
   color: var(--text-dim);
-  font-family: var(--font-heading, 'Audiowide', monospace);
+  font-family: var(--font-heading, 'Rajdhani', monospace);
   font-size: .68rem;
   letter-spacing: var(--tracking, .15em);
   display: flex;
@@ -73,7 +73,7 @@
 }
 
 .session-timer {
-  font-family: var(--font-display, 'Audiowide', monospace);
+  font-family: var(--font-display, 'Rajdhani', monospace);
   font-size: .72rem;
   letter-spacing: .12em;
   color: inherit;
@@ -140,14 +140,14 @@ body.has-session-bar:not(.gt-has-topbar) { padding-top: 32px; }
 }
 
 .session-popup-title {
-  font-family: var(--font-display, 'Audiowide', monospace);
+  font-family: var(--font-display, 'Rajdhani', monospace);
   font-size: .7rem;
   letter-spacing: .35em;
   color: var(--red, #ff2d2d);
   margin-bottom: .4rem;
 }
 .session-popup-name {
-  font-family: var(--font-display, 'Audiowide', monospace);
+  font-family: var(--font-display, 'Rajdhani', monospace);
   font-size: 1.05rem;
   color: #fff;
   margin-bottom: .9rem;
@@ -168,7 +168,7 @@ body.has-session-bar:not(.gt-has-topbar) { padding-top: 32px; }
   border: 1px solid;
   border-radius: 4px;
   background: transparent;
-  font-family: var(--font-display, 'Audiowide', monospace);
+  font-family: var(--font-display, 'Rajdhani', monospace);
   font-size: .72rem;
   letter-spacing: .12em;
   cursor: pointer;
@@ -204,7 +204,7 @@ body.has-session-bar:not(.gt-has-topbar) { padding-top: 32px; }
   border: 1px solid rgba(255,45,45,.45);
   border-radius: 3px;
   color: #ffd0d0;
-  font-family: var(--font-display, 'Audiowide', monospace);
+  font-family: var(--font-display, 'Rajdhani', monospace);
   font-size: .7rem;
   letter-spacing: .18em;
   opacity: 0;
@@ -242,7 +242,7 @@ body.has-session-bar:not(.gt-has-topbar) { padding-top: 32px; }
   background: #1a1a22;
 }
 .session-log-title {
-  font-family: var(--font-display, 'Audiowide', monospace);
+  font-family: var(--font-display, 'Rajdhani', monospace);
   font-size: .85rem;
   letter-spacing: .18em;
   color: #fff;
@@ -278,7 +278,7 @@ body.has-session-bar:not(.gt-has-topbar) { padding-top: 32px; }
   margin-bottom: .4rem;
 }
 .sl-name {
-  font-family: var(--font-display, 'Audiowide', monospace);
+  font-family: var(--font-display, 'Rajdhani', monospace);
   font-size: .82rem;
   letter-spacing: .08em;
   color: #fff;
@@ -292,7 +292,7 @@ body.has-session-bar:not(.gt-has-topbar) { padding-top: 32px; }
   color: var(--cyan, #00e5ff);
   font-size: .72rem;
   letter-spacing: .1em;
-  font-family: var(--font-display, 'Audiowide', monospace);
+  font-family: var(--font-display, 'Rajdhani', monospace);
 }
 .sl-parts {
   display: flex;

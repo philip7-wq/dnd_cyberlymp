@@ -94,7 +94,7 @@ function renderDistribution(view, character) {
     const section = el(`<div style="padding:10px 0; border-bottom:1px solid var(--role-line);">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <div style="font-family:'Audiowide'; font-size:13px;">${ab.name}</div>
+          <div style="font-family:'Rajdhani'; font-size:13px;">${ab.name}</div>
           <div style="font-size:11px; color:var(--role-muted);">${ab.desc}</div>
         </div>
       </div>

@@ -39,22 +39,16 @@ Share Tech Mono
   Files    : share-tech-mono-400.woff2
 
 ----------------------------------------------------------------
-Phase 2/3 — Ersatz für entfernte Google-Fonts-Links (DSGVO).
-Aktuell vom (noch nicht reskinnten) UI genutzte Familien; @font-face
-in base.css. TEMPORÄR bis zur Font-Migration der Page-CSS.
+@font-face in base.css (DSGVO, self-hosted). Phase 11d: UI auf Rajdhani/
+IBM Plex Mono migriert. Inter entfernt. Audiowide nur noch für den
+bewussten Retro-Look von radio-standalone.css. Caveat = Handschrift-Notizen.
 ----------------------------------------------------------------
 
-Audiowide
+Audiowide  (nur radio-standalone.css — Retro-Relikt)
   Designer : Astigmatic (AOETI)
   Source   : https://fonts.google.com/specimen/Audiowide
   License  : SIL Open Font License 1.1
   Files    : audiowide-400.woff2
-
-Inter
-  Designer : Rasmus Andersson
-  Source   : https://fonts.google.com/specimen/Inter
-  License  : SIL Open Font License 1.1
-  Files    : inter-latin.woff2  (Variable Font, Achse wght 400–600)
 
 Caveat
   Designer : Pablo Impallari (Impallari Type)

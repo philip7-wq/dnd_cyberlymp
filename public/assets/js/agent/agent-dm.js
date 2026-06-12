@@ -24,7 +24,7 @@ const DM_HTML = `
   <div class="agent-phone-frame" style="border-radius: 0 0 0 0; border-top: 1px solid var(--agent-accent-warm);">
     <div class="agent-status-bar">
       <span class="agent-time" id="agent-time">--:--</span>
-      <span style="color:var(--agent-accent-warm); margin-left: 14px; font-family:'Audiowide';" id="agent-active-identity">— wählen —</span>
+      <span style="color:var(--agent-accent-warm); margin-left: 14px; font-family:'Rajdhani';" id="agent-active-identity">— wählen —</span>
       <span class="agent-date" id="agent-date" style="margin-left:auto;">--.--.----</span>
     </div>
 

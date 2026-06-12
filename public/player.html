@@ -191,7 +191,7 @@
             </div>
           </div>
         </div>
-        <div id="psychosisLabel" style="font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;font-family:Audiowide,sans-serif;min-height:.9rem;margin-top:.1rem;padding-left:2.5rem"></div>
+        <div id="psychosisLabel" style="font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;font-family:Rajdhani,sans-serif;min-height:.9rem;margin-top:.1rem;padding-left:2.5rem"></div>
         <!-- Luck dots -->
         <div class="luck-row">
           <span class="luck-label">LUCK</span>
@@ -2840,7 +2840,7 @@ function setupCashLog() {
         const color = e.delta >= 0 ? '#2ecc71' : 'var(--neon-red)';
         const t     = new Date(e.ts).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
         return `<div style="display:flex;gap:.5rem;align-items:baseline;border-bottom:1px solid var(--border-dark);padding:.25rem 0">
-          <span style="color:${color};font-family:Audiowide,sans-serif;font-size:.75rem;min-width:80px">${sign}${e.delta?.toLocaleString('de-DE')} eb</span>
+          <span style="color:${color};font-family:Rajdhani,sans-serif;font-size:.75rem;min-width:80px">${sign}${e.delta?.toLocaleString('de-DE')} eb</span>
           <span style="flex:1;color:var(--text-main)">${e.reason || '—'}</span>
           <span style="color:var(--text-muted);font-size:.65rem">${t}</span>
           <span style="color:var(--text-muted);font-size:.65rem">${e.balance?.toLocaleString('de-DE')} eb</span>

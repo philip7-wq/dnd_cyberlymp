@@ -33,7 +33,7 @@ export async function mountSound(container) {
   mounted = true;
   _container = container;
 
-  container.innerHTML = '<div id="sound-tab"><div style="color:#555;font-size:12px;padding:20px;font-family:Audiowide,sans-serif;">Lade…</div></div>';
+  container.innerHTML = '<div id="sound-tab"><div style="color:#555;font-size:12px;padding:20px;font-family:Rajdhani,sans-serif;">Lade…</div></div>';
 
   [sounds, buttons] = await Promise.all([getSoundLibrary(), getSoundButtons()]);
 

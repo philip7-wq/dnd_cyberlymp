@@ -32,7 +32,7 @@
   background:
     radial-gradient(140% 100% at 50% 30%, #14101a 0%, #050307 65%, #000 100%);
   overflow: hidden;
-  font-family: 'Audiowide', 'Inter', sans-serif;
+  font-family: 'Audiowide', sans-serif;
   color: #c8b890;
   user-select: none;
 }

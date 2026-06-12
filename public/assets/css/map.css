@@ -19,7 +19,7 @@ body.map-page {
 }
 .map-topbar-logo { height: 26px; }
 .map-topbar-title {
-  font-family: Audiowide, sans-serif; font-size: .72rem;
+  font-family: Rajdhani, sans-serif; font-size: .72rem;
   color: var(--neon-red); letter-spacing: .12em; white-space: nowrap;
   margin-left: .25rem;
 }
@@ -106,7 +106,7 @@ body.map-page {
 }
 .ts-val {
   font-size: .72rem; color: var(--text-main);
-  font-family: Audiowide, sans-serif;
+  font-family: Rajdhani, sans-serif;
 }
 .ts-input {
   flex: 1; min-width: 0; padding: .28rem .5rem;
@@ -161,7 +161,7 @@ body.map-page {
 .measure-live {
   background: rgba(255,209,102,.08); border: 1px solid rgba(255,209,102,.25);
   border-radius: var(--radius); padding: .4rem .6rem;
-  font-size: .75rem; color: var(--warning-yellow); font-family: Audiowide, sans-serif;
+  font-size: .75rem; color: var(--warning-yellow); font-family: Rajdhani, sans-serif;
 }
 .dv-live {
   background: var(--bg-panel-cyan); border: 1px solid var(--cyan-dark);
@@ -175,7 +175,7 @@ body.map-page {
   border-radius: var(--radius); padding: .45rem .6rem;
   display: flex; flex-direction: column; gap: .2rem;
 }
-.sti-name { font-family: Audiowide, sans-serif; font-size: .72rem; color: var(--text-main); }
+.sti-name { font-family: Rajdhani, sans-serif; font-size: .72rem; color: var(--text-main); }
 .sti-row  { display: flex; justify-content: space-between; font-size: .65rem; color: var(--text-muted); }
 .sti-row span:last-child { color: var(--text-main); }
 
@@ -194,7 +194,7 @@ body.map-page {
   display: flex; align-items: center; justify-content: center;
   font-size: 1.4rem; flex-shrink: 0;
 }
-.player-map-pname { font-family: Audiowide, sans-serif; font-size: .78rem; color: var(--text-main); }
+.player-map-pname { font-family: Rajdhani, sans-serif; font-size: .78rem; color: var(--text-main); }
 .player-map-prole { font-size: .63rem; color: var(--text-muted); margin-top: .1rem; }
 
 .player-map-stats {
@@ -206,10 +206,10 @@ body.map-page {
 .pmap-bar-label { font-size: .58rem; color: var(--text-muted); min-width: 24px; text-transform: uppercase; letter-spacing: .08em; }
 .pmap-bar-wrap { flex: 1; height: 7px; background: var(--bg-main); border-radius: 3px; overflow: hidden; }
 .pmap-bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
-.pmap-bar-val { font-size: .62rem; color: var(--text-muted); min-width: 44px; text-align: right; font-family: Audiowide, sans-serif; }
+.pmap-bar-val { font-size: .62rem; color: var(--text-muted); min-width: 44px; text-align: right; font-family: Rajdhani, sans-serif; }
 
 .pmap-sp-row { display: flex; gap: .5rem; font-size: .66rem; color: var(--text-muted); flex-wrap: wrap; }
-.pmap-sp-val { color: var(--neon-cyan); font-family: Audiowide, sans-serif; margin-left: .15rem; }
+.pmap-sp-val { color: var(--neon-cyan); font-family: Rajdhani, sans-serif; margin-left: .15rem; }
 
 .player-map-section {
   padding: .45rem .75rem;
@@ -335,7 +335,7 @@ canvas#mapCanvas {
 .token-modal-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: .75rem 1rem; border-bottom: 1px solid var(--border-dark);
-  font-family: Audiowide, sans-serif; font-size: .75rem;
+  font-family: Rajdhani, sans-serif; font-size: .75rem;
   color: var(--neon-cyan); letter-spacing: .1em; flex-shrink: 0;
 }
 .token-modal-close {
@@ -407,7 +407,7 @@ canvas#mapCanvas {
   border-radius: var(--radius); padding: .4rem .65rem;
   box-shadow: 0 3px 10px rgba(0,0,0,.5); max-width: 200px;
 }
-.map-tooltip-name { font-family: Audiowide, sans-serif; font-size: .7rem; color: var(--neon-cyan); }
+.map-tooltip-name { font-family: Rajdhani, sans-serif; font-size: .7rem; color: var(--neon-cyan); }
 .map-tooltip-hp   { font-size: .65rem; color: var(--text-muted); margin-top: .15rem; }
 .map-tooltip-sp   { font-size: .6rem; color: var(--text-muted); }
 .map-tooltip-cond { font-size: .62rem; color: var(--neon-red); margin-top: .1rem; }
@@ -419,7 +419,7 @@ canvas#mapCanvas {
   padding: 0 .75rem;
   background: var(--bg-panel); border-top: 1px solid var(--border-dark);
   font-size: .6rem; color: var(--text-muted);
-  font-family: Audiowide, sans-serif; letter-spacing: .06em;
+  font-family: Rajdhani, sans-serif; letter-spacing: .06em;
 }
 
 /* ── Loading overlay ── */
@@ -427,7 +427,7 @@ canvas#mapCanvas {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   background: var(--bg-main); z-index: 100;
-  font-family: Audiowide, sans-serif; font-size: .85rem;
+  font-family: Rajdhani, sans-serif; font-size: .85rem;
   color: var(--text-muted); letter-spacing: .1em;
 }
 
@@ -513,7 +513,7 @@ canvas#mapCanvas {
 }
 .pmap-bar-val {
   font-size: .65rem; color: var(--text-muted);
-  font-family: Audiowide, sans-serif; white-space: nowrap;
+  font-family: Rajdhani, sans-serif; white-space: nowrap;
 }
 .pmap-armor-row {
   display: flex; align-items: center; gap: .35rem;
@@ -521,14 +521,14 @@ canvas#mapCanvas {
 }
 .pmap-armor-lbl {
   font-size: .55rem; color: var(--text-muted);
-  font-family: Audiowide, sans-serif; min-width: 38px;
+  font-family: Rajdhani, sans-serif; min-width: 38px;
 }
 .pmap-armor-name { flex: 1; color: var(--text-main); font-size: .68rem; }
-.pmap-armor-sp { font-family: Audiowide, sans-serif; font-size: .72rem; }
+.pmap-armor-sp { font-family: Rajdhani, sans-serif; font-size: .72rem; }
 .pmap-cond-list { display: flex; flex-wrap: wrap; gap: .2rem; }
 .pmap-cond {
   font-size: .6rem; border: 1px solid; border-radius: 3px;
-  padding: .07rem .3rem; font-family: Audiowide, sans-serif;
+  padding: .07rem .3rem; font-family: Rajdhani, sans-serif;
 }
 .pmap-none { font-size: .65rem; color: var(--text-muted); font-style: italic; }
 .pmap-inj-list { display: flex; flex-direction: column; gap: .15rem; }
@@ -566,7 +566,7 @@ canvas#mapCanvas {
 .blast-target-name { flex: 1; font-size: .78rem; }
 .blast-cover-badge { font-size: .63rem; color: #FFA000; white-space: nowrap; }
 .blast-dmg-val {
-  font-family: Audiowide, sans-serif; font-size: .85rem;
+  font-family: Rajdhani, sans-serif; font-size: .85rem;
   color: var(--neon-red); min-width: 32px; text-align: right;
 }
 .blast-dodge-btn { flex-shrink: 0; }
@@ -602,13 +602,13 @@ canvas#mapCanvas {
 .combat-card.dead    { border-color: var(--neon-red); opacity: .55; }
 .combat-card.dragging-over { border-color: var(--neon-cyan); }
 .combat-card-name {
-  font-size: .54rem; font-family: Audiowide,sans-serif; color: var(--text-main);
+  font-size: .54rem; font-family: Rajdhani,sans-serif; color: var(--text-main);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60px;
   text-align: center; margin-top: 2px;
 }
 .combat-card-hpbar { width: 100%; height: 2px; background: var(--bg-panel-soft); border-radius: 2px; margin: 2px 0; }
 .combat-card-hpbar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
-.combat-card-init  { font-size: .52rem; color: var(--text-muted); font-family: Audiowide,sans-serif; }
+.combat-card-init  { font-size: .52rem; color: var(--text-muted); font-family: Rajdhani,sans-serif; }
 .combat-card-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
 .combat-card-placeholder {
   width: 22px; height: 22px; border-radius: 50%; background: var(--bg-panel-soft);
@@ -692,7 +692,7 @@ canvas#mapCanvas {
   border-radius: var(--radius);
   padding: var(--sp-2) var(--sp-3);
   box-shadow: 0 4px 16px rgba(0,0,0,.7);
-  font-family: Audiowide, sans-serif;
+  font-family: Rajdhani, sans-serif;
 }
 .map-popup--fire { border-color: rgba(255,80,0,.4); }
 .map-popup-label { font-size: .68rem; color: #FF8C00; margin-bottom: var(--sp-2); }
@@ -703,7 +703,7 @@ canvas#mapCanvas {
 .map-death-banner {
   position: fixed; top: 0; left: 0; right: 0; z-index: 2000;
   background: var(--bg-panel-red); border-bottom: 2px solid var(--neon-red);
-  color: var(--neon-red); font-family: Audiowide, sans-serif;
+  color: var(--neon-red); font-family: Rajdhani, sans-serif;
   font-size: .8rem; letter-spacing: .1em; text-align: center;
   padding: var(--sp-2); pointer-events: none;
 }
@@ -711,7 +711,7 @@ canvas#mapCanvas {
 /* Attack-dice overlay label */
 .atk-dice-label {
   margin-top: var(--sp-3); font-size: .72rem; color: var(--text-main);
-  font-family: Audiowide, sans-serif; text-align: center;
+  font-family: Rajdhani, sans-serif; text-align: center;
   max-width: 300px; line-height: 1.7; padding: 0 var(--sp-4);
 }
 
@@ -723,16 +723,16 @@ canvas#mapCanvas {
   box-shadow: var(--glow-red-m), 0 0 40px rgba(0,0,0,.6);
 }
 .map-rr-title {
-  font-family: Audiowide, sans-serif; font-size: .85rem; color: var(--neon-red);
+  font-family: Rajdhani, sans-serif; font-size: .85rem; color: var(--neon-red);
   letter-spacing: .1em; margin-bottom: var(--sp-3);
 }
 .map-rr-source  { font-size: .9rem; color: var(--text-main); margin-bottom: var(--sp-1); }
-.map-rr-formula { font-family: Audiowide, sans-serif; font-size: 1.1rem; color: var(--warning-yellow); margin-bottom: var(--sp-4); }
+.map-rr-formula { font-family: Rajdhani, sans-serif; font-size: 1.1rem; color: var(--warning-yellow); margin-bottom: var(--sp-4); }
 .map-rr-result  { font-size: 1rem; color: var(--text-main); margin-bottom: var(--sp-3); }
 
 /* dmRollModal internals */
 .map-result-gold {
-  font-family: Audiowide, sans-serif; font-size: .85rem; color: var(--warning-yellow);
+  font-family: Rajdhani, sans-serif; font-size: .85rem; color: var(--warning-yellow);
   text-align: center; padding: var(--sp-2);
   background: rgba(255,209,102,.06); border: 1px solid rgba(255,209,102,.2);
   border-radius: var(--radius); margin-bottom: var(--sp-2);

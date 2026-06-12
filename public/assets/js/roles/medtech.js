@@ -227,7 +227,7 @@ async function renderSpecialties(view, character) {
     const row = el(`
       <div class="role-row" style="align-items:center; padding:10px 0; border-bottom:1px solid var(--role-line);">
         <div class="role-grow">
-          <div style="font-family:'Audiowide';font-size:13px;">${s.name}</div>
+          <div style="font-family:'Rajdhani';font-size:13px;">${s.name}</div>
           <div style="font-size:11px; color:var(--role-muted);">${s.perPoint}</div>
         </div>
         <div class="role-row" style="gap:4px; align-items:center;">

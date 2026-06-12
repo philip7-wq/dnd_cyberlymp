@@ -386,7 +386,7 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 }
 /* Kein leerer Rahmen, bevor das Query-Ergebnis (Lawman-Squad) eingefügt wird. */
 .ctrl-result:empty { display: none; }
-/* Großer Zahlen-Readout (NPC-Quick-Total). Schrift bleibt --font-display (Phase 11). */
+/* Großer Zahlen-Readout (NPC-Quick-Total). Schrift via --font-display (= Rajdhani). */
 .ctrl-readout { font-family: var(--font-display); font-size: var(--fs-lg); color: var(--text-main); min-width: 3ch; }
 
 /* Injury list in controls */
@@ -878,7 +878,7 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 }
 .npc-section-header:first-child { margin-top: 0; }
 .npc-section-header:hover { background: rgba(255,255,255,.05); }
-.npc-section-name { font-family: Audiowide,sans-serif; font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.npc-section-name { font-family: Rajdhani,sans-serif; font-size: var(--fs-xs); letter-spacing: var(--tracking); text-transform: uppercase; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .npc-section-count { font-size: .6rem; color: var(--text-muted); padding: .1rem var(--sp-2); background: var(--bg-panel-soft); border-radius: var(--radius); flex-shrink: 0; }
 .npc-section-actions { margin-left: auto; display: flex; gap: var(--sp-1); flex-shrink: 0; flex-wrap: wrap; }
 .npc-card-grid {
@@ -956,7 +956,7 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
 .dm-card--psycho { border-color: #7B2FBE !important; }
 .dm-card--psycho .dm-card-name::after {
   content: ' 🔴PSYCHO'; font-size:.58rem; color:#7B2FBE;
-  font-family:Audiowide,sans-serif; letter-spacing:.06em;
+  font-family:Rajdhani,sans-serif; letter-spacing:.06em;
 }
 
 /* ── DM Ammo Summary ── */
@@ -1041,11 +1041,11 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   border-bottom: 1px solid rgba(34,247,255,.25);
 }
 .dm-timer-bar-label {
-  font-family: Audiowide, sans-serif; font-size: var(--fs-xs);
+  font-family: Rajdhani, sans-serif; font-size: var(--fs-xs);
   color: var(--neon-cyan); white-space: nowrap; min-width: 70px;
 }
 .dm-timer-bar-countdown {
-  font-family: Audiowide, sans-serif; font-size: var(--fs-lg);
+  font-family: Rajdhani, sans-serif; font-size: var(--fs-lg);
   color: var(--neon-cyan); min-width: 58px;
 }
 .dm-bar-btn { flex-shrink: 0; }
@@ -1083,11 +1083,11 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   border-radius: var(--radius); padding: var(--sp-2) var(--sp-3);
 }
 .timer-preview-label {
-  font-family: Audiowide, sans-serif; font-size: var(--fs-xs);
+  font-family: Rajdhani, sans-serif; font-size: var(--fs-xs);
   color: var(--neon-cyan); min-width: 60px;
 }
 .timer-preview-countdown {
-  font-family: Audiowide, sans-serif; font-size: var(--fs-md);
+  font-family: Rajdhani, sans-serif; font-size: var(--fs-md);
   color: var(--neon-cyan); min-width: 52px;
 }
 
@@ -1096,7 +1096,7 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
    ═══════════════════════════════════════════════════════════════ */
 /* Phase 5d: HUD-Migration. Night-Market bleibt rot/illegal (MASTER Farblogik).
    Panel + Door-Cards = echte Border + Glow (kein clip, Gotcha #2). Status-Rows
-   re-rendern in-place via bmRefreshStatus (Gotcha #4). Schrift Audiowide bleibt
+   re-rendern in-place via bmRefreshStatus (Gotcha #4). Schrift Rajdhani bleibt
    bis Phase 11. .bm-action-/.bm-close-all-btn liegen jetzt auf dem Button-System
    (ctrl-btn ctrl-btn-red im Markup) — hier nur noch Full-Width-Layout. */
 .bm-dm-panel {
@@ -1120,7 +1120,7 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   padding-bottom: var(--sp-3);
   border-bottom: 1px solid var(--border-dark);
   filter: drop-shadow(0 1px 0 rgba(255,49,88,.18));
-  font-family: Audiowide, sans-serif;
+  font-family: Rajdhani, sans-serif;
   font-size: var(--fs-sm);
   color: var(--neon-red);
   letter-spacing: var(--tracking);
@@ -1139,7 +1139,7 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   text-transform: uppercase;
   letter-spacing: var(--tracking);
   margin-bottom: var(--sp-2);
-  font-family: Audiowide, sans-serif;
+  font-family: Rajdhani, sans-serif;
 }
 .bm-step-sub {
   font-size: var(--fs-xs);
@@ -1298,7 +1298,7 @@ body.chat-collapsed .dice-popup { bottom: calc(40px + 4.25rem); }
   text-transform: uppercase;
 }
 #sstDisplay {
-  font-family: Audiowide, monospace;
+  font-family: Rajdhani, monospace;
   font-size: .82rem;
   color: var(--text-main);
   letter-spacing: .05em;

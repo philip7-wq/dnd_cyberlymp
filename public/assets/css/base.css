@@ -9,19 +9,15 @@
 .ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex: none; }
 
 /* ── Self-hosted Fonts (DSGVO; ersetzen die früheren Google-Fonts-Links) ──
-   Audiowide/Inter/Caveat = die aktuell vom (noch nicht reskinnten) UI genutzten
-   Familien. woff2 (OFL) in assets/fonts/. Hier in base.css, weil diese Datei auf
-   JEDER Seite geladen wird (cyberpunk-ui.css nur auf player/dm/map). TEMPORÄR —
-   entfallen, sobald die Page-CSS in den Reskin-Phasen auf Rajdhani/IBM Plex Mono
-   migriert sind. Latin-Subset deckt deutsche Umlaute/ß ab. */
+   woff2 (OFL) in assets/fonts/. Hier in base.css, weil diese Datei auf jeder Seite
+   geladen wird. Phase 11d: HUD-Fonts (Rajdhani/IBM Plex Mono) kommen via @font-face
+   aus cyberpunk-ui.css. Audiowide bleibt NUR noch für radio-standalone.css (bewusster
+   Retro-Look, Phase 8c). Caveat = Handschrift-Notizen (player.css). Inter entfallen
+   (auf IBM Plex Mono migriert). Latin-Subset deckt deutsche Umlaute/ß ab. */
 @font-face {
+  /* nur noch radio-standalone.css (Retro-Relikt) */
   font-family: 'Audiowide'; font-style: normal; font-weight: 400;
   font-display: swap; src: url('../fonts/audiowide-400.woff2') format('woff2');
-}
-@font-face {
-  /* Inter ist ein Variable Font — eine Datei deckt 400–600 ab (wie zuvor bei Google). */
-  font-family: 'Inter'; font-style: normal; font-weight: 400 600;
-  font-display: swap; src: url('../fonts/inter-latin.woff2') format('woff2');
 }
 @font-face {
   font-family: 'Caveat'; font-style: normal; font-weight: 400;
@@ -31,13 +27,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Phase 11c: Migrations-Aliase (--red/--cyan/--bg/--border/--text/…) entfernt;
-     Consumer nutzen jetzt die HUD-Tokens aus cyberpunk-ui.css direkt.
-     --text-muted bleibt (eigener Wert, kein Alias). --font-display/--font-body
-     bleiben bis Phase 11d (Font-Migration). */
+  /* Phase 11c: Migrations-Aliase entfernt — Consumer nutzen HUD-Tokens direkt.
+     --text-muted bleibt (eigener Wert, kein Alias).
+     Phase 11d: Font-Tokens auf den HUD-Stack geflippt (= cyberpunk-ui.css-Werte),
+     ohne die 82 var(--font-display)-Consumer umzubenennen. */
   --text-muted: #686880;
-  --font-display: 'Audiowide', 'Courier New', 'Lucida Console', monospace;
-  --font-body:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Rajdhani', 'Orbitron', sans-serif;
+  --font-body:    'IBM Plex Mono', 'Share Tech Mono', monospace;
   --radius:     4px;
   --transition: 150ms ease;
 }

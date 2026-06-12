@@ -189,7 +189,7 @@
         <button class="token-picker-tab" data-tab="custom">Custom</button>
         <button class="token-picker-tab" data-tab="vehicle">Fahrzeug</button>
       </div>
-      <div id="tokenAddedBanner" style="display:none;padding:.3rem .6rem;background:rgba(34,247,255,.1);border-bottom:1px solid rgba(34,247,255,.2);font-size:.68rem;color:var(--neon-cyan);font-family:Audiowide,sans-serif;letter-spacing:.06em"></div>
+      <div id="tokenAddedBanner" style="display:none;padding:.3rem .6rem;background:rgba(34,247,255,.1);border-bottom:1px solid rgba(34,247,255,.2);font-size:.68rem;color:var(--neon-cyan);font-family:Rajdhani,sans-serif;letter-spacing:.06em"></div>
       <div id="tokenPickerChars" class="token-picker-grid"></div>
       <div id="tokenPickerNpcs"  class="token-picker-grid" style="display:none"></div>
       <div id="tokenPickerCustom" class="custom-token-form" style="display:none">
@@ -204,7 +204,7 @@
       <div id="tokenPickerVehicle" class="token-picker-grid" style="display:none"></div>
       <!-- Custom Vehicle Form -->
       <div id="customVehicleForm" style="display:none;padding:.6rem .75rem;border-top:1px solid var(--border-dark)">
-        <div style="font-family:Audiowide,sans-serif;font-size:.65rem;color:var(--neon-cyan);letter-spacing:.08em;margin-bottom:.5rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-plus"/></svg> EIGENES FAHRZEUG</div>
+        <div style="font-family:Rajdhani,sans-serif;font-size:.65rem;color:var(--neon-cyan);letter-spacing:.08em;margin-bottom:.5rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-plus"/></svg> EIGENES FAHRZEUG</div>
         <div style="display:flex;gap:.25rem;margin-bottom:.25rem">
           <input id="cvLabel"  class="ctrl-input" placeholder="🚘 Label" maxlength="3" style="width:56px;text-align:center">
           <input id="cvName"   class="ctrl-input" placeholder="Name" style="flex:1">
@@ -248,7 +248,7 @@
         <span class="ts-label" style="min-width:70px">Schaden</span>
         <input type="text" id="aoeBlastExpr" class="ts-input" value="8d6" style="max-width:90px">
         <button id="aoeBlastRollBtn" class="ctrl-btn" style="font-size:.72rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Würfeln</button>
-        <span id="aoeBlastResult" style="font-family:Audiowide,sans-serif;color:#FF4500;font-size:.9rem;margin-left:.5rem"></span>
+        <span id="aoeBlastResult" style="font-family:Rajdhani,sans-serif;color:#FF4500;font-size:.9rem;margin-left:.5rem"></span>
       </div>
       <div id="aoeBlastTargets" style="max-height:260px;overflow-y:auto;margin:.35rem 0"></div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem">
@@ -281,7 +281,7 @@
       <div id="grappleResult" style="font-size:.78rem;color:var(--text-muted)"></div>
       <button id="grappleRollBtn" class="ctrl-btn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dice"/></svg> Grapple würfeln</button>
       <div id="grappleActions" style="display:none;flex-direction:column;gap:.35rem">
-        <div style="font-size:.7rem;color:var(--neon-cyan);font-family:Audiowide,sans-serif;letter-spacing:.08em;margin:.1rem 0">IM GRAPPLE:</div>
+        <div style="font-size:.7rem;color:var(--neon-cyan);font-family:Rajdhani,sans-serif;letter-spacing:.08em;margin:.1rem 0">IM GRAPPLE:</div>
         <button class="ctrl-btn ctrl-btn--orange grapple-action-btn" data-action="choke"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-fist"/></svg> Choke — BODY direkt auf HP</button>
         <button class="ctrl-btn ctrl-btn--ember grapple-action-btn" data-action="throw"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dodge"/></svg> Throw — BODY + Prone</button>
         <button class="ctrl-btn ctrl-btn--purple grapple-action-btn" data-action="shield"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-shield"/></svg> Human Shield</button>
@@ -322,7 +322,7 @@
     <span id="gridSizeWrap" style="display:none;align-items:center;gap:4px">
       <input type="range" id="gridSizeSlider" min="25" max="100" value="50"
         style="width:72px;accent-color:var(--neon-cyan)" title="Grid-Größe">
-      <span id="gridSizeLabel" style="font-size:.65rem;color:var(--neon-cyan);font-family:Audiowide,sans-serif;min-width:36px">50px</span>
+      <span id="gridSizeLabel" style="font-size:.65rem;color:var(--neon-cyan);font-family:Rajdhani,sans-serif;min-width:36px">50px</span>
     </span>
     <span class="map-topbar-sep"></span>
     <button class="map-topbar-btn" id="zoomInBtn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-plus"/></svg></button>
@@ -869,7 +869,7 @@ function drawFogObjects() {
       ctx.strokeRect(fog.x, fog.y, fog.w, fog.h);
       ctx.setLineDash([]);
       // "VERDECKT" label
-      ctx.font = `bold ${Math.min(12, fog.w/8)/S.scale}px Audiowide`;
+      ctx.font = `bold ${Math.min(12, fog.w/8)/S.scale}px Rajdhani`;
       ctx.fillStyle = '#2a2a3a'; ctx.textAlign='center'; ctx.textBaseline='middle';
       const midY = fog.y + fog.h/2;
       ctx.fillText('VERDECKT', fog.x+fog.w/2, fog.note ? midY - 9/S.scale : midY);
@@ -893,7 +893,7 @@ function drawActiveFog() {
   ctx.fillRect(x,y,w,h); ctx.strokeRect(x,y,w,h);
   ctx.setLineDash([]);
   if (w>30/S.scale && h>16/S.scale) {
-    ctx.fillStyle='#333'; ctx.font=`bold ${10/S.scale}px Audiowide`;
+    ctx.fillStyle='#333'; ctx.font=`bold ${10/S.scale}px Rajdhani`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('VERDECKT', x+w/2, y+h/2);
   }
@@ -923,7 +923,7 @@ function drawCoverObjects() {
     ctx.globalAlpha = 1;
     if (destroyed) {
       ctx.fillStyle='rgba(160,160,160,.7)';
-      ctx.font=`bold ${11/S.scale}px Audiowide`;
+      ctx.font=`bold ${11/S.scale}px Rajdhani`;
       ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=3/S.scale;
       ctx.fillText('DESTROYED', c.x+c.w/2, c.y+c.h/2);
@@ -990,7 +990,7 @@ function drawSuppressiveZones() {
     ctx.strokeRect(z.x,z.y,z.w,z.h);
     ctx.setLineDash([]);
     ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
-    ctx.fillStyle='#FFA000'; ctx.font=`bold ${13/S.scale}px Audiowide`;
+    ctx.fillStyle='#FFA000'; ctx.font=`bold ${13/S.scale}px Rajdhani`;
     ctx.textAlign='center'; ctx.textBaseline='top';
     ctx.fillText(z.label||'SUPPRESSIVE ZONE', z.x+z.w/2, z.y+5/S.scale);
     ctx.font=`${10/S.scale}px Inter`; ctx.fillStyle='rgba(255,160,0,.85)';
@@ -1023,7 +1023,7 @@ function drawAoeMarkers() {
     ctx.setLineDash([]);
     ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
     if (a.label) {
-      ctx.fillStyle=a.color; ctx.font=`bold ${13/S.scale}px Audiowide`;
+      ctx.fillStyle=a.color; ctx.font=`bold ${13/S.scale}px Rajdhani`;
       ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(a.label, cx, cy);
     }
@@ -1049,7 +1049,7 @@ function drawActiveAoeDrag() {
   ctx.fill(); ctx.stroke();
   ctx.setLineDash([]);
   const rM = (S.aoeDragRadius/S.gridSize).toFixed(1);
-  ctx.fillStyle=color; ctx.font=`bold ${12/S.scale}px Audiowide`;
+  ctx.fillStyle=color; ctx.font=`bold ${12/S.scale}px Rajdhani`;
   ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=3/S.scale;
   ctx.textAlign='center'; ctx.textBaseline='bottom';
   ctx.fillText(`${rM}m`, S.aoeDragStart.x, S.aoeDragStart.y-S.aoeDragRadius-4/S.scale);
@@ -1135,7 +1135,7 @@ function drawMoveRange() {
     ctx.fill(); ctx.stroke();
     ctx.setLineDash([]);
   });
-  ctx.fillStyle=hexToRgba(color,.9); ctx.font=`bold ${12/S.scale}px Audiowide`;
+  ctx.fillStyle=hexToRgba(color,.9); ctx.font=`bold ${12/S.scale}px Rajdhani`;
   ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
   ctx.textAlign='center'; ctx.textBaseline='top';
   ctx.fillText(`MOVE ${move}m`, cx, cy+r1+4/S.scale);
@@ -1200,7 +1200,7 @@ function _renderRingZones(oCtx, cx, cy, dvType) {
     oCtx.stroke(); oCtx.setLineDash([]);
     const labelR = prevR + (r - prevR) * 0.5;
     const lbl = isNA ? `${BRACKET_LABELS[i]} (N/A)` : `${BRACKET_LABELS[i]} · DV ${dv}`;
-    oCtx.font = `${8/S.scale}px Audiowide,sans-serif`;
+    oCtx.font = `${8/S.scale}px Rajdhani,sans-serif`;
     oCtx.fillStyle = isNA ? 'rgba(120,120,120,0.6)' : STROKES[i];
     oCtx.textAlign = 'center'; oCtx.textBaseline = 'middle';
     oCtx.fillText(lbl, cx, cy - labelR);
@@ -1299,7 +1299,7 @@ function drawTokens() {
       ctx.restore();
       // DRAN label above token
       ctx.save();
-      ctx.font=`bold ${14/S.scale}px Audiowide`;
+      ctx.font=`bold ${14/S.scale}px Rajdhani`;
       ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=5/S.scale;
       ctx.fillStyle='#00FF88'; ctx.textAlign='center'; ctx.textBaseline='bottom';
       ctx.fillText('▶ DRAN', cx, cy-r-5/S.scale);
@@ -1383,7 +1383,7 @@ function drawTokens() {
         ctx.strokeStyle='#FF2D2D'; ctx.lineWidth=2.5/S.scale; ctx.lineCap='round';
         ctx.beginPath(); ctx.moveTo(cx-pad,cy-pad); ctx.lineTo(cx+pad,cy+pad); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(cx+pad,cy-pad); ctx.lineTo(cx-pad,cy+pad); ctx.stroke();
-        ctx.fillStyle='#FF2D2D'; ctx.font=`bold ${9/S.scale}px Audiowide`;
+        ctx.fillStyle='#FF2D2D'; ctx.font=`bold ${9/S.scale}px Rajdhani`;
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText('ZERSTÖRT',cx,cy);
         ctx.restore();
@@ -1540,7 +1540,7 @@ function drawTokens() {
       ctx.beginPath(); ctx.moveTo(cx-pad, cy-pad); ctx.lineTo(cx+pad, cy+pad); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx+pad, cy-pad); ctx.lineTo(cx-pad, cy+pad); ctx.stroke();
       // "TOT" label
-      ctx.fillStyle = '#FF2D2D'; ctx.font = `bold ${14/S.scale}px Audiowide`;
+      ctx.fillStyle = '#FF2D2D'; ctx.font = `bold ${14/S.scale}px Rajdhani`;
       ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4/S.scale;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('TOT', cx, cy);
@@ -1597,7 +1597,7 @@ function drawMeasureLine() {
   const mx=(x1+x2)/2, my=(y1+y2)/2;
   const dv = S.activeWeapon ? getDV(S.activeWeapon.dvType, distM) : null;
   const lbl = dv != null ? `${distM.toFixed(1)}m · DV ${dv}` : `${distM.toFixed(1)}m`;
-  ctx.font=`bold ${11/S.scale}px Audiowide,sans-serif`;
+  ctx.font=`bold ${11/S.scale}px Rajdhani,sans-serif`;
   const tw=ctx.measureText(lbl).width, ph=14/S.scale, pr=6/S.scale;
   ctx.fillStyle='rgba(0,0,0,0.78)';
   roundRectPath(ctx, mx-(tw+pr*2)/2, my-ph/2, tw+pr*2, ph, ph/2);
@@ -1681,7 +1681,7 @@ function drawShotgunCone() {
     if (t.id===ownToken.id) return;
     if (isInCone(t.x,t.y,cx,cy,facing,coneAngle,coneLen)) {
       const r=S.gridSize*0.44;
-      ctx.fillStyle='#FF4500'; ctx.font=`bold ${8/S.scale}px Audiowide`;
+      ctx.fillStyle='#FF4500'; ctx.font=`bold ${8/S.scale}px Rajdhani`;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       ctx.fillText('TREFFER', t.x, t.y-r-2/S.scale);
     }
@@ -1713,14 +1713,14 @@ function drawInitiativeOverlay() {
     if (isActive) { ctx.fillStyle='#00E5FF'; ctx.fillRect(x0,y,3,rowH-2); }
     else if (isNext) { ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(x0,y,2,rowH-2); }
     // Name
-    if (isActive) { ctx.font='bold 9px Audiowide,sans-serif'; ctx.fillStyle='#00E5FF'; }
-    else if (isNext) { ctx.font='9px Audiowide,sans-serif'; ctx.fillStyle='#ccc'; }
-    else { ctx.font='9px Audiowide,sans-serif'; ctx.fillStyle='rgba(255,255,255,.35)'; }
+    if (isActive) { ctx.font='bold 9px Rajdhani,sans-serif'; ctx.fillStyle='#00E5FF'; }
+    else if (isNext) { ctx.font='9px Rajdhani,sans-serif'; ctx.fillStyle='#ccc'; }
+    else { ctx.font='9px Rajdhani,sans-serif'; ctx.fillStyle='rgba(255,255,255,.35)'; }
     const prefix = isActive ? '▶ ' : '  ';
     const name = (c.name||'—').slice(0,16);
     ctx.fillText(prefix+name, x0+8, y+14);
     // Initiative
-    ctx.font='9px Audiowide,sans-serif';
+    ctx.font='9px Rajdhani,sans-serif';
     ctx.textAlign='right';
     ctx.fillText(c.initiative??'—', x0+w-8, y+14);
     ctx.textAlign='left';
@@ -2872,7 +2872,7 @@ function renderTokenPicker() {
         .from('role_inventory').select('*').eq('category', 'vehicle').order('name');
       if (!invItems?.length) return;
       const header = document.createElement('div');
-      header.style.cssText = 'grid-column:1/-1;font-size:.55rem;letter-spacing:.15em;color:#555;text-transform:uppercase;padding-top:.4rem;font-family:Audiowide,sans-serif;';
+      header.style.cssText = 'grid-column:1/-1;font-size:.55rem;letter-spacing:.15em;color:#555;text-transform:uppercase;padding-top:.4rem;font-family:Rajdhani,sans-serif;';
       header.textContent = '— Nomad-Fahrzeuge —';
       vg.appendChild(header);
       invItems.forEach(item => {
@@ -3140,7 +3140,7 @@ function openAoeBlastModal(aoe) {
         <div class="token-list-icon" style="width:28px;height:28px">${t.label||t.name?.[0]||'?'}</div>
         <div class="blast-target-name">${t.name||''}</div>
         ${covered ? '<span class="blast-cover-badge"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-cover"/></svg> DECKUNG</span>' : ''}
-        ${isPlayer && !covered ? '<span style="font-size:.58rem;color:#00E5FF;font-family:Audiowide,sans-serif"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-envelope"/></svg> Spieler entscheidet</span>' : ''}
+        ${isPlayer && !covered ? '<span style="font-size:.58rem;color:#00E5FF;font-family:Rajdhani,sans-serif"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-envelope"/></svg> Spieler entscheidet</span>' : ''}
         ${!isPlayer && canDodge && rollResult>0 ? `<button class="blast-dodge-btn ctrl-btn ctrl-btn--sm" data-tid="${t.id}"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-dodge"/></svg> Dodge</button>` : ''}
         <div class="blast-dmg-val">${dmgVal}</div>
       </div>`;
@@ -3311,7 +3311,7 @@ function showMapToast(msg, type='cyan') {
   let t=document.getElementById('mapToast');
   if (!t) {
     t=document.createElement('div'); t.id='mapToast';
-    t.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);padding:.45rem 1.2rem;border-radius:4px;font-family:Audiowide,sans-serif;font-size:.72rem;z-index:9999;pointer-events:none;transition:opacity .4s';
+    t.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);padding:.45rem 1.2rem;border-radius:4px;font-family:Rajdhani,sans-serif;font-size:.72rem;z-index:9999;pointer-events:none;transition:opacity .4s';
     document.body.appendChild(t);
   }
   t.style.background = type==='red'?'rgba(255,45,45,.9)':'rgba(0,229,255,.12)';
@@ -3463,7 +3463,7 @@ function showDmgDiceAnim(total, label, onDone, critInjury = false) {
     numEl.className   = 'atk-dice-num';
     numEl.style.color = '#FF8C00';
     if (critInjury) dieEl?.classList.add('glow-orange');
-    lblEl.innerHTML   = `<span style="font-family:Audiowide,sans-serif;font-size:.72rem;color:#FF8C00">${label}</span>`;
+    lblEl.innerHTML   = `<span style="font-family:Rajdhani,sans-serif;font-size:.72rem;color:#FF8C00">${label}</span>`;
   }, 480);
   setTimeout(() => {
     overlay.style.display = 'none';
@@ -3567,7 +3567,7 @@ function showMissPopupDm(data) {
   const lineItems = (data.lineTokens||[]).map(n =>
     `<div style="font-size:.65rem;color:#888;padding:.1rem 0">• ${n}</div>`).join('');
   div.innerHTML = `
-    <div style="font-family:Audiowide,sans-serif;font-size:.65rem;color:#FF2D2D;letter-spacing:.1em;margin-bottom:.4rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg> FEHLSCHUSS</div>
+    <div style="font-family:Rajdhani,sans-serif;font-size:.65rem;color:#FF2D2D;letter-spacing:.1em;margin-bottom:.4rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg> FEHLSCHUSS</div>
     <div style="font-size:.68rem;color:#e0e0e8;margin-bottom:.2rem">
       <b style="color:#FFD700">${data.shooter||'?'}</b> verfehlt <b style="color:#FF2D2D">${data.target||'?'}</b>
     </div>
@@ -3686,7 +3686,7 @@ function buildPlayerPanel() {
       <span class="pmap-armor-lbl">${lbl}</span>
       <span class="pmap-armor-name">${s.name}</span>
       <span class="pmap-armor-sp" style="color:${destroyed?'#FF2D2D':col}">${cur}${max&&max!==cur?`/${max}`:''}</span>
-      ${destroyed?'<span style="font-size:.55rem;color:#FF2D2D;font-family:Audiowide,sans-serif">ZERSTÖRT</span>':''}
+      ${destroyed?'<span style="font-size:.55rem;color:#FF2D2D;font-family:Rajdhani,sans-serif">ZERSTÖRT</span>':''}
     </div>
     <div class="sp-bar-wrap" style="margin:1px 0 4px"><div class="sp-bar-fill" style="width:${pct}%;background:${col}"></div></div>`;
   }).join('');
@@ -4189,7 +4189,7 @@ function buildPlayerPanel() {
       if (bonus) html += isCrit ? ` +${bonus}` : ` −${bonus}`;
       html += ` + REF ${ref} + Skill ${skill}${dispMod ? (dispMod>0?` +${dispMod}`:` ${dispMod}`):''}`;
       if (aimed) html += ` <span style="color:#FFD700">· Aimed: ${aimed==='head'?'Kopf':aimed==='leg'?'Bein':'Item'}</span>`;
-      html += ` = <b style="font-family:Audiowide;font-size:.9rem">${total}</b> vs DV <b>${dv}</b>`;
+      html += ` = <b style="font-family:Rajdhani;font-size:.9rem">${total}</b> vs DV <b>${dv}</b>`;
       html += hit
         ? `<div style="color:#22C55E;margin-top:.2rem;font-size:.7rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-check"/></svg> TREFFER (+${total-dv})</div>`
         : `<div style="color:#FF2D2D;margin-top:.2rem;font-size:.7rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg> FEHLSCHUSS (${dv-total} unter DV)</div>`;
@@ -4231,7 +4231,7 @@ function buildPlayerPanel() {
     let html = `[${rolls.join('][')}]`;
     if (_autofireOn && mult > 1) html += ` × <b>${mult}</b>`;
     if (spotBonus > 0) html += ` +${spotBonus} <span style="color:#FFD700;font-size:.6rem">Spot Weakness</span>`;
-    html += ` = <b style="color:#FF8C00;font-family:Audiowide;font-size:.9rem">${total}</b> Schaden`;
+    html += ` = <b style="color:#FF8C00;font-family:Rajdhani;font-size:.9rem">${total}</b> Schaden`;
     if (_atkWeaponClass === 'melee_weapon' || _atkWeaponClass === 'martial_arts')
       html += ` <span style="color:#888;font-size:.58rem">(½ SP)</span>`;
     if (critInjury) html += '<div class="atk-badge-injury"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-warning"/></svg> CRITICAL INJURY!</div>';
@@ -4876,10 +4876,10 @@ function renderCombatBar() {
   let actionsHtml = '';
   if (IS_DM) {
     actionsHtml = `<div class="combat-bar-actions">
-      <button id="cbNextTurnBtn" style="font-family:Audiowide,sans-serif;font-size:.58rem;
+      <button id="cbNextTurnBtn" style="font-family:Rajdhani,sans-serif;font-size:.58rem;
         padding:.2rem .45rem;background:rgba(0,229,255,.1);border:1px solid #00E5FF;
         color:#00E5FF;border-radius:4px;cursor:pointer;white-space:nowrap;"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-next"/></svg> Nächster</button>
-      <button id="cbEndCombatBtn" style="font-family:Audiowide,sans-serif;font-size:.58rem;
+      <button id="cbEndCombatBtn" style="font-family:Rajdhani,sans-serif;font-size:.58rem;
         padding:.2rem .45rem;background:rgba(255,45,45,.1);border:1px solid #FF2D2D;
         color:#FF2D2D;border-radius:4px;cursor:pointer;white-space:nowrap;"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-x"/></svg> Beenden</button>
     </div>`;

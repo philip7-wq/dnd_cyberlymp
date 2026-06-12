@@ -32,7 +32,7 @@
 }
 
 .snd-label {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 10px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -80,7 +80,7 @@
 }
 
 .snd-vol-label {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 9px;
   letter-spacing: .08em;
   color: var(--snd-muted);
@@ -133,7 +133,7 @@
   border: 1px solid var(--snd-red);
   background: transparent;
   color: var(--snd-red);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 10px;
   letter-spacing: .06em;
   cursor: pointer;
@@ -159,7 +159,7 @@
   border: 1px solid #FF2D2D28;
   border-radius: 6px;
   color: var(--snd-red);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 10px;
   line-height: 1.3;
   text-align: center;
@@ -238,7 +238,7 @@
 .snd-strip-toggle.on.purple { border-color: var(--snd-purple); box-shadow: 0 0 6px #B14EFF44; }
 
 .snd-strip-name {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 11px;
   flex: 1;
   min-width: 0;
@@ -322,7 +322,7 @@
 }
 .snd-upload-zone .upload-icon { font-size: 28px; margin-bottom: 6px; }
 .snd-upload-zone .upload-text {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 11px;
   color: var(--snd-muted);
 }
@@ -364,7 +364,7 @@
   border: 1px solid var(--snd-cyan);
   background: transparent;
   color: var(--snd-cyan);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 10px;
   cursor: pointer;
   transition: background .15s;
@@ -389,7 +389,7 @@
   border-collapse: collapse;
 }
 .snd-lib-table th {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 9px;
   letter-spacing: .08em;
   color: var(--snd-muted);
@@ -410,7 +410,7 @@
   padding: 2px 7px;
   border-radius: 10px;
   font-size: 9px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   letter-spacing: .05em;
 }
 .snd-cat-pill.one-shot { background: #FF2D2D18; color: var(--snd-red);    border: 1px solid #FF2D2D33; }
@@ -448,7 +448,7 @@
   gap: 12px;
 }
 .snd-modal h3 {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 13px;
   color: var(--snd-cyan);
   margin: 0;
@@ -456,7 +456,7 @@
 .snd-modal label {
   font-size: 10px;
   color: var(--snd-muted);
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   letter-spacing: .06em;
   display: block;
   margin-bottom: 3px;
@@ -481,7 +481,7 @@
 .snd-modal-actions button {
   padding: 7px 18px;
   border-radius: 4px;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 10px;
   cursor: pointer;
 }

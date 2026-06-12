@@ -51,7 +51,7 @@ panel.style.cssText = `
   display:none; position:fixed; top:56px; right:8px; z-index:1100;
   background:#0f0f18; border:1px solid #2a2a3a; border-radius:10px;
   padding:16px; width:220px;
-  font-family:'Audiowide',sans-serif;
+  font-family:'Rajdhani',sans-serif;
 `;
 panel.innerHTML = `
   <div style="font-size:10px;letter-spacing:.1em;color:#aaa;margin-bottom:12px;border-bottom:1px solid #1e1e2a;padding-bottom:6px;">

@@ -239,7 +239,7 @@
 
 /* ── Psychosis Modal ── */
 #psychosisModal .psychosis-title {
-  font-family: Audiowide, sans-serif; font-size: var(--fs-lg);
+  font-family: Rajdhani, sans-serif; font-size: var(--fs-lg);
   letter-spacing: .12em; text-transform: uppercase;
   color: var(--neon-red); margin-bottom: var(--sp-2);
   animation: psychosis-pulse .8s ease-in-out infinite;

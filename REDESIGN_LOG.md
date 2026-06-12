@@ -25,7 +25,7 @@
 | 8 create/upload/npc-sheet/radio | ✅ fertig | 8a upload.html · 8c radio.html · 8b-2 roles.css :root · 8b-3 npc-sheet.html → **Phase 8 KOMPLETT** (create.html bewusst alt belassen, nicht genutzt) |
 | 9 Rulebook (neu) | ⬜ offen | |
 | 10 Cyberware-Index (neu) | ⬜ offen | |
-| 11 Responsive/A11y/Cleanup/QA | 🔶 läuft | 11a+11b+11c ✅ (tote CSS, Slot-Dedup, Aliase entfernt); offen: 11d Fonts |
+| 11 Responsive/A11y/Cleanup/QA | ✅ fertig | 11a+b+c+d ✅ — tote CSS, Slot-Dedup, Aliase entfernt, Font-Migration. **REDESIGN KOMPLETT** |
 
 **Modell-Kadenz:** additive/isolierte Phasen → Sonnet 4.6; player/dm/map (4/5/7) + Final-QA → Opus xhigh.
 
@@ -1392,6 +1392,45 @@ mehr vorhanden; alle 9 neuen Tokens in cyberpunk-ui.css definiert; 4 Inline-Modu
 `node --check` als .mjs sauber; keine malformed Doppel-Ersetzungen. index.html unbetroffen (nutzte
 keinen Alias). **Offen (manuell):** Visual-Regression player/dm/upload/map/shop/npc-sheet (neue
 Palette, Shift gewollt), Konsole je Seite.
+
+---
+
+## Phase 11d — Font-Migration Audiowide→Rajdhani, Inter→IBM Plex Mono ✅ — REDESIGN KOMPLETT
+
+Finaler Schritt: ein konsistenter HUD-Font-Stack. Display/Heading = **Rajdhani**, Body = **IBM Plex
+Mono** (Body damit monospace — bewusst, design-system-konform). woff2 + @font-face (Rajdhani/IBM Plex
+Mono) lagen schon in cyberpunk-ui.css.
+
+**Weg = kleinste Änderung (Token-Flip):** in base.css nur die 2 Token-Werte angeglichen, **keine** der
+82 `var(--font-display)`-Consumer umbenannt:
+- `--font-display`: 'Audiowide' → `'Rajdhani', 'Orbitron', sans-serif`
+- `--font-body`: 'Inter' → `'IBM Plex Mono', 'Share Tech Mono', monospace`
+
+`--font-display` bleibt als Name (deckungsgleich mit `--font-heading`) — minimale Redundanz, kleinster
+Eingriff.
+
+**Audiowide→Rajdhani Sweep** (Wort-Swap, Fallback-Ketten erhalten) in 20 Dateien: CSS (map 24,
+map-weapons 20, agent 18, roles 14, sound 12, session-bar 9, dm 9, topbar 7, player 7, shop 1),
+HTML (map 32, npc-sheet 6, player 2, shop 1), JS (sound-player/sound-dm/roles{tech,solo,medtech}/
+agent-dm, je 1). **Inter→IBM Plex Mono** in agent.css(5), topbar.css(1), roles.css(1).
+
+**Ausnahme radio-standalone.css (User):** bewusster Retro-Look („Mechanisches Relikt", Phase 8c) →
+Audiowide (5×) bleibt. Einziger Touch: incidental `'Inter'`-Fallback in Z.35 entfernt (Audiowide
+bleibt primär → Look identisch), damit Inter komplett frei wird.
+
+**Tote Fonts entfernt (User):** Inter-@font-face aus base.css raus + `inter-latin.woff2` gelöscht.
+**Behalten:** Audiowide-@font-face + audiowide-400.woff2 (Radio), Caveat (Handschrift, player.css:1725),
+Rajdhani/IBM Plex Mono/Orbitron/Share-Tech-Mono. FONTS_LICENSE.txt aktualisiert.
+
+**@font-face-Verfügbarkeit:** alle Seiten außer create.html laden cyberpunk-ui.css → Rajdhani/IBM Plex
+Mono verfügbar. **create.html** (seit 11c bewusst kaputt, nur base.css) referenziert die Fonts ohne
+@font-face → Fallback. Akzeptiert.
+
+**Verifiziert:** Audiowide projektweit nur noch radio-standalone.css(5) + base.css(@font-face+Kommentar)
++ Docs; Inter font-family = 0; inter-latin.woff2 weg + keine Code-Referenz; base.css @font-face =
+Audiowide+Caveat; 8 Inline-Module (player/dm/map/shop/npc) `node --check` sauber. **Offen (manuell):**
+Visual-Check (Rajdhani-Headings + monospace Body) auf index/player/dm/map/shop/upload/npc-sheet;
+radio Retro unverändert; create.html bewusst kaputt.
 
 ---
 

@@ -1487,8 +1487,7 @@ body.near-death::before {
 .ammo-inv-ok      { border-color: var(--success-green); color: var(--success-green); }
 .ammo-inv-low     { border-color: var(--warning-yellow); color: var(--warning-yellow); }
 .ammo-inv-empty   { border-color: var(--neon-red); color: var(--neon-red); }
-/* Distanz-Bar (§9) — HUD-Rahmen + Inhalt 4d-2 von Inline-Hex auf Klassen/Tokens überführt.
-   wdDv behält bewusst Audiowide (Font-Migration = Phase 11). */
+/* Distanz-Bar (§9) — HUD-Rahmen + Inhalt 4d-2 von Inline-Hex auf Klassen/Tokens überführt. */
 .weapon-distance-bar {
   background: var(--bg-panel-soft); border: 1px solid var(--border-dark);
   border-radius: var(--radius); padding: var(--sp-3); margin-bottom: var(--sp-3);
@@ -1512,7 +1511,7 @@ body.near-death::before {
   padding: .25rem .5rem; background: var(--bg-panel); border: 1px solid var(--border-dark);
   border-radius: var(--radius); margin-bottom: var(--sp-2);
 }
-.dist-bar-dv { color: var(--warning-yellow); font-family: Audiowide, sans-serif; }
+.dist-bar-dv { color: var(--warning-yellow); font-family: Rajdhani, sans-serif; }
 .dist-bar-wname { color: var(--text-dim); margin-left: .4rem; }
 .dist-bar-tname { color: var(--neon-red); font-size: .6rem; margin-left: .4rem; }
 
@@ -1553,12 +1552,12 @@ body.timer-active .nav { top: 50px !important; }
 body.timer-active { padding-top: 50px; }
 
 .timer-label {
-  font-family: Audiowide, sans-serif; font-size: .78rem;
+  font-family: Rajdhani, sans-serif; font-size: .78rem;
   color: var(--neon-cyan); white-space: nowrap; letter-spacing: .08em;
   min-width: 80px;
 }
 .timer-countdown {
-  font-family: Audiowide, sans-serif; font-size: 1.45rem;
+  font-family: Rajdhani, sans-serif; font-size: 1.45rem;
   color: var(--neon-cyan); min-width: 72px; text-align: center;
 }
 .timer-progress-wrap {
@@ -1595,7 +1594,7 @@ body.timer-active { padding-top: 50px; }
 
 /* Expired modal title */
 .timer-expired-title {
-  font-family: Audiowide, sans-serif; font-size: 1.3rem;
+  font-family: Rajdhani, sans-serif; font-size: 1.3rem;
   color: var(--neon-red); letter-spacing: .1em; text-transform: uppercase;
   margin-bottom: .35rem;
   animation: psychosis-pulse .8s ease-in-out infinite;
@@ -1714,7 +1713,7 @@ body.timer-active { padding-top: 50px; }
   max-width: 88vw;
 }
 .bm-offer-header {
-  font-family: Audiowide, sans-serif;
+  font-family: Rajdhani, sans-serif;
   font-size: .62rem;
   letter-spacing: .16em;
   color: rgba(180,130,60,.75);
@@ -1826,7 +1825,7 @@ body.timer-active { padding-top: 50px; }
   --role-danger:  var(--neon-red);
   --role-success: var(--success-green);
 }
-/* Display-Schrift (roles.css: Audiowide) → HUD-Heading (Rajdhani) */
+/* Display-Schrift (roles.css: Rajdhani) → HUD-Heading (Rajdhani) */
 #tab-role .role-glyph,
 #tab-role .role-name,
 #tab-role .role-rank-value,
