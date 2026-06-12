@@ -365,6 +365,7 @@ import './assets/js/agent/agent-apps.js';
 import { mountRoleInterface } from './assets/js/roles/roles-router.js';
 import './assets/js/sound-player.js';
 import { routeItem, CYBERWARE_SLOT_MAP, getItemSlots, getSlotCost, buildSnapshot } from './assets/js/item-slots.js';
+import { performCheck, renderRollResult, rollD10 } from './assets/js/roles/roles-core.js';
 
 // ── Constants ─────────────────────────────────────────────────
 const STATS_ORDER = ['INT','REF','DEX','TECH','COOL','WILL','MOVE','BODY','EMP'];
@@ -2251,9 +2252,9 @@ async function equipCyberwareFromGear(item, gearIdx) {
     }
   }
 
-  // Einbauen
+  // Einbauen — kanonischer Snapshot via buildSnapshot (single source, item-slots.js)
   const existingCw = (char.cyberware && !Array.isArray(char.cyberware)) ? char.cyberware : {};
-  const snap = { ...item, category: 'Cyberware', slotCost: 1 };
+  const snap = buildSnapshot({ ...item, category: 'Cyberware' });
   const newCw = { ...existingCw, [chosenSlot]: [...(existingCw[chosenSlot] || []), snap] };
   char.gear = char.gear.filter((_, i) => i !== gearIdx);
   const patch = { cyberware: newCw, gear: char.gear };

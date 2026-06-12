@@ -85,7 +85,7 @@
 
 <script type="module">
 import { getCharacter, getItems, patchCharacter, patchCash, subscribeCharacters } from './assets/js/supabase.js';
-import { routeItem, CYBERWARE_SLOT_MAP, getItemSlots, getSlotCost, buildSnapshot } from './assets/js/item-slots.js';
+import { routeItem, CYBERWARE_SLOT_MAP, SLOT_MAXES, getItemSlots, getSlotCost, buildSnapshot } from './assets/js/item-slots.js';
 
 // HUD-Lock-Icon (Sprite) — ersetzt 🔒 in Gating-Anzeigen
 const LOCK_IC = '<svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-lock"/></svg>';
@@ -132,15 +132,7 @@ const FOUNDATIONAL_REQ = {
 };
 
 
-// ── Maximale Option-Slots pro Slot-Typ ────────────────────────
-const SLOT_MAXES = {
-  rightCybereye: 3, leftCybereye:  3,
-  rightCyberarm: 4, leftCyberarm:  4,
-  rightCyberleg: 4, leftCyberleg:  4,
-  cyberaudio: 3, neuralLink: 5,
-  fashionware: 7, internal: 7, external: 7,
-  borgware: Infinity,
-};
+// SLOT_MAXES → zentral in item-slots.js (importiert oben)
 
 // ── Config ────────────────────────────────────────────────────
 const SHOP_CATEGORIES = [

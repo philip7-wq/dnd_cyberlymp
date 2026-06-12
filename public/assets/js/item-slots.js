@@ -32,6 +32,18 @@ export const CYBERWARE_SLOT_MAP = {
   'Borgware':                        ['borgware'],
 };
 
+// ── Maximale Option-Slots pro Slot-Typ ────────────────────────
+// Semantik: pro EINZEL-slotKey; Limit gegen Summe der slotCost der
+// installierten Items (used = existing.reduce(slotCost)). Keine Gruppen.
+export const SLOT_MAXES = {
+  rightCybereye: 3, leftCybereye:  3,
+  rightCyberarm: 4, leftCyberarm:  4,
+  rightCyberleg: 4, leftCyberleg:  4,
+  cyberaudio: 3, neuralLink: 5,
+  fashionware: 7, internal: 7, external: 7,
+  borgware: Infinity,
+};
+
 // ── Slot-Bestimmung (korrekte Slots je nach Item-Name + Notes) ─
 export function getItemSlots(item) {
   const sub = item.subcategory || '';
@@ -78,8 +90,12 @@ export function buildSnapshot(item, ammoData) {
                penalty: (x.armor_penalty && x.armor_penalty !== 'None') ? parseInt(x.armor_penalty) || 0 : 0,
                notes: item.notes || null, price: item.price, raw_cost: item.raw_cost };
     case 'cyberware':
+      // install/humanity_loss: Shop-Items tragen sie in extra; bereits flach-
+      // geklopfte Snapshots (Gear-Einbau) top-level → Fallback-Kette, damit
+      // buildSnapshot beide Formen verlustfrei kanonisiert.
       return { name: item.name, category: item.category, notes: item.notes || null,
-               install: x.install || null, humanity_loss: x.humanity_loss || null,
+               install: x.install || item.install || null,
+               humanity_loss: x.humanity_loss || item.humanity_loss || null,
                price: item.price, raw_cost: item.raw_cost, subcategory: item.subcategory || null,
                slotCost: getSlotCost(item) };
     default:
