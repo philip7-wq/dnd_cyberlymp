@@ -3,6 +3,10 @@
    ------------------------------------------------------------
    Eigener Scope, lädt KEIN radio.css. Override aller Klassen
    die radio-ui.js #buildUI in #radioShell injiziert.
+
+   Phase 8c: radio.html bindet jetzt cyberpunk-ui.css (Fundament/Tokens)
+   ein. Die Retro-Relikt-Palette unten (Brass/Amber/Gun-Metal, Bernstein-
+   LCD, --cyber-cyan/-magenta) bleibt BEWUSST erhalten — kein HUD-Recolor.
    ============================================================ */
 
 :root {

@@ -5,65 +5,70 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>Character Upload — LZRV D&amp;D Hub</title>
+  <!-- Redesign-Fundament (Master §3: ZUERST laden) -->
+  <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
+  <link rel="stylesheet" href="assets/css/cyber-components.css">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/upload.css">
   <style>
-    .info-icon { background:none; border:none; color:var(--cyan,#00e5ff); cursor:pointer;
+    /* HUD-Tokens direkt (base.css re-definiert die Alt-Aliase auf alte Werte);
+       Fonts (var(--font-display)) bleiben bis Phase 11. */
+    .info-icon { background:none; border:none; color:var(--neon-cyan); cursor:pointer;
       font-size:.68rem; padding:0 .18rem; opacity:.6; line-height:1; vertical-align:middle;
       transition:opacity .15s; font-style:normal; }
     .info-icon:hover { opacity:1; }
-    .info-tip-panel { position:fixed; z-index:9999; background:#090909;
-      border:1px solid var(--cyan,#00e5ff); border-radius:4px; padding:.75rem 1rem;
-      max-width:min(320px, calc(100vw - 24px)); font-size:.78rem; color:#ddd;
-      line-height:1.55; box-shadow:0 4px 28px rgba(0,229,255,.14); display:none; }
+    .info-tip-panel { position:fixed; z-index:var(--z-modal); background:var(--bg-panel);
+      border:1px solid var(--cyan-soft); border-radius:var(--radius); padding:.75rem 1rem;
+      max-width:min(320px, calc(100vw - 24px)); font-size:.78rem; color:var(--text-main);
+      line-height:1.55; box-shadow:var(--glow-cyan-m); display:none; }
     .info-tip-panel.is-modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
       max-width:min(360px, calc(100vw - 32px)); max-height:80vh; overflow-y:auto; }
     .info-tip-panel h4 { font-size:.73rem; letter-spacing:.1em; text-transform:uppercase;
-      color:#ff2d2d; margin:0 0 .5rem; }
+      color:var(--neon-red); margin:0 0 .5rem; }
     .info-tip-panel p { margin:0 0 .3rem; }
     .info-tip-panel ul { margin:.2rem 0 .3rem; padding-left:1.1rem; }
     .info-tip-panel li { margin-bottom:.16rem; }
-    .info-tip-panel strong { color:#fff; }
-    .info-tip-close { float:right; background:none; border:none; color:#888; cursor:pointer;
+    .info-tip-panel strong { color:var(--text-main); }
+    .info-tip-close { float:right; background:none; border:none; color:var(--text-muted); cursor:pointer;
       font-size:1rem; padding:0; margin:-.1rem -.1rem 0 .5rem; line-height:1; }
-    .info-tip-overlay { display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.55); }
+    .info-tip-overlay { display:none; position:fixed; inset:0; z-index:calc(var(--z-modal) - 1); background:rgba(0,0,0,.55); }
     .info-tip-overlay.open { display:block; }
 
-    /* Specialty cards */
-    .spec-budget { font-family: var(--font-display); font-size: .7rem; color: var(--cyan); }
-    .spec-budget.over { color: var(--red); }
+    /* Specialty cards (HUD-Tokens; Icon-Glyphen sind JS-generiert → bleiben Emoji) */
+    .spec-budget { font-family: var(--font-display); font-size: .7rem; color: var(--neon-cyan); }
+    .spec-budget.over { color: var(--neon-red); }
     .spec-budget-wrap { margin: .2rem 0 .55rem; }
-    .spec-budget-bar-outer { height: 5px; background: var(--bg-input); border-radius: 3px; overflow: hidden; margin-bottom: .3rem; }
-    .spec-budget-bar-inner { height: 100%; width: 0%; background: var(--cyan); border-radius: 3px; transition: width .2s; }
-    .spec-budget-bar-inner.over { background: var(--red); }
+    .spec-budget-bar-outer { height: 5px; background: var(--bg-panel-soft); border-radius: 3px; overflow: hidden; margin-bottom: .3rem; }
+    .spec-budget-bar-inner { height: 100%; width: 0%; background: var(--neon-cyan); border-radius: 3px; transition: width .2s; }
+    .spec-budget-bar-inner.over { background: var(--neon-red); }
     .spec-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: .5rem; margin-bottom: .5rem; }
-    .spec-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    .spec-card { background: var(--bg-panel); border: 1px solid var(--border-dark); border-radius: var(--radius);
       padding: .7rem .45rem .6rem; display: flex; flex-direction: column; align-items: center;
       gap: .22rem; text-align: center; transition: border-color .15s; }
-    .spec-card:not(.maxed):hover { border-color: var(--cyan); }
+    .spec-card:not(.maxed):hover { border-color: var(--neon-cyan); }
     .spec-card.maxed { opacity: .45; }
     .spec-card-icon { font-size: 1.4rem; line-height: 1; }
-    .spec-card-name { font-family: var(--font-display); font-size: .6rem; letter-spacing: .08em; color: var(--text-head); }
+    .spec-card-name { font-family: var(--font-display); font-size: .6rem; letter-spacing: .08em; color: var(--text-main); }
     .spec-card-desc { font-size: .57rem; color: var(--text-muted); line-height: 1.3; min-height: 2.5em; }
     .spec-card-controls { display: flex; align-items: center; gap: .45rem; margin-top: .15rem; }
-    .spec-card-value { font-family: var(--font-display); font-size: 1.5rem; color: var(--cyan); min-width: 2ch; text-align: center; }
-    .spec-card-btn { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--border);
-      background: var(--bg-input); color: var(--text); font-size: 1rem; cursor: pointer;
+    .spec-card-value { font-family: var(--font-display); font-size: 1.5rem; color: var(--neon-cyan); min-width: 2ch; text-align: center; }
+    .spec-card-btn { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--border-dark);
+      background: var(--bg-panel-soft); color: var(--text-main); font-size: 1rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center; line-height: 1;
       transition: border-color .12s, color .12s; flex-shrink: 0; padding: 0; }
-    .spec-card-btn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+    .spec-card-btn:hover:not(:disabled) { border-color: var(--neon-cyan); color: var(--neon-cyan); }
     .spec-card-btn:disabled { opacity: .22; cursor: not-allowed; }
-    .spec-toggle-btn { margin-top: .12rem; padding: .28rem .5rem; border: 1.5px solid var(--border);
-      border-radius: var(--radius); background: var(--bg-input); color: var(--text-muted);
+    .spec-toggle-btn { margin-top: .12rem; padding: .28rem .5rem; border: 1.5px solid var(--border-dark);
+      border-radius: var(--radius); background: var(--bg-panel-soft); color: var(--text-muted);
       font-size: .67rem; cursor: pointer; transition: all .15s; }
-    .spec-toggle-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,.1); }
+    .spec-toggle-btn.active { border-color: var(--neon-cyan); color: var(--neon-cyan); background: var(--bg-panel-cyan); }
   </style>
 </head>
 <body>
 
 <nav class="nav">
   <img src="assets/img/logo.png" alt="LZRV Hub" class="nav-logo-img">
-  <a href="index.html" class="btn btn-ghost" style="margin-left:auto">← Zurück</a>
+  <a href="index.html" class="upload-back-btn">← Zurück</a>
 </nav>
 
 <main class="upload-page">
@@ -74,17 +79,14 @@
   </div>
 
   <!-- hidden file input — opacity:0 not display:none so Safari allows programmatic click -->
-  <input type="file" id="pdfInput" accept=".pdf"
-    style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden">
+  <input type="file" id="pdfInput" accept=".pdf" class="pdf-file-input">
 
   <!-- PDF drop zone -->
-  <div class="drop-zone card" id="dropZone">
-    <span class="drop-icon">📄</span>
+  <div class="drop-zone" id="dropZone">
+    <span class="drop-icon"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-clipboard"/></svg></span>
     <p><strong>PDF hier ablegen</strong></p>
-    <label for="pdfInput" class="btn btn-ghost" style="margin-top:.75rem;cursor:pointer;display:inline-flex">
-      PDF auswählen
-    </label>
-    <p style="font-size:.75rem;margin-top:.5rem;color:var(--text-muted)">Cyberpunk RED Charakterbogen (ausgefüllt)</p>
+    <label for="pdfInput" class="upload-pick-btn">PDF auswählen</label>
+    <p class="drop-hint">Cyberpunk RED Charakterbogen (ausgefüllt)</p>
     <p class="filename" id="pdfName" hidden></p>
   </div>
 
@@ -103,8 +105,7 @@
   <!-- Role selection (shown after PDF parse) -->
   <div class="field-group" id="roleSection" style="display:none">
     <label for="charRole">Rolle <span class="text-red">*</span></label>
-    <select id="charRole">
-      <option value="">— Rolle wählen —</option>
+    <cyber-select id="charRole" placeholder="— Rolle wählen —">
       <option value="Rockerboy">Rockerboy</option>
       <option value="Solo">Solo</option>
       <option value="Netrunner">Netrunner</option>
@@ -115,36 +116,36 @@
       <option value="Lawman">Lawman</option>
       <option value="Fixer">Fixer</option>
       <option value="Nomad">Nomad</option>
-    </select>
+    </cyber-select>
   </div>
 
   <div class="field-group" id="rankSection" style="display:none">
     <label for="charRank">Ability Rank</label>
-    <div style="display:flex;align-items:center;gap:.75rem">
-      <input type="number" id="charRank" min="1" max="10" value="4" style="max-width:70px">
-      <span class="text-muted" style="font-size:.8rem">Standard: 4 (Edgerunner)</span>
+    <div class="rank-row">
+      <input type="number" id="charRank" min="1" max="10" value="4" class="rank-input">
+      <span class="text-muted rank-hint">Standard: 4 (Edgerunner)</span>
     </div>
   </div>
 
   <div id="uploadSpecSection"></div>
 
   <!-- Portrait fallback (shown when PDF has no embedded image) -->
-  <div class="image-fallback card" id="imageFallback">
+  <div class="image-fallback" id="imageFallback">
     <div class="image-fallback-header">
       <img src="" alt="Portrait preview" class="image-preview" id="imgPreview" hidden>
       <div>
         <h3>Portrait</h3>
-        <p class="text-muted" style="font-size:.85rem" id="imgHint">
+        <p class="text-muted img-hint" id="imgHint">
           Wird aus dem PDF extrahiert — oder hier manuell hochladen:
         </p>
       </div>
     </div>
     <div class="image-upload-zone">
-      <label class="btn btn-ghost" style="cursor:pointer">
+      <label class="upload-pick-btn">
         Bild wählen
         <input type="file" id="manualImg" accept="image/jpeg,image/png,image/webp" class="sr-only">
       </label>
-      <span class="text-muted" id="manualImgName" style="font-size:.85rem"></span>
+      <span class="text-muted manual-img-name" id="manualImgName"></span>
     </div>
   </div>
 
@@ -163,12 +164,13 @@
   <div class="status-msg" id="statusMsg" role="alert"></div>
 
   <!-- Submit -->
-  <button class="btn btn-primary btn-upload" id="submitBtn" disabled>
+  <button class="upload-submit-btn" id="submitBtn" disabled>
     Character speichern
   </button>
 
 </main>
 
+<script type="module" src="assets/js/cyber-components.js"></script>
 <script type="module">
 console.log('[upload] module loaded');
 import { parsePDF }     from './assets/js/pdf-parser.js';

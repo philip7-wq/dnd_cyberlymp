@@ -22,7 +22,7 @@
 | 5 dm.html | ✅ fertig | Opus xhigh; 5a (Basis/Button-System/Haupt-Dashboard) + 5b (Kontroll-Modal) + 5c (Combat-Tracker/Timer/Items/Raum) + 5d (Schwarzmarkt) → **dm.html KOMPLETT** |
 | 6 shop.html | ✅ fertig | Fundament-Includes + Token-Migration + Button-System + In-Place-Reskin (Karten/Ammo/Detail/4 Modals); Preis-Tier-Farben; 🔒→ic-lock |
 | 7 map.html | ⬜ offen | Opus xhigh; Canvas unantastbar; Nav-Sidebar hier |
-| 8 create/upload/npc-sheet/radio | ⬜ offen | |
+| 8 create/upload/npc-sheet/radio | ✅ fertig | 8a upload.html · 8c radio.html · 8b-2 roles.css :root · 8b-3 npc-sheet.html → **Phase 8 KOMPLETT** (create.html bewusst alt belassen, nicht genutzt) |
 | 9 Rulebook (neu) | ⬜ offen | |
 | 10 Cyberware-Index (neu) | ⬜ offen | |
 | 11 Responsive/A11y/Cleanup/QA | ⬜ offen | Aliase + Temp-Fonts entfernen, --radius, favicon |
@@ -1162,8 +1162,167 @@ Tools/Modals/FAB/Combat-Bar/Token-Picker/DM-Roll/Player-Attack-Flow/Saved-Maps.
 
 ---
 
+## Phase 8a — upload.html ✅ (nur upload.html; create.html bewusst ausgelassen)
+**Geändert (nur 2 Dateien):** `upload.html` (Fundament-Includes + Inline-`<style>`-Token-Migration +
+Markup: Buttons/Select/Sprite/Inline-Styles), `upload.css` (Token-Migration + neue Helfer-Klassen +
+Button-System-Block am Dateiende). **`create.html` NICHT angefasst** (git verifiziert: nur upload-
+bezogene Dateien im Diff). Keine JS-Logik/IDs/Events/Handler/Upload-Flow/Supabase geändert.
+
+**Fundament:** `cyberpunk-ui.css` + `cyber-components.css` VOR `base.css` + `upload.css` geladen
+(MASTER §3 Reihenfolge wie shop/player/dm); `cyber-components.js` als `<script type="module">` am
+Body-Ende vor dem bestehenden Inline-Modul. Akzent = **Cyan** (Charakterdaten, MASTER §2 Farblogik).
+
+**Token-Migration:** Alle Alt-Aliase → **neue HUD-Tokens direkt** (`--neon-cyan`, `--neon-red`,
+`--bg-panel`, `--bg-panel-soft`, `--border-dark`, `--text-main`, `--cyan-soft`, `--glow-*`,
+`--bg-panel-cyan/-red`, `--red-soft`, `--success-green` …), NICHT über `var(--cyan)` etc. — base.css
+re-definiert die Aliase auf alte Werte (Redesign-Gotcha). Hardcode-Hex raus (`#ff2d2d`/`#090909`/
+`#ddd`/`#888`/`#fff`/`rgba(0,229,255,…)` → Tokens). **Fonts (`--font-display`/`--font-body`) bewusst
+belassen** (Phase 11). `--radius` belassen (Gotcha #6).
+
+**`.spec-*`-CSS:** LOKAL in upload.html auf HUD migriert — **KEINE Extraktion** in gemeinsame Datei
+(create.html bleibt unberührt, das Duplikat darf bestehen). Spec-Card-**Icon-Glyphen** (🩺💊❄🔧⚙🏗💡🛡🎲⚡🎯👁🕵)
+sind **JS-generiert** (`_specCardHtml`-Template-Literale) → **bleiben Emoji** (Regel: nur statische,
+eindeutige Glyphen tauschen).
+
+**Button-System (Phase 8a):** custom-property-getriebener Block (`--btn-*`) am `upload.css`-Ende,
+gespiegelt von shop.css/player.css (Border `::before`, Füllung `::after`, Glow `filter:drop-shadow`,
+Clip-sm — Gotcha #2; Klassenlisten KOMMA-getrennt — Glob-Falle). Mappings: `.upload-back-btn` +
+`.upload-pick-btn` (← Zurück / PDF auswählen / Bild wählen — **ghost sm32**, Hover→cyan),
+`.upload-submit-btn` (Character speichern — **cyan lg44**, volle Breite). Legacy `.btn`/`.btn-ghost`/
+`.btn-primary`/`.btn-upload`/`.card` aus dem Markup entfernt (base.css-Globals unberührt). Touch →44px.
+
+**cyber-select:** Rollen-`<select id="charRole">` (10 statische Optionen) → `<cyber-select
+id="charRole" placeholder="— Rolle wählen —">` (leere Default-Option → `placeholder`-Attribut, Pilot-
+Muster wie map.html). **Reader/Change-Handler unverändert** — `.value` (get/set), `[...sel.options]`
+(getter liefert `[{value,label}]`), `'change'`-Event sind native-parity; der `value`-Setter
+dispatcht **kein** `change` (nur User-Klick → kein Doppel-Render des nachgelagerten
+`handleRoleChange()`). `display:block` via `.field-group cyber-select` für volle Breite.
+
+**Emoji → Sprite:** nur das **statische** 📄 (Drop-Zone) → `ic-clipboard` (`<svg class="ic"><use
+href="/assets/icons/cyber-icons.svg#ic-clipboard"/>`). JS-/textContent-Sinks (Spec-Icons, ✕ Tooltip-
+Close, ✓ Portrait-Hinweis) bleiben Emoji.
+
+**Inline-Styles → Klassen:** `.pdf-file-input` (versteckter Input — opacity:0 statt display:none für
+Safari-Klick, Kommentar erhalten), `.drop-hint`, `.rank-row`/`.rank-input`/`.rank-hint`, `.img-hint`,
+`.manual-img-name`. **Bewusst inline belassen:** `#roleSection`/`#rankSection` `style="display:none"`
+(JS toggelt `.style.display`).
+
+**Verifiziert:** git-Diff = nur `upload.html` + `upload.css` (create.html NICHT im Diff); keine bare
+Legacy-Tokens (`var(--cyan)`/`--red`/`--bg`/`--bg-card`/`--bg-input`/`--border`/`--text`/`--text-head`/
+`--transition`) mehr; keine `.btn*`/`.card`-Legacy-Klassen im Markup; `<cyber-select>` balanciert 1/1;
+`ic-clipboard` == Sprite-Symbol-ID; Fundament-Dateien existieren. **Offen:** manueller Browser-
+Durchklick (kein Browser/Supabase-Auth in der Session) — PDF-Parse→Felder→Rollen-cyber-select→
+Specialty-Cards (Medtech/Tech/Solo)→Portrait→Submit→Redirect, Drag&Drop, Tooltips, Konsole sauber.
+
+---
+
+## Phase 8c — radio.html ✅ (nur Fundament-Include; Retro-Look bleibt)
+**Geändert (2 Dateien + Log):** `radio.html` (eine `<link>`-Zeile: `cyberpunk-ui.css` VOR `base.css`),
+`radio-standalone.css` (nur Header-Kommentar — **keine** Token-/Hex-Änderung). Keine JS/IDs/Events/
+Radio-Logik berührt.
+
+**User-Entscheidung:** „Nur Fundament" — Seite ans Design-System anbinden (Tokens verfügbar), die
+bewusste **Retro-Relikt-Palette bleibt 1:1** (`--relic-brass/-amber/-gun`, `--cyber-cyan #00FFD0`,
+`--cyber-magenta #FF2D95` + alle Brass/Amber-Hexes). Null sichtbare Änderung beabsichtigt.
+
+**Lade-Reihenfolge:** `cyberpunk-ui.css` → `base.css` → `radio-standalone.css?v=2` (Master §3).
+
+**Warum minimal (verifiziert):**
+- **Reset net-zero:** `base.css:31` == `cyberpunk-ui.css:153` (`*{box-sizing:border-box;margin:0;
+  padding:0}`) → der Include verschiebt das px-getunte Relic-Layout nicht.
+- **Kein Scanline-Doppel / Body-Shift:** cyberpunk-ui-Scanlines sind klassenbasiert
+  (`.cyber-scanlines`, hier nicht eingebunden); `.radio-page` (radio-standalone.css, zuletzt geladen)
+  überschreibt `body`-bg/-font.
+- **Buttons schon Sprite:** Power/Seek nutzen bereits `ic-power`/`ic-seek` (radio-ui.js:70-72 —
+  geteilt mit Player/DM-Drawer, **nicht angefasst**). Kein Emoji, **keine** Inline-Styles im
+  Seiten-Markup. Fonts (Audiowide) bleiben (Phase 11).
+
+**Verifiziert:** git-Diff = nur `radio.html` + `radio-standalone.css` (+ Log); radio-standalone.css-
+Diff ist reiner Kommentar (keine Regeln/Tokens geändert); Link-Reihenfolge korrekt; `cyberpunk-ui.css`
+existiert (kein 404). **Offen:** manueller Browser-Durchklick (Power/Seek/Tuning/Volume/Senderwahl/
+WAVE+VISUALIZER-Toggles, Konsole sauber) — kein Browser in dieser Session.
+
+---
+
+## Phase 8b-2 — roles.css `:root` modernisiert ✅ (Shared-File, das Risiko-Stück)
+**Geändert (1 Datei + Log):** `roles.css` **nur `:root`** (Z.6-18). Die 10 `.role-theme-*` + alle
+anderen Regeln **unangetastet** (git-verifiziert: Diff = ein einziger Hunk `@@ -7,11 +7,18 @@`, keine
+Theme-Definition im Diff; Braces 105/105).
+
+**Was:** Die 8 neutralen Tokens auf **Hybrid `var(--hud-token, aktueller-literal)`** umgestellt
+(robust auch ohne cyberpunk-ui.css; Literal = bisheriger Wert):
+`--role-bg: var(--bg-main, #0a0a0f)`, `--role-bg-elev: var(--bg-panel, rgba(20,22,30,0.6))`,
+`--role-bg-deep: var(--bg-panel-soft, rgba(8,10,16,0.85))`, `--role-text: var(--text-main, #e8eef2)`,
+`--role-muted: var(--text-muted, #7a8593)`, `--role-line: var(--border-dark, rgba(255,255,255,0.08))`,
+`--role-danger: var(--neon-red, #FF2D2D)`, `--role-success: var(--success-green, #00cc66)`.
+**Default-Akzent modernisiert:** `--role-accent #00E5FF → var(--neon-cyan, #22F7FF)` + `-soft
+rgba(34,247,255,0.15)` + `-glow rgba(34,247,255,0.4)`. **`--card-bg` neu definiert**
+(`var(--bg-panel, #101318)`) — war nirgends definiert (→ transparent), wird **nur von npc-sheet**
+konsumiert (5 Stellen: Header/Notes-Textarea/Armor-SP-Zellen/Stat-Zelle), player.html nie.
+
+**Warum kein player-Bruch:** player.css `#tab-role`/`.role-modal` re-deklariert alle 8 Neutralen auf
+HUD-Tokens → gewinnt weiter → Rollen-Tab **pixelgleich**. In player löst `var(--bg-main,…)` auf den
+HUD-Wert auf (egal, Override gewinnt). **Einziger erwarteter Sicht-Effekt:** body-portalierte Rollen-
+Würfel-Modals (Default-Akzent, nicht vom Override erfasst) → **Mini-Cyan-Shift** `#00E5FF→#22F7FF`
+(gleicher Farbton, etwas heller) — bewusst (User-Entscheidung).
+
+**npc-sheet in 8b-2:** noch **kein** cyberpunk-ui.css (kommt in 8b-3) → die 8 Neutralen fallen auf die
+Literale = bisherige Werte → **keine** Neutral-Änderung; npc-sheet-Default-Akzent zeigt jetzt
+neon-cyan, und die 5 `--card-bg`-Zellen bekommen Panel-bg (vorher transparent — beabsichtigte
+Bereinigung, Feinschliff in 8b-3).
+
+**Verifiziert:** `git diff` = nur `roles.css` (:root-Hunk); 10 Themes byte-identisch; Braces 105/105;
+keine anderen roles.css-Regeln berührt. **Offen:** manueller player-Rollen-Tab-Durchklick (mehrere
+Rollen: Akzent/Karten/Sub-Tabs/Meter unverändert, Würfel-Modal Mini-Shift ok, Rank-Up/Settings
+unverändert) — kein Browser in dieser Session.
+
+---
+
+## Phase 8b-3 — npc-sheet.html ✅ → **Phase 8 KOMPLETT**
+**Geändert (1 Datei + Log):** `npc-sheet.html`. `roles.css` **nicht** erneut angefasst (8b-2 fix,
+git-verifiziert). **Keine** JS-Logik/IDs/Events/Handler/Supabase-Änderung — nur `<head>`-Link,
+Inline-`<style>`, statische Glyphen + Token-Strings in den Render-Templates.
+
+**1. Fundament:** `cyberpunk-ui.css` VOR base.css →
+`cyberpunk-ui.css → base.css → player.css → roles.css` (Master §3). Dadurch lösen die roles.css-
+`:root`-Hybrids (8b-2) auf die echten HUD-Werte auf → `.role-section/-card/-pill/-meter/.tabs/.tab-btn`
+rendern wie im player-Rollen-Tab. **Kein cyber-components.css/js** (keine Custom-Elements, kein
+`<select>`).
+
+**2. Token-Migration** (base.css re-definiert Alt-Aliase → neue HUD-Tokens direkt): Inline-`<style>` +
+Render-Template-Inline-Styles — `var(--red)`→`var(--neon-red)`, `var(--cyan)`→`var(--neon-cyan)`,
+`var(--border)`→`var(--border-dark)`, `var(--text)`→`var(--text-main)`, `#FFD700`(Wound/HP-Mid)→
+`var(--warning-yellow)`, `rgba(255,255,255,.07)`(HP-Track)→`var(--role-line)`. Bleiben: `--text-muted`,
+`--card-bg` (= roles.css `var(--bg-panel,#101318)`), `--role-line`, Fonts Audiowide (Phase 11).
+Dynamische Inline-Styles (`width:${hpPct}%`, `${hpCol}`, `${ws.color}`) bleiben inline.
+
+**3. Inline-Style → Klassen:** neue `.npc-cell`/`.npc-cell-label`/`.npc-cell-val`/`.npc-hp-bar`/
+`.npc-hp-fill` im `<style>`-Block; angewandt auf HEAD/BODY-SP-Zellen (renderCombat) + Attribut-Zellen
+(renderStats) + HP-Bar. `id="headSpVal"`/`id="bodySpVal"` erhalten. `.tab-panel{padding:var(--sp-2)}`.
+
+**4. Emoji → Sprite (7):** Tab-Bar ⚔️→`ic-combat`, ✨→`ic-sparkle`, 📝→`ic-clipboard`; Templates
+✎→`ic-edit`, 👤→`ic-user`, ⚡→`ic-bolt`, 💥→`ic-burst`. **Bleiben Glyph:** 📊 (kein Stats-Symbol),
+`✓`/`…` (Notes-Status = textContent-Sink), `∞` (Math). `ic-dice` (Attack-Modal) unverändert.
+
+**5. Buttons:** **roles.css-Default behalten** (User-Entscheidung) — `.role-dice-btn`/.secondary
+(nach 8b-2 neon-cyan); kein player-Button-System dupliziert.
+
+**Bewusste Deltas zu player-Rollen-Tab:** Fonts (Audiowide statt Rajdhani → Phase 11), Button-Geometrie
+(rund statt clip). Sections/Karten/Pills/Meter/Farben = identisch.
+
+**Verifiziert:** `git diff` = nur `npc-sheet.html`; `roles.css` unberührt; inline-Modul `node --check`
+sauber; keine bare Legacy-Tokens mehr; 8 Sprite-Refs == vorhandene Symbol-IDs; Link-Reihenfolge korrekt.
+**Offen:** manueller Browser-Durchklick als DM (`localStorage.dm_auth='1'`, `?npc_id=…`) — alle Tabs,
+HP ±/Custom-Modal, Armor-SP ±, Attack/Damage-Würfe + Modal, Critical-Injuries, Notes-Autosave, Realtime;
+Konsole sauber; Optik-Abgleich mit player-Rollen-Tab.
+
+---
+
 ## Offene Punkte / To-do bis Ende
-- **Phase 8–10** wie Status-Tabelle.
+- **Phase 9/10** (Rulebook, Cyberware-Index) wie Status-Tabelle. **create.html** bleibt bewusst alt
+  (nicht genutzt) — ggf. in Phase 11 entfernen/migrieren.
+- **Phase 11 Cleanup** wie Status-Tabelle (Aliase/Temp-Fonts/`--radius`; ggf. redundantes
+  player.css-`#tab-role`-Neutral-Override + roles.css-`--card-bg` aufräumen).
 - **Phase 11 Cleanup:** Migrations-Aliase entfernen; `--radius`-Kollision auflösen; Temp-Fonts
   (Audiowide/Inter/Caveat) entfernen, sobald alle 13 Page-CSS migriert sind; optional In-Place-
   Anzeige-Bars auf Components nachziehen; `favicon.ico`; tote Alt-Styles.

@@ -4,17 +4,24 @@
    ============================================================ */
 
 :root {
-  --role-bg: #0a0a0f;
-  --role-bg-elev: rgba(20, 22, 30, 0.6);
-  --role-bg-deep: rgba(8, 10, 16, 0.85);
-  --role-text: #e8eef2;
-  --role-muted: #7a8593;
-  --role-line: rgba(255, 255, 255, 0.08);
-  --role-accent: #00E5FF;          /* overridden per role */
-  --role-accent-soft: rgba(0, 229, 255, 0.15);
-  --role-accent-glow: rgba(0, 229, 255, 0.4);
-  --role-danger: #FF2D2D;
-  --role-success: #00cc66;
+  /* Phase 8b-2: neutrale Basis als Hybrid var(--hud-token, aktueller-literal).
+     Robust auch ohne cyberpunk-ui.css (npc-sheet rendert roh) — der Literal-
+     Fallback ist der bisherige Wert, also keine sichtbare Neutral-Aenderung.
+     Wo cyberpunk-ui.css geladen ist (player), gewinnt ohnehin der #tab-role-
+     Override in player.css. Default-Akzent modernisiert (alt-cyan -> neon-cyan).
+     Die 10 .role-theme-* unten bleiben unangetastet (Rollen-Identitaet). */
+  --role-bg:      var(--bg-main, #0a0a0f);
+  --role-bg-elev: var(--bg-panel, rgba(20, 22, 30, 0.6));
+  --role-bg-deep: var(--bg-panel-soft, rgba(8, 10, 16, 0.85));
+  --role-text:    var(--text-main, #e8eef2);
+  --role-muted:   var(--text-muted, #7a8593);
+  --role-line:    var(--border-dark, rgba(255, 255, 255, 0.08));
+  --role-danger:  var(--neon-red, #FF2D2D);
+  --role-success: var(--success-green, #00cc66);
+  --card-bg:      var(--bg-panel, #101318);   /* war undefiniert; npc-sheet-Zellen-bg */
+  --role-accent:      var(--neon-cyan, #22F7FF);   /* default; overridden per role */
+  --role-accent-soft: rgba(34, 247, 255, 0.15);
+  --role-accent-glow: rgba(34, 247, 255, 0.4);
 }
 
 /* Per-role accent themes (added to root container) */

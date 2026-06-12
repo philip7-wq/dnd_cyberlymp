@@ -1,172 +1,271 @@
 /* ============================================================
-   LZRV D&D Hub — upload.html styles
+   LZRV D&D Hub — upload.html styles  (Phase 8a HUD-Reskin)
+   HUD-Tokens direkt verwenden: base.css re-definiert die Alt-Aliase
+   (var(--cyan)/--red/--bg-*) auf alte Werte → daher die neuen Tokens
+   (--neon-cyan, --bg-panel-soft, …) direkt. Fonts (var(--font-display)/
+   var(--font-body)) bleiben bis Phase 11. Akzent = Cyan (Charakterdaten).
    ============================================================ */
 
 .upload-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2.5rem 1rem 4rem;
-  gap: 2rem;
+  padding: var(--sp-7) var(--sp-4) var(--sp-8);
+  gap: var(--sp-5);
   max-width: 640px;
   margin: 0 auto;
 }
 
-.upload-title {
-  text-align: center;
-}
+.upload-title { text-align: center; }
 .upload-title h1 {
-  font-size: 1.6rem;
-  color: var(--red);
-  margin-bottom: .25rem;
+  font-size: var(--fs-xl);
+  color: var(--neon-cyan);
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  margin-bottom: var(--sp-1);
 }
 .upload-title p {
   color: var(--text-muted);
-  font-size: .9rem;
+  font-size: var(--fs-sm);
 }
 
-/* ── Drop zone ── */
+/* hidden PDF input — opacity:0 statt display:none, damit Safari den
+   programmatischen Klick via label[for] erlaubt */
+.pdf-file-input {
+  opacity: 0; position: absolute;
+  width: 1px; height: 1px; overflow: hidden;
+}
+
+/* ── Drop zone (HUD-Panel) ── */
 .drop-zone {
   width: 100%;
-  border: 2px dashed var(--border);
+  border: 1px dashed var(--border-dark);
   border-radius: var(--radius);
-  padding: 3rem 2rem;
+  padding: var(--sp-7) var(--sp-5);
   text-align: center;
-  transition: border-color 200ms, background 200ms;
-  background: var(--bg-card);
+  background: var(--bg-panel);
+  box-shadow: var(--inset-cyan);
+  transition: border-color var(--t-med) var(--ease), background var(--t-med) var(--ease);
 }
 .drop-zone:hover,
 .drop-zone.drag-over {
-  border-color: var(--cyan);
-  background: #12121e;
+  border-color: var(--neon-cyan);
+  background: var(--bg-panel-soft);
 }
 .drop-icon {
   font-size: 2.5rem;
-  margin-bottom: .75rem;
+  margin-bottom: var(--sp-3);
   display: block;
   line-height: 1;
+  color: var(--neon-cyan);
 }
-.drop-zone p {
-  color: var(--text-muted);
-  font-size: .9rem;
-}
-.drop-zone strong { color: var(--cyan); }
+.drop-zone p { color: var(--text-muted); font-size: var(--fs-sm); }
+.drop-zone strong { color: var(--neon-cyan); }
+.drop-hint { font-size: var(--fs-xs); margin-top: var(--sp-2); color: var(--text-muted); }
 .drop-zone .filename {
-  margin-top: .75rem;
-  color: var(--text-head);
-  font-size: .9rem;
+  margin-top: var(--sp-3);
+  color: var(--text-main);
+  font-size: var(--fs-sm);
   word-break: break-all;
 }
 
-/* ── Player name input ── */
+/* ── Form fields ── */
 .field-group {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: .4rem;
+  gap: var(--sp-2);
 }
 .field-group label {
   font-family: var(--font-display);
-  font-size: .75rem;
-  letter-spacing: .1em;
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking);
   text-transform: uppercase;
   color: var(--text-muted);
 }
 .field-group input[type="text"],
-.field-group select {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+.field-group input[type="number"] {
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-dark);
   border-radius: var(--radius);
-  color: var(--text);
+  color: var(--text-main);
   font-family: var(--font-body);
-  font-size: .95rem;
-  padding: .6rem .9rem;
+  font-size: var(--fs-md);
+  padding: var(--sp-3) var(--sp-4);
   width: 100%;
-  transition: border-color var(--transition);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
-.field-group input:focus,
-.field-group select:focus {
+.field-group input:focus {
   outline: none;
-  border-color: var(--cyan);
+  border-color: var(--cyan-soft);
+  box-shadow: var(--glow-cyan-s);
 }
+/* Rollen-Dropdown ist jetzt <cyber-select> (Look kommt aus cyber-components.css) */
+.field-group cyber-select { display: block; }
 
-/* ── Image fallback ── */
+.rank-row { display: flex; align-items: center; gap: var(--sp-3); }
+.rank-input { max-width: 70px; }
+.rank-hint { font-size: var(--fs-sm); }
+
+/* ── Image fallback (HUD-Panel) ── */
 .image-fallback {
   width: 100%;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  box-shadow: var(--inset-cyan);
 }
 .image-fallback-header {
   display: flex;
   align-items: center;
-  gap: .75rem;
-  margin-bottom: .75rem;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
 }
 .image-fallback-header h3 {
-  font-size: .9rem;
+  font-size: var(--fs-sm);
   font-family: var(--font-display);
-  letter-spacing: .05em;
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  color: var(--text-main);
 }
+.img-hint { font-size: var(--fs-sm); }
 .image-preview {
   width: 96px;
   height: 96px;
   border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-dark);
   object-fit: cover;
-  background: var(--bg-input);
+  background: var(--bg-panel-soft);
 }
 .image-upload-zone {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--sp-4);
 }
+.manual-img-name { font-size: var(--fs-sm); }
 
 /* ── Progress ── */
-.progress-wrap {
-  width: 100%;
-}
+.progress-wrap { width: 100%; }
 .progress-label {
   display: flex;
   justify-content: space-between;
-  font-size: .8rem;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
-  margin-bottom: .35rem;
+  margin-bottom: var(--sp-2);
 }
 .progress-bar-track {
   width: 100%;
   height: 6px;
-  background: var(--bg-input);
-  border-radius: 3px;
+  background: var(--bg-panel-soft);
+  border-radius: var(--radius);
   overflow: hidden;
 }
 .progress-bar-fill {
   height: 100%;
-  background: var(--red);
-  border-radius: 3px;
+  background: var(--cyan-soft);
+  border-radius: var(--radius);
   width: 0%;
   transition: width 300ms ease;
 }
-.progress-bar-fill.done { background: var(--cyan); }
+.progress-bar-fill.done { background: var(--success-green); }
 
 /* ── Status message ── */
 .status-msg {
   width: 100%;
-  padding: .75rem 1rem;
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius);
-  font-size: .88rem;
+  font-size: var(--fs-sm);
   display: none;
 }
 .status-msg.visible { display: block; }
-.status-msg.error   { background: #2a0808; border: 1px solid var(--red); color: #ff8080; }
-.status-msg.success { background: #081a1a; border: 1px solid var(--cyan); color: var(--cyan); }
-.status-msg.info    { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); }
+.status-msg.error   { background: var(--bg-panel-red); border: 1px solid var(--red-soft); color: var(--neon-red); }
+.status-msg.success { background: var(--bg-panel-cyan); border: 1px solid var(--cyan-soft); color: var(--neon-cyan); }
+.status-msg.info    { background: var(--bg-panel); border: 1px solid var(--border-dark); color: var(--text-muted); }
 
-/* ── Submit button ── */
-.btn-upload {
-  width: 100%;
+/* ════════════════════════════════════════════════════════════════
+   BUTTON-SYSTEM (Phase 8a) — cyber-button-Look auf die Upload-Buttons.
+   Gespiegelt von shop.css/player.css: custom-property-getrieben
+   (--btn-border, -fill, -fill-hover, -color, -glow, -h, -px, -fs),
+   Muster wie .cyber-button: Border via ::before, Fuellung via ::after,
+   Glow via filter:drop-shadow, Clip-sm (Gotcha #2). Quellordnung am
+   Dateiende → gewinnt bei gleicher Spezifitaet.
+   Klassenlisten KOMMA-getrennt (nie Slash-Glob im Kommentar).
+   Groessen: ghost-sm32 (zurueck / datei-picker), lg44 (Submit-CTA).
+   ════════════════════════════════════════════════════════════════ */
+.upload-back-btn, .upload-pick-btn, .upload-submit-btn {
+  --btn-border: var(--cyan-soft);
+  --btn-fill: var(--bg-panel-soft);
+  --btn-fill-hover: var(--bg-panel-cyan);
+  --btn-color: var(--neon-cyan);
+  --btn-glow: var(--glow-cyan-s);
+  --btn-h: 38px;
+  --btn-px: var(--sp-4);
+  --btn-fs: var(--fs-sm);
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  padding: .9rem;
-  font-size: .95rem;
+  gap: var(--sp-2);
+  min-height: var(--btn-h);
+  height: auto;
+  padding: 0 var(--btn-px);
+  background: transparent;
+  border: none;
+  color: var(--btn-color);
+  font-family: var(--font-heading);
+  font-size: var(--btn-fs);
+  font-weight: 600;
+  letter-spacing: var(--tracking);
+  text-transform: uppercase;
+  text-decoration: none;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: none;
+  border-radius: var(--radius);
+  clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)),
+                     calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm));
+  transition: color var(--t-fast) var(--ease), filter var(--t-fast) var(--ease),
+              transform var(--t-fast) var(--ease);
 }
-.btn-upload:disabled {
-  opacity: .4;
-  cursor: not-allowed;
+.upload-back-btn::before, .upload-pick-btn::before, .upload-submit-btn::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--btn-border); clip-path: inherit;
+}
+.upload-back-btn::after, .upload-pick-btn::after, .upload-submit-btn::after {
+  content: ""; position: absolute; inset: var(--border-w); z-index: -1;
+  background: var(--btn-fill); clip-path: inherit;
+  transition: background var(--t-fast) var(--ease);
+}
+.upload-back-btn:hover, .upload-pick-btn:hover, .upload-submit-btn:hover:not(:disabled) {
+  background: transparent; box-shadow: none;
+  filter: drop-shadow(var(--btn-glow)); transform: translateY(-1px);
+}
+.upload-back-btn:hover::after, .upload-pick-btn:hover::after, .upload-submit-btn:hover:not(:disabled)::after {
+  background: var(--btn-fill-hover);
+}
+.upload-back-btn:active, .upload-pick-btn:active, .upload-submit-btn:active { transform: translateY(0); }
+.upload-back-btn:focus-visible, .upload-pick-btn:focus-visible, .upload-submit-btn:focus-visible {
+  outline: none; filter: drop-shadow(var(--btn-glow));
+}
+.upload-submit-btn:disabled { opacity: .4; cursor: not-allowed; filter: none; transform: none; }
+
+/* — Varianten / Groessen — */
+/* ghost (zurueck / datei-picker) — neutral, Hover → cyan */
+.upload-back-btn, .upload-pick-btn {
+  --btn-border: var(--border-dark); --btn-color: var(--text-muted);
+  --btn-fill-hover: var(--bg-panel-cyan); --btn-glow: var(--glow-cyan-s);
+  --btn-h: 32px; --btn-px: var(--sp-3); --btn-fs: var(--fs-xs);
+}
+.upload-back-btn:hover, .upload-pick-btn:hover { color: var(--neon-cyan); }
+.upload-back-btn { margin-left: auto; }
+.upload-pick-btn { margin-top: var(--sp-3); }
+.image-upload-zone .upload-pick-btn { margin-top: 0; }
+/* primaerer CTA — Character speichern, volle Breite, lg44 */
+.upload-submit-btn { --btn-h: 44px; --btn-fs: var(--fs-md); width: 100%; }
+
+/* — Touch: alle System-Buttons ≥44px — */
+@media (pointer: coarse) {
+  .upload-back-btn, .upload-pick-btn, .upload-submit-btn { --btn-h: 44px; }
 }

@@ -5,27 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>NPC Sheet — LZRV Hub</title>
+  <!-- Redesign-Fundament (Master §3: ZUERST laden) — löst die roles.css-:root-Hybrid-Tokens
+       (8b-2) auf die echten HUD-Werte auf, damit die Rollen-UI wie im player-Rollen-Tab rendert. -->
+  <link rel="stylesheet" href="assets/css/cyberpunk-ui.css">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/player.css">
   <link rel="stylesheet" href="assets/css/roles.css">
   <style>
+    /* HUD-Tokens direkt (base.css re-definiert die Alt-Aliase auf alte Werte);
+       Fonts (Audiowide) bleiben bis Phase 11. */
     body { max-width: 520px; margin: 0 auto; }
     #loader { display:flex; align-items:center; justify-content:center; min-height:60vh;
       font-family:'Audiowide',sans-serif; font-size:.85rem; color:var(--text-muted); }
     .npc-header { display:flex; align-items:center; gap:1rem; padding:1rem 1.1rem;
-      background:var(--card-bg); border-bottom:1px solid var(--border); }
+      background:var(--card-bg); border-bottom:1px solid var(--border-dark); }
     .npc-portrait { width:54px; height:54px; border-radius:50%; object-fit:cover;
-      border:2px solid var(--red); flex-shrink:0; }
-    .npc-portrait-placeholder { width:54px; height:54px; border-radius:50%; border:2px solid var(--border);
-      display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; }
-    .npc-header-name { font-family:'Audiowide',sans-serif; font-size:1rem; color:var(--red); }
+      border:2px solid var(--neon-red); flex-shrink:0; }
+    .npc-portrait-placeholder { width:54px; height:54px; border-radius:50%; border:2px solid var(--border-dark);
+      display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--text-muted); flex-shrink:0; }
+    .npc-header-name { font-family:'Audiowide',sans-serif; font-size:1rem; color:var(--neon-red); }
     .npc-header-role { font-size:.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; margin-top:.15rem; }
     .npc-header-wound { font-family:'Audiowide',sans-serif; font-size:.7rem; margin-top:.3rem; }
     .npc-header-hp { margin-left:auto; text-align:right; font-family:'Audiowide',sans-serif; flex-shrink:0; }
-    .npc-header-hp-val { font-size:1.6rem; color:var(--red); line-height:1; }
+    .npc-header-hp-val { font-size:1.6rem; color:var(--neon-red); line-height:1; }
     .npc-header-hp-max { font-size:.65rem; color:var(--text-muted); }
-    .tab-panel { padding:.5rem; }
+    .tab-panel { padding:var(--sp-2); }
     .npc-empty { color:var(--text-muted); font-size:.8rem; padding:.75rem 0; }
+
+    /* Inline-Style → Klassen (Geometrie identisch; HUD-Tokens) */
+    .npc-cell { background:var(--card-bg); border:1px solid var(--border-dark); border-radius:var(--radius);
+      padding:var(--sp-3); text-align:center; }
+    .npc-cell-label { font-size:.6rem; color:var(--text-muted); letter-spacing:.1em; margin-bottom:.3rem; }
+    .npc-cell-val { font-family:'Audiowide',sans-serif; font-size:1.25rem; color:var(--neon-cyan); }
+    .npc-hp-bar { background:var(--role-line); border-radius:var(--radius); height:12px; overflow:hidden; margin-bottom:.6rem; }
+    .npc-hp-fill { height:100%; transition:width .3s; }
   </style>
 </head>
 <body>
@@ -36,10 +49,10 @@
   <div class="npc-header" id="npcHeader"></div>
 
   <div class="tabs" id="tabBar">
-    <button class="tab-btn active" data-tab="combat">⚔️ Combat</button>
+    <button class="tab-btn active" data-tab="combat"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-combat"/></svg> Combat</button>
     <button class="tab-btn" data-tab="stats">📊 Stats</button>
-    <button class="tab-btn" data-tab="effects">✨ Effects</button>
-    <button class="tab-btn" data-tab="notes">📝 Notes</button>
+    <button class="tab-btn" data-tab="effects"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-sparkle"/></svg> Effects</button>
+    <button class="tab-btn" data-tab="notes"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-clipboard"/></svg> Notes</button>
   </div>
 
   <div class="tab-panel active" id="tab-combat"></div>
@@ -49,7 +62,7 @@
     <div class="role-section">
       <div class="role-section-title">Notizen</div>
       <textarea id="npcNotesArea" style="width:100%;min-height:200px;background:var(--card-bg);
-        border:1px solid var(--border);border-radius:6px;color:var(--text);padding:.75rem;
+        border:1px solid var(--border-dark);border-radius:var(--radius);color:var(--text-main);padding:.75rem;
         font-family:inherit;font-size:.85rem;resize:vertical;box-sizing:border-box"
         placeholder="Notizen zum NPC…"></textarea>
       <div id="notesSaveStatus" style="font-size:.7rem;color:var(--text-muted);margin-top:.3rem"></div>
@@ -89,14 +102,14 @@ async function boot() {
     });
   } catch(e) {
     document.getElementById('loader').innerHTML =
-      `<span style="color:var(--red)">${e.message}</span>`;
+      `<span style="color:var(--neon-red)">${e.message}</span>`;
   }
 }
 
 function woundState(hp, maxHp) {
-  if (!maxHp || hp <= 0) return { label: 'ELIMINATED', color: 'var(--red)' };
-  if (hp <= Math.ceil(maxHp / 2)) return { label: 'SERIOUSLY WOUNDED', color: '#FFD700' };
-  return { label: 'HEALTHY', color: 'var(--cyan)' };
+  if (!maxHp || hp <= 0) return { label: 'ELIMINATED', color: 'var(--neon-red)' };
+  if (hp <= Math.ceil(maxHp / 2)) return { label: 'SERIOUSLY WOUNDED', color: 'var(--warning-yellow)' };
+  return { label: 'HEALTHY', color: 'var(--neon-cyan)' };
 }
 
 function renderAll() {
@@ -114,7 +127,7 @@ function renderHeader() {
   document.getElementById('npcHeader').innerHTML = `
     ${npc.image_url
       ? `<img class="npc-portrait" src="${escHtml(npc.image_url)}" alt="">`
-      : `<div class="npc-portrait-placeholder">👤</div>`}
+      : `<div class="npc-portrait-placeholder"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-user"/></svg></div>`}
     <div style="min-width:0">
       <div class="npc-header-name">${escHtml(npc.name)}</div>
       ${npc.role ? `<div class="npc-header-role">${escHtml(npc.role)}</div>` : ''}
@@ -131,7 +144,7 @@ function renderCombat() {
   const hp = npc.hp_current ?? 0;
   const maxHp = npc.hp_max ?? 0;
   const hpPct = maxHp ? Math.min(100, Math.round((hp / maxHp) * 100)) : 0;
-  const hpCol = hpPct > 50 ? 'var(--cyan)' : hpPct > 25 ? '#FFD700' : 'var(--red)';
+  const hpCol = hpPct > 50 ? 'var(--neon-cyan)' : hpPct > 25 ? 'var(--warning-yellow)' : 'var(--neon-red)';
   const headSp = npc.head_sp ?? 0;
   const bodySp = npc.body_sp ?? 0;
   const weapons = Array.isArray(npc.weapons) ? npc.weapons.filter(w => w.name) : [];
@@ -140,8 +153,8 @@ function renderCombat() {
   el.innerHTML = `
   <div class="role-section">
     <div class="role-section-title">HP</div>
-    <div style="background:rgba(255,255,255,.07);border-radius:4px;height:12px;overflow:hidden;margin-bottom:.6rem">
-      <div style="height:100%;width:${hpPct}%;background:${hpCol};transition:width .3s"></div>
+    <div class="npc-hp-bar">
+      <div class="npc-hp-fill" style="width:${hpPct}%;background:${hpCol}"></div>
     </div>
     <div class="role-row" style="gap:.4rem;flex-wrap:wrap">
       <button class="role-dice-btn secondary" data-hp="-10">−10</button>
@@ -149,24 +162,24 @@ function renderCombat() {
       <button class="role-dice-btn secondary" data-hp="-1">−1</button>
       <button class="role-dice-btn secondary" data-hp="+1">+1</button>
       <button class="role-dice-btn secondary" data-hp="+5">+5</button>
-      <button class="role-dice-btn secondary" id="npcHpCustomBtn">✎</button>
+      <button class="role-dice-btn secondary" id="npcHpCustomBtn"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-edit"/></svg></button>
     </div>
   </div>
 
   <div class="role-section">
     <div class="role-section-title">Armor SP</div>
     <div class="role-row" style="gap:.75rem">
-      <div style="flex:1;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:.65rem;text-align:center">
-        <div style="font-size:.6rem;color:var(--text-muted);letter-spacing:.1em;margin-bottom:.3rem">HEAD</div>
-        <div style="font-family:'Audiowide';font-size:1.25rem;color:var(--cyan)" id="headSpVal">${headSp}</div>
+      <div class="npc-cell" style="flex:1">
+        <div class="npc-cell-label">HEAD</div>
+        <div class="npc-cell-val" id="headSpVal">${headSp}</div>
         <div class="role-row" style="gap:.3rem;margin-top:.45rem;justify-content:center">
           <button class="role-dice-btn secondary" style="padding:.15rem .45rem;font-size:.7rem" data-sp="head" data-d="-1">−</button>
           <button class="role-dice-btn secondary" style="padding:.15rem .45rem;font-size:.7rem" data-sp="head" data-d="+1">+</button>
         </div>
       </div>
-      <div style="flex:1;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:.65rem;text-align:center">
-        <div style="font-size:.6rem;color:var(--text-muted);letter-spacing:.1em;margin-bottom:.3rem">BODY</div>
-        <div style="font-family:'Audiowide';font-size:1.25rem;color:var(--cyan)" id="bodySpVal">${bodySp}</div>
+      <div class="npc-cell" style="flex:1">
+        <div class="npc-cell-label">BODY</div>
+        <div class="npc-cell-val" id="bodySpVal">${bodySp}</div>
         <div class="role-row" style="gap:.3rem;margin-top:.45rem;justify-content:center">
           <button class="role-dice-btn secondary" style="padding:.15rem .45rem;font-size:.7rem" data-sp="body" data-d="-1">−</button>
           <button class="role-dice-btn secondary" style="padding:.15rem .45rem;font-size:.7rem" data-sp="body" data-d="+1">+</button>
@@ -183,8 +196,8 @@ function renderCombat() {
         <div class="role-card-name">${escHtml(w.name)}</div>
         <div class="role-card-meta">${escHtml(w.damage || '—')}</div>
         <div class="role-row" style="gap:.35rem;margin-top:.5rem">
-          <button class="role-dice-btn secondary" data-weapon="${i}" data-type="attack" style="font-size:.7rem;padding:.2rem .55rem">⚡ Attack</button>
-          <button class="role-dice-btn secondary" data-weapon="${i}" data-type="damage" style="font-size:.7rem;padding:.2rem .55rem">💥 Damage</button>
+          <button class="role-dice-btn secondary" data-weapon="${i}" data-type="attack" style="font-size:.7rem;padding:.2rem .55rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-bolt"/></svg> Attack</button>
+          <button class="role-dice-btn secondary" data-weapon="${i}" data-type="damage" style="font-size:.7rem;padding:.2rem .55rem"><svg class="ic" aria-hidden="true"><use href="/assets/icons/cyber-icons.svg#ic-burst"/></svg> Damage</button>
         </div>
       </div>`).join('')}
     </div>
@@ -194,7 +207,7 @@ function renderCombat() {
   <div class="role-section">
     <div class="role-section-title">Critical Injuries</div>
     ${injuries.map(inj => `
-      <div style="padding:.35rem 0;border-bottom:1px solid var(--role-line);color:var(--red);font-size:.82rem">
+      <div style="padding:.35rem 0;border-bottom:1px solid var(--role-line);color:var(--neon-red);font-size:.82rem">
         <strong>${escHtml(inj.name || String(inj))}</strong>${inj.effect ? ` — ${escHtml(inj.effect)}` : ''}
       </div>`).join('')}
   </div>` : ''}`;
@@ -320,9 +333,9 @@ function renderStats() {
       <div class="role-section-title">Attribute</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-top:.5rem">
         ${STATS.map(k => `
-          <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:.6rem;text-align:center">
-            <div style="font-size:.58rem;color:var(--text-muted);letter-spacing:.1em;margin-bottom:.25rem">${k}</div>
-            <div style="font-family:'Audiowide';font-size:1.2rem;color:var(--cyan)">${s[k] ?? '—'}</div>
+          <div class="npc-cell">
+            <div class="npc-cell-label">${k}</div>
+            <div class="npc-cell-val">${s[k] ?? '—'}</div>
           </div>`).join('')}
       </div>
     </div>`;
