@@ -1919,68 +1919,64 @@ function renderArmor() {
     </div>`;
 }
 
-// ── Cyberware tab ─────────────────────────────────────────────
-function buildSkeletonOverlayHtml(cw) {
-  const activeInjuries = getInjuries().map(i => i.name || i);
-  const injuredZones = new Set();
-  if (['Broken Arm','Dismembered Arm'].some(n => activeInjuries.includes(n))) { injuredZones.add('leftArm'); injuredZones.add('rightArm'); }
-  if (['Broken Leg','Dismembered Leg'].some(n => activeInjuries.includes(n))) { injuredZones.add('leftLeg'); injuredZones.add('rightLeg'); }
-  if (['Lost Eye','Damaged Eye'].some(n => activeInjuries.includes(n))) { injuredZones.add('leftEye'); injuredZones.add('rightEye'); }
+// ── Cyberware tab — Röntgen-Skelett ───────────────────────────
+// Asset (cyberware-skeleton.svg) wird inline injiziert (fetch→innerHTML),
+// damit die State-Klassen (is-filled/is-injured/is-hover) im SVG greifen.
+// Promise-Cache → ab dem 2. Render synchron schnell.
+let cwskSvgPromise = null;
+function loadSkeletonSvg() {
+  cwskSvgPromise ??= fetch('/assets/img/cyberware-skeleton.svg')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
+  return cwskSvgPromise;
+}
 
-  // Each named SVG zone → which slot keys it represents
-  const ZONE_SLOT_MAP = {
-    head:     ['neuralLink','rightCybereye','leftCybereye','cyberaudio'],
-    leftEye:  ['leftCybereye'],
-    rightEye: ['rightCybereye'],
-    neck:     ['neuralLink','cyberaudio'],
-    leftArm:  ['leftCyberarm'],
-    rightArm: ['rightCyberarm'],
-    torso:    ['internal','external','fashionware','borgware'],
-    leftLeg:  ['leftCyberleg'],
-    rightLeg: ['rightCyberleg'],
+// Leucht-States auf die Skelett-Regionen anwenden (belegt + verletzt).
+// Liest direkt char.cyberware (Normalpfad = Objekt; Legacy-Array → keine Belegung).
+function applySkeletonState() {
+  const m = document.getElementById('cwskMount'); if (!m) return;
+  const svg = m.querySelector('svg.cwsk'); if (!svg) return;
+  const cw = (char.cyberware && !Array.isArray(char.cyberware)) ? char.cyberware : {};
+
+  // Verletzungen → Region-slotKeys (faithful: nur Arme/Beine/Augen, je beide Seiten)
+  const names = getInjuries().map(i => i?.name || i);
+  const injuredSlots = new Set();
+  if (['Broken Arm','Dismembered Arm'].some(n => names.includes(n))) { injuredSlots.add('leftCyberarm'); injuredSlots.add('rightCyberarm'); }
+  if (['Broken Leg','Dismembered Leg'].some(n => names.includes(n))) { injuredSlots.add('leftCyberleg'); injuredSlots.add('rightCyberleg'); }
+  if (['Lost Eye','Damaged Eye'].some(n => names.includes(n)))       { injuredSlots.add('leftCybereye'); injuredSlots.add('rightCybereye'); }
+
+  svg.querySelectorAll('.cwsk-region').forEach(r => {
+    const slot = r.dataset.slots;
+    r.classList.toggle('is-filled', Array.isArray(cw[slot]) && cw[slot].length > 0);
+    r.classList.toggle('is-injured', injuredSlots.has(slot));
+  });
+}
+
+// Hover/Klick-Delegation EINMALIG am persistenten #tab-cyberware (überlebt Re-Renders).
+let _cwskHandlersAttached = false;
+function setupSkeletonHandlers() {
+  if (_cwskHandlersAttached) return;
+  const tab = document.getElementById('tab-cyberware');
+  if (!tab) return;
+  _cwskHandlersAttached = true;
+
+  const setHover = slot => {
+    const m = document.getElementById('cwskMount'); if (!m) return;
+    m.querySelectorAll('.cwsk-region.is-hover').forEach(r => r.classList.remove('is-hover'));
+    if (slot) m.querySelector(`.cwsk-region[data-slots="${slot}"]`)?.classList.add('is-hover');
   };
 
-  function zoneAttrs(zoneName) {
-    const slots = ZONE_SLOT_MAP[zoneName] || [];
-    const count = slots.reduce((n, s) => n + (Array.isArray(cw?.[s]) ? cw[s].length : 0), 0);
-    const injured = injuredZones.has(zoneName);
-    const hasCyber = count > 0;
-    const names = slots.flatMap(s => (cw?.[s] || []).map(i => i.name)).filter(Boolean);
-    const tip = names.length ? names.join(', ') : (CW_SLOT_LABELS[slots[0]] || zoneName);
-    if (injured) return { fill: 'rgba(255,45,45,.2)', stroke: '#FF2D2D', filter: 'drop-shadow(0 0 5px #FF2D2D)', count, tip };
-    if (hasCyber) return { fill: 'rgba(0,229,255,.18)', stroke: '#00E5FF', filter: 'drop-shadow(0 0 6px #00E5FF)', count, tip };
-    return { fill: 'transparent', stroke: 'rgba(0,229,255,.2)', filter: 'none', count: 0, tip };
-  }
-
-  function zone(tag, zoneName, attrs, children = '') {
-    const a = zoneAttrs(zoneName);
-    const filterAttr = a.filter !== 'none' ? ` style="filter:${a.filter}"` : '';
-    const badge = a.count > 0
-      ? `<text class="cyber-zone-badge" x="${attrs.bx ?? 0}" y="${attrs.by ?? 0}" text-anchor="middle">${a.count}</text>`
-      : '';
-    const shape = tag === 'ellipse'
-      ? `<ellipse data-zone="${zoneName}" cx="${attrs.cx}" cy="${attrs.cy}" rx="${attrs.rx}" ry="${attrs.ry}" fill="${a.fill}" stroke="${a.stroke}" stroke-width="1" class="cyber-svg-zone"${filterAttr}><title>${a.tip}</title></ellipse>`
-      : `<rect data-zone="${zoneName}" x="${attrs.x}" y="${attrs.y}" width="${attrs.w}" height="${attrs.h}" rx="${attrs.rx ?? 4}" fill="${a.fill}" stroke="${a.stroke}" stroke-width="1" class="cyber-svg-zone"${filterAttr}><title>${a.tip}</title></rect>`;
-    return shape + badge;
-  }
-
-  // SVG viewBox matches image aspect ratio 1024×1536 → 2:3 → 100×150
-  const svg = `<svg class="cyber-skeleton-svg" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
-    ${zone('ellipse','head',    {cx:50, cy:14, rx:13, ry:9,  bx:62, by:6})}
-    ${zone('ellipse','leftEye', {cx:44, cy:12, rx:4,  ry:3,  bx:48, by:9.5})}
-    ${zone('ellipse','rightEye',{cx:56, cy:12, rx:4,  ry:3,  bx:60, by:9.5})}
-    ${zone('rect','neck',       {x:45,  y:22,  w:10,  h:7,   rx:3, bx:55, by:25})}
-    ${zone('rect','torso',      {x:30,  y:24,  w:40,  h:53,  rx:4, bx:69, by:27})}
-    ${zone('rect','leftArm',    {x:5,   y:25,  w:24,  h:55,  rx:5, bx:28, by:28})}
-    ${zone('rect','rightArm',   {x:71,  y:25,  w:24,  h:55,  rx:5, bx:94, by:28})}
-    ${zone('rect','leftLeg',    {x:27,  y:78,  w:22,  h:66,  rx:4, bx:48, by:81})}
-    ${zone('rect','rightLeg',   {x:51,  y:78,  w:22,  h:66,  rx:4, bx:72, by:81})}
-  </svg>`;
-
-  return `<div class="cyber-skeleton-wrap">
-    <img src="./assets/img/cyberware-skeleton.png" class="cyber-skeleton-img" alt="Skeleton" draggable="false">
-    ${svg}
-  </div>`;
+  // Region-Klick → zur passenden Slot-Karte scrollen (data-slots = exakter slotKey)
+  tab.addEventListener('click', e => {
+    const r = e.target.closest('.cwsk-region'); if (!r) return;
+    document.getElementById('cyber-slot-' + r.dataset.slots)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+  // Karten-Hover → zugehörige Körperregion hervorheben (Slots ohne Region: nichts)
+  tab.addEventListener('mouseover', e => {
+    const card = e.target.closest('.cyber-slot');
+    setHover(card ? card.id.replace('cyber-slot-', '') : null);
+  });
+  tab.addEventListener('mouseleave', () => setHover(null));
 }
 
 function buildCyberSlotHtml(slotKey, cw) {
@@ -2027,7 +2023,7 @@ function renderCyberware() {
       ${leftSlots.map(s => buildCyberSlotHtml(s, cw)).join('')}
     </div>
     <div class="cyber-center-col">
-      ${buildSkeletonOverlayHtml(cw)}
+      <div id="cwskMount" class="cyber-skeleton-mount"></div>
       <div class="cyber-hum-section">
         <div class="cyber-hum-label">Humanity</div>
         <div class="cyber-hum-bar-wrap">
@@ -2041,24 +2037,13 @@ function renderCyberware() {
     </div>
   </div>`;
 
-  // SVG zone click → scroll to slot
-  const ZONE_SCROLL_TARGET = {
-    head: ['neuralLink','rightCybereye','leftCybereye','cyberaudio'],
-    leftEye: ['leftCybereye'], rightEye: ['rightCybereye'],
-    neck: ['neuralLink','cyberaudio'],
-    leftArm: ['leftCyberarm'], rightArm: ['rightCyberarm'],
-    torso: ['internal','external','fashionware','borgware'],
-    leftLeg: ['leftCyberleg'], rightLeg: ['rightCyberleg'],
-  };
-  el.querySelectorAll('.cyber-svg-zone').forEach(zone => {
-    zone.addEventListener('click', () => {
-      const slots = ZONE_SCROLL_TARGET[zone.dataset.zone] || [];
-      for (const s of slots) {
-        const slotEl = document.getElementById(`cyber-slot-${s}`);
-        if (slotEl) { slotEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); break; }
-      }
-    });
-  });
+  // Skelett-SVG inline injizieren + Leucht-States anwenden
+  loadSkeletonSvg().then(svg => {
+    const m = document.getElementById('cwskMount');
+    if (m && m.isConnected) { m.innerHTML = svg; applySkeletonState(); }
+  }).catch(e => console.warn('Skeleton load failed', e));
+
+  setupSkeletonHandlers();
 }
 
 // ── Gear tab ──────────────────────────────────────────────────
