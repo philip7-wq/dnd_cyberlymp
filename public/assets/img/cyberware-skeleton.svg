@@ -1,6 +1,6 @@
 <svg class="cwsk" viewBox="0 0 400 805" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cwskTitle cwskDesc">
 <title id="cwskTitle">Somatic scan — Cyberware-Körperansicht</title>
-<desc id="cwskDesc">Röntgen-Skelett mit beleuchtbaren Körperregionen für installierte Cyberware. Charakter-links erscheint im Bild rechts.</desc>
+<desc id="cwskDesc">PAPERDOLL: Charakter-links = Bild-links. Röntgen-Skelett mit beleuchtbaren Körperregionen für installierte Cyberware. Charakter-links erscheint im Bild rechts.</desc>
 
 <style>
 .cwsk{--cwsk-cy:#22F7FF;--cwsk-rd:#FF3158;}
@@ -85,7 +85,7 @@
 <path d="M 167 99 C 167 102 167 105 169 110 C 173 124 183 134 200 136.5 C 217 134 227 124 231 110 C 233 105 233 102 233 99" class="cwsk-bone-l"/>
 <rect x="183" y="124.5" width="4" height="5.5" rx="1.3" class="cwsk-tooth"/><rect x="189" y="126" width="4" height="5.5" rx="1.3" class="cwsk-tooth"/><rect x="195" y="126" width="4" height="5.5" rx="1.3" class="cwsk-tooth"/><rect x="201" y="126" width="4" height="5.5" rx="1.3" class="cwsk-tooth"/><rect x="207" y="126" width="4" height="5.5" rx="1.3" class="cwsk-tooth"/><rect x="213" y="124.5" width="4" height="5.5" rx="1.3" class="cwsk-tooth"/>
 <path d="M 176 128 C 184 133 192 134.5 200 134.5 C 208 134.5 216 133 224 128" class="cwsk-fine"/>
-<text x="372" y="48" class="cwsk-marker">L</text><text x="20" y="48" class="cwsk-marker">R</text>
+<text x="372" y="48" class="cwsk-marker">R</text><text x="20" y="48" class="cwsk-marker">L</text>
 <rect x="193" y="140" width="14" height="4.4" rx="2" class="cwsk-vert"/>
 <rect x="192.7" y="146.2" width="14.7" height="4.4" rx="2" class="cwsk-vert"/>
 <rect x="192.3" y="152.4" width="15.4" height="4.4" rx="2" class="cwsk-vert"/>
@@ -221,21 +221,21 @@
 <ellipse cx="200" cy="60" rx="40" ry="34" class="cwsk-aura"/>
 <ellipse cx="200" cy="60" rx="40" ry="34" class="cwsk-hit"/>
 </g>
-<g id="cwsk-region-eye-l" class="cwsk-region" data-slots="leftCybereye"><title>Linkes Auge (Charakter)</title>
+<g id="cwsk-region-eye-r" class="cwsk-region" data-slots="rightCybereye"><title>Rechtes Auge (Charakter)</title>
 <ellipse cx="217.5" cy="85" rx="11.5" ry="9.5" class="cwsk-socket" transform="rotate(-8 217.5 85)"/>
 <circle cx="217.5" cy="85" r="5" class="cwsk-core cwsk-lens"/>
 <circle cx="217.5" cy="85" r="2.1" class="cwsk-core cwsk-lens-iris"/>
 <path d="M 210 85 A 7.5 7.5 0 0 1 225 85" class="cwsk-core cwsk-lens-ring"/>
-<circle class="cwsk-anchor" data-anchor="leftCybereye" cx="217.5" cy="85" r="0.1"/>
+<circle class="cwsk-anchor" data-anchor="rightCybereye" cx="217.5" cy="85" r="0.1"/>
 <circle cx="217.5" cy="85" r="14" class="cwsk-aura"/>
 <circle cx="217.5" cy="85" r="14" class="cwsk-hit"/>
 </g>
-<g id="cwsk-region-eye-r" class="cwsk-region" data-slots="rightCybereye"><title>Rechtes Auge (Charakter)</title>
+<g id="cwsk-region-eye-l" class="cwsk-region" data-slots="leftCybereye"><title>Linkes Auge (Charakter)</title>
 <ellipse cx="182.5" cy="85" rx="11.5" ry="9.5" class="cwsk-socket" transform="rotate(8 182.5 85)"/>
 <circle cx="182.5" cy="85" r="5" class="cwsk-core cwsk-lens"/>
 <circle cx="182.5" cy="85" r="2.1" class="cwsk-core cwsk-lens-iris"/>
 <path d="M 175 85 A 7.5 7.5 0 0 1 190 85" class="cwsk-core cwsk-lens-ring"/>
-<circle class="cwsk-anchor" data-anchor="rightCybereye" cx="182.5" cy="85" r="0.1"/>
+<circle class="cwsk-anchor" data-anchor="leftCybereye" cx="182.5" cy="85" r="0.1"/>
 <circle cx="182.5" cy="85" r="14" class="cwsk-aura"/>
 <circle cx="182.5" cy="85" r="14" class="cwsk-hit"/>
 </g>
@@ -252,7 +252,7 @@
 <circle cx="157" cy="97" r="13" class="cwsk-hit"/>
 <circle class="cwsk-anchor" data-anchor="cyberaudio" cx="243" cy="97" r="0.1"/>
 </g>
-<g id="cwsk-region-arm-l" class="cwsk-region" data-slots="leftCyberarm"><title>Linker Arm (Charakter)</title>
+<g id="cwsk-region-arm-r" class="cwsk-region" data-slots="rightCyberarm"><title>Rechter Arm (Charakter)</title>
 <circle cx="269" cy="197" r="9" class="cwsk-joint-ring"/>
 <circle cx="269" cy="197" r="5.5" class="cwsk-bone"/>
 <path d="M 262.6 202.9 Q 272.8 260.5 277.5 318.8 C 279.6 327.4 290.5 326 290.5 317.2 Q 281.2 259.5 277.4 201.1 C 275.1 191.2 262.5 192.7 262.6 202.9 Z" class="cwsk-bone"/><path d="M 270.6 207.2 L 283.5 313.5" class="cwsk-marrow"/>
@@ -300,11 +300,11 @@
 <path d="M 283.5 489.9 Q 284.2 493.6 284 497.4 C 284.3 499.1 286.4 499 286.5 497.3 Q 286.1 493.6 286.5 489.8 C 286.2 487.8 283.7 487.9 283.5 489.9 Z" class="cwsk-bone"/><path d="M 285.1 490.9 L 285.3 496.5" class="cwsk-marrow"/>
 <circle cx="285.3" cy="497.3" r="1.2" class="cwsk-joint-dot"/>
 <path d="M 284 497.5 Q 284.7 500.2 284.9 502.9 C 285.3 504.3 287 504.1 287 502.7 Q 286.6 500 286.6 497.2 C 286.2 495.5 284 495.7 284 497.5 Z" class="cwsk-bone"/><path d="M 285.4 498.2 L 285.9 502.1" class="cwsk-marrow"/>
-<circle class="cwsk-anchor" data-anchor="leftCyberarm" cx="286" cy="330" r="0.1"/>
+<circle class="cwsk-anchor" data-anchor="rightCyberarm" cx="286" cy="330" r="0.1"/>
 <path d="M 245.1 192.1 Q 254.6 346.5 270.1 500.4 C 275.1 526.1 321.7 521.7 321.9 495.6 Q 308.4 341.5 288.9 187.9 C 284.7 166.2 245.2 170 245.1 192.1 Z" class="cwsk-aura"/>
 <path d="M 245.1 192.1 Q 254.6 346.5 270.1 500.4 C 275.1 526.1 321.7 521.7 321.9 495.6 Q 308.4 341.5 288.9 187.9 C 284.7 166.2 245.2 170 245.1 192.1 Z" class="cwsk-hit"/>
 </g>
-<g id="cwsk-region-arm-r" class="cwsk-region" data-slots="rightCyberarm"><title>Rechter Arm (Charakter)</title>
+<g id="cwsk-region-arm-l" class="cwsk-region" data-slots="leftCyberarm"><title>Linker Arm (Charakter)</title>
 <circle cx="131" cy="197" r="9" class="cwsk-joint-ring"/>
 <circle cx="131" cy="197" r="5.5" class="cwsk-bone"/>
 <path d="M 122.6 201.1 Q 118.8 259.5 109.5 317.2 C 109.5 326 120.4 327.4 122.5 318.8 Q 127.2 260.5 137.4 202.9 C 137.5 192.7 124.9 191.2 122.6 201.1 Z" class="cwsk-bone"/><path d="M 129.4 207.2 L 116.5 313.5" class="cwsk-marrow"/>
@@ -352,11 +352,11 @@
 <path d="M 113.5 489.8 Q 113.9 493.6 113.5 497.3 C 113.6 499 115.7 499.1 116 497.4 Q 115.8 493.6 116.5 489.9 C 116.3 487.9 113.8 487.8 113.5 489.8 Z" class="cwsk-bone"/><path d="M 114.9 490.9 L 114.7 496.5" class="cwsk-marrow"/>
 <circle cx="114.7" cy="497.3" r="1.2" class="cwsk-joint-dot"/>
 <path d="M 113.4 497.2 Q 113.4 500 113 502.7 C 113 504.1 114.7 504.3 115.1 502.9 Q 115.3 500.2 116 497.5 C 116 495.7 113.8 495.5 113.4 497.2 Z" class="cwsk-bone"/><path d="M 114.6 498.2 L 114.1 502.1" class="cwsk-marrow"/>
-<circle class="cwsk-anchor" data-anchor="rightCyberarm" cx="114" cy="330" r="0.1"/>
+<circle class="cwsk-anchor" data-anchor="leftCyberarm" cx="114" cy="330" r="0.1"/>
 <path d="M 111.1 187.9 Q 91.6 341.5 78.1 495.6 C 78.3 521.7 124.9 526.1 129.9 500.4 Q 145.4 346.5 154.9 192.1 C 154.8 170 115.3 166.2 111.1 187.9 Z" class="cwsk-aura"/>
 <path d="M 111.1 187.9 Q 91.6 341.5 78.1 495.6 C 78.3 521.7 124.9 526.1 129.9 500.4 Q 145.4 346.5 154.9 192.1 C 154.8 170 115.3 166.2 111.1 187.9 Z" class="cwsk-hit"/>
 </g>
-<g id="cwsk-region-leg-l" class="cwsk-region" data-slots="leftCyberleg"><title>Linkes Bein (Charakter)</title>
+<g id="cwsk-region-leg-r" class="cwsk-region" data-slots="rightCyberleg"><title>Rechtes Bein (Charakter)</title>
 <circle cx="245" cy="468" r="7" class="cwsk-bone"/>
 <path d="M 250 464 C 258 462 263 468 262 476" class="cwsk-stroke"/>
 <path d="M 249.6 478.8 Q 244.2 541.3 231.6 602.8 C 231.2 614.3 245.5 616.4 248.4 605.2 Q 253.8 542.7 266.4 481.2 C 266.8 469.7 252.5 467.6 249.6 478.8 Z" class="cwsk-bone"/><path d="M 257.1 485.9 L 240.9 598.1" class="cwsk-marrow"/>
@@ -383,11 +383,11 @@
 <path d="M 247.1 772.8 Q 248.2 774.6 248.4 776.6 C 249.1 778.1 251 777.5 250.7 775.9 Q 249.8 774.1 249.7 772 C 249 770.3 246.8 771 247.1 772.8 Z" class="cwsk-bone"/><path d="M 248.7 773.3 L 249.3 775.5" class="cwsk-marrow"/>
 <path d="M 247.7 758.9 Q 251.1 763.1 253.7 767.9 C 255.1 769.6 257.3 768 256.3 766.1 Q 252.9 761.9 250.3 757.1 C 248.9 755.4 246.7 757 247.7 758.9 Z" class="cwsk-bone"/><path d="M 249.6 758.9 L 254.4 766.1" class="cwsk-marrow"/>
 <path d="M 254.8 769 Q 256.3 770.4 257.1 772.2 C 258.1 773.4 259.7 772.3 259 771 Q 257.6 769.5 256.9 767.5 C 255.8 766.2 254 767.4 254.8 769 Z" class="cwsk-bone"/><path d="M 256.3 769 L 257.6 770.9" class="cwsk-marrow"/>
-<circle class="cwsk-anchor" data-anchor="leftCyberleg" cx="242" cy="600" r="0.1"/>
+<circle class="cwsk-anchor" data-anchor="rightCyberleg" cx="242" cy="600" r="0.1"/>
 <path d="M 226 459.2 Q 217 610.1 218 761.3 C 219.5 783.3 259.1 784.6 262 762.7 Q 273 611.9 274 460.8 C 272.4 436.7 229.2 435.3 226 459.2 Z" class="cwsk-aura"/>
 <path d="M 226 459.2 Q 217 610.1 218 761.3 C 219.5 783.3 259.1 784.6 262 762.7 Q 273 611.9 274 460.8 C 272.4 436.7 229.2 435.3 226 459.2 Z" class="cwsk-hit"/>
 </g>
-<g id="cwsk-region-leg-r" class="cwsk-region" data-slots="rightCyberleg"><title>Rechtes Bein (Charakter)</title>
+<g id="cwsk-region-leg-l" class="cwsk-region" data-slots="leftCyberleg"><title>Linkes Bein (Charakter)</title>
 <circle cx="155" cy="468" r="7" class="cwsk-bone"/>
 <path d="M 150 464 C 142 462 137 468 138 476" class="cwsk-stroke"/>
 <path d="M 133.6 481.2 Q 146.2 542.7 151.6 605.2 C 154.5 616.4 168.8 614.3 168.4 602.8 Q 155.8 541.3 150.4 478.8 C 147.5 467.6 133.2 469.7 133.6 481.2 Z" class="cwsk-bone"/><path d="M 142.9 485.9 L 159.1 598.1" class="cwsk-marrow"/>
@@ -414,7 +414,7 @@
 <path d="M 150.3 772 Q 150.2 774.1 149.3 775.9 C 149 777.5 150.9 778.1 151.6 776.6 Q 151.8 774.6 152.9 772.8 C 153.2 771 151 770.3 150.3 772 Z" class="cwsk-bone"/><path d="M 151.3 773.3 L 150.7 775.5" class="cwsk-marrow"/>
 <path d="M 149.7 757.1 Q 147.1 761.9 143.7 766.1 C 142.7 768 144.9 769.6 146.3 767.9 Q 148.9 763.1 152.3 758.9 C 153.3 757 151.1 755.4 149.7 757.1 Z" class="cwsk-bone"/><path d="M 150.4 758.9 L 145.6 766.1" class="cwsk-marrow"/>
 <path d="M 143.1 767.5 Q 142.4 769.5 141 771 C 140.3 772.3 141.9 773.4 142.9 772.2 Q 143.7 770.4 145.2 769 C 146 767.4 144.2 766.2 143.1 767.5 Z" class="cwsk-bone"/><path d="M 143.7 769 L 142.4 770.9" class="cwsk-marrow"/>
-<circle class="cwsk-anchor" data-anchor="rightCyberleg" cx="158" cy="600" r="0.1"/>
+<circle class="cwsk-anchor" data-anchor="leftCyberleg" cx="158" cy="600" r="0.1"/>
 <path d="M 126 460.8 Q 127 611.9 138 762.7 C 140.9 784.6 180.5 783.3 182 761.3 Q 183 610.1 174 459.2 C 170.8 435.3 127.6 436.7 126 460.8 Z" class="cwsk-aura"/>
 <path d="M 126 460.8 Q 127 611.9 138 762.7 C 140.9 784.6 180.5 783.3 182 761.3 Q 183 610.1 174 459.2 C 170.8 435.3 127.6 436.7 126 460.8 Z" class="cwsk-hit"/>
 </g>
